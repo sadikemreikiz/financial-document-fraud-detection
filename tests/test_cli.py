@@ -1,5 +1,6 @@
 import functools
 import hashlib
+import json
 import shutil
 from pathlib import Path
 
@@ -12,7 +13,8 @@ import docfraud.cli
 from docfraud import __version__
 from docfraud.cli import app
 from docfraud.data.download import SOURCES, DatasetSource
-from docfraud.data.gold import draw_gold_set, load_manifest
+from docfraud.data.gold import GoldManifest, draw_gold_set, load_manifest
+from docfraud.data.models import Split
 from docfraud.data.splits import TestSetLockedError
 from docfraud.reading.ocr import OcrResult
 from tests.fixtures.findit import load_toy
@@ -134,3 +136,19 @@ def test_reading_ocr_caches_unlocked_splits_only(
     )
     assert locked.exit_code != 0
     assert isinstance(locked.exception, TestSetLockedError)
+
+
+def test_reading_check_gold_lists_suspicious_authentic_annotations(tmp_path: Path) -> None:
+    manifest = GoldManifest(
+        dataset="d", split=Split.TRAIN, seed=0, authentic=("XA", "XB"), forged=("XF",)
+    )
+    path = tmp_path / "manifest.json"
+    path.write_text(manifest.model_dump_json(), encoding="utf-8")
+    amounts = {"total_due": ["5.00"], "tendered": ["10.00"], "change": ["4.00"]}
+    bad = json.dumps({"doc_id": "XA", "annotator": "t", "fields": {"amounts": amounts}})
+    (tmp_path / "XA.json").write_text(bad, encoding="utf-8")
+    result = runner.invoke(app, ["reading", "check-gold", "--manifest", str(path)])
+    assert result.exit_code == 0, result.output
+    assert "1 of 3 gold receipts annotated" in result.output
+    assert "re-check XA: Tendered - due = change" in result.output
+    assert "missing: XB, XF" in result.output

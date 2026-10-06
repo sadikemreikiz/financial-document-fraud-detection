@@ -13,10 +13,11 @@ from docfraud.data.audit import audit_dataset
 from docfraud.data.download import SOURCES, download, safe_extract, verify
 from docfraud.data.duplicates import resolve_duplicates
 from docfraud.data.findit import DUPLICATE_GROUPS, load_findit2
-from docfraud.data.gold import draw_gold_set, save_manifest
+from docfraud.data.gold import draw_gold_set, load_annotations, load_manifest, save_manifest
 from docfraud.data.models import Label, Split
 from docfraud.data.normalize import load_grayscale
 from docfraud.data.splits import select
+from docfraud.reading.consistency import CHECKS
 from docfraud.reading.ocr import CachedOcr, RapidOcrEngine
 
 app = typer.Typer(
@@ -155,3 +156,28 @@ def reading_ocr(
             ocr.recognize(load_grayscale(document.image_path))
             progress.advance(task)
     console.print(f"[green]cached[/green] {len(pages)} pages in {ocr.directory}")
+
+
+@reading_app.command("check-gold")
+def reading_check_gold(
+    manifest_path: Annotated[Path, typer.Option("--manifest", help="Gold manifest.")] = (
+        GOLD_MANIFEST
+    ),
+) -> None:
+    """Validate gold annotations and list arithmetic that fails on authentic receipts.
+
+    A failing relation on an authentic receipt usually means an annotation typo; it is resolved
+    by looking at the image again, never by editing a value until it balances.
+    """
+    manifest = load_manifest(manifest_path)
+    annotations = load_annotations(manifest_path.parent, manifest)
+    missing = sorted(manifest.doc_ids - set(annotations))
+    console.print(f"{len(annotations)} of {len(manifest.doc_ids)} gold receipts annotated")
+    for doc_id, annotation in annotations.items():
+        if doc_id not in manifest.authentic:
+            continue
+        failed = [name for name, check in CHECKS.items() if check(annotation.fields) is False]
+        if failed:
+            console.print(f"[yellow]re-check[/yellow] {doc_id}: {', '.join(failed)}")
+    if missing:
+        console.print(f"missing: {', '.join(missing)}")

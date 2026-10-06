@@ -14,10 +14,12 @@ import numpy as np
 from pydantic import BaseModel, ConfigDict
 
 from docfraud.data.models import Document, Label, Split
+from docfraud.reading.fields import ReceiptFields
 
 GOLD_SEED = 20261006
 GOLD_AUTHENTIC = 40
 GOLD_FORGED = 10
+MANIFEST_NAME = "manifest.json"
 
 
 class GoldManifest(BaseModel):
@@ -97,3 +99,35 @@ def development_documents(
         and d.dataset == manifest.dataset
         and d.doc_id not in manifest.doc_ids
     )
+
+
+class GoldAnnotation(BaseModel):
+    """Manually verified fields of one gold receipt."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    doc_id: str
+    annotator: str
+    fields: ReceiptFields
+    notes: str = ""
+
+
+def annotation_path(directory: Path, doc_id: str) -> Path:
+    """Where the annotation of one gold receipt is stored."""
+    return directory / f"{doc_id}.json"
+
+
+def load_annotations(directory: Path, manifest: GoldManifest) -> dict[str, GoldAnnotation]:
+    """Load and validate the annotations present so far.
+
+    Raises:
+        ValueError: If a file names a document outside the manifest or disagrees with its name.
+    """
+    annotations: dict[str, GoldAnnotation] = {}
+    for path in sorted(p for p in directory.glob("*.json") if p.name != MANIFEST_NAME):
+        annotation = GoldAnnotation.model_validate_json(path.read_text(encoding="utf-8"))
+        if annotation.doc_id != path.stem or annotation.doc_id not in manifest.doc_ids:
+            msg = f"{path.name}: annotation for {annotation.doc_id} is not a gold receipt here"
+            raise ValueError(msg)
+        annotations[annotation.doc_id] = annotation
+    return annotations

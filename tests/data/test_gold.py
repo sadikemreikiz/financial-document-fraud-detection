@@ -4,8 +4,10 @@ import pytest
 
 from docfraud.data.gold import (
     GoldManifest,
+    annotation_path,
     development_documents,
     draw_gold_set,
+    load_annotations,
     load_manifest,
     save_manifest,
 )
@@ -68,3 +70,35 @@ def test_development_documents_exclude_gold_and_non_training(tmp_path: Path) -> 
     save_manifest(manifest, path)
     assert load_manifest(path) == manifest
     assert isinstance(load_manifest(path), GoldManifest)
+
+
+def annotation_json(doc_id: str, total: str = "5.00") -> str:
+    return (
+        f'{{"doc_id": "{doc_id}", "annotator": "test", '
+        f'"fields": {{"amounts": {{"total_due": ["{total}"]}}}}}}'
+    )
+
+
+def test_annotations_are_loaded_and_validated(tmp_path: Path) -> None:
+    manifest = draw_gold_set(DOCS, n_authentic=2, n_forged=1)
+    first = sorted(manifest.doc_ids)[0]
+    (tmp_path / f"{first}.json").write_text(annotation_json(first), encoding="utf-8")
+    save_manifest(manifest, tmp_path / "manifest.json")
+    loaded = load_annotations(tmp_path, manifest)
+    assert list(loaded) == [first]
+    assert (
+        str(loaded[first].fields.amounts)
+        == "{<AmountRole.TOTAL_DUE: 'total_due'>: (Decimal('5.00'),)}"
+    )
+    assert annotation_path(tmp_path, first) == tmp_path / f"{first}.json"
+
+
+@pytest.mark.parametrize("name", ["X999", "mismatch"])
+def test_annotations_outside_the_manifest_are_rejected(tmp_path: Path, name: str) -> None:
+    manifest = draw_gold_set(DOCS, n_authentic=2, n_forged=1)
+    inside = sorted(manifest.doc_ids)[0]
+    doc_id = "X999" if name == "X999" else inside
+    file_name = "X999.json" if name == "X999" else "other.json"
+    (tmp_path / file_name).write_text(annotation_json(doc_id), encoding="utf-8")
+    with pytest.raises(ValueError, match="not a gold receipt"):
+        load_annotations(tmp_path, manifest)
