@@ -1,0 +1,5 @@
+# Normalise line endings so that byte-level differences never become a signal
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.pdf binary

@@ -1,0 +1,106 @@
+[project]
+name = "docfraud"
+version = "2.0.0.dev0"
+description = "Explainable multimodal detection of forged financial documents: pixel forensics, rule-based verification and LLM-assisted review, evaluated on real human forgeries."
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "Sadik Emre Ikiz" }]
+requires-python = ">=3.14"
+keywords = ["document-forensics", "fraud-detection", "receipts", "explainable-ai", "multimodal"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Typing :: Typed",
+]
+dependencies = [
+    "typer>=0.27.2",
+]
+
+[project.scripts]
+docfraud = "docfraud.cli:app"
+
+[dependency-groups]
+dev = [
+    "mypy>=2.4.0",
+    "pre-commit>=4.6.2",
+    "pytest>=9.1.1",
+    "pytest-cov>=7.1.0",
+    "ruff>=0.16.10",
+]
+
+[build-system]
+requires = ["uv_build>=0.12.23,<0.13"]
+build-backend = "uv_build"
+
+[tool.ruff]
+line-length = 100
+target-version = "py314"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = [
+    "E", "W",   # pycodestyle
+    "F",        # pyflakes
+    "I",        # isort
+    "N",        # pep8-naming
+    "D",        # pydocstyle
+    "UP",       # pyupgrade
+    "B",        # bugbear
+    "S",        # bandit (security)
+    "C4",       # comprehensions
+    "SIM",      # simplify
+    "RET",      # return
+    "ARG",      # unused arguments
+    "PTH",      # pathlib over os.path
+    "PT",       # pytest style
+    "PL",       # pylint
+    "PERF",     # performance anti-patterns
+    "NPY",      # numpy
+    "ERA",      # commented-out code
+    "T20",      # print statements
+    "RUF",      # ruff-specific
+]
+ignore = [
+    "D105",     # magic-method docstrings add noise
+    "D107",     # __init__ is documented on the class
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["D", "S101", "PLR2004"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.mypy]
+python_version = "3.14"
+strict = true
+files = ["src", "tests"]
+warn_unreachable = true
+enable_error_code = ["ignore-without-code", "redundant-expr", "truthy-bool"]
+
+[tool.pytest.ini_options]
+minversion = "9.0"
+testpaths = ["tests"]
+addopts = ["-ra", "--strict-markers", "--strict-config", "--import-mode=importlib"]
+xfail_strict = true
+filterwarnings = ["error"]
+markers = [
+    "data: needs the downloaded dataset under data/ (skipped in CI)",
+    "slow: takes more than a few seconds",
+]
+
+[tool.coverage.run]
+source = ["docfraud"]
+branch = true
+
+[tool.coverage.report]
+fail_under = 90
+show_missing = true
+skip_covered = true
+exclude_also = [
+    "if TYPE_CHECKING:",
+    "raise NotImplementedError",
+]

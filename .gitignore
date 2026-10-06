@@ -1,0 +1,29 @@
+# Python and tooling caches
+__pycache__/
+*.py[cod]
+.venv/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+dist/
+build/
+
+# Datasets are downloaded and checksum-verified by the CLI, never committed
+/data/
+
+# Trained models and per-run outputs live outside version control;
+# small, curated results are promoted to reports/ explicitly
+/artifacts/
+/runs/
+
+# Secrets
+.env
+.env.*
+
+# OS and editor files
+.DS_Store
+.idea/
+.vscode/
