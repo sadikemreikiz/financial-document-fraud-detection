@@ -22,7 +22,14 @@ _HAS_LETTERS = re.compile(r"[A-Z]{2,}")
 
 # Ordered: the first pattern that matches a label decides its role.
 _ROLE_PATTERNS: tuple[tuple[AmountRole, re.Pattern[str]], ...] = (
-    (AmountRole.ROUNDING, re.compile(r"\bROUND(?:ING)?\b|\bRND\b|\bADJ(?:USTMENT)?\b")),
+    (
+        AmountRole.TOTAL_DUE,
+        re.compile(
+            r"\bTOTAL\b.*\bAFTER\b|\bROUNDED\b|\b(?:TOTAL|AMT|AMOUNT)\b.*\bPAYABLE\b"
+            r"|\bNETT?\s+TOTAL\b|\bGRAND\b"
+        ),
+    ),
+    (AmountRole.ROUNDING, re.compile(r"\bROUND(?:ING)?\b|\bRND\b|^ADJ(?:USTMENT)?\b")),
     (AmountRole.CHANGE, re.compile(r"\bCHANGE\b|\bBAKI\b")),
     (
         AmountRole.TAX,
@@ -50,15 +57,21 @@ _ROLE_PATTERNS: tuple[tuple[AmountRole, re.Pattern[str]], ...] = (
     ),
     (AmountRole.TOTAL_DUE, re.compile(r"\bTOTAL\b|\bNETT?\b|\bAMOUNT DUE\b|\bGRAND\b")),
 )
-_EXPLICIT_FINAL = re.compile(r"PAYABLE|ROUNDED|NETT?\b|GRAND|FINAL|AMOUNT DUE|TOTAL DUE")
+_EXPLICIT_FINAL = re.compile(r"PAYABLE|ROUNDED|NETT?\b|GRAND|FINAL|AMOUNT DUE|TOTAL DUE|\bAFTER\b")
 _NOT_A_TOTAL = re.compile(
     r"\bTOTAL\s+(?:QTY|QUANTITY|ITEMS?|PCS|SAVINGS?|DISCOUNT|POINTS?|WEIGHT)\b|\d+\s?%\s*SUPPLIES"
 )
 _SUPPLIES = re.compile(r"(?P<rate>\d+(?:\.\d+)?)\s?%\s*SUPPLIES")
 _SUMMARY_HEADER = re.compile(r"\b(?:GST|SST|TAX)\s+SUMMARY\b|\bTAX CODE\b|\bSUMMARY\b")
+_SUMMARY_TOTAL = re.compile(r"^TOTAL\b")
 _SUMMARY_ROW = re.compile(r"^(?P<code>[A-Z]{1,3})\b.*?(?P<rate>\d+(?:\.\d+)?)\s?%")
 _ITEM_HEADER = re.compile(r"\b(?:DESCRIPTION|ITEM|PRODUCT|QTY|U\.?\s?PRICE|PRICE|AMT|AMOUNT)\b")
 _QUANTITY = re.compile(r"(?<![\d.])(?P<qty>\d{1,4}(?:\.\d{1,3})?)\s?[Xx*]\s")
+_BARE_QUANTITY = re.compile(r"(?:^|\s)(?P<qty>\d{1,3})\s+(?=(?:RM|\$)?\s?-?\d{1,7}\.\d{2}\b)")
+_ITEMS_END = re.compile(
+    r"\bTOT(?:AL)?\.?\s*(?:QTY|QUANTITY|ITEMS?)\b|\bITEM\(?S\)?\s*:|\bNO\.?\s*OF\s*ITEMS?\b"
+    r"|\bSUB[\s-]?TOTAL\b|^TOTAL\b|^(?:GST|SST|TAX)\b"
+)
 _ITEM_COUNT = re.compile(
     r"\b(?:ITEM\(?S\)?|NO\.?\s*OF\s*ITEMS?|TOTAL\s+ITEMS?)\s*:?\s*(?P<n>\d{1,3})\b"
 )
@@ -114,6 +127,8 @@ def parse_receipt(rows: Sequence[Row]) -> ReceiptFields:
             if row is not None:
                 tax_summary.append(row)
                 continue
+            if _SUMMARY_TOTAL.search(text) and len(values) >= 2:  # noqa: PLR2004 - amount, tax
+                continue  # the summary table's own total row, not a receipt total
         for role, value, explicit in _labelled_amounts(text, texts, index):
             amounts.setdefault(role, []).append((value, explicit))
             if first_total_row is None and role is not AmountRole.TENDERED:
@@ -230,6 +245,7 @@ def _summary_row(text: str, values: list[Decimal]) -> TaxSummaryRow | None:
 def _items(texts: Sequence[str], *, end: int | None) -> tuple[LineItem, ...]:
     start = next((i + 1 for i, t in enumerate(texts) if _ITEM_HEADER.search(t)), 0)
     stop = end if end is not None else len(texts)
+    stop = next((i for i in range(start, stop) if _ITEMS_END.search(texts[i])), stop)
     items: list[LineItem] = []
     pending: list[str] = []
     for text in texts[start:stop]:
@@ -238,9 +254,9 @@ def _items(texts: Sequence[str], *, end: int | None) -> tuple[LineItem, ...]:
             if _HAS_LETTERS.search(text) and not _ITEM_COUNT.search(text):
                 pending.append(text)
             continue
-        description = _AMOUNT.sub(" ", text)
-        quantity_match = _QUANTITY.search(description)
-        description = _QUANTITY.sub(" ", description)
+        quantity_match = _QUANTITY.search(text) or _BARE_QUANTITY.search(text)
+        description = text[: quantity_match.start("qty")] if quantity_match else text
+        description = _QUANTITY.sub(" ", _AMOUNT.sub(" ", description))
         description = re.sub(r"\b[A-Z]{1,3}\b$|[^A-Z0-9()&./\- ]", " ", description.strip())
         description = re.sub(r"\s+", " ", description).strip()
         if not _HAS_LETTERS.search(description) and pending:

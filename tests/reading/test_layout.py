@@ -30,13 +30,19 @@ def test_insufficient_overlap_starts_a_new_row() -> None:
     assert texts(rows) == ["A", "B"]
 
 
-def test_segments_without_position_are_kept_at_the_end_in_order() -> None:
-    rows = group_rows([Segment("x"), seg("A", 0, 100), Segment("y")])
-    assert texts(rows) == ["A", "x", "y"]
+def test_unplaced_segments_follow_their_predecessor_or_trail() -> None:
+    rows = group_rows([Segment("x"), seg("TOTAL", 0, 100), Segment("9.90"), seg("CASH", 0, 130)])
+    assert texts(rows) == ["TOTAL 9.90", "CASH", "x"]
+    assert rows[0].box == BBox(x=0, y=100, width=20, height=10)
+
+
+def test_chains_of_unplaced_segments_stay_together() -> None:
+    rows = group_rows([seg("TOTAL", 0, 100), Segment("RM"), Segment("9.90")])
+    assert texts(rows) == ["TOTAL RM 9.90"]
 
 
 def test_generators_are_accepted() -> None:
-    rows = group_rows(s for s in [seg("A", 0, 0), Segment("free")])
+    rows = group_rows(s for s in [Segment("free"), seg("A", 0, 0)])
     assert texts(rows) == ["A", "free"]
 
 

@@ -161,3 +161,36 @@ def test_first_returns_the_first_occurrence_or_none() -> None:
     fields = parse_receipt(rows("TOTAL 6.50", "TOTAL 7.00"))
     assert fields.first(AmountRole.TOTAL_DUE) == D("6.50")
     assert fields.first(AmountRole.CHANGE) is None
+
+
+@pytest.mark.parametrize(
+    ("line", "role"),
+    [
+        ("TOTAL AFTER ADJ INCL GST 75.00", AmountRole.TOTAL_DUE),
+        ("TOTAL AMT PAYABLE : 6.35", AmountRole.TOTAL_DUE),
+        ("GST PAYABLE: 0.78", AmountRole.TAX),
+        ("ADJUSTMENT -0.02", AmountRole.ROUNDING),
+    ],
+)
+def test_explicit_final_totals_and_adjustments(line: str, role: AmountRole) -> None:
+    assert set(parse_receipt(rows(line)).amounts) == {role}
+
+
+def test_the_tax_summary_total_row_is_not_a_receipt_total() -> None:
+    fields = parse_receipt(rows("TOTAL 6.35", "GST SUMMARY AMOUNT TAX", "TOTAL 6.00 0.36"))
+    assert fields.amounts == {AmountRole.TOTAL_DUE: (D("6.35"),)}
+
+
+def test_bare_quantity_before_the_first_amount() -> None:
+    fields = parse_receipt(rows("ITEM QTY PRICE AMOUNT", "TP-24 5 1.32 6.60", "TOTAL 6.60"))
+    assert fields.items == (
+        LineItem(description="TP-24", quantity=D(5), unit_price=D("1.32"), amount=D("6.60")),
+    )
+
+
+def test_item_region_ends_at_count_and_tax_rows() -> None:
+    fields = parse_receipt(
+        rows("DESCRIPTION AMOUNT", "TEH 2.10", "TOTAL QTY 1 2.10", "GST 6% 0.12", "TOTAL 2.10")
+    )
+    assert [i.amount for i in fields.items] == [D("2.10")]
+    assert fields.quantity_total == D(1)

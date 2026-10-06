@@ -52,8 +52,10 @@ def group_rows(segments: Iterable[Segment], *, min_overlap: float = 0.5) -> list
     ``min_overlap`` of the smaller height. Comparing against the row's running extent rather
     than its first member tolerates slightly skewed scans.
 
-    Segments without a box cannot be placed and are returned as one-segment rows at the end, in
-    their original order.
+    Segments without a box are attached, without inventing a position, to the row of the segment
+    that precedes them in the input. Transcripts list a value right after its label, so a value
+    that OCR failed to detect still lands next to its label. Unplaced segments without a placed
+    predecessor are returned as one-segment rows at the end, in input order.
 
     Args:
         segments: Text pieces, typically OCR lines or words, or aligned transcript lines.
@@ -75,9 +77,21 @@ def group_rows(segments: Iterable[Segment], *, min_overlap: float = 0.5) -> list
         else:
             rows.append([segment])
             extents.append((box.y, box.y2))
-    ordered = sorted(zip(extents, rows, strict=True), key=lambda pair: pair[0][0])
-    result = [Row(tuple(sorted(row, key=_left))) for _, row in ordered]
-    return result + [Row((s,)) for s in items if s.box is None]
+    ordered = [row for _, row in sorted(zip(extents, rows, strict=True), key=lambda p: p[0][0])]
+    row_of = {id(segment): row for row in ordered for segment in row}
+    sorted_rows = {id(row): sorted(row, key=_left) for row in ordered}
+    trailing: list[Row] = []
+    previous: Segment | None = None
+    for segment in items:
+        if segment.box is None:
+            if previous is not None and id(previous) in row_of:
+                host = row_of[id(previous)]
+                sorted_rows[id(host)].append(segment)
+                row_of[id(segment)] = host
+            else:
+                trailing.append(Row((segment,)))
+        previous = segment
+    return [Row(tuple(sorted_rows[id(row)])) for row in ordered] + trailing
 
 
 def _center_y(box: BBox) -> float:

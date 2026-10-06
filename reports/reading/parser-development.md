@@ -8,26 +8,26 @@ Development receipts: the training split minus the gold set (512 receipts). A re
 
 | Relation | Authentic: holds | Forged: holds |
 |---|---|---|
-| Items add up to a printed total | 57.1 % (164/287) | 48.2 % (27/56) |
-| Quantity x unit price = line amount | 96.8 % (30/31) | 100.0 % (3/3) |
-| Excl. tax + tax = incl. tax | 79.2 % (38/48) | 83.3 % (10/12) |
-| Incl. tax + rounding = amount due | 58.4 % (66/113) | 54.5 % (12/22) |
-| Tendered - due = change | 77.2 % (203/263) | 66.7 % (34/51) |
-| Repeated amounts agree | 40.2 % (43/107) | 43.5 % (10/23) |
-| Coverage: amount due found | 75.5 % | 66.7 % |
-| Coverage: any item found | 68.9 % | 67.9 % |
+| Items add up to a printed total | 71.0 % (196/276) | 62.3 % (33/53) |
+| Quantity x unit price = line amount | 78.5 % (142/181) | 74.2 % (23/31) |
+| Excl. tax + tax = incl. tax | 77.6 % (38/49) | 83.3 % (10/12) |
+| Incl. tax + rounding = amount due | 83.9 % (73/87) | 75.0 % (12/16) |
+| Tendered - due = change | 90.0 % (235/261) | 74.5 % (38/51) |
+| Repeated amounts agree | 53.7 % (44/82) | 50.0 % (10/20) |
+| Coverage: amount due found | 69.9 % | 61.9 % |
+| Coverage: any item found | 66.1 % | 64.3 % |
 | Coverage: a date found | 98.6 % | 97.6 % |
 
 ### Text source: ocr (428 authentic, 84 forged)
 
 | Relation | Authentic: holds | Forged: holds |
 |---|---|---|
-| Items add up to a printed total | 56.5 % (157/278) | 50.0 % (27/54) |
-| Quantity x unit price = line amount | 96.6 % (28/29) | 66.7 % (2/3) |
+| Items add up to a printed total | 69.8 % (187/268) | 62.7 % (32/51) |
+| Quantity x unit price = line amount | 77.7 % (136/175) | 75.9 % (22/29) |
 | Excl. tax + tax = incl. tax | 84.2 % (32/38) | 83.3 % (10/12) |
-| Incl. tax + rounding = amount due | 59.2 % (58/98) | 52.4 % (11/21) |
-| Tendered - due = change | 73.9 % (170/230) | 59.6 % (28/47) |
-| Repeated amounts agree | 46.7 % (49/105) | 48.0 % (12/25) |
-| Coverage: amount due found | 73.6 % | 75.0 % |
-| Coverage: any item found | 68.2 % | 66.7 % |
+| Incl. tax + rounding = amount due | 80.2 % (65/81) | 78.6 % (11/14) |
+| Tendered - due = change | 86.8 % (197/227) | 74.5 % (35/47) |
+| Repeated amounts agree | 59.2 % (45/76) | 52.4 % (11/21) |
+| Coverage: amount due found | 68.9 % | 69.0 % |
+| Coverage: any item found | 65.7 % | 63.1 % |
 | Coverage: a date found | 92.5 % | 86.9 % |
