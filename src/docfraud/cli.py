@@ -11,7 +11,8 @@ from rich.progress import BarColumn, DownloadColumn, Progress, TransferSpeedColu
 from docfraud import __version__
 from docfraud.data.audit import audit_dataset
 from docfraud.data.download import SOURCES, download, safe_extract, verify
-from docfraud.data.findit import load_findit2
+from docfraud.data.duplicates import resolve_duplicates
+from docfraud.data.findit import DUPLICATE_GROUPS, load_findit2
 from docfraud.data.models import Label, Split
 from docfraud.data.normalize import load_grayscale
 from docfraud.data.splits import select
@@ -107,9 +108,10 @@ def data_audit(
 ) -> None:
     """Audit composition, corrections, integrity and shortcuts; write a Markdown report."""
     source = SOURCES[dataset.value]
-    documents = load_findit2(data_dir / "raw" / source.name)
+    raw = load_findit2(data_dir / "raw" / source.name, duplicate_groups=())
+    documents, dropped = resolve_duplicates(raw, DUPLICATE_GROUPS)
     with console.status("inspecting documents"):
-        audit_dataset(documents, output, source=source.citation)
+        audit_dataset(documents, output, source.citation, DUPLICATE_GROUPS, dropped)
     console.print(f"[green]written[/green] {output}")
 
 

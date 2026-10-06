@@ -18,11 +18,17 @@ means the upstream data changed.
 import ast
 import csv
 from collections import defaultdict
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from docfraud.data.duplicates import (
+    DistinctPair,
+    DuplicateGroup,
+    DuplicateKind,
+    resolve_duplicates,
+)
 from docfraud.data.models import (
     BBox,
     Document,
@@ -33,6 +39,7 @@ from docfraud.data.models import (
     Split,
     Technique,
 )
+from docfraud.data.splits import check_disjoint
 
 DATASET = "findit2"
 SOURCE_DATASET = "sroie"
@@ -99,6 +106,65 @@ KNOWN_CORRECTIONS: tuple[Correction, ...] = (
 )
 
 
+_C, _T = DuplicateKind.COPY, DuplicateKind.TWIN
+
+# Reviewed on 2026-10-06 (ADR-0009): every candidate proposed by find_candidates() was compared
+# line by line; members share receipt number and date/time, differing only in recognition noise
+# or, for twins, in the forged values.
+DUPLICATE_GROUPS: tuple[DuplicateGroup, ...] = (
+    DuplicateGroup(("X51005268262", "X51005301659"), _C, "identical pixels"),
+    DuplicateGroup(("X51005301661", "X51005303661"), _C, "identical pixels"),
+    DuplicateGroup(("X51005301666", "X51005268275"), _C, "identical pixels"),
+    DuplicateGroup(("X51005453801", "X51009453801"), _C, "identical pixels"),
+    DuplicateGroup(("X51005453804", "X51009453804"), _C, "identical pixels"),
+    DuplicateGroup(("X51005684949", "X510056849111"), _C, "identical pixels"),
+    DuplicateGroup(("X51006008091", "X51009008091"), _C, "identical pixels"),
+    DuplicateGroup(("X51006328913", "X51006329388"), _C, "identical pixels"),
+    DuplicateGroup(("X51006328937", "X51006329399"), _C, "identical pixels"),
+    DuplicateGroup(("X51006328967", "X51006332575"), _C, "identical pixels"),
+    DuplicateGroup(("X51007135037", "X51006401723"), _C, "identical pixels"),
+    DuplicateGroup(("X51009453729", "X51005453729"), _C, "identical pixels"),
+    DuplicateGroup(("X51006329395", "X51006328919"), _C, "identical transcripts, rescan"),
+    DuplicateGroup(("X51007103643", "X51007103641"), _C, "identical transcripts, rescan"),
+    DuplicateGroup(("X51006387740", "X51006401940"), _C, "same time 15:23:00, spacing differs"),
+    DuplicateGroup(("X51009568881", "X51005568881"), _T, "quantity 5 (50PCS) forged to 2 (20PCS)"),
+    DuplicateGroup(("X51006401853", "X51007135247"), _T, "amount 35.32 forged to 3535.32"),
+    DuplicateGroup(("X51005447842", "X51009447842"), _T, "0.90 and 5.00 forged to 100.90, 105.00"),
+    DuplicateGroup(("X51006008095", "X51009008095"), _T, "same receipt CS180319-0015, forged"),
+    DuplicateGroup(("X51007339105", "X51007339115"), _T, "3.30 forged to 903.90, 5.00 to 1000.00"),
+)
+
+SENSITIVITY_EXCLUSIONS: frozenset[str] = frozenset(
+    {
+        "X51005268275",
+        "X510056849111",
+        "X51009008091",
+        "X51006401723",
+        "X51005453729",
+        "X51006329388",
+        "X51006328919",
+        "X51005447842",
+    }
+)
+"""Test receipts that had a copy or twin elsewhere in the published dataset. The final evaluation
+also reports results without them, as a pre-registered sensitivity analysis (ADR-0009)."""
+
+_SAME_TEMPLATE = "same shop template, different receipt number and date"
+REVIEWED_DISTINCT: tuple[DistinctPair, ...] = (
+    DistinctPair(("X51005442334", "X51007231341"), _SAME_TEMPLATE),
+    DistinctPair(("X51005442384", "X51006414470"), _SAME_TEMPLATE),
+    DistinctPair(("X51005724621", "X51005724625"), _SAME_TEMPLATE),
+    DistinctPair(("X51005724624", "X51005724554"), _SAME_TEMPLATE),
+    DistinctPair(("X51005742110", "X51005763964"), "consecutive receipt numbers, same items"),
+    DistinctPair(("X51006414470", "X51006414633"), _SAME_TEMPLATE),
+    DistinctPair(("X51006913060", "X51006913023"), _SAME_TEMPLATE),
+    DistinctPair(("X51007231341", "X51006913023"), _SAME_TEMPLATE),
+    DistinctPair(("X51007339647", "X51007339656"), _SAME_TEMPLATE),
+    DistinctPair(("X51007339658", "X51007339638"), _SAME_TEMPLATE),
+    DistinctPair(("X51007846388", "X51007846391"), _SAME_TEMPLATE),
+)
+
+
 @dataclass(frozen=True, slots=True)
 class _Row:
     split: Split
@@ -114,6 +180,7 @@ def load_findit2(
     *,
     duplicate_resolutions: Mapping[str, tuple[Split, Label]] = DUPLICATE_RESOLUTIONS,
     unannotated_forgeries: frozenset[str] = UNANNOTATED_FORGERIES,
+    duplicate_groups: Sequence[DuplicateGroup] = DUPLICATE_GROUPS,
 ) -> tuple[Document, ...]:
     """Load the dataset into documents, applying the documented corrections.
 
@@ -122,6 +189,8 @@ def load_findit2(
             folders.
         duplicate_resolutions: Split and label for documents listed in several label files.
         unannotated_forgeries: Forged documents known to lack region annotations.
+        duplicate_groups: Reviewed copies of the same receipt, resolved with
+            :func:`docfraud.data.duplicates.resolve_duplicates`.
 
     Returns:
         Documents ordered by split (train, val, test) and then by identifier.
@@ -146,6 +215,17 @@ def load_findit2(
     if stale:
         msg = f"known corrections no longer apply, upstream data changed: {sorted(stale)}"
         raise DataIntegrityError(msg)
+
+    known = {d.doc_id for d in documents}
+    unknown = sorted({m for g in duplicate_groups for m in g.members} - known)
+    if unknown:
+        msg = f"duplicate groups name unknown documents, upstream data changed: {unknown}"
+        raise DataIntegrityError(msg)
+    documents, _ = resolve_duplicates(documents, duplicate_groups)
+    try:
+        check_disjoint(documents)
+    except ValueError as error:
+        raise DataIntegrityError(str(error)) from error
 
     order = {split: index for index, split in enumerate(LABEL_FILES)}
     return tuple(sorted(documents, key=lambda d: (order[d.split or Split.TRAIN], d.doc_id)))

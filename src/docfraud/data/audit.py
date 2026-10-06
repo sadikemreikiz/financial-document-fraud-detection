@@ -17,6 +17,7 @@ from pathlib import Path
 import numpy as np
 from PIL import Image
 
+from docfraud.data.duplicates import Dropped, DuplicateGroup
 from docfraud.data.findit import KNOWN_CORRECTIONS
 from docfraud.data.models import Document, Entity, Label, RegionRole, Split, Technique
 from docfraud.data.normalize import normalize_transcript
@@ -108,13 +109,18 @@ def roc_auc(scores: Sequence[float], positives: Sequence[bool]) -> float:
     return float((ranks[is_positive].sum() - n_pos * (n_pos + 1) / 2) / (n_pos * n_neg))
 
 
-def build_audit(traits: Sequence[FileTraits]) -> list[Table]:
-    """Compute every audit table from per-document traits."""
+def build_audit(
+    traits: Sequence[FileTraits],
+    groups: Sequence[DuplicateGroup] = (),
+    dropped: Sequence[Dropped] = (),
+) -> list[Table]:
+    """Compute every audit table from per-document traits and the duplicate resolution."""
     documents = [t.document for t in traits]
     check_disjoint(documents)
     return [
         _composition(documents),
         _corrections(),
+        _duplicates(groups, dropped),
         _regions_by(
             documents,
             "Forgery techniques",
@@ -173,6 +179,27 @@ def _corrections() -> Table:
         "Documented corrections",
         ["Document", "Issue", "Resolution"],
         [[c.doc_id, c.issue, c.resolution] for c in KNOWN_CORRECTIONS],
+    )
+
+
+def _duplicates(groups: Sequence[DuplicateGroup], dropped: Sequence[Dropped]) -> Table:
+    removed = {d.document.doc_id: d for d in dropped}
+    rows: list[list[Cell]] = []
+    for group in groups:
+        kept = [m for m in group.members if m not in removed]
+        gone = [
+            f"{m} ({removed[m].document.split}, {removed[m].document.label})"
+            for m in group.members
+            if m in removed
+        ]
+        rows.append([group.kind.value, group.evidence, ", ".join(kept), ", ".join(gone) or "none"])
+    return Table(
+        "Copies of the same receipt",
+        ["Kind", "Evidence", "Kept", "Removed (split, label)"],
+        rows,
+        f"{len(groups)} reviewed groups, {len(dropped)} documents removed (ADR-0009). Copies in "
+        "several splits keep the test, then the validation copy; twins (an authentic receipt and "
+        "its forged version) in the same split are both kept and share one source identity.",
     )
 
 
@@ -394,9 +421,15 @@ def render_audit(tables: Sequence[Table], source: str) -> str:
     return header + "\n".join(render_table(t) for t in tables)
 
 
-def audit_dataset(documents: Sequence[Document], output: Path, source: str) -> list[Table]:
+def audit_dataset(
+    documents: Sequence[Document],
+    output: Path,
+    source: str,
+    groups: Sequence[DuplicateGroup] = (),
+    dropped: Sequence[Dropped] = (),
+) -> list[Table]:
     """Inspect all documents, write the Markdown audit to ``output`` and return its tables."""
-    tables = build_audit([inspect_files(d) for d in documents])
+    tables = build_audit([inspect_files(d) for d in documents], groups, dropped)
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(render_audit(tables, source), encoding="utf-8")
     return tables

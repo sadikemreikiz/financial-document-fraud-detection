@@ -3,27 +3,36 @@ from pathlib import Path
 
 import pytest
 
+from docfraud.data.duplicates import DuplicateGroup, DuplicateKind
 from docfraud.data.findit import (
     DUPLICATE_RESOLUTIONS,
     KNOWN_CORRECTIONS,
     UNANNOTATED_FORGERIES,
     DataIntegrityError,
-    load_findit2,
 )
 from docfraud.data.models import Document, Entity, Label, RegionRole, Split, Technique
-from tests.fixtures.findit import Entry, annotation, region, standard_entries, write_dataset
+from tests.fixtures.findit import (
+    Entry,
+    annotation,
+    load_toy,
+    region,
+    standard_entries,
+    write_dataset,
+)
 
 
 def load(
     root: Path,
     duplicate_resolutions: Mapping[str, tuple[Split, Label]] | None = None,
     unannotated_forgeries: frozenset[str] = frozenset(),
+    duplicate_groups: tuple[DuplicateGroup, ...] = (),
 ) -> dict[str, Document]:
     """Load a miniature dataset; corrections default to none."""
-    documents = load_findit2(
+    documents = load_toy(
         root,
         duplicate_resolutions=duplicate_resolutions or {},
         unannotated_forgeries=unannotated_forgeries,
+        duplicate_groups=duplicate_groups,
     )
     return {d.doc_id: d for d in documents}
 
@@ -176,3 +185,25 @@ def test_missing_files_are_reported(findit_root: Path) -> None:
     (findit_root / "test" / "A3.txt").unlink()
     with pytest.raises(FileNotFoundError, match=r"A3\.txt"):
         load(findit_root)
+
+
+def test_duplicate_groups_are_resolved_towards_the_test_split(findit_root: Path) -> None:
+    group = DuplicateGroup(("A1", "A3"), DuplicateKind.COPY, "same receipt")
+    docs = load(findit_root, duplicate_groups=(group,))
+    assert "A1" not in docs
+    assert docs["A3"].split is Split.TEST
+
+
+def test_duplicate_groups_with_unknown_members_are_errors(findit_root: Path) -> None:
+    group = DuplicateGroup(("A1", "GONE"), DuplicateKind.COPY, "same receipt")
+    with pytest.raises(DataIntegrityError, match="unknown documents"):
+        load(findit_root, duplicate_groups=(group,))
+
+
+def test_registered_groups_and_distinct_pairs_do_not_overlap() -> None:
+    from docfraud.data.findit import DUPLICATE_GROUPS, REVIEWED_DISTINCT  # noqa: PLC0415
+
+    members = [m for g in DUPLICATE_GROUPS for m in g.members]
+    assert len(members) == len(set(members)), "a document may belong to one group only"
+    for pair in REVIEWED_DISTINCT:
+        assert not any(set(pair.members) <= set(g.members) for g in DUPLICATE_GROUPS)

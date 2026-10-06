@@ -12,8 +12,8 @@ test regenerates and compares on every local run.
 | **Authors** | B. Martínez Tornés, T. Taburet, E. Boros, K. Rouis, A. Doucet, P. Gomez-Krämer, N. Sidere, V. Poulain d'Andecy (L3i, University of La Rochelle; Yooz) |
 | **Reference** | *Receipt Dataset for Document Forgery Detection*, ICDAR 2023, LNCS 14191, pp. 454–469, [doi:10.1007/978-3-031-41682-8_28](https://doi.org/10.1007/978-3-031-41682-8_28) |
 | **Homepage** | <https://l3i-share.univ-lr.fr/2023Finditagain/index.html> |
-| **Content** | 987 unique scanned receipts (PNG) with transcripts; 163 forged by people |
-| **Splits** | Official train / validation / test: 577 / 192 / 218 receipts, 95 / 33 / 35 forged, after the corrections below |
+| **Content** | 987 receipt files (PNG) with transcripts, 163 forged by people; 970 distinct documents after removing copies of the same receipt |
+| **Splits** | Train / validation / test: 562 / 190 / 218 receipts, 94 / 33 / 35 forged, after the corrections below; the test split is the published one |
 | **Pinned archive** | 673,974,679 bytes, SHA-256 `6f8c6f134951956627edcc06c7e8fc298abb9e984073ab193174aee204d46261` |
 | **Licence** | Not stated by the authors. The data is therefore not redistributed: the tooling downloads it from the original source and verifies the checksum. |
 
@@ -62,6 +62,7 @@ and corrected the annotations.
 | The forgery-technique field is sometimes a string instead of a mapping, and "other" appears in French ("Autre") | Parsed explicitly; any other unknown value stops loading |
 | Copy sources are only partly annotated (the authors removed uncertain ones) | Copy-source localisation is evaluated only where annotated |
 | Region rectangles are larger than the edited pixels | Pixel-level localisation scores are lower bounds; region-level hit rate is reported as well |
+| The same receipt appears under several identifiers: 15 groups of copies and 5 authentic/forged twins, 10 of the 20 groups spanning splits | Resolved by [ADR-0009](decisions/0009-duplicate-receipts.md): the test split stays whole, copies leave training and validation, twins in one split stay together; a data test re-runs the detection |
 
 The adapter (`docfraud.data.findit`) applies only the documented corrections. Any other
 inconsistency stops loading with an error, and a correction that is no longer needed raises as

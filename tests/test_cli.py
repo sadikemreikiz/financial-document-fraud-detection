@@ -1,4 +1,3 @@
-import functools
 import hashlib
 import shutil
 from pathlib import Path
@@ -12,9 +11,9 @@ import docfraud.cli
 from docfraud import __version__
 from docfraud.cli import app
 from docfraud.data.download import SOURCES, DatasetSource
-from docfraud.data.findit import load_findit2
 from docfraud.data.splits import TestSetLockedError
 from docfraud.reading.ocr import OcrResult
+from tests.fixtures.findit import load_toy
 
 runner = CliRunner()
 
@@ -48,10 +47,8 @@ def toy_source(findit_root: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatc
         citation="Toy citation",
     )
     monkeypatch.setitem(SOURCES, "findit2", source)
-    loader = functools.partial(
-        load_findit2, duplicate_resolutions={}, unannotated_forgeries=frozenset()
-    )
-    monkeypatch.setattr(docfraud.cli, "load_findit2", loader)
+    monkeypatch.setattr(docfraud.cli, "load_findit2", load_toy)
+    monkeypatch.setattr(docfraud.cli, "DUPLICATE_GROUPS", ())
     return tmp_path / "data"
 
 
