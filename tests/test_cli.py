@@ -1,4 +1,3 @@
-import functools
 import hashlib
 import json
 import shutil
@@ -13,7 +12,7 @@ import docfraud.cli
 from docfraud import __version__
 from docfraud.cli import app
 from docfraud.data.download import SOURCES, DatasetSource
-from docfraud.data.gold import GoldManifest, draw_gold_set, load_manifest
+from docfraud.data.gold import GoldManifest, load_manifest
 from docfraud.data.models import Split
 from docfraud.data.splits import TestSetLockedError
 from docfraud.reading.ocr import OcrResult
@@ -94,20 +93,31 @@ def test_unknown_dataset_is_rejected() -> None:
     assert result.exit_code != 0
 
 
-def test_data_draw_gold_writes_a_manifest(
-    toy_source: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
+def test_data_draw_gold_writes_a_manifest(toy_source: Path, tmp_path: Path) -> None:
     runner.invoke(app, ["data", "prepare", "--data-dir", str(toy_source)])
-    monkeypatch.setattr(
-        docfraud.cli, "draw_gold_set", functools.partial(draw_gold_set, n_authentic=1, n_forged=1)
-    )
     output = tmp_path / "gold.json"
-    result = runner.invoke(
-        app, ["data", "draw-gold", "--data-dir", str(toy_source), "--output", str(output)]
-    )
+    args = ["data", "draw-gold", "--data-dir", str(toy_source), "--authentic", "1"]
+    args += ["--forged", "1", "--output", str(output)]
+    result = runner.invoke(app, args)
     assert result.exit_code == 0, result.output
     manifest = load_manifest(output)
     assert (len(manifest.authentic), len(manifest.forged)) == (1, 1)
+    again = runner.invoke(app, args)
+    assert again.exit_code == 1
+    assert "refusing to overwrite" in again.output
+    assert load_manifest(output) == manifest
+
+
+def test_data_draw_gold_draws_around_earlier_sets(toy_source: Path, tmp_path: Path) -> None:
+    runner.invoke(app, ["data", "prepare", "--data-dir", str(toy_source)])
+    first, second = tmp_path / "a.json", tmp_path / "b.json"
+    base = ["data", "draw-gold", "--data-dir", str(toy_source)]
+    drawn = runner.invoke(app, [*base, "--authentic", "1", "--forged", "0", "--output", str(first)])
+    assert drawn.exit_code == 0, drawn.output
+    later = ["--authentic", "0", "--forged", "1", "--exclude", str(first), "--output", str(second)]
+    result = runner.invoke(app, [*base, *later])
+    assert result.exit_code == 0, result.output
+    assert not load_manifest(first).doc_ids & load_manifest(second).doc_ids
 
 
 class FakeOcr:

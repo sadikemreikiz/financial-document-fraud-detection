@@ -72,6 +72,23 @@ def test_development_documents_exclude_gold_and_non_training(tmp_path: Path) -> 
     assert isinstance(load_manifest(path), GoldManifest)
 
 
+def test_a_later_gold_set_is_drawn_around_earlier_ones() -> None:
+    first = draw_gold_set(DOCS, n_authentic=8, n_forged=3)
+    second = draw_gold_set(development_documents(DOCS, first), n_authentic=8, n_forged=3, seed=1)
+    assert not first.doc_ids & second.doc_ids
+    development = development_documents(DOCS, first, second)
+    assert len(development) == 40 - 22
+    assert not {d.doc_id for d in development} & (first.doc_ids | second.doc_ids)
+
+
+def test_development_documents_need_gold_sets_of_one_dataset() -> None:
+    first = draw_gold_set(DOCS, n_authentic=1, n_forged=1)
+    with pytest.raises(ValueError, match="exactly one dataset"):
+        development_documents(DOCS)
+    with pytest.raises(ValueError, match="exactly one dataset"):
+        development_documents(DOCS, first, first.model_copy(update={"dataset": "other"}))
+
+
 def annotation_json(doc_id: str, total: str = "5.00") -> str:
     return (
         f'{{"doc_id": "{doc_id}", "annotator": "test", '

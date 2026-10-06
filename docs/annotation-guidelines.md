@@ -34,6 +34,11 @@ before the parser exists and are never used to develop it.
 6. **Evaluate.** The frozen parser is evaluated once on the gold set. LLM extraction is
    evaluated on the same set in Phase 6.
 
+**Gold set B.** A second gold set of 30 training receipts (24 authentic, 6 forged, seed
+20261007) was drawn outside gold set A after the first parser had been evaluated, to measure
+parser improvements without bias ([ADR-0010](decisions/0010-second-gold-set.md)). It follows the
+same procedure and is stored in `annotations/findit2/gold-fields-b/`.
+
 **Disclosure.** The annotator also writes the parser. Steps 1–4 limit the resulting bias and
 step 5 measures annotation quality. One gold receipt, `X51007339647`, was partly seen before
 the second draw: during the duplicate review, three of its lines (receipt number, salesperson

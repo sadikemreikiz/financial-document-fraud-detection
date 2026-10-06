@@ -89,15 +89,23 @@ def load_manifest(path: Path) -> GoldManifest:
 
 
 def development_documents(
-    documents: Sequence[Document], manifest: GoldManifest
+    documents: Sequence[Document], *manifests: GoldManifest
 ) -> tuple[Document, ...]:
-    """Training documents that may be used to develop extraction: training minus gold."""
+    """Training documents that may be used to develop extraction: training minus every gold set.
+
+    Raises:
+        ValueError: If no manifest is given or the manifests name different datasets.
+    """
+    datasets = {m.dataset for m in manifests}
+    if len(datasets) != 1:
+        msg = f"expected gold sets of exactly one dataset, got {sorted(datasets)}"
+        raise ValueError(msg)
+    dataset = datasets.pop()
+    excluded = frozenset().union(*(m.doc_ids for m in manifests))
     return tuple(
         d
         for d in documents
-        if d.split is Split.TRAIN
-        and d.dataset == manifest.dataset
-        and d.doc_id not in manifest.doc_ids
+        if d.split is Split.TRAIN and d.dataset == dataset and d.doc_id not in excluded
     )
 
 

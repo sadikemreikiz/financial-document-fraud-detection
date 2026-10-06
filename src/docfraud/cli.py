@@ -14,7 +14,16 @@ from docfraud.data.audit import audit_dataset
 from docfraud.data.download import SOURCES, download, safe_extract, verify
 from docfraud.data.duplicates import resolve_duplicates
 from docfraud.data.findit import DUPLICATE_GROUPS, load_findit2
-from docfraud.data.gold import draw_gold_set, load_annotations, load_manifest, save_manifest
+from docfraud.data.gold import (
+    GOLD_AUTHENTIC,
+    GOLD_FORGED,
+    GOLD_SEED,
+    development_documents,
+    draw_gold_set,
+    load_annotations,
+    load_manifest,
+    save_manifest,
+)
 from docfraud.data.gold_review import (
     ReviewResult,
     draw_review_sample,
@@ -132,13 +141,28 @@ GOLD_MANIFEST = Path("annotations/findit2/gold-fields/manifest.json")
 
 
 @data_app.command("draw-gold")
-def data_draw_gold(
+def data_draw_gold(  # noqa: PLR0913, PLR0917 - one option per draw parameter
     data_dir: DataDir = Path("data"),
     output: Annotated[Path, typer.Option(help="Where to write the manifest.")] = GOLD_MANIFEST,
+    exclude: Annotated[
+        list[Path] | None, typer.Option(help="Manifests of earlier gold sets to draw around.")
+    ] = None,
+    authentic: Annotated[int, typer.Option(help="Authentic receipts to draw.")] = GOLD_AUTHENTIC,
+    forged: Annotated[int, typer.Option(help="Forged receipts to draw.")] = GOLD_FORGED,
+    seed: Annotated[int, typer.Option(help="Random seed of the draw.")] = GOLD_SEED,
 ) -> None:
-    """Draw the gold set for field extraction from the training split (seeded, stratified)."""
+    """Draw a gold set for field extraction from the training split (seeded, stratified).
+
+    A gold set is drawn once: an existing manifest is never overwritten. Later gold sets are
+    drawn from the training receipts outside every earlier one (``--exclude``).
+    """
+    if output.exists():
+        console.print(f"[red]refusing to overwrite[/red] {output}")
+        raise typer.Exit(1)
     documents = load_findit2(data_dir / "raw" / SOURCES[DatasetName.FINDIT2.value].name)
-    manifest = draw_gold_set(documents)
+    if exclude:
+        documents = development_documents(documents, *map(load_manifest, exclude))
+    manifest = draw_gold_set(documents, n_authentic=authentic, n_forged=forged, seed=seed)
     save_manifest(manifest, output)
     console.print(
         f"[green]written[/green] {output}: {len(manifest.authentic)} authentic and "
