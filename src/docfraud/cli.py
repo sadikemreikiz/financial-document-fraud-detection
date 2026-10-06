@@ -13,6 +13,7 @@ from docfraud.data.audit import audit_dataset
 from docfraud.data.download import SOURCES, download, safe_extract, verify
 from docfraud.data.duplicates import resolve_duplicates
 from docfraud.data.findit import DUPLICATE_GROUPS, load_findit2
+from docfraud.data.gold import draw_gold_set, save_manifest
 from docfraud.data.models import Label, Split
 from docfraud.data.normalize import load_grayscale
 from docfraud.data.splits import select
@@ -113,6 +114,24 @@ def data_audit(
     with console.status("inspecting documents"):
         audit_dataset(documents, output, source.citation, DUPLICATE_GROUPS, dropped)
     console.print(f"[green]written[/green] {output}")
+
+
+GOLD_MANIFEST = Path("annotations/findit2/gold-fields/manifest.json")
+
+
+@data_app.command("draw-gold")
+def data_draw_gold(
+    data_dir: DataDir = Path("data"),
+    output: Annotated[Path, typer.Option(help="Where to write the manifest.")] = GOLD_MANIFEST,
+) -> None:
+    """Draw the gold set for field extraction from the training split (seeded, stratified)."""
+    documents = load_findit2(data_dir / "raw" / SOURCES[DatasetName.FINDIT2.value].name)
+    manifest = draw_gold_set(documents)
+    save_manifest(manifest, output)
+    console.print(
+        f"[green]written[/green] {output}: {len(manifest.authentic)} authentic and "
+        f"{len(manifest.forged)} forged training receipts (seed {manifest.seed})"
+    )
 
 
 OCR_CACHE = Path("artifacts/ocr")

@@ -1,3 +1,4 @@
+import functools
 import hashlib
 import shutil
 from pathlib import Path
@@ -11,6 +12,7 @@ import docfraud.cli
 from docfraud import __version__
 from docfraud.cli import app
 from docfraud.data.download import SOURCES, DatasetSource
+from docfraud.data.gold import draw_gold_set, load_manifest
 from docfraud.data.splits import TestSetLockedError
 from docfraud.reading.ocr import OcrResult
 from tests.fixtures.findit import load_toy
@@ -88,6 +90,22 @@ def test_data_audit_writes_report(toy_source: Path, tmp_path: Path) -> None:
 def test_unknown_dataset_is_rejected() -> None:
     result = runner.invoke(app, ["data", "prepare", "nope"])
     assert result.exit_code != 0
+
+
+def test_data_draw_gold_writes_a_manifest(
+    toy_source: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    runner.invoke(app, ["data", "prepare", "--data-dir", str(toy_source)])
+    monkeypatch.setattr(
+        docfraud.cli, "draw_gold_set", functools.partial(draw_gold_set, n_authentic=1, n_forged=1)
+    )
+    output = tmp_path / "gold.json"
+    result = runner.invoke(
+        app, ["data", "draw-gold", "--data-dir", str(toy_source), "--output", str(output)]
+    )
+    assert result.exit_code == 0, result.output
+    manifest = load_manifest(output)
+    assert (len(manifest.authentic), len(manifest.forged)) == (1, 1)
 
 
 class FakeOcr:
