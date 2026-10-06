@@ -52,7 +52,7 @@ Option 3.
   few failing development receipts were printed during tuning. Its result on gold set B is
   therefore not fully unbiased; the changes made from now on are. This is preferred to option 4,
   which would trade a mild, disclosed bias in extraction for a less clean validation split.
-- The improvement is measured on receipts that no development decision has seen.
+- The improvement is measured on receipts that none of the changes made from now on has seen.
 - Gold set B costs another annotation round and a shorter owner review.
 - With 30 receipts, intervals on gold set B are wider than on gold set A; comparisons between
   parser versions use both sets and state which result is unbiased.
