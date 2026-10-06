@@ -193,6 +193,7 @@ def reading_check_gold(
 
 
 GOLD_REVIEW = Path("annotations/findit2/gold-review.json")
+GOLD_RESOLUTIONS = Path("annotations/findit2/gold-review-resolutions.json")
 
 
 @reading_app.command("review-gold")
@@ -229,6 +230,9 @@ def reading_score_review(
         GOLD_MANIFEST
     ),
     record: Annotated[Path, typer.Option(help="Where to keep the review.")] = GOLD_REVIEW,
+    resolutions: Annotated[
+        Path, typer.Option(help="JSON mapping each finding to its resolution, if any.")
+    ] = GOLD_RESOLUTIONS,
     output: Annotated[Path, typer.Option(help="Where to write the report.")] = Path(
         "reports/reading/gold-verification.md"
     ),
@@ -243,7 +247,10 @@ def reading_score_review(
             json.dumps(result.model_dump(mode="json"), indent=2) + "\n", encoding="utf-8"
         )
     output.parent.mkdir(parents=True, exist_ok=True)
-    output.write_text(render_review_report(result, scores), encoding="utf-8")
+    resolved: dict[str, str] = (
+        json.loads(resolutions.read_text(encoding="utf-8")) if resolutions.is_file() else {}
+    )
+    output.write_text(render_review_report(result, scores, resolved), encoding="utf-8")
     accepted = sum(s.accepted for s in scores)
     total = sum(s.units + s.missed for s in scores)
     console.print(f"[green]written[/green] {output}: {accepted} of {total} accepted")

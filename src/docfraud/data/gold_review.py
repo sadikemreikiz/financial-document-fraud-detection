@@ -170,8 +170,21 @@ def score_review(
     return tuple(scores)
 
 
-def render_review_report(result: ReviewResult, scores: Sequence[ReceiptAgreement]) -> str:
-    """The generated verification report, with every rejection and missed value listed."""
+def finding_key(doc_id: str, unit: str) -> str:
+    """How a rejected unit (``unit_id``) or a missed value (``missed:<text>``) is referred to."""
+    return f"{doc_id}/{unit}"
+
+
+def render_review_report(
+    result: ReviewResult,
+    scores: Sequence[ReceiptAgreement],
+    resolutions: Mapping[str, str],
+) -> str:
+    """The generated verification report, with every finding and how it was resolved.
+
+    ``resolutions`` maps :func:`finding_key` to the annotator's resolution, decided against the
+    image after the review; findings without one are shown as unresolved.
+    """
     units = sum(s.units for s in scores)
     accepted = sum(s.accepted for s in scores)
     missed = sum(s.missed for s in scores)
@@ -189,13 +202,16 @@ def render_review_report(result: ReviewResult, scores: Sequence[ReceiptAgreement
         for v in r.verdicts
         if not v.accepted
     ]
-    findings += [(r.doc_id, "missed", m) for r in result.reviews for m in r.missed]
+    findings += [(r.doc_id, f"missed:{m}", m) for r in result.reviews for m in r.missed]
     rejected = Table(
         title="Rejected units and missed values",
-        columns=("Receipt", "Unit", "Reviewer comment"),
-        rows=sorted(findings),
-        note="Every finding is resolved against the image and recorded in the annotation's "
-        "notes; corrected values are not re-scored.",
+        columns=("Receipt", "Unit", "Reviewer comment", "Resolution"),
+        rows=[
+            (*f, resolutions.get(finding_key(f[0], f[1]), "unresolved")) for f in sorted(findings)
+        ],
+        note="Each finding is resolved against the image after the review and noted in the "
+        "annotation. The agreement above counts every rejection as given, including those "
+        "resolved in favour of the annotation; corrected values are not re-scored.",
     )
     header = (
         "# Gold set verification\n\n"

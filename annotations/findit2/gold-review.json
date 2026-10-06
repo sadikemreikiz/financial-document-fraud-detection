@@ -1,0 +1,740 @@
+{
+  "reviewer": "Sadik Emre Ikiz",
+  "reviews": [
+    {
+      "doc_id": "X51005365179",
+      "verdicts": [
+        {
+          "unit_id": "merchant",
+          "accepted": true,
+          "comment": ""
+        },
+        {
+          "unit_id": "date:0",
+          "accepted": true,
+          "comment": ""
+        },
+        {
+          "unit_id": "item:0",
+          "accepted": true,
+          "comment": ""
+        },
+        {
+          "unit_id": "amount:subtotal:0",
+          "accepted": true,
+          "comment": ""
+        },
+        {
+          "unit_id": "amount:tax:0",
+          "accepted": true,
+          "comment": ""
+        },
+        {
+          "unit_id": "amount:total_including_tax:0",
+          "accepted": true,
+          "comment": ""
+        },
+        {
+          "unit_id": "amount:rounding:0",
+          "accepted": true,
+          "comment": ""
+        },
+        {
+          "unit_id": "amount:total_due:0",
+          "accepted": true,
+          "comment": ""
+        },
+        {
+          "unit_id": "amount:tendered:0",
+          "accepted": true,
+          "comment": ""
+        },
+        {
+          "unit_id": "amount:change:0",
+          "accepted": true,
+          "comment": ""
+        },
+        {
+          "unit_id": "tax:0",
+          "accepted": true,
+          "comment": ""
+        },
+        {
+          "unit_id": "item_count",
+          "accepted": true,
+          "comment": ""
+        }
+      ],
+      "missed": []
+    },
+    {
+      "doc_id": "X51005719823",
+      "verdicts": [
+        {
+          "unit_id": "merchant",
+          "accepted": true,
+          "comment": ""
+        },
+        {
+          "unit_id": "date:0",
+          "accepted": true,
+          "comment": ""
+        },
+        {
+          "unit_id": "item:0",
+          "accepted": true,
+          "comment": ""
+        },
+        {
+          "unit_id": "item:1",
+          "accepted": true,
+          "comment": ""
+        },
+        {
+          "unit_id": "item:2",
+          "accepted": true,
+          "comment": ""
+        },
+        {
+          "unit_id": "amount:subtotal:0",
+          "accepted": true,
+          "comment": ""
+        },
+        {
+          "unit_id": "amount:discount:0",
+          "accepted": true,
+          "comment": ""
+        },
+        {
+          "unit_id": "amount:tax:0",
+          "accepted": true,
+          "comment": ""
+        },
+        {
+          "unit_id": "amount:tax:1",
+          "accepted": true,
+          "comment": ""
+        },
+        {
+          "unit_id": "amount:rounding:0",
+          "accepted": true,
+          "comment": ""
+        },
+        {
+          "unit_id": "amount:total_due:0",
+          "accepted": true,
+          "comment": ""
+        },
+        {
+          "unit_id": "amount:tendered:0",
+          "accepted": true,
+          "comment": ""
+        },
+        {
+          "unit_id": "amount:change:0",
+          "accepted": true,
+          "comment": ""
+        },
+        {
+          "unit_id": "tax:0",
+          "accepted": true,
+          "comment": ""
+        },
+        {
+          "unit_id": "tax:1",
+          "accepted": true,
+          "comment": ""
+        },
+        {
+          "unit_id": "quantity_total",
+          "accepted": true,
+          "comment": ""
+        }
+      ],
+      "missed": []
+    },
+    {
+      "doc_id": "X51005724628",
+      "verdicts": [
+        {
+          "unit_id": "merchant",
+          "accepted": true,
+          "comment": ""
+        },
+        {
+          "unit_id": "date:0",
+          "accepted": true,
+          "comment": ""
+        },
+        {
+          "unit_id": "item:0",
+          "accepted": true,
+          "comment": ""
+        },
+        {
+          "unit_id": "amount:subtotal:0",
+          "accepted": false,
+          "comment": "it s with taxt price , i think, it could be 80"
+        },
+        {
+          "unit_id": "amount:discount:0",
+          "accepted": true,
+          "comment": ""
+        },
+        {
+          "unit_id": "amount:total_excluding_tax:0",
+          "accepted": true,
+          "comment": ""
+        },
+        {
+          "unit_id": "amount:tax:0",
+          "accepted": true,
+          "comment": ""
+        },
+        {
+          "unit_id": "amount:total_including_tax:0",
+          "accepted": true,
+          "comment": ""
+        },
+        {
+          "unit_id": "amount:rounding:0",
+          "accepted": true,
+          "comment": ""
+        },
+        {
+          "unit_id": "amount:tendered:0",
+          "accepted": true,
+          "comment": ""
+        },
+        {
+          "unit_id": "amount:change:0",
+          "accepted": true,
+          "comment": ""
+        },
+        {
+          "unit_id": "tax:0",
+          "accepted": true,
+          "comment": ""
+        },
+        {
+          "unit_id": "quantity_total",
+          "accepted": true,
+          "comment": ""
+        }
+      ],
+      "missed": []
+    },
+    {
+      "doc_id": "X51005746203",
+      "verdicts": [
+        {
+          "unit_id": "merchant",
+          "accepted": true,
+          "comment": ""
+        },
+        {
+          "unit_id": "date:0",
+          "accepted": true,
+          "comment": ""
+        },
+        {
+          "unit_id": "item:0",
+          "accepted": true,
+          "comment": ""
+        },
+        {
+          "unit_id": "item:1",
+          "accepted": true,
+          "comment": ""
+        },
+        {
+          "unit_id": "item:2",
+          "accepted": true,
+          "comment": ""
+        },
+        {
+          "unit_id": "item:3",
+          "accepted": true,
+          "comment": ""
+        },
+        {
+          "unit_id": "item:4",
+          "accepted": true,
+          "comment": ""
+        },
+        {
+          "unit_id": "item:5",
+          "accepted": true,
+          "comment": ""
+        },
+        {
+          "unit_id": "item:6",
+          "accepted": true,
+          "comment": ""
+        },
+        {
+          "unit_id": "item:7",
+          "accepted": true,
+          "comment": ""
+        },
+        {
+          "unit_id": "item:8",
+          "accepted": true,
+          "comment": ""
+        },
+        {
+          "unit_id": "amount:total_including_tax:0",
+          "accepted": true,
+          "comment": ""
+        },
+        {
+          "unit_id": "amount:rounding:0",
+          "accepted": true,
+          "comment": ""
+        },
+        {
+          "unit_id": "amount:total_due:0",
+          "accepted": true,
+          "comment": ""
+        },
+        {
+          "unit_id": "tax:0",
+          "accepted": true,
+          "comment": ""
+        },
+        {
+          "unit_id": "tax:1",
+          "accepted": true,
+          "comment": ""
+        },
+        {
+          "unit_id": "quantity_total",
+          "accepted": true,
+          "comment": ""
+        }
+      ],
+      "missed": []
+    },
+    {
+      "doc_id": "X51005757235",
+      "verdicts": [
+        {
+          "unit_id": "merchant",
+          "accepted": true,
+          "comment": ""
+        },
+        {
+          "unit_id": "date:0",
+          "accepted": true,
+          "comment": ""
+        },
+        {
+          "unit_id": "item:0",
+          "accepted": true,
+          "comment": ""
+        },
+        {
+          "unit_id": "item:1",
+          "accepted": true,
+          "comment": ""
+        },
+        {
+          "unit_id": "amount:subtotal:0",
+          "accepted": true,
+          "comment": ""
+        },
+        {
+          "unit_id": "amount:total_including_tax:0",
+          "accepted": true,
+          "comment": ""
+        },
+        {
+          "unit_id": "amount:total_due:0",
+          "accepted": true,
+          "comment": ""
+        },
+        {
+          "unit_id": "amount:tendered:0",
+          "accepted": true,
+          "comment": ""
+        },
+        {
+          "unit_id": "amount:change:0",
+          "accepted": true,
+          "comment": ""
+        },
+        {
+          "unit_id": "tax:0",
+          "accepted": true,
+          "comment": ""
+        },
+        {
+          "unit_id": "item_count",
+          "accepted": true,
+          "comment": ""
+        }
+      ],
+      "missed": []
+    },
+    {
+      "doc_id": "X51006556823",
+      "verdicts": [
+        {
+          "unit_id": "merchant",
+          "accepted": true,
+          "comment": ""
+        },
+        {
+          "unit_id": "date:0",
+          "accepted": true,
+          "comment": ""
+        },
+        {
+          "unit_id": "item:0",
+          "accepted": true,
+          "comment": ""
+        },
+        {
+          "unit_id": "item:1",
+          "accepted": true,
+          "comment": ""
+        },
+        {
+          "unit_id": "item:2",
+          "accepted": true,
+          "comment": ""
+        },
+        {
+          "unit_id": "item:3",
+          "accepted": true,
+          "comment": ""
+        },
+        {
+          "unit_id": "amount:tax:0",
+          "accepted": true,
+          "comment": ""
+        },
+        {
+          "unit_id": "amount:total_due:0",
+          "accepted": true,
+          "comment": ""
+        },
+        {
+          "unit_id": "tax:0",
+          "accepted": false,
+          "comment": "rate could be 6"
+        },
+        {
+          "unit_id": "tax:1",
+          "accepted": true,
+          "comment": ""
+        }
+      ],
+      "missed": []
+    },
+    {
+      "doc_id": "X51006913007",
+      "verdicts": [
+        {
+          "unit_id": "merchant",
+          "accepted": true,
+          "comment": ""
+        },
+        {
+          "unit_id": "date:0",
+          "accepted": true,
+          "comment": ""
+        },
+        {
+          "unit_id": "item:0",
+          "accepted": true,
+          "comment": ""
+        },
+        {
+          "unit_id": "item:1",
+          "accepted": true,
+          "comment": ""
+        },
+        {
+          "unit_id": "item:2",
+          "accepted": true,
+          "comment": ""
+        },
+        {
+          "unit_id": "item:3",
+          "accepted": true,
+          "comment": ""
+        },
+        {
+          "unit_id": "item:4",
+          "accepted": true,
+          "comment": ""
+        },
+        {
+          "unit_id": "item:5",
+          "accepted": true,
+          "comment": ""
+        },
+        {
+          "unit_id": "item:6",
+          "accepted": true,
+          "comment": ""
+        },
+        {
+          "unit_id": "item:7",
+          "accepted": true,
+          "comment": ""
+        },
+        {
+          "unit_id": "item:8",
+          "accepted": true,
+          "comment": ""
+        },
+        {
+          "unit_id": "amount:subtotal:0",
+          "accepted": true,
+          "comment": ""
+        },
+        {
+          "unit_id": "amount:total_including_tax:0",
+          "accepted": true,
+          "comment": ""
+        },
+        {
+          "unit_id": "amount:total_due:0",
+          "accepted": true,
+          "comment": ""
+        },
+        {
+          "unit_id": "amount:tendered:0",
+          "accepted": true,
+          "comment": ""
+        },
+        {
+          "unit_id": "amount:change:0",
+          "accepted": true,
+          "comment": ""
+        },
+        {
+          "unit_id": "tax:0",
+          "accepted": true,
+          "comment": ""
+        },
+        {
+          "unit_id": "tax:1",
+          "accepted": true,
+          "comment": ""
+        },
+        {
+          "unit_id": "item_count",
+          "accepted": true,
+          "comment": ""
+        }
+      ],
+      "missed": []
+    },
+    {
+      "doc_id": "X51007262328",
+      "verdicts": [
+        {
+          "unit_id": "merchant",
+          "accepted": true,
+          "comment": ""
+        },
+        {
+          "unit_id": "date:0",
+          "accepted": true,
+          "comment": ""
+        },
+        {
+          "unit_id": "item:0",
+          "accepted": true,
+          "comment": ""
+        },
+        {
+          "unit_id": "amount:subtotal:0",
+          "accepted": false,
+          "comment": "it could be 23.58"
+        },
+        {
+          "unit_id": "amount:discount:0",
+          "accepted": true,
+          "comment": ""
+        },
+        {
+          "unit_id": "amount:total_excluding_tax:0",
+          "accepted": true,
+          "comment": ""
+        },
+        {
+          "unit_id": "amount:tax:0",
+          "accepted": true,
+          "comment": ""
+        },
+        {
+          "unit_id": "amount:total_including_tax:0",
+          "accepted": true,
+          "comment": ""
+        },
+        {
+          "unit_id": "amount:rounding:0",
+          "accepted": true,
+          "comment": ""
+        },
+        {
+          "unit_id": "amount:tendered:0",
+          "accepted": true,
+          "comment": ""
+        },
+        {
+          "unit_id": "amount:change:0",
+          "accepted": true,
+          "comment": ""
+        },
+        {
+          "unit_id": "tax:0",
+          "accepted": true,
+          "comment": ""
+        },
+        {
+          "unit_id": "quantity_total",
+          "accepted": true,
+          "comment": ""
+        }
+      ],
+      "missed": []
+    },
+    {
+      "doc_id": "X51008122920",
+      "verdicts": [
+        {
+          "unit_id": "merchant",
+          "accepted": true,
+          "comment": ""
+        },
+        {
+          "unit_id": "date:0",
+          "accepted": true,
+          "comment": ""
+        },
+        {
+          "unit_id": "item:0",
+          "accepted": true,
+          "comment": ""
+        },
+        {
+          "unit_id": "item:1",
+          "accepted": true,
+          "comment": ""
+        },
+        {
+          "unit_id": "amount:subtotal:0",
+          "accepted": true,
+          "comment": ""
+        },
+        {
+          "unit_id": "amount:tax:0",
+          "accepted": true,
+          "comment": ""
+        },
+        {
+          "unit_id": "amount:total_including_tax:0",
+          "accepted": true,
+          "comment": ""
+        },
+        {
+          "unit_id": "amount:rounding:0",
+          "accepted": true,
+          "comment": ""
+        },
+        {
+          "unit_id": "amount:total_due:0",
+          "accepted": true,
+          "comment": ""
+        },
+        {
+          "unit_id": "amount:tendered:0",
+          "accepted": true,
+          "comment": ""
+        },
+        {
+          "unit_id": "amount:change:0",
+          "accepted": true,
+          "comment": ""
+        },
+        {
+          "unit_id": "tax:0",
+          "accepted": true,
+          "comment": ""
+        },
+        {
+          "unit_id": "item_count",
+          "accepted": true,
+          "comment": ""
+        }
+      ],
+      "missed": []
+    },
+    {
+      "doc_id": "X51008123586",
+      "verdicts": [
+        {
+          "unit_id": "merchant",
+          "accepted": true,
+          "comment": ""
+        },
+        {
+          "unit_id": "date:0",
+          "accepted": true,
+          "comment": ""
+        },
+        {
+          "unit_id": "item:0",
+          "accepted": true,
+          "comment": ""
+        },
+        {
+          "unit_id": "item:1",
+          "accepted": true,
+          "comment": ""
+        },
+        {
+          "unit_id": "item:2",
+          "accepted": true,
+          "comment": ""
+        },
+        {
+          "unit_id": "amount:subtotal:0",
+          "accepted": true,
+          "comment": ""
+        },
+        {
+          "unit_id": "amount:total_due:0",
+          "accepted": true,
+          "comment": ""
+        },
+        {
+          "unit_id": "amount:tendered:0",
+          "accepted": true,
+          "comment": ""
+        },
+        {
+          "unit_id": "amount:change:0",
+          "accepted": true,
+          "comment": ""
+        },
+        {
+          "unit_id": "tax:0",
+          "accepted": true,
+          "comment": ""
+        },
+        {
+          "unit_id": "quantity_total",
+          "accepted": true,
+          "comment": ""
+        }
+      ],
+      "missed": []
+    }
+  ]
+}

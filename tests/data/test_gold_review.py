@@ -106,9 +106,9 @@ def test_score_counts_rejections_and_missed_values() -> None:
         ("F00", 9, 9, 0),
     ]
     assert scores[0].rate == pytest.approx(0.8)
-    report = render_review_report(result, scores)
-    assert "| A01 | merchant | bad |" in report
-    assert "| A01 | missed | rounding 0.00 |" in report
+    report = render_review_report(result, scores, {"A01/merchant": "kept"})
+    assert "| A01 | merchant | bad | kept |" in report
+    assert "| A01 | missed:rounding 0.00 | rounding 0.00 | unresolved |" in report
     assert "17 of 18 units accepted, 1 missed values; agreement 0.895" in report
 
 

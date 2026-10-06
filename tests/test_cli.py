@@ -214,3 +214,22 @@ def test_reading_score_review_keeps_the_review_and_writes_a_report(
     assert "1 of 1 accepted" in result.output
     assert json.loads(record.read_text(encoding="utf-8"))["reviewer"] == "owner"
     assert "agreement 1.000" in report.read_text(encoding="utf-8")
+
+
+def test_reading_score_review_reports_resolutions(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    manifest = write_gold(tmp_path, ("XA",))
+    monkeypatch.setattr(docfraud.cli, "draw_review_sample", lambda _: ("XA",))
+    verdict = {"unit_id": "amount:total_due:0", "accepted": False, "comment": "5.50?"}
+    review = {"reviewer": "owner", "reviews": [{"doc_id": "XA", "verdicts": [verdict]}]}
+    downloaded = tmp_path / "gold-review.json"
+    downloaded.write_text(json.dumps(review), encoding="utf-8")
+    resolutions = tmp_path / "resolutions.json"
+    resolutions.write_text(json.dumps({"XA/amount:total_due:0": "kept"}), encoding="utf-8")
+    report = tmp_path / "verification.md"
+    args = ["reading", "score-review", str(downloaded), "--manifest", str(manifest)]
+    args += ["--record", str(downloaded), "--resolutions", str(resolutions)]
+    result = runner.invoke(app, [*args, "--output", str(report)])
+    assert result.exit_code == 0, result.output
+    assert "| XA | amount:total_due:0 | 5.50? | kept |" in report.read_text(encoding="utf-8")

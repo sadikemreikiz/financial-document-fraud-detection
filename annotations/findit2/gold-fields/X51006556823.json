@@ -57,5 +57,5 @@
     "item_count": null,
     "quantity_total": null
   },
-  "notes": "Delivery note: quantity is the Sale column (negative for returns). The bill-to block names the customer. Per-rate supply totals are tax summary rows; 'Total 0% supplies' is printed twice and recorded once."
+  "notes": "Delivery note: quantity is the Sale column (negative for returns). The bill-to block names the customer. Per-rate supply totals are tax summary rows; 'Total 0% supplies' is printed twice and recorded once. Owner review questioned the rate of the first tax summary row; the image prints 'Total 0% supplies: 15.36', so the rate 0 is kept."
 }

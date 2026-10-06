@@ -51,5 +51,5 @@
     "item_count": null,
     "quantity_total": "1"
   },
-  "notes": "Description is printed below the number row; the item code 1264 is left out. 25.00 on the Total Qty row is the unlabelled item total (subtotal). The GST summary's Total row is not a separate row."
+  "notes": "Description is printed below the number row; the item code 1264 is left out. 25.00 on the Total Qty row is the unlabelled item total (subtotal). The GST summary's Total row is not a separate row. Owner review questioned the subtotal because item prices include tax; kept as the receipt's own item total (guidelines section 3, subtotal on tax-inclusive receipts)."
 }

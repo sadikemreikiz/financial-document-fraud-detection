@@ -57,7 +57,7 @@ position. The label examples are taken from development receipts.
 
 | Role | Meaning | Typical labels |
 |---|---|---|
-| `subtotal` | Sum of the items before discounts, service charge, tax and rounding, as the receipt states it | SUBTOTAL, SUB-TOTAL, SUB TOTAL |
+| `subtotal` | Sum of the items before discounts, service charge, tax and rounding, as the receipt states it; when item prices include tax, so does the subtotal | SUBTOTAL, SUB-TOTAL, SUB TOTAL |
 | `discount` | A receipt-level discount, with the printed sign | DISCOUNT, DISC |
 | `service_charge` | Service charge | SERVICE CHARGE, SVC CHG, S.CHARGE |
 | `total_excluding_tax` | A total explicitly marked as excluding tax | TOTAL (EXCLUDING GST), TOTAL SALES (EXCLUDING GST), TOTAL AMOUNT EXCL GST |
@@ -67,6 +67,13 @@ position. The label examples are taken from development receipts.
 | `total_due` | The final amount the customer has to pay | TOTAL PAYABLE, NETT TOTAL, NET TOTAL, FINAL TOTAL, GRAND TOTAL, TOTAL ROUNDED, TOTAL AMOUNT |
 | `tendered` | The amount handed over, by any means | CASH, CASH TENDERED, PAID, TENDER, VISA, MASTER, CREDIT CARD |
 | `change` | The amount returned to the customer | CHANGE, CHANGE DUE, BALANCE (when it is the change) |
+
+**Subtotal on tax-inclusive receipts.** The subtotal is the receipt's own sum of its items, in
+whatever price basis the items use: on a receipt whose item amounts include tax, the subtotal
+includes tax too, and the explicitly labelled pre-tax total is `total_excluding_tax`. This keeps
+"items add up to the subtotal" checkable on every receipt. *(Clarified on 2026-10-06 after the
+owner's review questioned it on two receipts; no recorded value changed, as all tax-inclusive
+gold receipts already followed this reading.)*
 
 **A plain "TOTAL"** is `total_due` unless a later amount is explicitly labelled as payable,
 rounded, nett or grand total; then the plain total is `total_including_tax`. A plain total
