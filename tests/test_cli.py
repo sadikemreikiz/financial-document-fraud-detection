@@ -233,3 +233,30 @@ def test_reading_score_review_reports_resolutions(
     result = runner.invoke(app, [*args, "--output", str(report)])
     assert result.exit_code == 0, result.output
     assert "| XA | amount:total_due:0 | 5.50? | kept |" in report.read_text(encoding="utf-8")
+
+
+def test_reading_evaluate_gold_scores_both_text_sources(
+    toy_source: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    runner.invoke(app, ["data", "prepare", "--data-dir", str(toy_source)])
+    monkeypatch.setattr(docfraud.cli, "RapidOcrEngine", FakeOcr)
+    train = [d.doc_id for d in load_toy(toy_source / "raw" / "findit2") if d.split is Split.TRAIN]
+    manifest = write_gold(tmp_path, tuple(train))
+    out, report = tmp_path / "predictions", tmp_path / "evaluation.md"
+    args = ["reading", "evaluate-gold", "--data-dir", str(toy_source), "--manifest", str(manifest)]
+    args += ["--cache", str(tmp_path / "ocr"), "--predictions", str(out)]
+    result = runner.invoke(app, [*args, "--output", str(report)])
+    assert result.exit_code == 0, result.output
+    text = report.read_text(encoding="utf-8")
+    assert "| Metric | T1 transcript | T2 OCR |" in text
+    assert "OCR engine: `fake-ocr`" in text
+    assert len(list((out / "transcript").glob("*.json"))) == len(train)
+    assert len(list((out / "ocr").glob("*.json"))) == len(train)
+
+
+def test_reading_evaluate_gold_needs_every_annotation(tmp_path: Path) -> None:
+    manifest = write_gold(tmp_path, ("XA",))
+    (manifest.parent / "XA.json").unlink()
+    result = runner.invoke(app, ["reading", "evaluate-gold", "--manifest", str(manifest)])
+    assert result.exit_code == 1
+    assert "not annotated yet: XA" in result.output

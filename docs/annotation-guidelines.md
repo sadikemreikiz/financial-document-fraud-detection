@@ -153,3 +153,20 @@ Fixed before the parser is evaluated:
 
 All metrics are reported on the two text sources: dataset transcripts (track T1) and our OCR
 (track T2).
+
+*Made concrete on 2026-10-06, after the owner's verification and before the parser was run on
+any gold receipt (`docfraud.evaluation.extraction`):*
+
+- Precision, recall and F1 are micro-averaged: matches, predictions and gold elements are
+  summed over all receipts, so F1 = 2 × matches / (predictions + gold).
+- Items and tax summary rows are paired one to one by a maximum matching, so the result does
+  not depend on print order. Amounts compare as numbers (`6` equals `6.00`).
+- Description similarity is 1 − edit distance / longer length, after upper-casing and
+  collapsing whitespace, averaged over matched items.
+- Exact-match fields count as correct when both sides are absent. Dates compare as the full
+  ordered list.
+- 95 % intervals come from a bootstrap over receipts (10,000 resamples); T1 and T2 are compared
+  by the paired bootstrap on metrics whose denominator does not depend on the prediction
+  (recall, accuracy). Results are also broken down by label and by amount role.
+- The evaluation runs once, with the frozen parser; any later parser change is measured on
+  development receipts and reported as a new, separate result.
