@@ -93,7 +93,7 @@ def test_several_labels_on_one_row_and_values_on_the_next_row() -> None:
         ("GST @6% INCLUDED IN TOTAL RM 1.86", AmountRole.TAX),
         ("TOTAL GST 1.20", AmountRole.TAX),
         ("SUB-TOTAL 10.00", AmountRole.SUBTOTAL),
-        ("DISCOUNT -1.00", AmountRole.DISCOUNT),
+        ("DISCOUNT 1.00", AmountRole.DISCOUNT),
         ("SERVICE CHARGE 10% 2.00", AmountRole.SERVICE_CHARGE),
         ("TOTAL SALES (EXCLUDING GST) 9.43", AmountRole.TOTAL_EXCLUDING_TAX),
         ("TOTAL PAYABLE: 31.05", AmountRole.TOTAL_DUE),
@@ -109,13 +109,146 @@ def test_label_vocabulary(line: str, role: AmountRole) -> None:
     "line",
     [
         "GST ID: 001335787520 12.00",
-        "TOTAL QTY: 3 3.00",
+        "TOTAL QTY: 3.00",
         "CASH SALES COUNTER 1.00",
         "TAX INVOICE 2.00",
     ],
 )
 def test_non_amount_labels_are_ignored(line: str) -> None:
     assert parse_receipt(rows(line)).amounts == {}
+
+
+def test_item_total_on_the_quantity_row_is_the_subtotal() -> None:
+    fields = parse_receipt(rows("TOTAL QTY: 3 14.20", "TOTAL 14.20"))
+    assert fields.amounts[AmountRole.SUBTOTAL] == (D("14.20"),)
+    assert fields.quantity_total == D(3)
+
+
+def test_plain_total_before_the_tax_line_is_the_subtotal() -> None:
+    fields = parse_receipt(
+        rows(
+            "TOTAL (MYR) : 20.00",
+            "GST @ 6% : 1.20",
+            "NET TOTAL (MYR) : 21.20",
+            "ROUNDING ADJ. : 0.00",
+            "NET TOTAL ROUNDED (MYR) : 21.20",
+        )
+    )
+    assert fields.amounts == {
+        AmountRole.SUBTOTAL: (D("20.00"),),
+        AmountRole.TAX: (D("1.20"),),
+        AmountRole.TOTAL_INCLUDING_TAX: (D("21.20"),),
+        AmountRole.ROUNDING: (D("0.00"),),
+        AmountRole.TOTAL_DUE: (D("21.20"),),
+    }
+
+
+def test_negative_discounts_among_items_are_items() -> None:
+    fields = parse_receipt(
+        rows(
+            "T-SAHA BREAD *# 1 RM4.60 ST",
+            "DISCOUNT RM-0.23",
+            "T-HONEY WALNUT *# 1 RM3.70 ST",
+            "DISCOUNT RM-0.18",
+            "TOTAL (INCL GST, 0%) RM7.89",
+            "DISCOUNT 0.41",
+        )
+    )
+    assert [(i.description, i.amount) for i in fields.items] == [
+        ("T-SAHA BREAD", D("4.60")),
+        ("DISCOUNT", D("-0.23")),
+        ("T-HONEY WALNUT", D("3.70")),
+        ("DISCOUNT", D("-0.18")),
+    ]
+    assert fields.amounts[AmountRole.DISCOUNT] == (D("0.41"),)
+
+
+def test_descriptions_above_or_below_the_number_row() -> None:
+    above = parse_receipt(
+        rows(
+            "MR. D.I.Y. (M) SDN BHD",
+            "- TAX INVOICE -",
+            "STUDENT SOCKS 3PCS BK *S",
+            "JH61 - 4/200",
+            "9034915 1 X 9.50 9.50",
+            "BELT 5202-3#*VS *S",
+            "9034870 1 X 22.90 22.90",
+            "ITEM(S) : 2 QTY(S) : 2",
+        )
+    )
+    assert [i.description for i in above.items] == ["STUDENT SOCKS 3PCS BK", "BELT 5202-3 VS"]
+    below = parse_receipt(
+        rows(
+            "SHOPPING HOURS",
+            "1X 000001048211 11.25SR",
+            "NATUREL PREMIU",
+            "1X 000005043675 10.50SR",
+            "JOY DISHWASHIN",
+            "SUB-TOTAL 21.75",
+        )
+    )
+    assert [(i.description, i.amount) for i in below.items] == [
+        ("NATUREL PREMIU", D("11.25")),
+        ("JOY DISHWASHIN", D("10.50")),
+    ]
+
+
+def test_unit_prices_may_have_four_decimals() -> None:
+    fields = parse_receipt(rows("RESTAURANT ORDER CHIT", "3 X 2.9000 8.70 SR", "TOTAL 8.70"))
+    assert fields.items == (
+        LineItem(
+            description="RESTAURANT ORDER CHIT",
+            quantity=D(3),
+            unit_price=D("2.9000"),
+            amount=D("8.70"),
+        ),
+    )
+
+
+def test_per_code_fuel_tax_lines_are_tax_summary_rows() -> None:
+    fields = parse_receipt(
+        rows(
+            "TOTAL RM 100.00",
+            "6.00% GST A RM 5.66",
+            "TOTAL GROSS A RM 100.00",
+            "RELIEF GST C RM 0.00",
+        )
+    )
+    assert fields.tax_summary == (
+        TaxSummaryRow(code="A", rate_percent=D(6), tax=D("5.66")),
+        TaxSummaryRow(code="C", tax=D("0.00")),
+    )
+    assert fields.amounts == {AmountRole.TOTAL_DUE: (D("100.00"),)}
+
+
+@pytest.mark.parametrize(
+    ("header", "expected"),
+    [
+        (("OLDTOWN WHITE COFFEE", "OLD TOWN KOPITIAM SDN BHD (716269-X)"), "OLDTOWN WHITE COFFEE"),
+        (
+            ("TAX INVOICE", "GREAT ZONE HOUSEHOLD CENTRE SDN BHD"),
+            "GREAT ZONE HOUSEHOLD CENTRE SDN BHD",
+        ),
+        (
+            ("PASARAYA BORONG PINTAR", "SDN BHD", "BR NO.: (124525-H)"),
+            "PASARAYA BORONG PINTAR SDN BHD",
+        ),
+        (("KEDAI UBAT & RUNCIT HONG", "NING SDN. BHD."), "KEDAI UBAT & RUNCIT HONG NING SDN. BHD"),
+        (("3180502", "SUPER NINETY NINE SDN.BHD.", "(619657-U)"), "SUPER NINETY NINE SDN.BHD"),
+        (("99 SPEED MART S/B (519537-X)",), "99 SPEED MART S/B"),
+        (("GARDENIA BAKERIES (KL) SDN BHD (139386 X)",), "GARDENIA BAKERIES (KL) SDN BHD"),
+        (("SYARIKAT KAM LAI SEONG SDN BHD (CO", "NO. 95156P)"), "SYARIKAT KAM LAI SEONG SDN BHD"),
+        (
+            ("CASH SALE", "SINNATHAMBY HOLDINGS SDN. BHD. (249336-T)"),
+            "SINNATHAMBY HOLDINGS SDN. BHD",
+        ),
+        (("SUBWAY#42210-0 PHONE 03-78870693",), "SUBWAY#42210-0"),
+    ],
+)
+def test_merchant_is_the_first_business_name_without_registration(
+    header: tuple[str, ...], expected: str
+) -> None:
+    assert parse_receipt(rows(*header)).merchant == expected
 
 
 def test_supplies_lines_become_tax_summary_rows() -> None:
