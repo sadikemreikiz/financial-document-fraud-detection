@@ -1,0 +1,64 @@
+{
+  "doc_id": "X51006619790",
+  "annotator": "claude",
+  "fields": {
+    "merchant": "YIN MA (M) SDN.BHD.",
+    "dates": [
+      "2016-07-19"
+    ],
+    "items": [
+      {
+        "description": "HOOK-3015",
+        "quantity": null,
+        "unit_price": null,
+        "amount": "2.90"
+      },
+      {
+        "description": "HOOK-3015",
+        "quantity": null,
+        "unit_price": null,
+        "amount": "2.90"
+      },
+      {
+        "description": "TOILET BRUSH-1",
+        "quantity": null,
+        "unit_price": null,
+        "amount": "2.90"
+      },
+      {
+        "description": "HOOK-3015",
+        "quantity": null,
+        "unit_price": null,
+        "amount": "2.90"
+      },
+      {
+        "description": "HOOK-3015",
+        "quantity": null,
+        "unit_price": null,
+        "amount": "2.90"
+      }
+    ],
+    "amounts": {
+      "total_including_tax": [
+        "14.50"
+      ],
+      "tendered": [
+        "15.50"
+      ],
+      "change": [
+        "1.00"
+      ]
+    },
+    "tax_summary": [
+      {
+        "code": "S",
+        "rate_percent": "6.0",
+        "taxable_amount": "13.70",
+        "tax": "0.80"
+      }
+    ],
+    "item_count": 5,
+    "quantity_total": null
+  },
+  "notes": "Leading barcodes are left out. No amount labelled as due; the final total is 'Total Incl. GST'."
+}

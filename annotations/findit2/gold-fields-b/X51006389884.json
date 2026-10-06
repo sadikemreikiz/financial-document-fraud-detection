@@ -1,0 +1,88 @@
+{
+  "doc_id": "X51006389884",
+  "annotator": "claude",
+  "fields": {
+    "merchant": "99 SPEED MART S/B",
+    "dates": [
+      "2017-11-22"
+    ],
+    "items": [
+      {
+        "description": "HELANG MINYAK MASAK 5KG",
+        "quantity": "2",
+        "unit_price": "24.35",
+        "amount": "48.70"
+      },
+      {
+        "description": "JASMINE SUPER 5 SPECIA",
+        "quantity": null,
+        "unit_price": null,
+        "amount": "29.90"
+      },
+      {
+        "description": "GREENLINK BIOTECH BRIKE",
+        "quantity": null,
+        "unit_price": null,
+        "amount": "8.40"
+      },
+      {
+        "description": "LIFEBUOY COOL FRESH SO",
+        "quantity": "2",
+        "unit_price": "6.99",
+        "amount": "13.98"
+      },
+      {
+        "description": "PIPIT BLEACH 2*1KG TP",
+        "quantity": null,
+        "unit_price": null,
+        "amount": "4.20"
+      },
+      {
+        "description": "FAB PERFECT BAR (B) 130",
+        "quantity": "10",
+        "unit_price": "0.90",
+        "amount": "9.00"
+      },
+      {
+        "description": "NESCAFE CLASSIC ARABICA",
+        "quantity": "3",
+        "unit_price": "22.60",
+        "amount": "67.80"
+      }
+    ],
+    "amounts": {
+      "total_including_tax": [
+        "181.98"
+      ],
+      "rounding": [
+        "0.02"
+      ],
+      "total_due": [
+        "182.00"
+      ],
+      "tendered": [
+        "182.00"
+      ],
+      "change": [
+        "0.00"
+      ]
+    },
+    "tax_summary": [
+      {
+        "code": "S",
+        "rate_percent": "6",
+        "taxable_amount": "33.56",
+        "tax": "2.02"
+      },
+      {
+        "code": "Z",
+        "rate_percent": "0",
+        "taxable_amount": "146.40",
+        "tax": "0.00"
+      }
+    ],
+    "item_count": null,
+    "quantity_total": null
+  },
+  "notes": "Leading item codes are left out; quantity and unit price are printed on the row below ('@2 X RM 24.35'). The line labelled 'Rounding' 182.00 is the rounded amount due (the adjustment .02 is on 'Rounding Adjustment'), so it is recorded as total_due (guidelines section 3: the role follows the arithmetic). Paid by CREDIT. Amounts such as '.02' and '.90' are printed without a leading zero."
+}

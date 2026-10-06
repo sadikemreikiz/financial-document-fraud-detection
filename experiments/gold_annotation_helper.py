@@ -3,17 +3,20 @@
 Used while annotating the gold set by hand (docs/annotation-guidelines.md): each call validates
 a record against GoldAnnotation before writing it, so malformed amounts never reach a file.
 
-Usage: put ``experiments`` on ``sys.path``, import this module and call :func:`write`.
+Usage: put ``experiments`` on ``sys.path``, import this module and call :func:`write`. The gold
+set is chosen by the environment variable ``DOCFRAUD_GOLD_SET`` (default ``gold-fields``, i.e.
+gold set A; ``gold-fields-b`` for gold set B).
 """
 
 import json
+import os
 from pathlib import Path
 from typing import Any
 
 from docfraud.data.gold import GoldAnnotation, annotation_path, load_manifest
 
 ROOT = Path(__file__).resolve().parents[1]
-DIR = ROOT / "annotations/findit2/gold-fields"
+DIR = ROOT / "annotations/findit2" / os.environ.get("DOCFRAUD_GOLD_SET", "gold-fields")
 MANIFEST = load_manifest(DIR / "manifest.json")
 
 

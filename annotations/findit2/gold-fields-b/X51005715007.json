@@ -1,0 +1,52 @@
+{
+  "doc_id": "X51005715007",
+  "annotator": "claude",
+  "fields": {
+    "merchant": "KAISON FURNISHING SDN BHD",
+    "dates": [
+      "2018-03-25"
+    ],
+    "items": [
+      {
+        "description": "PLASTIC TRAY-GLOSS R",
+        "quantity": null,
+        "unit_price": null,
+        "amount": "8.90"
+      },
+      {
+        "description": "KEYCHAIN - SCARF STA",
+        "quantity": null,
+        "unit_price": null,
+        "amount": "5.90"
+      },
+      {
+        "description": "KEYCHAIN - KNIT SCAR",
+        "quantity": null,
+        "unit_price": null,
+        "amount": "3.90"
+      }
+    ],
+    "amounts": {
+      "total_due": [
+        "18.70"
+      ],
+      "tendered": [
+        "-20.00"
+      ],
+      "change": [
+        "1.30"
+      ]
+    },
+    "tax_summary": [
+      {
+        "code": "SR",
+        "rate_percent": "6",
+        "taxable_amount": "17.64",
+        "tax": "1.06"
+      }
+    ],
+    "item_count": null,
+    "quantity_total": null
+  },
+  "notes": "Cash is printed with a minus sign (-20.00) and recorded as printed. The unit 'pcs' and the item numbers are left out. The tax summary also prints the row total 18.70, which the schema has no field for. The number 3-1708032 at the top is a benign digital annotation."
+}

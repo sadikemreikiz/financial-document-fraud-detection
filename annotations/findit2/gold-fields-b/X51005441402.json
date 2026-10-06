@@ -1,0 +1,52 @@
+{
+  "doc_id": "X51005441402",
+  "annotator": "claude",
+  "fields": {
+    "merchant": "THREE STOOGES",
+    "dates": [
+      "2018-03-03"
+    ],
+    "items": [
+      {
+        "description": "HH GUINESS 12 GLASSES",
+        "quantity": "1",
+        "unit_price": null,
+        "amount": "150.00"
+      }
+    ],
+    "amounts": {
+      "subtotal": [
+        "150.00"
+      ],
+      "service_charge": [
+        "15.00"
+      ],
+      "total_due": [
+        "174.90"
+      ],
+      "tendered": [
+        "200.00"
+      ],
+      "change": [
+        "25.10"
+      ]
+    },
+    "tax_summary": [
+      {
+        "code": "SVC",
+        "rate_percent": "10",
+        "taxable_amount": "150.00",
+        "tax": "15.00"
+      },
+      {
+        "code": "SR",
+        "rate_percent": "6",
+        "taxable_amount": "165.00",
+        "tax": "9.90"
+      }
+    ],
+    "item_count": null,
+    "quantity_total": null
+  },
+  "notes": "The 'GST 6%' line prints no amount, so no tax amount is recorded; the tax is in the summary. The tax summary table lists the service charge (code SVC, 10%) as a row, recorded as printed. Item and service charge amounts are faded but legible and agree with the transcript. The '1' before SUB TOTAL has no label and is not recorded as a count. 'BISTRO & CAFE' continues the trading name on the next line. Handwritten marks are benign."
+}

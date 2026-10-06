@@ -1,0 +1,40 @@
+{
+  "doc_id": "X51006414679",
+  "annotator": "claude",
+  "fields": {
+    "merchant": "DE MAXIMUM THAI EXPRESS SDN BHD",
+    "dates": [
+      "2018-04-14"
+    ],
+    "items": [
+      {
+        "description": "THAI ICE TEA",
+        "quantity": "1",
+        "unit_price": "8.90",
+        "amount": "8.90"
+      },
+      {
+        "description": "BELACAN FRIED RICE",
+        "quantity": "1",
+        "unit_price": "12.90",
+        "amount": "12.90"
+      }
+    ],
+    "amounts": {
+      "total_including_tax": [
+        "21.80"
+      ],
+      "rounding": [
+        "0.00"
+      ],
+      "total_due": [
+        "21.80",
+        "21.80"
+      ]
+    },
+    "tax_summary": [],
+    "item_count": null,
+    "quantity_total": "2"
+  },
+  "notes": "'Total Amount' is printed before and after 'Rounding Adj': the first is the total before rounding (total including tax), the second repeats the rounded amount due, as does the final 'TOTAL'. Menu codes are left out; descriptions are printed below them. 'Type 2' is not a recognised count label. No tax amount is printed. Handwritten note at the top is benign."
+}

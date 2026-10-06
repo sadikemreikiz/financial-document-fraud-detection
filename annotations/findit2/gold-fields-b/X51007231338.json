@@ -1,0 +1,55 @@
+{
+  "doc_id": "X51007231338",
+  "annotator": "claude",
+  "fields": {
+    "merchant": "AMPHAWA THAI TEA & CO.",
+    "dates": [
+      "2018-05-11"
+    ],
+    "items": [
+      {
+        "description": "THAI MILK TEA - CHA YEN",
+        "quantity": "1",
+        "unit_price": "8.90",
+        "amount": "8.90"
+      }
+    ],
+    "amounts": {
+      "total_excluding_tax": [
+        "8.90"
+      ],
+      "discount": [
+        "0.00"
+      ],
+      "service_charge": [
+        "0.00"
+      ],
+      "tax": [
+        "0.53"
+      ],
+      "rounding": [
+        "0.02"
+      ],
+      "total_including_tax": [
+        "9.45"
+      ],
+      "tendered": [
+        "10.00"
+      ],
+      "change": [
+        "0.55"
+      ]
+    },
+    "tax_summary": [
+      {
+        "code": "SR",
+        "rate_percent": "6",
+        "taxable_amount": "8.90",
+        "tax": "0.53"
+      }
+    ],
+    "item_count": null,
+    "quantity_total": null
+  },
+  "notes": "Trading name first; the owning company T PLUS F&B SDN. BHD. follows. Menu code M03 is left out. The 'Total: 1' under the quantity column is not a recognised count label. No amount labelled as due; the final total is 'Total Sales (Inclusive of GST)', printed after rounding. The GST summary's Total row is not a separate row. Handwritten note at the top is benign."
+}

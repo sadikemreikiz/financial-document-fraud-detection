@@ -1,0 +1,45 @@
+{
+  "doc_id": "X51007103668",
+  "annotator": "claude",
+  "fields": {
+    "merchant": "MR. D.I.Y. (M) SDN BHD",
+    "dates": [
+      "2018-04-22"
+    ],
+    "items": [
+      {
+        "description": "COTTON MOP",
+        "quantity": "1",
+        "unit_price": "8.90",
+        "amount": "8.90"
+      },
+      {
+        "description": "HARD BROOM 484P W/4FT",
+        "quantity": "1",
+        "unit_price": "5.90",
+        "amount": "5.90"
+      },
+      {
+        "description": "NYLON BATH BROOM 718 4'",
+        "quantity": "2",
+        "unit_price": "6.20",
+        "amount": "12.40"
+      }
+    ],
+    "amounts": {
+      "total_including_tax": [
+        "27.20"
+      ],
+      "tendered": [
+        "27.20"
+      ],
+      "tax": [
+        "1.54"
+      ]
+    },
+    "tax_summary": [],
+    "item_count": 3,
+    "quantity_total": "4"
+  },
+  "notes": "Same layout as X51006619698; codes and the *S marker are left out. The labels print a GST rate of 2% although 1.54 is 6% of the tax-exclusive amount; recorded as printed (the rate appears only in labels, so no tax summary row). Handwritten number at the top is benign."
+}

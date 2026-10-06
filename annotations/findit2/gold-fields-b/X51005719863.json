@@ -1,0 +1,54 @@
+{
+  "doc_id": "X51005719863",
+  "annotator": "claude",
+  "fields": {
+    "merchant": "SEN LEE HEONG RESTAURANT",
+    "dates": [
+      "2018-01-12"
+    ],
+    "items": [
+      {
+        "description": "FOOD",
+        "quantity": "1",
+        "unit_price": "67.00",
+        "amount": "67.00"
+      },
+      {
+        "description": "BIG RICE",
+        "quantity": "2",
+        "unit_price": "1.50",
+        "amount": "3.00"
+      },
+      {
+        "description": "TEA POT",
+        "quantity": "1",
+        "unit_price": "3.00",
+        "amount": "3.00"
+      }
+    ],
+    "amounts": {
+      "subtotal": [
+        "73.00"
+      ],
+      "total_excluding_tax": [
+        "73.00"
+      ],
+      "tax": [
+        "4.38"
+      ],
+      "rounding": [
+        "0.02"
+      ],
+      "total_due": [
+        "77.40"
+      ],
+      "tendered": [
+        "77.40"
+      ]
+    },
+    "tax_summary": [],
+    "item_count": 4,
+    "quantity_total": null
+  },
+  "notes": "'GST TAX AMT' (taxable amount) is the total excluding tax, as on X51006466060. 'Item: 4' counts units and is recorded as printed. A blanked-out area follows two item names."
+}

@@ -1,0 +1,61 @@
+{
+  "doc_id": "X51006557213",
+  "annotator": "claude",
+  "fields": {
+    "merchant": "GARDENIA BAKERIES (KL) SDN BHD",
+    "dates": [
+      "2017-10-01"
+    ],
+    "items": [
+      {
+        "description": "O.C. WHITE",
+        "quantity": "3",
+        "unit_price": "2.13",
+        "amount": "6.39"
+      },
+      {
+        "description": "WHOLEMEAL",
+        "quantity": "5",
+        "unit_price": "2.78",
+        "amount": "13.90"
+      },
+      {
+        "description": "O.C JUMBO",
+        "quantity": "5",
+        "unit_price": "2.97",
+        "amount": "14.85"
+      },
+      {
+        "description": "CR-CHOCLT",
+        "quantity": "-5",
+        "unit_price": "0.72",
+        "amount": "-3.60"
+      }
+    ],
+    "amounts": {
+      "tax": [
+        "-0.22"
+      ],
+      "total_due": [
+        "31.32"
+      ]
+    },
+    "tax_summary": [
+      {
+        "code": "",
+        "rate_percent": "0",
+        "taxable_amount": "35.14",
+        "tax": null
+      },
+      {
+        "code": "",
+        "rate_percent": "6",
+        "taxable_amount": "-3.60",
+        "tax": null
+      }
+    ],
+    "item_count": null,
+    "quantity_total": null
+  },
+  "notes": "Delivery note, as on X51006556823: quantity is the Sale column (negative for returns). The bill-to block names the customer. Per-rate supply totals are tax summary rows; 'Total 0% supplies' is printed twice and recorded once. The delivery date repeats the date."
+}

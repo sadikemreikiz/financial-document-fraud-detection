@@ -1,0 +1,76 @@
+{
+  "doc_id": "X51005746207",
+  "annotator": "claude",
+  "fields": {
+    "merchant": "SUPER SEVEN CASH & CARRY SDN BHD",
+    "dates": [
+      "2018-03-21"
+    ],
+    "items": [
+      {
+        "description": "FRUIT (FP)",
+        "quantity": "1",
+        "unit_price": "2.99",
+        "amount": "2.99"
+      },
+      {
+        "description": "NANGKA 1 PINGGAN",
+        "quantity": "1",
+        "unit_price": "2.00",
+        "amount": "2.00"
+      },
+      {
+        "description": "KIMBALL TOMATO PUREE 430G",
+        "quantity": "1",
+        "unit_price": "3.80",
+        "amount": "3.80"
+      },
+      {
+        "description": "KIMBALL TOMATO PUREE 430G",
+        "quantity": "1",
+        "unit_price": "3.80",
+        "amount": "3.80"
+      },
+      {
+        "description": "URO MUSHROOM 425G",
+        "quantity": "1",
+        "unit_price": "2.80",
+        "amount": "2.80"
+      },
+      {
+        "description": "YOUNG CORN 425G (MS)",
+        "quantity": "1",
+        "unit_price": "2.90",
+        "amount": "2.90"
+      }
+    ],
+    "amounts": {
+      "total_including_tax": [
+        "18.29"
+      ],
+      "rounding": [
+        "0.01"
+      ],
+      "total_due": [
+        "18.30"
+      ]
+    },
+    "tax_summary": [
+      {
+        "code": "ZR",
+        "rate_percent": "0",
+        "taxable_amount": "4.99",
+        "tax": "0.00"
+      },
+      {
+        "code": "SR",
+        "rate_percent": "6",
+        "taxable_amount": "12.54",
+        "tax": "0.76"
+      }
+    ],
+    "item_count": null,
+    "quantity_total": "6"
+  },
+  "notes": "Same layout as X51005746203: unit prices follow '@', quantities follow '*'. Paid by MASTER CARD without a printed amount. A customer name is printed and deliberately not annotated. The SR rate is partly faded but legible. Handwritten marks are benign."
+}

@@ -1,0 +1,151 @@
+{
+  "doc_id": "X51006414733",
+  "annotator": "claude",
+  "fields": {
+    "merchant": "AEON CO. (M) BHD",
+    "dates": [
+      "2018-04-01"
+    ],
+    "items": [
+      {
+        "description": "SA MIX PLUM",
+        "quantity": "1",
+        "unit_price": null,
+        "amount": "7.00"
+      },
+      {
+        "description": "R.GALA APPLE",
+        "quantity": "1",
+        "unit_price": null,
+        "amount": "7.50"
+      },
+      {
+        "description": "FOUR SEAS SEAW",
+        "quantity": "1",
+        "unit_price": null,
+        "amount": "9.85"
+      },
+      {
+        "description": "CHEK HUP 2IN1",
+        "quantity": "1",
+        "unit_price": null,
+        "amount": "16.50"
+      },
+      {
+        "description": "ITEM PROMO @12.99",
+        "quantity": null,
+        "unit_price": null,
+        "amount": "-3.51"
+      },
+      {
+        "description": "TOMATO AMOROS",
+        "quantity": "1",
+        "unit_price": null,
+        "amount": "7.50"
+      },
+      {
+        "description": "FRANCE GREEN KI",
+        "quantity": "1",
+        "unit_price": null,
+        "amount": "12.50"
+      },
+      {
+        "description": "T. CHERRY HONEY",
+        "quantity": "1",
+        "unit_price": null,
+        "amount": "4.80"
+      },
+      {
+        "description": "SUSHI SET-PTC",
+        "quantity": "1",
+        "unit_price": null,
+        "amount": "15.90"
+      },
+      {
+        "description": "JAMBU AIR MADU",
+        "quantity": "1",
+        "unit_price": null,
+        "amount": "4.33"
+      },
+      {
+        "description": "CUT FRUITS 1.99",
+        "quantity": "1",
+        "unit_price": null,
+        "amount": "2.50"
+      },
+      {
+        "description": "ZA M/N BEAUTY",
+        "quantity": "1",
+        "unit_price": null,
+        "amount": "8.00"
+      },
+      {
+        "description": "CAVANDISH BANAN",
+        "quantity": "1",
+        "unit_price": null,
+        "amount": "4.61"
+      },
+      {
+        "description": "BLUEBERRY",
+        "quantity": "1",
+        "unit_price": null,
+        "amount": "10.90"
+      },
+      {
+        "description": "EGG KANI MAYO S",
+        "quantity": "1",
+        "unit_price": null,
+        "amount": "3.90"
+      },
+      {
+        "description": "COLESLAW SANDWI",
+        "quantity": "1",
+        "unit_price": null,
+        "amount": "3.00"
+      },
+      {
+        "description": "WANFA DRIED FIS",
+        "quantity": "1",
+        "unit_price": null,
+        "amount": "7.50"
+      }
+    ],
+    "amounts": {
+      "subtotal": [
+        "122.78"
+      ],
+      "total_including_tax": [
+        "122.78"
+      ],
+      "rounding": [
+        "0.02"
+      ],
+      "total_due": [
+        "122.80"
+      ],
+      "tendered": [
+        "200.00"
+      ],
+      "change": [
+        "77.20"
+      ]
+    },
+    "tax_summary": [
+      {
+        "code": "SR",
+        "rate_percent": "6",
+        "taxable_amount": "50.13",
+        "tax": "3.01"
+      },
+      {
+        "code": "ZR",
+        "rate_percent": "0",
+        "taxable_amount": "69.64",
+        "tax": "0.00"
+      }
+    ],
+    "item_count": 16,
+    "quantity_total": null
+  },
+  "notes": "AEON layout as on X51005757201 and X51006913007: the item promotion line is a negative item; 'Total After Adj Incl GST' is the amount due; 'Change Amt' sits on the Item Count row; the GST summary's Total row is not a separate row. Handwritten note at the top is benign."
+}

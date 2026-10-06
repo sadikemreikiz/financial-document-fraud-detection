@@ -1,0 +1,50 @@
+{
+  "doc_id": "X51005663323",
+  "annotator": "claude",
+  "fields": {
+    "merchant": "KOH SENG HARDWARE",
+    "dates": [
+      "2017-12-04"
+    ],
+    "items": [
+      {
+        "description": "EXTENSION LADDER 12' X 12'",
+        "quantity": "2",
+        "unit_price": "424.00",
+        "amount": "848.00"
+      }
+    ],
+    "amounts": {
+      "discount": [
+        "0.00"
+      ],
+      "tax": [
+        "48.00",
+        "48.00"
+      ],
+      "rounding": [
+        "0.00"
+      ],
+      "total_due": [
+        "848.00"
+      ],
+      "tendered": [
+        "848.00"
+      ],
+      "change": [
+        "0.00"
+      ]
+    },
+    "tax_summary": [
+      {
+        "code": "SR",
+        "rate_percent": "6",
+        "taxable_amount": "800.00",
+        "tax": "48.00"
+      }
+    ],
+    "item_count": null,
+    "quantity_total": "2"
+  },
+  "notes": "Same layout as X51005719823 and X51007339647: 'GST' and 'TAX TOTAL' are both recorded as tax. Description is printed below the code row; the 'SR:' tax-code prefix and item code 3751 are left out. Handwritten numbers are benign."
+}

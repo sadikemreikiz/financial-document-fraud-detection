@@ -1,0 +1,50 @@
+{
+  "doc_id": "X51007339166",
+  "annotator": "claude",
+  "fields": {
+    "merchant": "SANYU STATIONERY SHOP",
+    "dates": [
+      "2017-12-04"
+    ],
+    "items": [
+      {
+        "description": "CAMPAP CR 36364 A4 10S BRIEF CARD (CAMPAP ARTO)",
+        "quantity": "100",
+        "unit_price": "3.9000",
+        "amount": "390"
+      }
+    ],
+    "amounts": {
+      "total_including_tax": [
+        "390",
+        "390"
+      ],
+      "discount": [
+        "0.00"
+      ],
+      "rounding": [
+        "0.00"
+      ],
+      "total_due": [
+        "390"
+      ],
+      "tendered": [
+        "1000"
+      ],
+      "change": [
+        "610"
+      ]
+    },
+    "tax_summary": [
+      {
+        "code": "SR",
+        "rate_percent": "6",
+        "taxable_amount": "368",
+        "tax": "22"
+      }
+    ],
+    "item_count": null,
+    "quantity_total": "1"
+  },
+  "notes": "Most amounts are printed without their decimal point ('3 90', '10 00', '6 10', '3 68', '22'), while the 0.00 lines keep it. The printed digits are recorded as whole numbers, as the transcript reads them; 100 x 3.9000 = 390 agrees with that reading. Layout as on X51007339151: 'Total Sales Inclusive GST' and the plain 'Total' (followed by 'Final Total') are totals including tax. Item number 2000-0240 is left out."
+}
