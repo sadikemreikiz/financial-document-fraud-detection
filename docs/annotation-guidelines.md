@@ -26,6 +26,11 @@ before the parser exists and are never used to develop it.
    value to make it balance.
 5. **Verify.** The project owner independently checks 10 gold receipts, drawn with a fixed
    seed, field by field against the image. The agreement rate is reported with the results.
+   *(Made concrete on 2026-10-06, after annotation and before the review: the sample is 8
+   authentic and 2 forged receipts drawn with the gold seed (`docfraud.data.gold_review`);
+   every recorded value is one unit the owner accepts or rejects, and values the annotation
+   left out are listed as missed; agreement = accepted units / (units + missed values). The
+   owner sees the annotations, so this is a verification, not a blind second annotation.)*
 6. **Evaluate.** The frozen parser is evaluated once on the gold set. LLM extraction is
    evaluated on the same set in Phase 6.
 

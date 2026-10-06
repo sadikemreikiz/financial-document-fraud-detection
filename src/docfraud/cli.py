@@ -1,5 +1,6 @@
 """Command-line interface for docfraud."""
 
+import json
 from enum import StrEnum
 from pathlib import Path
 from typing import Annotated
@@ -14,6 +15,14 @@ from docfraud.data.download import SOURCES, download, safe_extract, verify
 from docfraud.data.duplicates import resolve_duplicates
 from docfraud.data.findit import DUPLICATE_GROUPS, load_findit2
 from docfraud.data.gold import draw_gold_set, load_annotations, load_manifest, save_manifest
+from docfraud.data.gold_review import (
+    ReviewResult,
+    draw_review_sample,
+    image_url,
+    render_review_page,
+    render_review_report,
+    score_review,
+)
 from docfraud.data.models import Label, Split
 from docfraud.data.normalize import load_grayscale
 from docfraud.data.splits import select
@@ -181,3 +190,60 @@ def reading_check_gold(
             console.print(f"[yellow]re-check[/yellow] {doc_id}: {', '.join(failed)}")
     if missing:
         console.print(f"missing: {', '.join(missing)}")
+
+
+GOLD_REVIEW = Path("annotations/findit2/gold-review.json")
+
+
+@reading_app.command("review-gold")
+def reading_review_gold(
+    data_dir: DataDir = Path("data"),
+    manifest_path: Annotated[Path, typer.Option("--manifest", help="Gold manifest.")] = (
+        GOLD_MANIFEST
+    ),
+    output: Annotated[Path, typer.Option(help="Directory for the review page.")] = Path(
+        "artifacts/gold-review"
+    ),
+) -> None:
+    """Write a local page for the owner to verify a seeded sample of gold annotations."""
+    manifest = load_manifest(manifest_path)
+    annotations = load_annotations(manifest_path.parent, manifest)
+    sample = draw_review_sample(manifest)
+    missing = sorted(set(sample) - set(annotations))
+    if missing:
+        console.print(f"[red]not annotated yet:[/red] {', '.join(missing)}")
+        raise typer.Exit(1)
+    documents = load_findit2(data_dir / "raw" / SOURCES[DatasetName.FINDIT2.value].name)
+    images = {d.doc_id: d.image_path for d in documents if d.doc_id in sample}
+    output.mkdir(parents=True, exist_ok=True)
+    urls = {doc_id: image_url(output, path) for doc_id, path in images.items()}
+    page = output / "index.html"
+    page.write_text(render_review_page(sample, annotations, urls), encoding="utf-8")
+    console.print(f"[green]written[/green] {page} ({len(sample)} receipts)")
+
+
+@reading_app.command("score-review")
+def reading_score_review(
+    result_path: Annotated[Path, typer.Argument(help="JSON downloaded from the review page.")],
+    manifest_path: Annotated[Path, typer.Option("--manifest", help="Gold manifest.")] = (
+        GOLD_MANIFEST
+    ),
+    record: Annotated[Path, typer.Option(help="Where to keep the review.")] = GOLD_REVIEW,
+    output: Annotated[Path, typer.Option(help="Where to write the report.")] = Path(
+        "reports/reading/gold-verification.md"
+    ),
+) -> None:
+    """Score a completed review, keep it with the annotations and write the report."""
+    manifest = load_manifest(manifest_path)
+    annotations = load_annotations(manifest_path.parent, manifest)
+    result = ReviewResult.model_validate_json(result_path.read_text(encoding="utf-8"))
+    scores = score_review(result, annotations, draw_review_sample(manifest))
+    if result_path.resolve() != record.resolve():
+        record.write_text(
+            json.dumps(result.model_dump(mode="json"), indent=2) + "\n", encoding="utf-8"
+        )
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text(render_review_report(result, scores), encoding="utf-8")
+    accepted = sum(s.accepted for s in scores)
+    total = sum(s.units + s.missed for s in scores)
+    console.print(f"[green]written[/green] {output}: {accepted} of {total} accepted")

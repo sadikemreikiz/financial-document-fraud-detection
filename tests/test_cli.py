@@ -152,3 +152,65 @@ def test_reading_check_gold_lists_suspicious_authentic_annotations(tmp_path: Pat
     assert "1 of 3 gold receipts annotated" in result.output
     assert "re-check XA: Tendered - due = change" in result.output
     assert "missing: XB, XF" in result.output
+
+
+def write_gold(tmp_path: Path, doc_ids: tuple[str, ...]) -> Path:
+    manifest = GoldManifest(
+        dataset="findit2", split=Split.TRAIN, seed=0, authentic=doc_ids, forged=()
+    )
+    path = tmp_path / "gold" / "manifest.json"
+    path.parent.mkdir()
+    path.write_text(manifest.model_dump_json(), encoding="utf-8")
+    amounts = {"total_due": ["5.00"]}
+    for doc_id in doc_ids:
+        record = {"doc_id": doc_id, "annotator": "t", "fields": {"amounts": amounts}}
+        (path.parent / f"{doc_id}.json").write_text(json.dumps(record), encoding="utf-8")
+    return path
+
+
+def test_reading_review_gold_writes_a_page_for_the_sample(
+    toy_source: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    runner.invoke(app, ["data", "prepare", "--data-dir", str(toy_source)])
+    train = [d.doc_id for d in load_toy(toy_source / "raw" / "findit2") if d.split is Split.TRAIN]
+    manifest = write_gold(tmp_path, tuple(train))
+    monkeypatch.setattr(docfraud.cli, "draw_review_sample", lambda _: (train[0],))
+    out = tmp_path / "review"
+    args = ["reading", "review-gold", "--data-dir", str(toy_source), "--manifest", str(manifest)]
+    result = runner.invoke(app, [*args, "--output", str(out)])
+    assert result.exit_code == 0, result.output
+    page = (out / "index.html").read_text(encoding="utf-8")
+    assert f'"doc_id": "{train[0]}"' in page
+    assert f"../data/raw/findit2/train/{train[0]}" in page
+
+
+def test_reading_review_gold_needs_annotated_sample(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    manifest = write_gold(tmp_path, ("XA",))
+    monkeypatch.setattr(docfraud.cli, "draw_review_sample", lambda _: ("XA", "XB"))
+    result = runner.invoke(app, ["reading", "review-gold", "--manifest", str(manifest)])
+    assert result.exit_code == 1
+    assert "not annotated yet: XB" in result.output
+
+
+def test_reading_score_review_keeps_the_review_and_writes_a_report(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    manifest = write_gold(tmp_path, ("XA",))
+    monkeypatch.setattr(docfraud.cli, "draw_review_sample", lambda _: ("XA",))
+    review = {
+        "reviewer": "owner",
+        "reviews": [
+            {"doc_id": "XA", "verdicts": [{"unit_id": "amount:total_due:0", "accepted": True}]}
+        ],
+    }
+    downloaded = tmp_path / "gold-review.json"
+    downloaded.write_text(json.dumps(review), encoding="utf-8")
+    record, report = tmp_path / "kept.json", tmp_path / "reports" / "verification.md"
+    args = ["reading", "score-review", str(downloaded), "--manifest", str(manifest)]
+    result = runner.invoke(app, [*args, "--record", str(record), "--output", str(report)])
+    assert result.exit_code == 0, result.output
+    assert "1 of 1 accepted" in result.output
+    assert json.loads(record.read_text(encoding="utf-8"))["reviewer"] == "owner"
+    assert "agreement 1.000" in report.read_text(encoding="utf-8")
