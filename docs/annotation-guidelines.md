@@ -76,6 +76,10 @@ roles; they become tax summary rows (section 5).
 - `description` is the product name as printed; codes such as barcodes or SKUs are left out.
 - `quantity`, `unit_price` and `amount` are recorded when printed. Weighted goods keep their
   decimal quantity. `amount` is the line total.
+- When a line prints several price columns (for example excluding and including tax), the
+  unit price is the column that multiplies with the quantity to the line amount; if none does,
+  it is the first price column. *(Clarified on 2026-10-06, during parser development and before
+  any gold receipt was annotated.)*
 - Informational lines (barcodes alone, "ITEM(S): 4", headers) are not items.
 
 ## 5. Tax summary, counts, dates and merchant

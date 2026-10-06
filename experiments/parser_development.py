@@ -86,9 +86,24 @@ def change_math(f: ReceiptFields) -> bool | None:
     return close(tendered - due, change)
 
 
+UNIQUE_ROLES = (
+    R.SUBTOTAL,
+    R.TOTAL_EXCLUDING_TAX,
+    R.TAX,
+    R.TOTAL_INCLUDING_TAX,
+    R.ROUNDING,
+    R.TOTAL_DUE,
+    R.CHANGE,
+)
+
+
 def repeats_agree(f: ReceiptFields) -> bool | None:
-    """Every amount printed more than once has the same value each time."""
-    repeated = [values for values in f.amounts.values() if len(values) > 1]
+    """Every once-per-receipt amount printed more than once has the same value each time.
+
+    Discounts, service charges and payments can legitimately occur several times with
+    different values (item discounts, split payments), so they are excluded.
+    """
+    repeated = [f.amounts[r] for r in UNIQUE_ROLES if len(f.amounts.get(r, ())) > 1]
     if not repeated:
         return None
     return all(all(close(v, values[0]) for v in values) for values in repeated)
@@ -100,7 +115,7 @@ CHECKS: dict[str, Check] = {
     "Excl. tax + tax = incl. tax": tax_math,
     "Incl. tax + rounding = amount due": rounding_math,
     "Tendered - due = change": change_math,
-    "Repeated amounts agree": repeats_agree,
+    "Repeated once-per-receipt amounts agree": repeats_agree,
 }
 
 

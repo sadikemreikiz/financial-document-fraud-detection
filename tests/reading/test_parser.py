@@ -194,3 +194,45 @@ def test_item_region_ends_at_count_and_tax_rows() -> None:
     )
     assert [i.amount for i in fields.items] == [D("2.10")]
     assert fields.quantity_total == D(1)
+
+
+@pytest.mark.parametrize(
+    ("line", "quantity", "unit", "amount"),
+    [
+        ("11046 2 80.00 84.80 169.60 SR", "2", "84.80", "169.60"),
+        ("2.00 X 17.00 34.00 SR", "2.00", "17.00", "34.00"),
+        ("9556655112694 1 8.40 * 0.00 8.40", "1", "8.40", "8.40"),
+        ("FORGED 2 80.00 84.80 999.60", "2", "80.00", "999.60"),
+    ],
+    ids=["tax-inclusive-column", "decimal-quantity", "asterisk-marker", "no-column-fits"],
+)
+def test_item_columns(line: str, quantity: str, unit: str, amount: str) -> None:
+    (item,) = parse_receipt(rows("ITEM QTY PRICE AMOUNT", line)).items
+    assert (item.quantity, item.unit_price, item.amount) == (D(quantity), D(unit), D(amount))
+
+
+@pytest.mark.parametrize(
+    ("line", "role"),
+    [
+        ("TOTAL AFTER ROUNDING 21.40", AmountRole.TOTAL_DUE),
+        ("AMOUNT TO BE PAID : 25.45", AmountRole.TOTAL_DUE),
+        ("ROUNDING ADJUSTMENT 0.00", AmountRole.ROUNDING),
+    ],
+)
+def test_more_label_variants(line: str, role: AmountRole) -> None:
+    assert set(parse_receipt(rows(line)).amounts) == {role}
+
+
+def test_total_includes_line_is_tax_when_another_total_exists() -> None:
+    fields = parse_receipt(rows("TOTAL ROUNDED 25.40", "TOTAL INCLUDES 6% GST 1.44"))
+    assert fields.amounts == {AmountRole.TOTAL_DUE: (D("25.40"),), AmountRole.TAX: (D("1.44"),)}
+
+
+def test_total_includes_line_is_the_total_when_it_stands_alone() -> None:
+    fields = parse_receipt(rows("TOTAL INCLUDES GST 6% 9.00", "CASH 10.00"))
+    assert fields.amounts[AmountRole.TOTAL_INCLUDING_TAX] == (D("9.00"),)
+    assert AmountRole.TAX not in fields.amounts
+
+
+def test_abbreviated_total() -> None:
+    assert parse_receipt(rows("TL:RM 28.60")).amounts == {AmountRole.TOTAL_DUE: (D("28.60"),)}

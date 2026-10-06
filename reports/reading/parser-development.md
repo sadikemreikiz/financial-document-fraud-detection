@@ -8,13 +8,13 @@ Development receipts: the training split minus the gold set (512 receipts). A re
 
 | Relation | Authentic: holds | Forged: holds |
 |---|---|---|
-| Items add up to a printed total | 71.0 % (196/276) | 62.3 % (33/53) |
-| Quantity x unit price = line amount | 78.5 % (142/181) | 74.2 % (23/31) |
+| Items add up to a printed total | 71.1 % (197/277) | 62.3 % (33/53) |
+| Quantity x unit price = line amount | 86.1 % (99/115) | 77.8 % (14/18) |
 | Excl. tax + tax = incl. tax | 77.6 % (38/49) | 83.3 % (10/12) |
 | Incl. tax + rounding = amount due | 83.9 % (73/87) | 75.0 % (12/16) |
-| Tendered - due = change | 90.0 % (235/261) | 74.5 % (38/51) |
-| Repeated amounts agree | 53.7 % (44/82) | 50.0 % (10/20) |
-| Coverage: amount due found | 69.9 % | 61.9 % |
+| Tendered - due = change | 90.5 % (238/263) | 74.5 % (38/51) |
+| Repeated once-per-receipt amounts agree | 65.1 % (41/63) | 57.1 % (8/14) |
+| Coverage: amount due found | 69.6 % | 60.7 % |
 | Coverage: any item found | 66.1 % | 64.3 % |
 | Coverage: a date found | 98.6 % | 97.6 % |
 
@@ -23,11 +23,11 @@ Development receipts: the training split minus the gold set (512 receipts). A re
 | Relation | Authentic: holds | Forged: holds |
 |---|---|---|
 | Items add up to a printed total | 69.8 % (187/268) | 62.7 % (32/51) |
-| Quantity x unit price = line amount | 77.7 % (136/175) | 75.9 % (22/29) |
+| Quantity x unit price = line amount | 81.1 % (90/111) | 75.0 % (12/16) |
 | Excl. tax + tax = incl. tax | 84.2 % (32/38) | 83.3 % (10/12) |
-| Incl. tax + rounding = amount due | 80.2 % (65/81) | 78.6 % (11/14) |
-| Tendered - due = change | 86.8 % (197/227) | 74.5 % (35/47) |
-| Repeated amounts agree | 59.2 % (45/76) | 52.4 % (11/21) |
-| Coverage: amount due found | 68.9 % | 69.0 % |
+| Incl. tax + rounding = amount due | 80.7 % (67/83) | 78.6 % (11/14) |
+| Tendered - due = change | 86.8 % (198/228) | 74.5 % (35/47) |
+| Repeated once-per-receipt amounts agree | 71.7 % (43/60) | 62.5 % (10/16) |
+| Coverage: amount due found | 68.5 % | 67.9 % |
 | Coverage: any item found | 65.7 % | 63.1 % |
 | Coverage: a date found | 92.5 % | 86.9 % |

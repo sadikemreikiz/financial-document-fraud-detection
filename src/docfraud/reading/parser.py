@@ -20,25 +20,28 @@ _AMOUNT = re.compile(
 )
 _HAS_LETTERS = re.compile(r"[A-Z]{2,}")
 
-# Ordered: the first pattern that matches a label decides its role.
+# Ordered: the first pattern that matches a label decides its role. Tax comes first because tax
+# lines often mention totals ("GST @6% INCLUDED IN TOTAL"); explicit final totals come before
+# rounding because they often mention it ("TOTAL AFTER ROUNDING").
 _ROLE_PATTERNS: tuple[tuple[AmountRole, re.Pattern[str]], ...] = (
-    (
-        AmountRole.TOTAL_DUE,
-        re.compile(
-            r"\bTOTAL\b.*\bAFTER\b|\bROUNDED\b|\b(?:TOTAL|AMT|AMOUNT)\b.*\bPAYABLE\b"
-            r"|\bNETT?\s+TOTAL\b|\bGRAND\b"
-        ),
-    ),
-    (AmountRole.ROUNDING, re.compile(r"\bROUND(?:ING)?\b|\bRND\b|^ADJ(?:USTMENT)?\b")),
-    (AmountRole.CHANGE, re.compile(r"\bCHANGE\b|\bBAKI\b")),
     (
         AmountRole.TAX,
         re.compile(
-            r"\b(?:GST|SST|TAX)\b.*\bINCLUDED\b"
+            r"\b(?:GST|SST|TAX)\b.*\bINCLUDED\b|\bINCLUDES?\b.*\b(?:GST|SST|TAX)\b"
             r"|^(?:TOTAL\s+)?(?:GST|SST|TAX)\b(?!.*\b(?:ID|REG|NO|CODE|SUMMARY|INVOICE)\b)"
             r"|\b(?:GST|SST|TAX) (?:PAYABLE|AMOUNT)\b"
         ),
     ),
+    (
+        AmountRole.TOTAL_DUE,
+        re.compile(
+            r"\bTOTAL\b.*\b(?:AFTER|ROUND(?:ED|ING)?)\b|\bROUNDED\b"
+            r"|\b(?:TOTAL|AMT|AMOUNT)\b.*\bPAYABLE\b|\bNETT?\s+TOTAL\b|\bGRAND\b"
+            r"|\bTO BE PAID\b|\b(?:AMOUNT|BALANCE)\s+DUE\b"
+        ),
+    ),
+    (AmountRole.ROUNDING, re.compile(r"\bROUND(?:ING)?\b|\bRND\b|^ADJ(?:USTMENT)?\b")),
+    (AmountRole.CHANGE, re.compile(r"\bCHANGE\b|\bBAKI\b")),
     (
         AmountRole.TOTAL_EXCLUDING_TAX,
         re.compile(r"\bTOTAL\b.*\bEXC(?:L|LUDING|\.)?\b|\bAMOUNT\b.*\bEXCL"),
@@ -55,9 +58,12 @@ _ROLE_PATTERNS: tuple[tuple[AmountRole, re.Pattern[str]], ...] = (
             r"|\bE-?WALLET\b|\bPAYMENT\b"
         ),
     ),
-    (AmountRole.TOTAL_DUE, re.compile(r"\bTOTAL\b|\bNETT?\b|\bAMOUNT DUE\b|\bGRAND\b")),
+    (AmountRole.TOTAL_DUE, re.compile(r"\bTOTAL\b|^TL\b|\bNETT?\b|\bAMOUNT DUE\b|\bGRAND\b")),
 )
-_EXPLICIT_FINAL = re.compile(r"PAYABLE|ROUNDED|NETT?\b|GRAND|FINAL|AMOUNT DUE|TOTAL DUE|\bAFTER\b")
+_TOTAL_INCLUDES = re.compile(r"^TOTAL\b.*\bINCLUDES?\b")
+_EXPLICIT_FINAL = re.compile(
+    r"PAYABLE|ROUND|NETT?\b|GRAND|FINAL|AMOUNT DUE|TOTAL DUE|\bAFTER\b|TO BE PAID"
+)
 _NOT_A_TOTAL = re.compile(
     r"\bTOTAL\s+(?:QTY|QUANTITY|ITEMS?|PCS|SAVINGS?|DISCOUNT|POINTS?|WEIGHT)\b|\d+\s?%\s*SUPPLIES"
 )
@@ -66,7 +72,9 @@ _SUMMARY_HEADER = re.compile(r"\b(?:GST|SST|TAX)\s+SUMMARY\b|\bTAX CODE\b|\bSUMM
 _SUMMARY_TOTAL = re.compile(r"^TOTAL\b")
 _SUMMARY_ROW = re.compile(r"^(?P<code>[A-Z]{1,3})\b.*?(?P<rate>\d+(?:\.\d+)?)\s?%")
 _ITEM_HEADER = re.compile(r"\b(?:DESCRIPTION|ITEM|PRODUCT|QTY|U\.?\s?PRICE|PRICE|AMT|AMOUNT)\b")
-_QUANTITY = re.compile(r"(?<![\d.])(?P<qty>\d{1,4}(?:\.\d{1,3})?)\s?[Xx*]\s")
+_QUANTITY = re.compile(
+    r"(?<![\d.])(?:(?P<qty>\d{1,4}(?:\.\d{1,3})?)\s?[Xx]|(?P<count>\d{1,3})\s?\*(?=\s+\d))\s"
+)
 _BARE_QUANTITY = re.compile(r"(?:^|\s)(?P<qty>\d{1,3})\s+(?=(?:RM|\$)?\s?-?\d{1,7}\.\d{2}\b)")
 _ITEMS_END = re.compile(
     r"\bTOT(?:AL)?\.?\s*(?:QTY|QUANTITY|ITEMS?)\b|\bITEM\(?S\)?\s*:|\bNO\.?\s*OF\s*ITEMS?\b"
@@ -110,6 +118,7 @@ def parse_receipt(rows: Sequence[Row]) -> ReceiptFields:
     tax_summary: list[TaxSummaryRow] = []
     first_total_row: int | None = None
     in_summary = False
+    inclusive: list[Decimal] = []
 
     for index, text in enumerate(texts):
         if _SUMMARY_HEADER.search(text):
@@ -129,7 +138,10 @@ def parse_receipt(rows: Sequence[Row]) -> ReceiptFields:
                 continue
             if _SUMMARY_TOTAL.search(text) and len(values) >= 2:  # noqa: PLR2004 - amount, tax
                 continue  # the summary table's own total row, not a receipt total
-        for role, value, explicit in _labelled_amounts(text, texts, index):
+        for role, value, explicit, label in _labelled_amounts(text, texts, index):
+            if role is AmountRole.TAX and _TOTAL_INCLUDES.search(label):
+                inclusive.append(value)  # resolved once all totals are known
+                continue
             amounts.setdefault(role, []).append((value, explicit))
             if first_total_row is None and role is not AmountRole.TENDERED:
                 first_total_row = index
@@ -138,7 +150,7 @@ def parse_receipt(rows: Sequence[Row]) -> ReceiptFields:
         merchant=_merchant(texts),
         dates=_dates(texts),
         items=_items(texts, end=first_total_row),
-        amounts=_resolve_plain_totals(amounts),
+        amounts=_resolve_plain_totals(_resolve_inclusive(amounts, inclusive)),
         tax_summary=tuple(tax_summary),
         item_count=_first_int(_ITEM_COUNT, texts),
         quantity_total=_first_decimal(_QTY_TOTAL, texts),
@@ -172,7 +184,7 @@ def _role(label: str) -> tuple[AmountRole, bool] | None:
 
 def _labelled_amounts(
     text: str, texts: Sequence[str], index: int
-) -> list[tuple[AmountRole, Decimal, bool]]:
+) -> list[tuple[AmountRole, Decimal, bool, str]]:
     """Pair each role label in a row with the amount that follows it.
 
     A row like ``CASH 52.00 CHANGE 25.00`` yields two pairs. A label without an amount takes the
@@ -188,7 +200,7 @@ def _labelled_amounts(
     if tail and _HAS_LETTERS.search(tail):
         pieces.append((tail, None))
 
-    pairs: list[tuple[AmountRole, Decimal, bool]] = []
+    pairs: list[tuple[AmountRole, Decimal, bool, str]] = []
     for position, (label, printed) in enumerate(pieces):
         found = _role(label) if _HAS_LETTERS.search(label) else None
         if found is None:
@@ -199,7 +211,7 @@ def _labelled_amounts(
             printed if printed is not None or not is_last else _amount_only_row(texts, index + 1)
         )
         if value is not None:
-            pairs.append((role, value, explicit))
+            pairs.append((role, value, explicit, label))
     return pairs
 
 
@@ -208,6 +220,21 @@ def _amount_only_row(texts: Sequence[str], index: int) -> Decimal | None:
         return None
     values = _amounts(texts[index])
     return values[-1] if len(values) == 1 else None
+
+
+def _resolve_inclusive(
+    amounts: dict[AmountRole, list[tuple[Decimal, bool]]], inclusive: list[Decimal]
+) -> dict[AmountRole, list[tuple[Decimal, bool]]]:
+    """Resolve lines such as ``TOTAL INCLUDES GST 6% 9.00``.
+
+    Receipts use this wording both for the tax contained in the total and for the total itself.
+    If another final total is printed, the line states the tax; otherwise it is the total.
+    """
+    if inclusive:
+        has_total = AmountRole.TOTAL_DUE in amounts or AmountRole.TOTAL_INCLUDING_TAX in amounts
+        role = AmountRole.TAX if has_total else AmountRole.TOTAL_INCLUDING_TAX
+        amounts.setdefault(role, []).extend((value, False) for value in inclusive)
+    return amounts
 
 
 def _resolve_plain_totals(
@@ -255,7 +282,13 @@ def _items(texts: Sequence[str], *, end: int | None) -> tuple[LineItem, ...]:
                 pending.append(text)
             continue
         quantity_match = _QUANTITY.search(text) or _BARE_QUANTITY.search(text)
-        description = text[: quantity_match.start("qty")] if quantity_match else text
+        quantity: Decimal | None = None
+        description = text
+        if quantity_match:
+            group = "qty" if quantity_match["qty"] is not None else "count"
+            quantity = Decimal(quantity_match[group])
+            description = text[: quantity_match.start(group)]
+            values = _amounts(text[quantity_match.end() :]) or values
         description = _QUANTITY.sub(" ", _AMOUNT.sub(" ", description))
         description = re.sub(r"\b[A-Z]{1,3}\b$|[^A-Z0-9()&./\- ]", " ", description.strip())
         description = re.sub(r"\s+", " ", description).strip()
@@ -265,12 +298,30 @@ def _items(texts: Sequence[str], *, end: int | None) -> tuple[LineItem, ...]:
         items.append(
             LineItem(
                 description=description,
-                quantity=Decimal(quantity_match["qty"]) if quantity_match else None,
-                unit_price=values[0] if len(values) >= 2 else None,  # noqa: PLR2004
+                quantity=quantity,
+                unit_price=_unit_price(values[:-1], quantity, values[-1]),
                 amount=values[-1],
             )
         )
     return tuple(items)
+
+
+def _unit_price(
+    prices: Sequence[Decimal], quantity: Decimal | None, amount: Decimal
+) -> Decimal | None:
+    """The unit price column of an item row.
+
+    Rows may print several price columns (for example excluding and including tax). The unit
+    price is the column for which quantity x price equals the amount; if none does, the first
+    column is taken, so a manipulated line still reads as inconsistent.
+    """
+    if not prices:
+        return None
+    if quantity is not None:
+        for price in prices:
+            if abs(quantity * price - amount) <= Decimal("0.01"):
+                return price
+    return prices[0]
 
 
 def _merchant(texts: Sequence[str]) -> str | None:
