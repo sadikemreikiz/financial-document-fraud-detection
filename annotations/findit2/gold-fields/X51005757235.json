@@ -1,0 +1,52 @@
+{
+  "doc_id": "X51005757235",
+  "annotator": "claude",
+  "fields": {
+    "merchant": "AEON CO. (M) BHD",
+    "dates": [
+      "2018-03-09"
+    ],
+    "items": [
+      {
+        "description": "BIO ZIP POWDER",
+        "quantity": "1",
+        "unit_price": null,
+        "amount": "15.50"
+      },
+      {
+        "description": "BIO ZIP POWDER",
+        "quantity": "1",
+        "unit_price": null,
+        "amount": "15.50"
+      }
+    ],
+    "amounts": {
+      "subtotal": [
+        "31.00"
+      ],
+      "total_including_tax": [
+        "31.00"
+      ],
+      "total_due": [
+        "31.00"
+      ],
+      "tendered": [
+        "50.00"
+      ],
+      "change": [
+        "19.00"
+      ]
+    },
+    "tax_summary": [
+      {
+        "code": "SR",
+        "rate_percent": "6",
+        "taxable_amount": "29.24",
+        "tax": "1.76"
+      }
+    ],
+    "item_count": 2,
+    "quantity_total": null
+  },
+  "notes": "'Change Amt' 19.00 sits on the Item Count row. The number at the top is a benign digital annotation."
+}

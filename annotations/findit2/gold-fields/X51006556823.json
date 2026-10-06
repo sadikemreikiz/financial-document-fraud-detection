@@ -1,0 +1,61 @@
+{
+  "doc_id": "X51006556823",
+  "annotator": "claude",
+  "fields": {
+    "merchant": "GARDENIA BAKERIES (KL) SDN BHD",
+    "dates": [
+      "2017-09-30"
+    ],
+    "items": [
+      {
+        "description": "O.C. WHITE",
+        "quantity": "10",
+        "unit_price": "2.13",
+        "amount": "21.30"
+      },
+      {
+        "description": "O.C JUMBO",
+        "quantity": "-2",
+        "unit_price": "2.97",
+        "amount": "-5.94"
+      },
+      {
+        "description": "CR-VANILLA",
+        "quantity": "-5",
+        "unit_price": "0.72",
+        "amount": "-3.60"
+      },
+      {
+        "description": "CR-B'SCOTCH",
+        "quantity": "20",
+        "unit_price": "0.72",
+        "amount": "14.40"
+      }
+    ],
+    "amounts": {
+      "tax": [
+        "0.64"
+      ],
+      "total_due": [
+        "26.80"
+      ]
+    },
+    "tax_summary": [
+      {
+        "code": "",
+        "rate_percent": "0",
+        "taxable_amount": "15.36",
+        "tax": null
+      },
+      {
+        "code": "",
+        "rate_percent": "6",
+        "taxable_amount": "10.80",
+        "tax": null
+      }
+    ],
+    "item_count": null,
+    "quantity_total": null
+  },
+  "notes": "Delivery note: quantity is the Sale column (negative for returns). The bill-to block names the customer. Per-rate supply totals are tax summary rows; 'Total 0% supplies' is printed twice and recorded once."
+}

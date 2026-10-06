@@ -1,0 +1,67 @@
+{
+  "doc_id": "X51005663298",
+  "annotator": "claude",
+  "fields": {
+    "merchant": "AL MENDIS-THE MINES",
+    "dates": [
+      "2018-03-21"
+    ],
+    "items": [
+      {
+        "description": "MAGHGOUT LAMB W 1SL",
+        "quantity": "1",
+        "unit_price": "22.50",
+        "amount": "22.50"
+      },
+      {
+        "description": "GARDEN SALAD (S)",
+        "quantity": "1",
+        "unit_price": "5.90",
+        "amount": "5.90"
+      },
+      {
+        "description": "TEA POT BIG",
+        "quantity": "1",
+        "unit_price": "12.90",
+        "amount": "12.90"
+      }
+    ],
+    "amounts": {
+      "total_excluding_tax": [
+        "41.30"
+      ],
+      "service_charge": [
+        "4.13"
+      ],
+      "tax": [
+        "2.73"
+      ],
+      "total_including_tax": [
+        "48.16"
+      ],
+      "rounding": [
+        "-0.01"
+      ],
+      "total_due": [
+        "48.15"
+      ],
+      "tendered": [
+        "50.00"
+      ],
+      "change": [
+        "1.85"
+      ]
+    },
+    "tax_summary": [
+      {
+        "code": "SR",
+        "rate_percent": "6",
+        "taxable_amount": "45.43",
+        "tax": "2.73"
+      }
+    ],
+    "item_count": null,
+    "quantity_total": null
+  },
+  "notes": "Trading name first, company ZAWIAJAYA FOOD N BEVERAGE SDN BHD second. Handwritten number at the top is benign."
+}

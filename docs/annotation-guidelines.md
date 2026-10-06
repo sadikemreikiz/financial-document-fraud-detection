@@ -75,7 +75,8 @@ roles; they become tax summary rows (section 5).
   credit notes).
 - `description` is the product name as printed; codes such as barcodes or SKUs are left out.
 - `quantity`, `unit_price` and `amount` are recorded when printed. Weighted goods keep their
-  decimal quantity. `amount` is the line total.
+  decimal quantity. `amount` is the line total. On delivery notes that print issued, exchanged
+  and sold columns, the quantity is the sold (net) column, which is negative for returns.
 - When a line prints several price columns (for example excluding and including tax), the
   unit price is the column that multiplies with the quantity to the line amount; if none does,
   it is the first price column. *(Clarified on 2026-10-06, during parser development and before
@@ -88,9 +89,13 @@ roles; they become tax summary rows (section 5).
   or empty), rate in percent, taxable amount and tax, as printed.
 - **Counts**: `item_count` from labels like `ITEM(S)` or `NO. OF ITEMS`; `quantity_total` from
   `TOTAL QTY` or `QTY(S)`.
-- **Dates**: every printed transaction date, in order, normalised to `YYYY-MM-DD`. Malaysian
-  receipts use day-month order; two-digit years are read as 20YY. Times are not recorded.
-- **Merchant**: the business name as printed in the header.
+- **Dates**: every distinct printed date, once, in order of first appearance, normalised to
+  `YYYY-MM-DD`. Malaysian receipts use day-month order unless the day-month reading is
+  impossible (as in `12/28/2017`); two-digit years are read as 20YY. Times are not recorded.
+  *(Repetition and month-day order clarified on 2026-10-06, at the first gold receipt.)*
+- **Merchant**: the first business name printed in the header, whether that is a trading name
+  or a company name, without its company registration number.
+  Benign handwritten or digital notes above the header are not part of it. *(Clarified on 2026-10-06, at the sixth gold receipt.)*
 
 ## 6. File format
 

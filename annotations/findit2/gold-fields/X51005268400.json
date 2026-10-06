@@ -1,0 +1,48 @@
+{
+  "doc_id": "X51005268400",
+  "annotator": "claude",
+  "fields": {
+    "merchant": "RESTORAN HASSANBISTRO",
+    "dates": [
+      "2017-12-28"
+    ],
+    "items": [
+      {
+        "description": "MAKANAN",
+        "quantity": "1",
+        "unit_price": "15.00",
+        "amount": "15.00"
+      }
+    ],
+    "amounts": {
+      "subtotal": [
+        "15.00"
+      ],
+      "discount": [
+        "0.00"
+      ],
+      "total_excluding_tax": [
+        "15.00"
+      ],
+      "tax": [
+        "0.00"
+      ],
+      "total_including_tax": [
+        "15.00"
+      ],
+      "rounding": [
+        "0.00"
+      ],
+      "tendered": [
+        "15.00"
+      ],
+      "change": [
+        "0.00"
+      ]
+    },
+    "tax_summary": [],
+    "item_count": 1,
+    "quantity_total": "1.00"
+  },
+  "notes": "Date printed month-first (12/28/2017) and again as 2017-12-28. No amount labelled as due; the final total is 'Total Incl. 6% GST'."
+}

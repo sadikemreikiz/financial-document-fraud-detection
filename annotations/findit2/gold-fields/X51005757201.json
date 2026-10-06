@@ -1,0 +1,133 @@
+{
+  "doc_id": "X51005757201",
+  "annotator": "claude",
+  "fields": {
+    "merchant": "AEON CO. (M) BHD.",
+    "dates": [
+      "2018-02-28"
+    ],
+    "items": [
+      {
+        "description": "V-CHOR FRA",
+        "quantity": "1",
+        "unit_price": null,
+        "amount": "16.90"
+      },
+      {
+        "description": "CE 13312 LONG H",
+        "quantity": "1",
+        "unit_price": null,
+        "amount": "10.45"
+      },
+      {
+        "description": "BL HARUMI WASHI",
+        "quantity": "1",
+        "unit_price": null,
+        "amount": "7.90"
+      },
+      {
+        "description": "BL HARUMI WASHI",
+        "quantity": "1",
+        "unit_price": null,
+        "amount": "7.90"
+      },
+      {
+        "description": "BL HARUMI WASHI",
+        "quantity": "1",
+        "unit_price": null,
+        "amount": "7.90"
+      },
+      {
+        "description": "LIDI BROOM W/P",
+        "quantity": "1",
+        "unit_price": null,
+        "amount": "4.10"
+      },
+      {
+        "description": "E-71/MP WATER D",
+        "quantity": "1",
+        "unit_price": null,
+        "amount": "4.90"
+      },
+      {
+        "description": "UNICORN 24MMX",
+        "quantity": "1",
+        "unit_price": null,
+        "amount": "8.90"
+      },
+      {
+        "description": "DISC 10% @8.01",
+        "quantity": null,
+        "unit_price": null,
+        "amount": "-0.89"
+      },
+      {
+        "description": "SW CE3914B NYL",
+        "quantity": "1",
+        "unit_price": null,
+        "amount": "7.30"
+      },
+      {
+        "description": "18MMX1 WHITE D",
+        "quantity": "1",
+        "unit_price": null,
+        "amount": "2.50"
+      },
+      {
+        "description": "DISC 10% @2.25",
+        "quantity": null,
+        "unit_price": null,
+        "amount": "-0.25"
+      },
+      {
+        "description": "CABLE BOX",
+        "quantity": "1",
+        "unit_price": null,
+        "amount": "18.90"
+      },
+      {
+        "description": "DISC 41% @11.16",
+        "quantity": null,
+        "unit_price": null,
+        "amount": "-7.74"
+      },
+      {
+        "description": "PLASTICS BAG",
+        "quantity": "1",
+        "unit_price": null,
+        "amount": "0.20"
+      }
+    ],
+    "amounts": {
+      "subtotal": [
+        "88.97"
+      ],
+      "total_including_tax": [
+        "88.97"
+      ],
+      "rounding": [
+        "-0.02"
+      ],
+      "total_due": [
+        "88.95"
+      ],
+      "tendered": [
+        "100.00"
+      ],
+      "change": [
+        "11.05"
+      ]
+    },
+    "tax_summary": [
+      {
+        "code": "SR",
+        "rate_percent": "6",
+        "taxable_amount": "83.93",
+        "tax": "5.04"
+      }
+    ],
+    "item_count": 12,
+    "quantity_total": null
+  },
+  "notes": "Item-level discount lines are negative items. 'Total After Adj Incl GST' is the amount due; 'Charge Amt' is the change. The number at the top is a benign digital annotation."
+}

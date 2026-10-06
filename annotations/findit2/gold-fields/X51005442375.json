@@ -1,0 +1,52 @@
+{
+  "doc_id": "X51005442375",
+  "annotator": "claude",
+  "fields": {
+    "merchant": "UNIHAKKA INTERNATIONAL SDN BHD",
+    "dates": [
+      "2018-03-25"
+    ],
+    "items": [
+      {
+        "description": "4 VEGE",
+        "quantity": "1",
+        "unit_price": "5.50",
+        "amount": "5.50"
+      },
+      {
+        "description": "FRIED NOODLE (L)",
+        "quantity": "1",
+        "unit_price": "3.00",
+        "amount": "3.00"
+      }
+    ],
+    "amounts": {
+      "total_including_tax": [
+        "8.50"
+      ],
+      "tax": [
+        "0.48"
+      ],
+      "total_due": [
+        "8.50"
+      ],
+      "tendered": [
+        "8.50"
+      ],
+      "change": [
+        "0.00"
+      ]
+    },
+    "tax_summary": [
+      {
+        "code": "SR",
+        "rate_percent": "6",
+        "taxable_amount": "8.02",
+        "tax": "0.48"
+      }
+    ],
+    "item_count": null,
+    "quantity_total": null
+  },
+  "notes": "Prices include GST. 'Total Amount' precedes 'Nett Total', so it is recorded as the total including tax. Handwritten note at the top is benign."
+}

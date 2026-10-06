@@ -1,0 +1,39 @@
+{
+  "doc_id": "X51005745244",
+  "annotator": "claude",
+  "fields": {
+    "merchant": "SUBWAY#42210-0",
+    "dates": [
+      "2018-02-14"
+    ],
+    "items": [
+      {
+        "description": "(MY) EDV MEAL",
+        "quantity": "1",
+        "unit_price": null,
+        "amount": "11.90"
+      }
+    ],
+    "amounts": {
+      "total_due": [
+        "11.90"
+      ],
+      "tendered": [
+        "11.90"
+      ],
+      "change": [
+        "0.00"
+      ],
+      "tax": [
+        "0.67"
+      ],
+      "total_excluding_tax": [
+        "11.23"
+      ]
+    },
+    "tax_summary": [],
+    "item_count": null,
+    "quantity_total": null
+  },
+  "notes": "The meal's components (sub, drink, cookie) are not priced separately. The company URBAN IDEA SDN BHD is printed below the trading name. Handwritten '11-90' is benign."
+}
