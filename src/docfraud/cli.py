@@ -25,6 +25,8 @@ from docfraud.data.gold import (
     save_manifest,
 )
 from docfraud.data.gold_review import (
+    REVIEW_AUTHENTIC,
+    REVIEW_FORGED,
     ReviewResult,
     draw_review_sample,
     image_url,
@@ -219,6 +221,8 @@ def reading_check_gold(
 
 
 GOLD_REVIEW = Path("annotations/findit2/gold-review.json")
+ReviewAuthentic = Annotated[int, typer.Option(help="Authentic receipts in the review sample.")]
+ReviewForged = Annotated[int, typer.Option(help="Forged receipts in the review sample.")]
 GOLD_RESOLUTIONS = Path("annotations/findit2/gold-review-resolutions.json")
 
 
@@ -231,11 +235,13 @@ def reading_review_gold(
     output: Annotated[Path, typer.Option(help="Directory for the review page.")] = Path(
         "artifacts/gold-review"
     ),
+    authentic: ReviewAuthentic = REVIEW_AUTHENTIC,
+    forged: ReviewForged = REVIEW_FORGED,
 ) -> None:
     """Write a local page for the owner to verify a seeded sample of gold annotations."""
     manifest = load_manifest(manifest_path)
     annotations = load_annotations(manifest_path.parent, manifest)
-    sample = draw_review_sample(manifest)
+    sample = draw_review_sample(manifest, n_authentic=authentic, n_forged=forged)
     missing = sorted(set(sample) - set(annotations))
     if missing:
         console.print(f"[red]not annotated yet:[/red] {', '.join(missing)}")
@@ -250,7 +256,7 @@ def reading_review_gold(
 
 
 @reading_app.command("score-review")
-def reading_score_review(
+def reading_score_review(  # noqa: PLR0913, PLR0917 - one option per input
     result_path: Annotated[Path, typer.Argument(help="JSON downloaded from the review page.")],
     manifest_path: Annotated[Path, typer.Option("--manifest", help="Gold manifest.")] = (
         GOLD_MANIFEST
@@ -262,12 +268,15 @@ def reading_score_review(
     output: Annotated[Path, typer.Option(help="Where to write the report.")] = Path(
         "reports/reading/gold-verification.md"
     ),
+    authentic: ReviewAuthentic = REVIEW_AUTHENTIC,
+    forged: ReviewForged = REVIEW_FORGED,
 ) -> None:
     """Score a completed review, keep it with the annotations and write the report."""
     manifest = load_manifest(manifest_path)
     annotations = load_annotations(manifest_path.parent, manifest)
     result = ReviewResult.model_validate_json(result_path.read_text(encoding="utf-8"))
-    scores = score_review(result, annotations, draw_review_sample(manifest))
+    sample = draw_review_sample(manifest, n_authentic=authentic, n_forged=forged)
+    scores = score_review(result, annotations, sample)
     if result_path.resolve() != record.resolve():
         record.write_text(
             json.dumps(result.model_dump(mode="json"), indent=2) + "\n", encoding="utf-8"
@@ -276,7 +285,8 @@ def reading_score_review(
     resolved: dict[str, str] = (
         json.loads(resolutions.read_text(encoding="utf-8")) if resolutions.is_file() else {}
     )
-    output.write_text(render_review_report(result, scores, resolved), encoding="utf-8")
+    report = render_review_report(result, scores, resolved, sizes=(authentic, forged))
+    output.write_text(report, encoding="utf-8")
     accepted = sum(s.accepted for s in scores)
     total = sum(s.units + s.missed for s in scores)
     console.print(f"[green]written[/green] {output}: {accepted} of {total} accepted")

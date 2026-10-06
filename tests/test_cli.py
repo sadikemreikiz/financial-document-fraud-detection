@@ -184,7 +184,7 @@ def test_reading_review_gold_writes_a_page_for_the_sample(
     runner.invoke(app, ["data", "prepare", "--data-dir", str(toy_source)])
     train = [d.doc_id for d in load_toy(toy_source / "raw" / "findit2") if d.split is Split.TRAIN]
     manifest = write_gold(tmp_path, tuple(train))
-    monkeypatch.setattr(docfraud.cli, "draw_review_sample", lambda _: (train[0],))
+    monkeypatch.setattr(docfraud.cli, "draw_review_sample", lambda *_, **__: (train[0],))
     out = tmp_path / "review"
     args = ["reading", "review-gold", "--data-dir", str(toy_source), "--manifest", str(manifest)]
     result = runner.invoke(app, [*args, "--output", str(out)])
@@ -198,7 +198,7 @@ def test_reading_review_gold_needs_annotated_sample(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     manifest = write_gold(tmp_path, ("XA",))
-    monkeypatch.setattr(docfraud.cli, "draw_review_sample", lambda _: ("XA", "XB"))
+    monkeypatch.setattr(docfraud.cli, "draw_review_sample", lambda *_, **__: ("XA", "XB"))
     result = runner.invoke(app, ["reading", "review-gold", "--manifest", str(manifest)])
     assert result.exit_code == 1
     assert "not annotated yet: XB" in result.output
@@ -208,7 +208,7 @@ def test_reading_score_review_keeps_the_review_and_writes_a_report(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     manifest = write_gold(tmp_path, ("XA",))
-    monkeypatch.setattr(docfraud.cli, "draw_review_sample", lambda _: ("XA",))
+    monkeypatch.setattr(docfraud.cli, "draw_review_sample", lambda *_, **__: ("XA",))
     review = {
         "reviewer": "owner",
         "reviews": [
@@ -230,7 +230,7 @@ def test_reading_score_review_reports_resolutions(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     manifest = write_gold(tmp_path, ("XA",))
-    monkeypatch.setattr(docfraud.cli, "draw_review_sample", lambda _: ("XA",))
+    monkeypatch.setattr(docfraud.cli, "draw_review_sample", lambda *_, **__: ("XA",))
     verdict = {"unit_id": "amount:total_due:0", "accepted": False, "comment": "5.50?"}
     review = {"reviewer": "owner", "reviews": [{"doc_id": "XA", "verdicts": [verdict]}]}
     downloaded = tmp_path / "gold-review.json"
