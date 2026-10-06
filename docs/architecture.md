@@ -1,0 +1,84 @@
+# Architecture
+
+This is the target architecture. It is implemented phase by phase (see the
+[project charter](project-charter.md#roadmap)); sections describe intent until the corresponding
+phase is complete. The rationale is in [ADR-0005](decisions/0005-evidence-based-architecture.md)
+and [ADR-0006](decisions/0006-llm-placement.md).
+
+## Overview
+
+```mermaid
+flowchart TD
+    IN["Document input<br/>dataset adapter or upload"] --> READ
+
+    subgraph READ["1 · Reading"]
+        NORM["Image normalisation<br/>grayscale, no alpha"]
+        OCR["OCR with coordinates"]
+        EXT["Field extraction<br/>parser or LLM → schema"]
+    end
+
+    READ --> DETECT
+
+    subgraph DETECT["2 · Detection → findings"]
+        ARI["Accounting rules"]
+        FOR["Pixel forensics"]
+        CMV["Copy-move"]
+        META["File metadata<br/>(practical track only)"]
+    end
+
+    DETECT --> LINK["3 · Cross-modal linking<br/>region ↔ field ↔ broken rule"]
+    LINK --> FUS["4 · Calibrated fusion"]
+    FUS --> POL["5 · Decision policy<br/>accept · review · reject"]
+    POL --> REP["6 · Audit report<br/>every document"]
+    POL -->|review only| AGENT["Investigation agent<br/>LLM with tool use"]
+
+    classDef llm fill:#FAECE7,stroke:#993C1D,color:#712B13
+    classDef learned fill:#EEEDFE,stroke:#534AB7,color:#3C3489
+    class EXT,AGENT llm
+    class FOR,FUS learned
+```
+
+Purple components are trained models, orange components use an LLM, everything else is
+deterministic code.
+
+## Core data model
+
+| Type | Meaning |
+|---|---|
+| `Document` | One document instance: identifier, source dataset and source document identity, image, optional transcript, label and annotated regions when known, split assignment |
+| `Token` | A recognised word with its bounding box and confidence |
+| `ReceiptFields` | Structured content (line items, subtotal, tax, rounding, total, tendered, change, dates, merchant) where each value keeps a reference to its source tokens |
+| `Finding` | One piece of evidence: detector, type, score, location (bounding boxes and/or fields), human-readable reason and machine-readable details |
+| `Assessment` | Calibrated fraud probability, decision, and the findings that support it |
+
+`Finding` is the contract between layers. Detectors produce findings, linking relates them,
+fusion consumes them and reporting renders them. A report cannot state anything that is not a
+finding.
+
+## Package layout
+
+| Module | Responsibility | Phase |
+|---|---|---|
+| `docfraud.data` | Dataset adapters, the `Document` model, split handling with the test lock | 1 |
+| `docfraud.reading` | Image normalisation, OCR, field extraction | 2 |
+| `docfraud.detectors` | Accounting rules, pixel forensics, copy-move, file metadata | 3–5 |
+| `docfraud.evaluation` | Metrics, bootstrap, cross-validation, run records | 3 |
+| `docfraud.synthesis` | Synthetic forgery engine (training data only) | 4 |
+| `docfraud.linking` | Cross-modal evidence linking | 5 |
+| `docfraud.fusion` | Calibration and fusion models | 5 |
+| `docfraud.decision` | Decision policy | 5 |
+| `docfraud.reporting` | Audit reports | 5 |
+| `docfraud.llm` | Provider interface, LLM extraction, investigation agent | 6 |
+| `docfraud.api`, `docfraud.cli` | HTTP API and command line | 0, 7 |
+
+Modules are created when their phase starts, not before.
+
+## Extension points
+
+| To add | Implement | Nothing else changes because |
+|---|---|---|
+| A dataset | A dataset adapter that yields `Document`s | Detectors only see `Document`s; documents without transcripts are read by OCR |
+| An accounting rule | A rule function with tests | The rule engine collects rules from a registry |
+| A document type (e.g. invoices) | A field schema and parser profile | Rules operate on structured fields |
+| A detector | The detector interface, emitting `Finding`s | Fusion learns the new evidence's weight on validation |
+| An OCR engine or LLM provider | The respective interface | Callers depend on the interface only |
