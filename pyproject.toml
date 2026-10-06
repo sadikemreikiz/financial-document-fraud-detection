@@ -17,8 +17,10 @@ classifiers = [
 ]
 dependencies = [
     "numpy>=2.5.3",
+    "onnxruntime>=1.30.0",
     "pillow>=12.3.0",
     "pydantic>=2.13.5",
+    "rapidocr>=3.9.2",
     "typer>=0.27.2",
 ]
 
@@ -84,7 +86,7 @@ convention = "google"
 python_version = "3.14"
 strict = true
 plugins = ["pydantic.mypy"]
-files = ["src", "tests"]
+files = ["src", "tests", "experiments"]
 warn_unreachable = true
 enable_error_code = ["ignore-without-code", "redundant-expr", "truthy-bool"]
 
@@ -97,6 +99,7 @@ filterwarnings = ["error"]
 markers = [
     "data: needs the downloaded dataset under data/ (skipped in CI)",
     "slow: takes more than a few seconds",
+    "models: runs a real OCR or ML model (CPU, a few seconds)",
 ]
 
 [tool.coverage.run]
@@ -111,6 +114,10 @@ exclude_also = [
     "if TYPE_CHECKING:",
     "raise NotImplementedError",
 ]
+
+[[tool.mypy.overrides]]
+module = ["doctr.*"]
+ignore_missing_imports = true
 
 [tool.pydantic-mypy]
 init_forbid_extra = true

@@ -3,6 +3,8 @@ import hashlib
 import shutil
 from pathlib import Path
 
+import numpy as np
+import numpy.typing as npt
 import pytest
 from typer.testing import CliRunner
 
@@ -11,6 +13,8 @@ from docfraud import __version__
 from docfraud.cli import app
 from docfraud.data.download import SOURCES, DatasetSource
 from docfraud.data.findit import load_findit2
+from docfraud.data.splits import TestSetLockedError
+from docfraud.reading.ocr import OcrResult
 
 runner = CliRunner()
 
@@ -87,3 +91,31 @@ def test_data_audit_writes_report(toy_source: Path, tmp_path: Path) -> None:
 def test_unknown_dataset_is_rejected() -> None:
     result = runner.invoke(app, ["data", "prepare", "nope"])
     assert result.exit_code != 0
+
+
+class FakeOcr:
+    identifier = "fake-ocr"
+
+    def recognize(self, image: npt.NDArray[np.uint8]) -> OcrResult:
+        return OcrResult(
+            engine=self.identifier, width=image.shape[1], height=image.shape[0], tokens=()
+        )
+
+
+def test_reading_ocr_caches_unlocked_splits_only(
+    toy_source: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    runner.invoke(app, ["data", "prepare", "--data-dir", str(toy_source)])
+    monkeypatch.setattr(docfraud.cli, "RapidOcrEngine", FakeOcr)
+    cache = tmp_path / "ocr"
+    result = runner.invoke(
+        app, ["reading", "ocr", "--data-dir", str(toy_source), "--cache", str(cache)]
+    )
+    assert result.exit_code == 0, result.output
+    assert "cached 4 pages" in result.output
+    locked = runner.invoke(
+        app,
+        ["reading", "ocr", "--split", "test", "--data-dir", str(toy_source), "--cache", str(cache)],
+    )
+    assert locked.exit_code != 0
+    assert isinstance(locked.exception, TestSetLockedError)
