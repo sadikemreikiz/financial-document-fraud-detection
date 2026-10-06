@@ -1,0 +1,55 @@
+{
+  "doc_id": "X51008123586",
+  "annotator": "claude",
+  "fields": {
+    "merchant": "MYNEWS RETAIL SB",
+    "dates": [
+      "2018-06-29"
+    ],
+    "items": [
+      {
+        "description": "HE-333-3S UNICORN BALL PEN BLUE",
+        "quantity": "1",
+        "unit_price": "1.90",
+        "amount": "1.90"
+      },
+      {
+        "description": "HE-3S 70 UNICORN MARKER BK",
+        "quantity": "1",
+        "unit_price": "4.50",
+        "amount": "4.50"
+      },
+      {
+        "description": "MR.BANANA 140G",
+        "quantity": "1",
+        "unit_price": "1.30",
+        "amount": "1.30"
+      }
+    ],
+    "amounts": {
+      "subtotal": [
+        "7.70"
+      ],
+      "total_due": [
+        "7.70"
+      ],
+      "tendered": [
+        "8.00"
+      ],
+      "change": [
+        "0.30"
+      ]
+    },
+    "tax_summary": [
+      {
+        "code": "SR",
+        "rate_percent": "0",
+        "taxable_amount": "7.70",
+        "tax": "0.00"
+      }
+    ],
+    "item_count": null,
+    "quantity_total": "3"
+  },
+  "notes": "The header opens with a greeting naming the brand (mynews.com) and the outlet name OASIS VILLAGE; the first business name is the company MYNEWS RETAIL SB. Model codes inside the item name line are kept, as on X51006619698. Per-item discount column is 0.00."
+}

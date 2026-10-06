@@ -1,0 +1,61 @@
+{
+  "doc_id": "X51008142030",
+  "annotator": "claude",
+  "fields": {
+    "merchant": "ONE ONE THREE SEAFOOD RESTAURANT SDN BHD",
+    "dates": [
+      "2018-06-05"
+    ],
+    "items": [
+      {
+        "description": "OMELLETE ITEM",
+        "quantity": "1",
+        "unit_price": null,
+        "amount": "15.00"
+      },
+      {
+        "description": "VEGE ITEM (S)",
+        "quantity": "1",
+        "unit_price": null,
+        "amount": "10.00"
+      },
+      {
+        "description": "RICE W SEAFOOD /MEAT ITEM SINGLE",
+        "quantity": "1",
+        "unit_price": null,
+        "amount": "22.00"
+      },
+      {
+        "description": "BEVERAGE",
+        "quantity": "1",
+        "unit_price": null,
+        "amount": "5.00"
+      }
+    ],
+    "amounts": {
+      "total_excluding_tax": [
+        "52.00"
+      ],
+      "total_including_tax": [
+        "52.00"
+      ],
+      "total_due": [
+        "52.00"
+      ],
+      "tendered": [
+        "52.00"
+      ]
+    },
+    "tax_summary": [
+      {
+        "code": "SR",
+        "rate_percent": "0",
+        "taxable_amount": "52.00",
+        "tax": "0.00"
+      }
+    ],
+    "item_count": null,
+    "quantity_total": null
+  },
+  "notes": "Description is printed below each quantity row; a blanked-out area follows each quantity. The closing date is the same day and recorded once."
+}

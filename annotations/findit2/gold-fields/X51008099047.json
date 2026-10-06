@@ -1,0 +1,55 @@
+{
+  "doc_id": "X51008099047",
+  "annotator": "claude",
+  "fields": {
+    "merchant": "RESTORAN WAN SHENG",
+    "dates": [
+      "2018-06-21"
+    ],
+    "items": [
+      {
+        "description": "TEH (B)",
+        "quantity": "1",
+        "unit_price": "2.10",
+        "amount": "2.10"
+      },
+      {
+        "description": "CHAM (B)",
+        "quantity": "1",
+        "unit_price": "2.10",
+        "amount": "2.10"
+      },
+      {
+        "description": "TAKE AWAY",
+        "quantity": "2",
+        "unit_price": "0.20",
+        "amount": "0.40"
+      }
+    ],
+    "amounts": {
+      "total_excluding_tax": [
+        "4.60"
+      ],
+      "total_including_tax": [
+        "4.60"
+      ],
+      "total_due": [
+        "4.60"
+      ],
+      "tendered": [
+        "4.60"
+      ]
+    },
+    "tax_summary": [
+      {
+        "code": "ZRL",
+        "rate_percent": "0",
+        "taxable_amount": "4.60",
+        "tax": "0.00"
+      }
+    ],
+    "item_count": null,
+    "quantity_total": "4"
+  },
+  "notes": "Same layout as X51005711401, zero-rated (June 2018), so no GST payable line is printed. The take-away fee is an item."
+}

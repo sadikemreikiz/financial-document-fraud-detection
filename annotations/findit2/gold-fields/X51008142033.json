@@ -1,0 +1,58 @@
+{
+  "doc_id": "X51008142033",
+  "annotator": "claude",
+  "fields": {
+    "merchant": "ONE ONE THREE SEAFOOD RESTAURANT SDN BHD",
+    "dates": [
+      "2018-05-19"
+    ],
+    "items": [
+      {
+        "description": "RICE W SEAFOOD /MEAT ITEM SINGLE",
+        "quantity": "1",
+        "unit_price": null,
+        "amount": "15.00"
+      },
+      {
+        "description": "BEVERAGE",
+        "quantity": "1",
+        "unit_price": null,
+        "amount": "5.00"
+      },
+      {
+        "description": "NOODLE ITEM SINGLE",
+        "quantity": "1",
+        "unit_price": null,
+        "amount": "20.00"
+      }
+    ],
+    "amounts": {
+      "total_excluding_tax": [
+        "40.00"
+      ],
+      "tax": [
+        "2.40"
+      ],
+      "total_including_tax": [
+        "42.40"
+      ],
+      "total_due": [
+        "42.40"
+      ],
+      "tendered": [
+        "42.40"
+      ]
+    },
+    "tax_summary": [
+      {
+        "code": "SR",
+        "rate_percent": "6",
+        "taxable_amount": "40.00",
+        "tax": "2.40"
+      }
+    ],
+    "item_count": null,
+    "quantity_total": null
+  },
+  "notes": "Same layout as X51008142030: description below each quantity row, blanked-out area after each quantity. The closing date is the same day and recorded once."
+}

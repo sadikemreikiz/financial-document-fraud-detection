@@ -1,0 +1,50 @@
+{
+  "doc_id": "X51007339151",
+  "annotator": "claude",
+  "fields": {
+    "merchant": "SANYU STATIONERY SHOP",
+    "dates": [
+      "2017-07-15"
+    ],
+    "items": [
+      {
+        "description": "RESTAURANT ORDER CHIT NCR 3.5\"X6\"",
+        "quantity": "3",
+        "unit_price": "2.9000",
+        "amount": "8.70"
+      }
+    ],
+    "amounts": {
+      "total_including_tax": [
+        "8.70",
+        "8.70"
+      ],
+      "discount": [
+        "0.00"
+      ],
+      "rounding": [
+        "0.00"
+      ],
+      "total_due": [
+        "8.70"
+      ],
+      "tendered": [
+        "100.00"
+      ],
+      "change": [
+        "1.30"
+      ]
+    },
+    "tax_summary": [
+      {
+        "code": "SR",
+        "rate_percent": "6",
+        "taxable_amount": "8.21",
+        "tax": "0.49"
+      }
+    ],
+    "item_count": null,
+    "quantity_total": null
+  },
+  "notes": "'Total Sales Inclusive GST' and the plain 'Total' (followed by 'Final Total') are both totals including tax. Change 1.30 is recorded as printed although 100.00 - 8.70 = 91.30. The owning company SANYU SUPPLY SDN BHD is printed below the trading name; item number 2012-0029 is left out."
+}

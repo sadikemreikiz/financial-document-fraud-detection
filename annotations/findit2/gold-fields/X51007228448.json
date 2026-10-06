@@ -1,0 +1,40 @@
+{
+  "doc_id": "X51007228448",
+  "annotator": "claude",
+  "fields": {
+    "merchant": "KFA SUPPLY",
+    "dates": [
+      "2018-05-27"
+    ],
+    "items": [
+      {
+        "description": "STAR 74CM X79CM 10KEPING",
+        "quantity": "1",
+        "unit_price": "11.60",
+        "amount": "11.60"
+      }
+    ],
+    "amounts": {
+      "total_due": [
+        "11.60"
+      ],
+      "tendered": [
+        "12.00"
+      ],
+      "change": [
+        "0.40"
+      ]
+    },
+    "tax_summary": [
+      {
+        "code": "SR",
+        "rate_percent": "6",
+        "taxable_amount": "10.94",
+        "tax": "0.66"
+      }
+    ],
+    "item_count": null,
+    "quantity_total": "1"
+  },
+  "notes": "The GST summary's Total row is not a separate row."
+}

@@ -1,0 +1,64 @@
+{
+  "doc_id": "X51008030566",
+  "annotator": "claude",
+  "fields": {
+    "merchant": "RESTORAN WAN SHENG",
+    "dates": [
+      "2018-04-09"
+    ],
+    "items": [
+      {
+        "description": "TEH (B)",
+        "quantity": "1",
+        "unit_price": "2.20",
+        "amount": "2.20"
+      },
+      {
+        "description": "CHAM (B)",
+        "quantity": "1",
+        "unit_price": "2.20",
+        "amount": "2.20"
+      },
+      {
+        "description": "HERBAL TEA",
+        "quantity": "2",
+        "unit_price": "1.70",
+        "amount": "3.40"
+      },
+      {
+        "description": "TAKE AWAY",
+        "quantity": "4",
+        "unit_price": "0.20",
+        "amount": "0.80"
+      }
+    ],
+    "amounts": {
+      "total_excluding_tax": [
+        "8.11"
+      ],
+      "tax": [
+        "0.49"
+      ],
+      "total_including_tax": [
+        "8.60"
+      ],
+      "total_due": [
+        "8.60"
+      ],
+      "tendered": [
+        "8.60"
+      ]
+    },
+    "tax_summary": [
+      {
+        "code": "SR",
+        "rate_percent": "6",
+        "taxable_amount": "8.11",
+        "tax": "0.49"
+      }
+    ],
+    "item_count": null,
+    "quantity_total": "8"
+  },
+  "notes": "Same layout as X51005711401. The take-away fee is an item."
+}

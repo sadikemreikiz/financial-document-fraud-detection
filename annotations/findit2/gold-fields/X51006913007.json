@@ -1,0 +1,100 @@
+{
+  "doc_id": "X51006913007",
+  "annotator": "claude",
+  "fields": {
+    "merchant": "AEON CO. (M) BHD",
+    "dates": [
+      "2018-05-27"
+    ],
+    "items": [
+      {
+        "description": "NATUREL PREMIU",
+        "quantity": "1",
+        "unit_price": null,
+        "amount": "11.25"
+      },
+      {
+        "description": "JOY DISHWASHIN",
+        "quantity": "1",
+        "unit_price": null,
+        "amount": "10.50"
+      },
+      {
+        "description": "303027 COOK KN",
+        "quantity": "1",
+        "unit_price": null,
+        "amount": "45.90"
+      },
+      {
+        "description": "6% OFF @43.15",
+        "quantity": null,
+        "unit_price": null,
+        "amount": "-2.75"
+      },
+      {
+        "description": "CED NATURAL HIM",
+        "quantity": "1",
+        "unit_price": null,
+        "amount": "4.59"
+      },
+      {
+        "description": "BL 5004C 4 GALL",
+        "quantity": "1",
+        "unit_price": null,
+        "amount": "4.90"
+      },
+      {
+        "description": "6% OFF @4.61",
+        "quantity": null,
+        "unit_price": null,
+        "amount": "-0.29"
+      },
+      {
+        "description": "KLEENEX FT SOF",
+        "quantity": "1",
+        "unit_price": null,
+        "amount": "12.15"
+      },
+      {
+        "description": "ONWARDS TOM &",
+        "quantity": "1",
+        "unit_price": null,
+        "amount": "13.65"
+      }
+    ],
+    "amounts": {
+      "subtotal": [
+        "99.90"
+      ],
+      "total_including_tax": [
+        "99.90"
+      ],
+      "total_due": [
+        "99.90"
+      ],
+      "tendered": [
+        "100.00"
+      ],
+      "change": [
+        "0.10"
+      ]
+    },
+    "tax_summary": [
+      {
+        "code": "SR",
+        "rate_percent": "6",
+        "taxable_amount": "89.92",
+        "tax": "5.39"
+      },
+      {
+        "code": "ZR",
+        "rate_percent": "0",
+        "taxable_amount": "4.59",
+        "tax": "0.00"
+      }
+    ],
+    "item_count": 7,
+    "quantity_total": null
+  },
+  "notes": "Item-level discount lines are negative items. 'Total After Adj Incl GST' is the amount due. The GST summary's Total row is not a separate row, as on X51005757201. 'Change Amt' sits on the Item Count row. Handwritten number at the top is benign."
+}

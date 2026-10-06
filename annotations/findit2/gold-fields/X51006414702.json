@@ -1,0 +1,72 @@
+{
+  "doc_id": "X51006414702",
+  "annotator": "claude",
+  "fields": {
+    "merchant": "TRIPLE SIX POINT ENTERPRISE 666",
+    "dates": [
+      "2018-04-23"
+    ],
+    "items": [
+      {
+        "description": "HEY SONG JAPAN GREEN TEA 580ML",
+        "quantity": "24",
+        "unit_price": "4.30",
+        "amount": "96.00"
+      },
+      {
+        "description": "HWA TAI LUXURY COKLAT CREAM",
+        "quantity": "1",
+        "unit_price": "3.90",
+        "amount": "3.90"
+      },
+      {
+        "description": "HWA TAI LUXURY PEANUTS CRACKER",
+        "quantity": "1",
+        "unit_price": "3.90",
+        "amount": "3.90"
+      },
+      {
+        "description": "HWA TAI LUXURY LEMON CREAM",
+        "quantity": "2",
+        "unit_price": "3.90",
+        "amount": "7.80"
+      },
+      {
+        "description": "BENTO SWEET SPICY",
+        "quantity": "1",
+        "unit_price": "12.90",
+        "amount": "12.90"
+      },
+      {
+        "description": "TANGO ALMONDS 20BARS",
+        "quantity": "1",
+        "unit_price": "30.90",
+        "amount": "30.90"
+      },
+      {
+        "description": "YEOS SOYA 1L",
+        "quantity": "1",
+        "unit_price": "2.50",
+        "amount": "2.50"
+      }
+    ],
+    "amounts": {
+      "discount": [
+        "7.20"
+      ],
+      "total_due": [
+        "157.90"
+      ],
+      "tendered": [
+        "157.90"
+      ],
+      "change": [
+        "0"
+      ]
+    },
+    "tax_summary": [],
+    "item_count": null,
+    "quantity_total": null
+  },
+  "notes": "Item 1 carries a line discount '(Disc: 7.2000)': its amount 96.00 is 24 x 4.30 minus 7.20. The receipt-level 'Discount 7.20' repeats it, printed without a sign, and is already inside the items. Change printed as '0'. The transcript places 'HEY SONG' and 'TANGO ALMONDS' at the end; reading order follows the image. Handwritten note at the top is benign."
+}

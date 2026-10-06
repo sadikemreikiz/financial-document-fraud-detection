@@ -1,0 +1,52 @@
+{
+  "doc_id": "X51005365179",
+  "annotator": "claude",
+  "fields": {
+    "merchant": "C W KHOO HARDWARE SDN BHD",
+    "dates": [
+      "2016-03-01"
+    ],
+    "items": [
+      {
+        "description": "AIR ADAPTOR @ 1",
+        "quantity": "5",
+        "unit_price": "4.00",
+        "amount": "20.00"
+      }
+    ],
+    "amounts": {
+      "subtotal": [
+        "20.00"
+      ],
+      "tax": [
+        "1.20"
+      ],
+      "total_including_tax": [
+        "21.20"
+      ],
+      "rounding": [
+        "0.00"
+      ],
+      "total_due": [
+        "21.20"
+      ],
+      "tendered": [
+        "21.20"
+      ],
+      "change": [
+        "0.00"
+      ]
+    },
+    "tax_summary": [
+      {
+        "code": "SR",
+        "rate_percent": "6",
+        "taxable_amount": "20.00",
+        "tax": "1.20"
+      }
+    ],
+    "item_count": 5,
+    "quantity_total": null
+  },
+  "notes": "'Total (MYR)' is printed before GST and recorded as subtotal; 'Net Total' precedes 'Net Total Rounded', so it is the total including tax. '5 Item(s)' counts units and is recorded as printed. Date and printed date are the same day. The number 3-1707067 at the top is a benign digital annotation."
+}

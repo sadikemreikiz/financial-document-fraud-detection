@@ -64,7 +64,13 @@ position. The label examples are taken from development receipts.
 | `change` | The amount returned to the customer | CHANGE, CHANGE DUE, BALANCE (when it is the change) |
 
 **A plain "TOTAL"** is `total_due` unless a later amount is explicitly labelled as payable,
-rounded, nett or grand total; then the plain total is `total_including_tax`.
+rounded, nett or grand total; then the plain total is `total_including_tax`. A plain total
+printed *before* the tax line, such as `TOTAL (MYR)` followed by `GST @ 6%` and `NET TOTAL`,
+is the receipt's own sum of the items and is recorded as `subtotal`. *(Clarified on
+2026-10-06, at the 23rd gold receipt.)* Conversely, an amount labelled `SUBTOTAL` that is
+printed after the service charge and tax and is the amount paid is recorded as `total_due`:
+the role follows the arithmetic meaning, not the label alone. *(Clarified on 2026-10-06, at
+the 30th gold receipt.)*
 
 **Per-rate totals** such as `TOTAL 6% SUPPLIES (EXCL. GST)` or a `GST SUMMARY` table are not
 roles; they become tax summary rows (section 5).

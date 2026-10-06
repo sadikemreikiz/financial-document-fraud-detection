@@ -1,0 +1,97 @@
+{
+  "doc_id": "X51007846289",
+  "annotator": "claude",
+  "fields": {
+    "merchant": "MOONLIGHT CAKE HOUSE SDN BHD",
+    "dates": [
+      "2018-06-07"
+    ],
+    "items": [
+      {
+        "description": "T-DARK SEED GRAIN BREAD",
+        "quantity": "1",
+        "unit_price": null,
+        "amount": "4.15"
+      },
+      {
+        "description": "DISCOUNT",
+        "quantity": null,
+        "unit_price": null,
+        "amount": "-0.20"
+      },
+      {
+        "description": "T-GREEN TEA MOCHI",
+        "quantity": "1",
+        "unit_price": null,
+        "amount": "3.30"
+      },
+      {
+        "description": "DISCOUNT",
+        "quantity": null,
+        "unit_price": null,
+        "amount": "-0.16"
+      },
+      {
+        "description": "T-HONEY WALNUT",
+        "quantity": "1",
+        "unit_price": null,
+        "amount": "3.70"
+      },
+      {
+        "description": "DISCOUNT",
+        "quantity": null,
+        "unit_price": null,
+        "amount": "-0.18"
+      },
+      {
+        "description": "T-SAHA BREAD",
+        "quantity": "1",
+        "unit_price": null,
+        "amount": "4.60"
+      },
+      {
+        "description": "DISCOUNT",
+        "quantity": null,
+        "unit_price": null,
+        "amount": "-0.23"
+      }
+    ],
+    "amounts": {
+      "total_including_tax": [
+        "14.98"
+      ],
+      "rounding": [
+        "0.02"
+      ],
+      "total_due": [
+        "15.00"
+      ],
+      "tendered": [
+        "20.00"
+      ],
+      "change": [
+        "5.00"
+      ],
+      "discount": [
+        "0.77"
+      ]
+    },
+    "tax_summary": [
+      {
+        "code": "ST",
+        "rate_percent": "0",
+        "taxable_amount": "14.98",
+        "tax": "0.00"
+      },
+      {
+        "code": "NS",
+        "rate_percent": "0",
+        "taxable_amount": "0.00",
+        "tax": "0.00"
+      }
+    ],
+    "item_count": null,
+    "quantity_total": null
+  },
+  "notes": "Item-level discount lines are negative items. The 'Discount Summary' 0.77 repeats them and is already inside the items, as on X51006414702. The '*#' markers after item names are left out. The date is printed twice and recorded once. Handwritten note at the top is benign."
+}

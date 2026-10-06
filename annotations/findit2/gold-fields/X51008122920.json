@@ -1,0 +1,58 @@
+{
+  "doc_id": "X51008122920",
+  "annotator": "claude",
+  "fields": {
+    "merchant": "C W KHOO HARDWARE SDN BHD",
+    "dates": [
+      "2018-05-04"
+    ],
+    "items": [
+      {
+        "description": "2032 'ENERGIZER' BATTERY (PC) @ PKT",
+        "quantity": "1",
+        "unit_price": "6.40",
+        "amount": "6.40"
+      },
+      {
+        "description": "9V 'ENERGIZER' BATTERY(522BP1G) @ PKT",
+        "quantity": "1",
+        "unit_price": "11.53",
+        "amount": "11.53"
+      }
+    ],
+    "amounts": {
+      "subtotal": [
+        "17.93"
+      ],
+      "tax": [
+        "1.08"
+      ],
+      "total_including_tax": [
+        "19.01"
+      ],
+      "rounding": [
+        "-0.01"
+      ],
+      "total_due": [
+        "19.00"
+      ],
+      "tendered": [
+        "19.00"
+      ],
+      "change": [
+        "0.00"
+      ]
+    },
+    "tax_summary": [
+      {
+        "code": "SR",
+        "rate_percent": "6",
+        "taxable_amount": "17.93",
+        "tax": "1.08"
+      }
+    ],
+    "item_count": 2,
+    "quantity_total": null
+  },
+  "notes": "Same layout as X51005365179: 'Total (MYR)' is printed before GST and recorded as subtotal; 'Net Total' precedes 'Net Total Rounded', so it is the total including tax. Date and printed date are the same day."
+}
