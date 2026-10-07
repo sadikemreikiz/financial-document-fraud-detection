@@ -77,6 +77,42 @@ Receipts on which the rule failed / receipts on which it applied.
 
 Change in the log-odds of forgery when the outcome occurs, relative to the rule passing.
 
-### Validation split
+### Validation split, measured once (unbiased)
 
-Not measured yet. It is measured once, after the rules and the scoring are frozen at a commit (ADR-0012).
+| Metric | Rules T1 | Rules T2 | Any rule fails T1 | Any rule fails T2 | BoW + LR | Flag everything |
+|---|---|---|---|---|---|---|
+| Precision | 17.4 [17.4, 17.4] | 17.4 [17.4, 17.4] | 26.6 [20.2, 33.3] | 23.5 [17.1, 30.0] | 12.5 [0.0, 40.0] | 17.4 [17.4, 17.4] |
+| Recall | 100.0 [100.0, 100.0] | 100.0 [100.0, 100.0] | 63.6 [45.5, 78.8] | 57.6 [39.4, 72.7] | 3.0 [0.0, 9.1] | 100.0 [100.0, 100.0] |
+| F1 | 29.6 [29.6, 29.6] | 29.6 [29.6, 29.6] | 37.5 [28.6, 46.4] | 33.3 [24.1, 42.1] | 4.9 [0.0, 15.0] | 29.6 [29.6, 29.6] |
+| Average precision | 36.5 [24.6, 53.3] | 30.5 [20.6, 46.0] | 23.2 [18.7, 29.6] | 20.9 [17.3, 26.3] | 17.0 [14.1, 25.4] | 17.4 [17.4, 17.4] |
+| ROC-AUC | 61.5 [49.0, 73.2] | 58.8 [47.2, 69.9] | 63.3 [54.1, 72.3] | 59.0 [49.6, 68.1] | 47.6 [37.1, 58.4] | 50.0 [50.0, 50.0] |
+| Recall at 10 % review | 29.7 [18.2, 42.4] | 24.7 [12.1, 36.4] | 15.3 [11.7, 19.2] | 13.5 [9.8, 17.3] | 3.0 [0.0, 12.1] | 10.0 [10.0, 10.0] |
+| Recall at 20 % review | 36.4 [24.2, 51.5] | 30.3 [18.2, 45.5] | 30.6 [23.3, 38.4] | 27.0 [19.7, 34.5] | 12.1 [3.0, 24.2] | 20.0 [20.0, 20.0] |
+| Forged found / authentic flagged / forged missed | 33 / 157 / 0 | 33 / 157 / 0 | 21 / 58 / 12 | 19 / 62 / 14 | 1 / 7 / 32 | 33 / 157 / 0 |
+
+190 validation receipts (33 forged). Scorers and BoW + LR fitted on the whole training split; rule thresholds from the training cross-validation, BoW + LR at 0.5. Run `20261007T082342276385Z-rules-validation` (commit cb0ede6).
+
+### Rules compared with BoW + LR on the validation split
+
+| Metric | Rules T1 - BoW + LR | Rules T2 - BoW + LR |
+|---|---|---|
+| F1 | +24.7 [+14.6, +29.6] * | +24.7 [+14.6, +29.6] * |
+| Average precision | +19.5 [+4.3, +36.0] * | +13.5 [-0.1, +28.7] |
+| ROC-AUC | +13.9 [-3.3, +30.4] | +11.2 [-4.2, +26.1] |
+| Recall at 10 % review | +26.7 [+9.1, +39.4] * | +21.7 [+6.1, +33.3] * |
+| Recall at 20 % review | +24.2 [+6.1, +45.5] * | +18.2 [+0.0, +39.4] |
+
+Percentage points; paired stratified bootstrap over the same receipts. * marks an interval that excludes zero.
+
+### Rule outcomes on the validation split
+
+| Rule | T1 authentic | T1 forged | T2 authentic | T2 forged |
+|---|---|---|---|---|
+| totals_reconcile | 7 / 104 | 6 / 21 | 9 / 95 | 4 / 21 |
+| items_reconcile | 41 / 153 | 11 / 32 | 49 / 151 | 9 / 32 |
+| line_amounts | 10 / 94 | 5 / 17 | 12 / 87 | 3 / 18 |
+| change_given | 5 / 96 | 8 / 18 | 7 / 86 | 8 / 18 |
+| repeats_agree | 3 / 21 | 1 / 3 | 4 / 23 | 2 / 4 |
+| tax_rates | 10 / 70 | 4 / 20 | 5 / 56 | 1 / 13 |
+
+Receipts on which the rule failed / receipts on which it applied.

@@ -75,6 +75,14 @@ reported alongside as a reference without learned parameters.
   for the rules. The BoW + LR baseline is measured on the same receipts the same way, and the two
   are compared with the paired bootstrap of the evaluation protocol.
 
+**Result (2026-10-07).** Measured once on the validation split from commit `cb0ede6`
+([report](../../reports/rules/accounting-rules.md)). On transcripts the learned scorer reaches
+average precision 36.5 [24.6, 53.3] against a chance level of 17.4, and finds 29.7 % of the
+forged receipts when 10 % of all receipts are reviewed (10 % by chance); "any rule fails" reaches
+F1 37.5 [28.6, 46.4] but flags 58 of 157 authentic receipts. The F1-optimal threshold of the
+learned scorer, chosen in cross-validation, flags every receipt. Results on OCR are slightly
+lower throughout.
+
 ## Consequences
 
 - The gap between gold fields and parser output measures the cost of reading errors directly.
