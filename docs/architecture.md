@@ -11,7 +11,9 @@ and [ADR-0006](decisions/0006-llm-placement.md).
 |---|---|
 | Data (Phase 1) | Done: Find-it-again adapter, normalisation, test lock, audits |
 | Reading (Phase 2) | Done: RapidOCR behind `OcrEngine`, rule-based parser (v2), gold-set evaluation ([results](../reports/reading/README.md)). `ReceiptFields` does not yet keep references to source tokens; that comes with linking in Phase 5 |
-| Detection, linking, fusion, decision, reporting, LLM | Not started (Phases 3 to 6) |
+| Evaluation and baselines (Phase 3) | Done: run records, stored folds, pre-registered metrics with floors, BoW + LR reproduced ([results](../reports/rules/README.md)) |
+| Detection: accounting rules (Phase 3) | Done: six rules with worded verdicts, scored by logistic regression. Verdicts are not yet `Finding` objects; that contract is introduced with fusion in Phase 5 |
+| Pixel forensics, copy-move, linking, fusion, decision, reporting, LLM | Not started (Phases 4 to 6) |
 
 ## Overview
 
@@ -70,6 +72,7 @@ finding.
 | `docfraud.data` | Dataset adapters, the `Document` model, split handling with the test lock | 1 |
 | `docfraud.reading` | Image normalisation, OCR, field extraction | 2 |
 | `docfraud.detectors` | Accounting rules, pixel forensics, copy-move, file metadata | 3–5 |
+| `docfraud.baselines` | Published baselines, re-implemented to anchor results to prior work | 3 |
 | `docfraud.evaluation` | Metrics, bootstrap, cross-validation, run records | 3 |
 | `docfraud.synthesis` | Synthetic forgery engine (training data only) | 4 |
 | `docfraud.linking` | Cross-modal evidence linking | 5 |

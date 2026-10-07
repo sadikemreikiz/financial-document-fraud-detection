@@ -1,6 +1,7 @@
+import numpy as np
 import pytest
 
-from docfraud.evaluation.bootstrap import Estimate, paired_ratio_difference, ratio
+from docfraud.evaluation.bootstrap import Estimate, paired_ratio_difference, ratio, stratified
 
 
 def test_ratio_is_a_ratio_of_sums_with_an_enclosing_interval() -> None:
@@ -51,3 +52,21 @@ def test_excludes_zero() -> None:
     assert Estimate(0.1, 0.01, 0.2).excludes_zero
     assert Estimate(-0.1, -0.2, -0.01).excludes_zero
     assert not Estimate(0.0, -0.1, 0.1).excludes_zero
+
+
+def test_stratified_resampling_keeps_class_sizes() -> None:
+    labels = np.array([1, 1, 0, 0, 0, 0])
+    seen: list[int] = []
+
+    def positives(idx: np.ndarray) -> float:
+        seen.append(int(labels[idx].sum()))
+        return float(labels[idx].mean())
+
+    estimate = stratified(positives, labels, resamples=200)
+    assert set(seen) == {2}
+    assert [estimate.value, estimate.low, estimate.high] == pytest.approx([1 / 3] * 3)
+
+
+def test_stratified_needs_documents() -> None:
+    with pytest.raises(ValueError, match="at least one document"):
+        stratified(lambda _: 0.0, np.array([], dtype=int))

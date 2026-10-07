@@ -62,7 +62,10 @@ because no unseen gold receipts remain to measure a change.
 - **"TOTAL AMOUNT" on tax-inclusive receipts.** When a plain total is followed by an included
   tax line and an equal `NETT TOTAL`, v2 records it as `subtotal`; the annotation records
   `total_including_tax` (3 receipts in B, 6 in A, all from one restaurant). The value is right,
-  the role is not.
+  the role is not. The cause is the annotation guideline: its rule for a plain total before the
+  tax line did not say that it applies only when the tax is added on top, and v2 implemented that
+  wording. The annotations followed the narrower rule throughout; the guideline was clarified
+  after the evaluation, without changing any recorded value.
 - **Quantity row without an amount.** An empty `Total: 1` quantity row takes the amount of the
   next line as `subtotal` (`X51007231338`).
 - **Tax summary rows** are found less often than other fields (recall 0.53 on transcripts,

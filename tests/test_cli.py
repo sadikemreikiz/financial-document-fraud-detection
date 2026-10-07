@@ -2,6 +2,8 @@ import hashlib
 import json
 import shutil
 from pathlib import Path
+from types import SimpleNamespace
+from typing import Any
 
 import numpy as np
 import numpy.typing as npt
@@ -13,9 +15,14 @@ from docfraud import __version__
 from docfraud.cli import app
 from docfraud.data.download import SOURCES, DatasetSource
 from docfraud.data.gold import GoldManifest, load_manifest
-from docfraud.data.models import Split
+from docfraud.data.models import Label, Split
 from docfraud.data.splits import TestSetLockedError
+from docfraud.evaluation.folds import assign_folds, load_folds, save_folds
+from docfraud.evaluation.runs import CodeVersion, JsonRunStore
+from docfraud.reading.fields import ReceiptFields
 from docfraud.reading.ocr import OcrResult
+from tests.baselines.test_bow import corpus
+from tests.evaluation.test_folds import documents as fold_documents
 from tests.fixtures.findit import load_toy
 
 runner = CliRunner()
@@ -118,6 +125,21 @@ def test_data_draw_gold_draws_around_earlier_sets(toy_source: Path, tmp_path: Pa
     result = runner.invoke(app, [*base, *later])
     assert result.exit_code == 0, result.output
     assert not load_manifest(first).doc_ids & load_manifest(second).doc_ids
+
+
+def test_data_draw_folds_writes_folds_once(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(docfraud.cli, "load_findit2", lambda _: fold_documents())
+    output = tmp_path / "folds.json"
+    args = ["data", "draw-folds", "--output", str(output)]
+    result = runner.invoke(app, args)
+    assert result.exit_code == 0, result.output
+    assert "(seed 0)" in result.output
+    folds = load_folds(output)
+    assert folds.n_folds == 5
+    again = runner.invoke(app, [*args, "--seed", "1"])
+    assert again.exit_code == 1
+    assert "refusing to overwrite" in again.output
+    assert load_folds(output) == folds
 
 
 class FakeOcr:
@@ -335,3 +357,129 @@ def test_reading_evaluate_gold_needs_every_annotation(tmp_path: Path) -> None:
     result = runner.invoke(app, ["reading", "evaluate-gold", "--manifest", str(manifest)])
     assert result.exit_code == 1
     assert "not annotated yet: XA" in result.output
+
+
+def baseline_setup(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> list[str]:
+    docs = corpus(tmp_path / "corpus")
+    monkeypatch.setattr(docfraud.cli, "load_findit2", lambda _: docs)
+    folds = tmp_path / "folds.json"
+    save_folds(assign_folds(docs), folds)
+    return ["--runs", str(tmp_path / "runs"), "--folds", str(folds)]
+
+
+def test_baseline_cross_validation_is_recorded_and_reported(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    options = baseline_setup(tmp_path, monkeypatch)
+    result = runner.invoke(app, ["baseline", "bow-lr", *options])
+    assert result.exit_code == 0, result.output
+    assert "cross-validated F1 1.000" in result.output
+    (record,) = JsonRunStore(tmp_path / "runs").records("bow-lr-cv")
+    assert record.test_unlocks == ()
+    assert record.results["counts"]["fp"] == 0
+    report = tmp_path / "bow-lr.md"
+    args = ["baseline", "report", "--runs", str(tmp_path / "runs"), "--output", str(report)]
+    assert runner.invoke(app, args).exit_code == 0
+    assert "Not run yet" in report.read_text(encoding="utf-8")
+
+
+def test_baseline_test_run_happens_once_from_a_clean_commit(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    options = baseline_setup(tmp_path, monkeypatch)
+    command = ["baseline", "bow-lr", *options, "--unlock-test"]
+    monkeypatch.setattr(docfraud.cli, "code_version", lambda: CodeVersion(commit="a", dirty=True))
+    dirty = runner.invoke(app, command)
+    assert dirty.exit_code == 1
+    assert "commit all changes first" in dirty.output
+    monkeypatch.setattr(docfraud.cli, "code_version", lambda: CodeVersion(commit="a", dirty=False))
+    first = runner.invoke(app, command)
+    assert first.exit_code == 0, first.output
+    assert "reproduction failed" in first.output  # perfect toy scores are far above 17.78
+    (record,) = JsonRunStore(tmp_path / "runs").records("bow-lr-test")
+    assert record.test_unlocks == (docfraud.cli.BOW_TEST_REASON,)
+    assert record.results["n_documents"] == 12
+    again = runner.invoke(app, command)
+    assert again.exit_code == 1
+    assert "refusing to run again" in again.output
+
+
+def test_baseline_report_needs_a_cross_validation_run(tmp_path: Path) -> None:
+    args = ["baseline", "report", "--runs", str(tmp_path), "--output", str(tmp_path / "r.md")]
+    result = runner.invoke(app, args)
+    assert result.exit_code == 1
+    assert "no bow-lr-cv run" in result.output
+
+
+def rules_setup(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> list[str]:
+    """Training and validation receipts whose forged ones print a wrong change."""
+    docs = [
+        d.model_copy(update={"split": Split.VAL}) if d.split is Split.TEST else d
+        for d in corpus(tmp_path / "corpus")
+    ]
+    gold_ids = tuple(d.doc_id for d in docs[:4])
+    manifest = write_gold(tmp_path, gold_ids)
+
+    def fields(document: Any, *_: Any) -> SimpleNamespace:
+        change = "9.00" if document.label is Label.FORGED else "8.00"
+        amounts = {"total_due": ["12.00"], "tendered": ["20.00"], "change": [change]}
+        return SimpleNamespace(fields=ReceiptFields.model_validate({"amounts": amounts}))
+
+    monkeypatch.setattr(docfraud.cli, "load_findit2", lambda _: tuple(docs))
+    monkeypatch.setattr(docfraud.cli, "RapidOcrEngine", FakeOcr)
+    monkeypatch.setattr(docfraud.cli, "read_document", fields)
+    folds = tmp_path / "folds.json"
+    save_folds(assign_folds(docs), folds)
+    runs = tmp_path / "runs"
+    options = ["--runs", str(runs), "--folds", str(folds), "--cache", str(tmp_path / "ocr")]
+    assert (
+        runner.invoke(
+            app, ["baseline", "bow-lr", "--runs", str(runs), "--folds", str(folds)]
+        ).exit_code
+        == 0
+    )
+    return [*options, "--gold", str(manifest)]
+
+
+def test_rules_are_cross_validated_against_the_baseline_and_reported(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    options = rules_setup(tmp_path, monkeypatch)
+    result = runner.invoke(app, ["rules", "evaluate", *options])
+    assert result.exit_code == 0, result.output
+    (record,) = JsonRunStore(tmp_path / "runs").records("rules-cv")
+    assert record.results["transcript"]["any_fail"]["counts"]["fp"] == 0
+    assert record.results["gold_fields"]["any_fail"]["n_documents"] == 4
+    report = tmp_path / "rules.md"
+    args = ["rules", "report", "--runs", str(tmp_path / "runs"), "--output", str(report)]
+    assert runner.invoke(app, args).exit_code == 0
+    assert "Not measured yet" in report.read_text(encoding="utf-8")
+
+
+def test_rules_validation_runs_once_from_a_clean_commit(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    options = rules_setup(tmp_path, monkeypatch)
+    command = ["rules", "evaluate", *options, "--validation"]
+    monkeypatch.setattr(docfraud.cli, "code_version", lambda: CodeVersion(commit="a", dirty=True))
+    assert "commit all changes first" in runner.invoke(app, command).output
+    monkeypatch.setattr(docfraud.cli, "code_version", lambda: CodeVersion(commit="a", dirty=False))
+    result = runner.invoke(app, command)
+    assert result.exit_code == 0, result.output
+    (record,) = JsonRunStore(tmp_path / "runs").records("rules-validation")
+    assert record.test_unlocks == ()
+    assert record.results["ocr"]["learned"]["n_documents"] == 12
+    again = runner.invoke(app, command)
+    assert again.exit_code == 1
+    assert "refusing to run again" in again.output
+
+
+def test_rules_need_the_baseline_runs(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    options = rules_setup(tmp_path, monkeypatch)
+    for record in (tmp_path / "runs").iterdir():
+        shutil.rmtree(record)
+    result = runner.invoke(app, ["rules", "evaluate", *options])
+    assert result.exit_code == 1
+    assert "run the baseline first" in result.output
+    report = ["rules", "report", "--runs", str(tmp_path / "runs")]
+    assert "need rules-cv and bow-lr-cv" in runner.invoke(app, report).output

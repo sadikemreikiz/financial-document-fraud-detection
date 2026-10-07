@@ -1,15 +1,23 @@
 """Command-line interface for docfraud."""
 
 import json
+from collections.abc import Callable, Sequence
+from contextlib import AbstractContextManager
+from dataclasses import dataclass
 from enum import StrEnum
+from functools import partial
 from pathlib import Path
-from typing import Annotated
+from typing import Annotated, Any
 
+import numpy as np
+import numpy.typing as npt
 import typer
 from rich.console import Console
 from rich.progress import BarColumn, DownloadColumn, Progress, TransferSpeedColumn
 
 from docfraud import __version__
+from docfraud.baselines import bow
+from docfraud.baselines.report import render_report
 from docfraud.data.audit import audit_dataset
 from docfraud.data.download import SOURCES, download, safe_extract, verify
 from docfraud.data.duplicates import resolve_duplicates
@@ -36,10 +44,25 @@ from docfraud.data.gold_review import (
     render_review_report,
     score_review,
 )
-from docfraud.data.models import Label, Split
+from docfraud.data.models import Document, Label, Split
 from docfraud.data.normalize import load_grayscale
 from docfraud.data.splits import select
+from docfraud.detectors.evaluation import cross_validated, held_out, rule_counts
+from docfraud.detectors.report import render_rules_report
+from docfraud.detectors.rules import check
+from docfraud.detectors.scoring import any_fail
+from docfraud.evaluation.detection import compare, summary
 from docfraud.evaluation.extraction import render_extraction_report, score_document
+from docfraud.evaluation.folds import (
+    CV_FOLDS,
+    FOLD_SEED,
+    FoldAssignment,
+    assign_folds,
+    check_folds,
+    load_folds,
+    save_folds,
+)
+from docfraud.evaluation.runs import JsonRunStore, Run, code_version, run
 from docfraud.reading.consistency import CHECKS
 from docfraud.reading.fields import ReceiptFields
 from docfraud.reading.ocr import CachedOcr, RapidOcrEngine
@@ -55,6 +78,10 @@ data_app = typer.Typer(help="Download, prepare and audit datasets.", no_args_is_
 app.add_typer(data_app, name="data")
 reading_app = typer.Typer(help="OCR and field extraction.", no_args_is_help=True)
 app.add_typer(reading_app, name="reading")
+baseline_app = typer.Typer(help="Published baselines, re-implemented.", no_args_is_help=True)
+app.add_typer(baseline_app, name="baseline")
+rules_app = typer.Typer(help="Accounting rules.", no_args_is_help=True)
+app.add_typer(rules_app, name="rules")
 
 console = Console()
 
@@ -143,6 +170,7 @@ def data_audit(
 
 
 GOLD_MANIFEST = Path("annotations/findit2/gold-fields/manifest.json")
+GOLD_B_MANIFEST = Path("annotations/findit2/gold-fields-b/manifest.json")
 
 
 @data_app.command("draw-gold")
@@ -173,6 +201,31 @@ def data_draw_gold(  # noqa: PLR0913, PLR0917 - one option per draw parameter
         f"[green]written[/green] {output}: {len(manifest.authentic)} authentic and "
         f"{len(manifest.forged)} forged training receipts (seed {manifest.seed})"
     )
+
+
+CV_FOLDS_PATH = Path("annotations/findit2/cv-folds.json")
+
+
+@data_app.command("draw-folds")
+def data_draw_folds(
+    data_dir: DataDir = Path("data"),
+    output: Annotated[Path, typer.Option(help="Where to write the folds.")] = CV_FOLDS_PATH,
+    folds: Annotated[int, typer.Option(help="Number of folds.")] = CV_FOLDS,
+    seed: Annotated[int, typer.Option(help="Random seed of the draw.")] = FOLD_SEED,
+) -> None:
+    """Draw the cross-validation folds of the training split (seeded, stratified, grouped).
+
+    Folds are drawn once: an existing file is never overwritten, so every experiment is measured
+    on the same partition.
+    """
+    if output.exists():
+        console.print(f"[red]refusing to overwrite[/red] {output}")
+        raise typer.Exit(1)
+    documents = load_findit2(data_dir / "raw" / SOURCES[DatasetName.FINDIT2.value].name)
+    assignment = assign_folds(documents, n_folds=folds, seed=seed)
+    save_folds(assignment, output)
+    sizes = ", ".join(str(len(assignment.documents(f))) for f in range(assignment.n_folds))
+    console.print(f"[green]written[/green] {output}: fold sizes {sizes} (seed {assignment.seed})")
 
 
 OCR_CACHE = Path("artifacts/ocr")
@@ -421,4 +474,266 @@ def reading_compare_gold(  # noqa: PLR0913, PLR0917 - one option per input and o
     )
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(header + "\n".join(sections), encoding="utf-8")
+    console.print(f"[green]written[/green] {output}")
+
+
+REPORTED_RUNS = Path("reports/runs")
+BOW_CV_RUN = "bow-lr-cv"
+BOW_TEST_RUN = "bow-lr-test"
+BOW_TEST_REASON = "baseline reproduction, evaluation protocol section 3, exception 1 (ADR-0011)"
+BOW_CONFIG = {
+    "baseline": "bag of words + logistic regression (Martinez Tornes et al., 2023)",
+    "decision": "ADR-0011",
+    "text": "T1, normalised dataset transcripts",
+    "features": "sklearn CountVectorizer(), default settings",
+    "classifier": "sklearn LogisticRegression(), default settings",
+    "threshold": bow.THRESHOLD,
+    "training": "training split",
+}
+
+
+@baseline_app.command("bow-lr")
+def baseline_bow_lr(
+    data_dir: DataDir = Path("data"),
+    runs: Annotated[Path, typer.Option(help="Where reported run records are kept.")] = (
+        REPORTED_RUNS
+    ),
+    folds_path: Annotated[Path, typer.Option("--folds", help="Stored folds.")] = CV_FOLDS_PATH,
+    unlock_test: Annotated[
+        bool,
+        typer.Option(
+            "--unlock-test",
+            help="Evaluate once on the test split (protocol exception 1) instead of in "
+            "cross-validation.",
+        ),
+    ] = False,
+) -> None:
+    """Run the published BoW + LR baseline: cross-validated, or once on the test split."""
+    source = SOURCES[DatasetName.FINDIT2.value]
+    documents = load_findit2(data_dir / "raw" / source.name)
+    store = JsonRunStore(runs)
+    recorded = partial(
+        run, store=store, seeds={"bootstrap": 0}, dataset_sha256={source.name: source.sha256}
+    )
+    if not unlock_test:
+        folds = load_folds(folds_path)
+        check_folds(folds, documents)
+        with recorded(BOW_CV_RUN, config=BOW_CONFIG | {"folds": str(folds_path)}) as current:
+            cv = bow.cross_validate(documents, folds)
+            current.log("max_iter", list(cv.max_iter))
+            for key, value in summary(cv.labels, cv.scores, bow.THRESHOLD, cv.doc_ids).items():
+                current.log(key, value)
+        f1 = current.results["metrics"]["f1"]["value"]
+        console.print(f"[green]recorded[/green] {BOW_CV_RUN}: cross-validated F1 {f1:.3f}")
+        return
+    if store.records(BOW_TEST_RUN):
+        console.print(f"[red]refusing to run again:[/red] a {BOW_TEST_RUN} record exists in {runs}")
+        raise typer.Exit(1)
+    if code_version().dirty is not False:
+        console.print("[red]commit all changes first[/red]: the test run must name a clean commit")
+        raise typer.Exit(1)
+    with recorded(BOW_TEST_RUN, config=BOW_CONFIG) as current:
+        train = select(documents, Split.TRAIN)
+        test = select(documents, Split.TEST, unlock_test=True, reason=BOW_TEST_REASON)
+        fitted = bow.fit(train)
+        current.log("max_iter", fitted.max_iter)
+        doc_ids = [d.doc_id for d in test]
+        for key, value in summary(
+            bow.labels(test), fitted.scores(test), bow.THRESHOLD, doc_ids
+        ).items():
+            current.log(key, value)
+        current.log("published", bow.PUBLISHED)
+        f1 = current.results["metrics"]["f1"]
+        current.log("reproduced", bool(f1["low"] <= bow.PUBLISHED["f1"] <= f1["high"]))
+    verdict = "passed" if current.results["reproduced"] else "failed"
+    console.print(f"[green]recorded[/green] {BOW_TEST_RUN}: reproduction {verdict}")
+
+
+@baseline_app.command("report")
+def baseline_report(
+    runs: Annotated[Path, typer.Option(help="Where reported run records are kept.")] = (
+        REPORTED_RUNS
+    ),
+    output: Annotated[Path, typer.Option(help="Where to write the report.")] = Path(
+        "reports/baselines/bow-lr.md"
+    ),
+) -> None:
+    """Render the BoW + LR report from the latest cross-validation run and the test run."""
+    store = JsonRunStore(runs)
+    cv = store.records(BOW_CV_RUN)
+    if not cv:
+        console.print(f"[red]no {BOW_CV_RUN} run in {runs}[/red]")
+        raise typer.Exit(1)
+    test = store.records(BOW_TEST_RUN)
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text(render_report(cv[-1], test[-1] if test else None), encoding="utf-8")
+    console.print(f"[green]written[/green] {output}")
+
+
+RULES_CV_RUN = "rules-cv"
+RULES_VALIDATION_RUN = "rules-validation"
+RULES_CONFIG = {
+    "decision": "ADR-0012",
+    "rules": "docfraud.detectors.rules.RULES",
+    "scorer": "sklearn LogisticRegression(), default settings, over fail / not-applicable flags",
+    "threshold": "maximises F1 on out-of-fold training scores, ties to the higher threshold",
+    "reader": "parser v2 (frozen)",
+}
+COMPARED = (
+    "f1",
+    "average_precision",
+    "roc_auc",
+    "recall_at_10pct_review",
+    "recall_at_20pct_review",
+)
+
+
+def _versus_bow(
+    y: object, bow_scores: object, rule_scores: object, threshold: float
+) -> dict[str, Any]:
+    differences = compare(y, bow_scores, rule_scores, bow.THRESHOLD, threshold)
+    return {
+        name: {"value": d.value, "low": d.low, "high": d.high, "excludes_zero": d.excludes_zero}
+        for name, d in differences.items()
+        if name in COMPARED
+    }
+
+
+@rules_app.command("evaluate")
+def rules_evaluate(  # noqa: PLR0913, PLR0917 - one option per input
+    data_dir: DataDir = Path("data"),
+    runs: Annotated[Path, typer.Option(help="Where reported run records are kept.")] = (
+        REPORTED_RUNS
+    ),
+    folds_path: Annotated[Path, typer.Option("--folds", help="Stored folds.")] = CV_FOLDS_PATH,
+    cache: Annotated[Path, typer.Option(help="OCR cache directory.")] = OCR_CACHE,
+    gold: Annotated[
+        list[Path] | None, typer.Option(help="Gold manifests for the correct-reading level.")
+    ] = None,
+    validation: Annotated[
+        bool,
+        typer.Option(
+            "--validation",
+            help="Measure once on the validation split (ADR-0012) instead of in cross-validation.",
+        ),
+    ] = False,
+) -> None:
+    """Measure the accounting rules: cross-validated on training, or once on validation."""
+    source = SOURCES[DatasetName.FINDIT2.value]
+    documents = load_findit2(data_dir / "raw" / source.name)
+    folds = load_folds(folds_path)
+    check_folds(folds, documents)
+    store = JsonRunStore(runs)
+    setup = _RulesSetup(
+        documents=documents,
+        train=sorted(select(documents, Split.TRAIN), key=lambda d: d.doc_id),
+        folds=folds,
+        ocr=CachedOcr(RapidOcrEngine(), cache),
+        store=store,
+        recorded=partial(
+            run, store=store, seeds={"bootstrap": 0}, dataset_sha256={source.name: source.sha256}
+        ),
+    )
+    if validation:
+        _rules_validation(setup)
+    else:
+        _rules_cross_validation(setup, gold or [GOLD_MANIFEST, GOLD_B_MANIFEST])
+
+
+@dataclass(frozen=True)
+class _RulesSetup:
+    documents: tuple[Document, ...]
+    train: list[Document]
+    folds: FoldAssignment
+    ocr: CachedOcr
+    store: JsonRunStore
+    recorded: Callable[..., AbstractContextManager[Run]]
+
+    def outcomes(self, documents: Sequence[Document], source: TextSource) -> list[Any]:
+        return [check(read_document(d, self.ocr, source).fields) for d in documents]
+
+    def fold_of(self) -> npt.NDArray[np.int_]:
+        return np.array([self.folds.folds[d.doc_id] for d in self.train])
+
+
+def _rules_cross_validation(setup: _RulesSetup, gold: list[Path]) -> None:
+    bow_runs = setup.store.records(BOW_CV_RUN)
+    if not bow_runs:
+        console.print(f"[red]run the baseline first:[/red] no {BOW_CV_RUN} record")
+        raise typer.Exit(1)
+    train, y = setup.train, bow.labels(setup.train)
+    ids = [d.doc_id for d in train]
+    bow_scores = [bow_runs[-1].results["scores"][i] for i in ids]
+    with setup.recorded(RULES_CV_RUN, config=RULES_CONFIG) as current:
+        for text_source in TRACKS:
+            result = cross_validated(setup.outcomes(train, text_source), y, setup.fold_of(), ids)
+            oof = [result["learned"]["scores"][i] for i in ids]
+            result["versus_bow"] = _versus_bow(y, bow_scores, oof, result["threshold"])
+            current.log(text_source.value, result)
+        annotations: dict[str, Any] = {}
+        for manifest_path in gold:
+            annotations |= load_annotations(manifest_path.parent, load_manifest(manifest_path))
+        forged = {d.doc_id: d.label is Label.FORGED for d in train}
+        gold_ids = sorted(annotations)
+        gold_outcomes = [check(annotations[i].fields) for i in gold_ids]
+        gold_y = np.array([forged[i] for i in gold_ids], dtype=bool)
+        current.log(
+            "gold_fields",
+            {
+                "any_fail": summary(gold_y, any_fail(gold_outcomes), 1.0, gold_ids),
+                "rules": rule_counts(gold_outcomes, gold_y),
+            },
+        )
+    console.print(f"[green]recorded[/green] {RULES_CV_RUN}")
+
+
+def _rules_validation(setup: _RulesSetup) -> None:
+    if setup.store.records(RULES_VALIDATION_RUN):
+        console.print(f"[red]refusing to run again:[/red] a {RULES_VALIDATION_RUN} record exists")
+        raise typer.Exit(1)
+    if code_version().dirty is not False:
+        console.print("[red]commit all changes first[/red]: the run must name a clean commit")
+        raise typer.Exit(1)
+    held = sorted(select(setup.documents, Split.VAL), key=lambda d: d.doc_id)
+    y, y_train = bow.labels(held), bow.labels(setup.train)
+    ids = [d.doc_id for d in held]
+    with setup.recorded(RULES_VALIDATION_RUN, config=RULES_CONFIG) as current:
+        held_bow = bow.fit(setup.train).scores(held)
+        current.log("bow", summary(y, held_bow, bow.THRESHOLD, ids))
+        for text_source in TRACKS:
+            result = held_out(
+                setup.outcomes(setup.train, text_source),
+                y_train,
+                setup.fold_of(),
+                setup.outcomes(held, text_source),
+                y,
+                ids,
+            )
+            scores = [result["learned"]["scores"][i] for i in ids]
+            result["versus_bow"] = _versus_bow(y, held_bow, scores, result["threshold"])
+            current.log(text_source.value, result)
+    console.print(f"[green]recorded[/green] {RULES_VALIDATION_RUN}")
+
+
+@rules_app.command("report")
+def rules_report(
+    runs: Annotated[Path, typer.Option(help="Where reported run records are kept.")] = (
+        REPORTED_RUNS
+    ),
+    output: Annotated[Path, typer.Option(help="Where to write the report.")] = Path(
+        "reports/rules/accounting-rules.md"
+    ),
+) -> None:
+    """Render the accounting-rules report from the latest cross-validation and validation runs."""
+    store = JsonRunStore(runs)
+    cv, bow_cv = store.records(RULES_CV_RUN), store.records(BOW_CV_RUN)
+    if not cv or not bow_cv:
+        console.print(f"[red]need {RULES_CV_RUN} and {BOW_CV_RUN} runs in {runs}[/red]")
+        raise typer.Exit(1)
+    validation = store.records(RULES_VALIDATION_RUN)
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text(
+        render_rules_report(cv[-1], bow_cv[-1], validation[-1] if validation else None),
+        encoding="utf-8",
+    )
     console.print(f"[green]written[/green] {output}")

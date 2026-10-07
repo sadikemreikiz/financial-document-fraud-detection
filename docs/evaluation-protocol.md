@@ -88,6 +88,10 @@ T1 and T2 are both headline results and are always reported side by side.
 - Also reported: precision, recall, average precision (area under the precision-recall curve),
   ROC-AUC, Matthews correlation coefficient, balanced accuracy.
 - Calibration: Brier score and expected calibration error with 10 equal-mass bins.
+- Floors: every F1 is reported next to the F1 of marking every document as forged,
+  2*p* / (1 + *p*) for a share *p* of forged documents, and every ranking metric next to its
+  chance level (average precision *p*, ROC-AUC 0.5, recall at budget *b* equal to *b*).
+  *(Added on 2026-10-07 by [ADR-0013](decisions/0013-success-criterion-and-floors.md).)*
 - Operational: recall when the review budget is 10 % and 20 % of all documents, i.e. when only
   the highest-scoring documents are sent to a human.
 

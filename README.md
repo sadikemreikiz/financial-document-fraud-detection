@@ -10,8 +10,9 @@ This repository is **v2** of my M.Sc. thesis (University of Europe for Applied S
 headline results were not valid, and v2 is designed to answer the same research questions
 properly. See [From thesis to v2](docs/thesis-review.md).
 
-> **Status: under active development (Phases 0 to 2 of 8 complete: foundations, data, reading).**
-> No fraud detection results are reported yet; field extraction accuracy is in the
+> **Status: under active development (Phases 0 to 3 of 8 complete: foundations, data, reading,
+> accounting rules).** First detection results, on the validation split, are in the
+> [Phase 3 results](reports/rules/README.md); field extraction accuracy is in the
 > [Phase 2 results](reports/reading/README.md). The evaluation protocol was fixed before any
 > model was trained, and the test set stays locked until the final evaluation.
 
@@ -26,6 +27,7 @@ properly. See [From thesis to v2](docs/thesis-review.md).
 | [Data card](docs/data-card.md) and [data audit](reports/data/findit2-audit.md) | The dataset, its known issues and the shortcut analysis |
 | [Annotation guidelines](docs/annotation-guidelines.md) | How the gold sets for field extraction are drawn, annotated and verified |
 | [Phase 2 results](reports/reading/README.md) | OCR choice, field extraction accuracy on two gold sets, known limitations |
+| [Phase 3 results](reports/rules/README.md) | Published baseline reproduced, accounting rules measured once on validation |
 | [From thesis to v2](docs/thesis-review.md) | Code-verified review of the original implementation |
 
 ## Development
