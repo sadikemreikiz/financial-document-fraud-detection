@@ -39,7 +39,13 @@ make install   # create the environment and install git hooks
 make check     # lint, type check and test, as in CI
 make data      # download, verify and prepare the dataset
 make test-data # checks on the real dataset
+make reports   # regenerate the reports from the dataset, annotations and run records
+make check-reports  # fail if a committed report differs from its regeneration
 ```
+
+Reports derived from run records (`reports/runs`) or recorded reviews are also checked in CI.
+The gold evaluations in `reports/reading` were produced by the parser version named in each
+report and are reproduced as described in the [Phase 2 results](reports/reading/README.md).
 
 ## Licence
 

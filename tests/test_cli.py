@@ -10,9 +10,13 @@ import numpy.typing as npt
 import pytest
 from typer.testing import CliRunner
 
-import docfraud.cli
 from docfraud import __version__
 from docfraud.cli import app
+from docfraud.cli import baseline as cli_baseline
+from docfraud.cli import common as cli_common
+from docfraud.cli import data as cli_data
+from docfraud.cli import reading as cli_reading
+from docfraud.cli import rules as cli_rules
 from docfraud.data.download import SOURCES, DatasetSource
 from docfraud.data.gold import GoldManifest, load_manifest
 from docfraud.data.models import Label, Split
@@ -57,8 +61,8 @@ def toy_source(findit_root: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatc
         citation="Toy citation",
     )
     monkeypatch.setitem(SOURCES, "findit2", source)
-    monkeypatch.setattr(docfraud.cli, "load_findit2", load_toy)
-    monkeypatch.setattr(docfraud.cli, "DUPLICATE_GROUPS", ())
+    monkeypatch.setattr(cli_common, "load_findit2", load_toy)
+    monkeypatch.setattr(cli_data, "DUPLICATE_GROUPS", ())
     return tmp_path / "data"
 
 
@@ -71,7 +75,7 @@ def test_data_download_uses_the_pinned_source(
         calls.append((source.url, directory))
         return directory / source.filename
 
-    monkeypatch.setattr(docfraud.cli, "download", fake_download)
+    monkeypatch.setattr(cli_data, "download", fake_download)
     result = runner.invoke(app, ["data", "download", "--data-dir", str(toy_source)])
     assert result.exit_code == 0, result.output
     assert calls == [("https://example.org/findit2.zip", toy_source / "raw")]
@@ -128,7 +132,7 @@ def test_data_draw_gold_draws_around_earlier_sets(toy_source: Path, tmp_path: Pa
 
 
 def test_data_draw_folds_writes_folds_once(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(docfraud.cli, "load_findit2", lambda _: fold_documents())
+    monkeypatch.setattr(cli_common, "load_findit2", lambda _: fold_documents())
     output = tmp_path / "folds.json"
     args = ["data", "draw-folds", "--output", str(output)]
     result = runner.invoke(app, args)
@@ -155,7 +159,7 @@ def test_reading_ocr_caches_unlocked_splits_only(
     toy_source: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     runner.invoke(app, ["data", "prepare", "--data-dir", str(toy_source)])
-    monkeypatch.setattr(docfraud.cli, "RapidOcrEngine", FakeOcr)
+    monkeypatch.setattr(cli_common, "RapidOcrEngine", FakeOcr)
     cache = tmp_path / "ocr"
     result = runner.invoke(
         app, ["reading", "ocr", "--data-dir", str(toy_source), "--cache", str(cache)]
@@ -206,7 +210,7 @@ def test_reading_review_gold_writes_a_page_for_the_sample(
     runner.invoke(app, ["data", "prepare", "--data-dir", str(toy_source)])
     train = [d.doc_id for d in load_toy(toy_source / "raw" / "findit2") if d.split is Split.TRAIN]
     manifest = write_gold(tmp_path, tuple(train))
-    monkeypatch.setattr(docfraud.cli, "draw_review_sample", lambda *_, **__: (train[0],))
+    monkeypatch.setattr(cli_reading, "draw_review_sample", lambda *_, **__: (train[0],))
     out = tmp_path / "review"
     args = ["reading", "review-gold", "--data-dir", str(toy_source), "--manifest", str(manifest)]
     result = runner.invoke(app, [*args, "--output", str(out)])
@@ -220,7 +224,7 @@ def test_reading_review_gold_needs_annotated_sample(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     manifest = write_gold(tmp_path, ("XA",))
-    monkeypatch.setattr(docfraud.cli, "draw_review_sample", lambda *_, **__: ("XA", "XB"))
+    monkeypatch.setattr(cli_reading, "draw_review_sample", lambda *_, **__: ("XA", "XB"))
     result = runner.invoke(app, ["reading", "review-gold", "--manifest", str(manifest)])
     assert result.exit_code == 1
     assert "not annotated yet: XB" in result.output
@@ -230,7 +234,7 @@ def test_reading_score_review_keeps_the_review_and_writes_a_report(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     manifest = write_gold(tmp_path, ("XA",))
-    monkeypatch.setattr(docfraud.cli, "draw_review_sample", lambda *_, **__: ("XA",))
+    monkeypatch.setattr(cli_reading, "draw_review_sample", lambda *_, **__: ("XA",))
     review = {
         "reviewer": "owner",
         "reviews": [
@@ -252,7 +256,7 @@ def test_reading_score_review_reports_resolutions(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     manifest = write_gold(tmp_path, ("XA",))
-    monkeypatch.setattr(docfraud.cli, "draw_review_sample", lambda *_, **__: ("XA",))
+    monkeypatch.setattr(cli_reading, "draw_review_sample", lambda *_, **__: ("XA",))
     verdict = {"unit_id": "amount:total_due:0", "accepted": False, "comment": "5.50?"}
     review = {"reviewer": "owner", "reviews": [{"doc_id": "XA", "verdicts": [verdict]}]}
     downloaded = tmp_path / "gold-review.json"
@@ -271,7 +275,7 @@ def test_reading_evaluate_gold_scores_both_text_sources(
     toy_source: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     runner.invoke(app, ["data", "prepare", "--data-dir", str(toy_source)])
-    monkeypatch.setattr(docfraud.cli, "RapidOcrEngine", FakeOcr)
+    monkeypatch.setattr(cli_common, "RapidOcrEngine", FakeOcr)
     train = [d.doc_id for d in load_toy(toy_source / "raw" / "findit2") if d.split is Split.TRAIN]
     manifest = write_gold(tmp_path, tuple(train))
     out, report = tmp_path / "predictions", tmp_path / "evaluation.md"
@@ -290,7 +294,7 @@ def test_reading_evaluate_gold_states_the_note(
     toy_source: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     runner.invoke(app, ["data", "prepare", "--data-dir", str(toy_source)])
-    monkeypatch.setattr(docfraud.cli, "RapidOcrEngine", FakeOcr)
+    monkeypatch.setattr(cli_common, "RapidOcrEngine", FakeOcr)
     train = [d.doc_id for d in load_toy(toy_source / "raw" / "findit2") if d.split is Split.TRAIN]
     manifest, report = write_gold(tmp_path, tuple(train)), tmp_path / "evaluation.md"
     args = ["reading", "evaluate-gold", "--data-dir", str(toy_source), "--manifest", str(manifest)]
@@ -361,7 +365,7 @@ def test_reading_evaluate_gold_needs_every_annotation(tmp_path: Path) -> None:
 
 def baseline_setup(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> list[str]:
     docs = corpus(tmp_path / "corpus")
-    monkeypatch.setattr(docfraud.cli, "load_findit2", lambda _: docs)
+    monkeypatch.setattr(cli_common, "load_findit2", lambda _: docs)
     folds = tmp_path / "folds.json"
     save_folds(assign_folds(docs), folds)
     return ["--runs", str(tmp_path / "runs"), "--folds", str(folds)]
@@ -388,16 +392,16 @@ def test_baseline_test_run_happens_once_from_a_clean_commit(
 ) -> None:
     options = baseline_setup(tmp_path, monkeypatch)
     command = ["baseline", "bow-lr", *options, "--unlock-test"]
-    monkeypatch.setattr(docfraud.cli, "code_version", lambda: CodeVersion(commit="a", dirty=True))
+    monkeypatch.setattr(cli_common, "code_version", lambda: CodeVersion(commit="a", dirty=True))
     dirty = runner.invoke(app, command)
     assert dirty.exit_code == 1
     assert "commit all changes first" in dirty.output
-    monkeypatch.setattr(docfraud.cli, "code_version", lambda: CodeVersion(commit="a", dirty=False))
+    monkeypatch.setattr(cli_common, "code_version", lambda: CodeVersion(commit="a", dirty=False))
     first = runner.invoke(app, command)
     assert first.exit_code == 0, first.output
     assert "reproduction failed" in first.output  # perfect toy scores are far above 17.78
     (record,) = JsonRunStore(tmp_path / "runs").records("bow-lr-test")
-    assert record.test_unlocks == (docfraud.cli.BOW_TEST_REASON,)
+    assert record.test_unlocks == (cli_baseline.BOW_TEST_REASON,)
     assert record.results["n_documents"] == 12
     again = runner.invoke(app, command)
     assert again.exit_code == 1
@@ -425,9 +429,9 @@ def rules_setup(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> list[str]:
         amounts = {"total_due": ["12.00"], "tendered": ["20.00"], "change": [change]}
         return SimpleNamespace(fields=ReceiptFields.model_validate({"amounts": amounts}))
 
-    monkeypatch.setattr(docfraud.cli, "load_findit2", lambda _: tuple(docs))
-    monkeypatch.setattr(docfraud.cli, "RapidOcrEngine", FakeOcr)
-    monkeypatch.setattr(docfraud.cli, "read_document", fields)
+    monkeypatch.setattr(cli_common, "load_findit2", lambda _: tuple(docs))
+    monkeypatch.setattr(cli_common, "RapidOcrEngine", FakeOcr)
+    monkeypatch.setattr(cli_rules, "read_document", fields)
     folds = tmp_path / "folds.json"
     save_folds(assign_folds(docs), folds)
     runs = tmp_path / "runs"
@@ -461,9 +465,9 @@ def test_rules_validation_runs_once_from_a_clean_commit(
 ) -> None:
     options = rules_setup(tmp_path, monkeypatch)
     command = ["rules", "evaluate", *options, "--validation"]
-    monkeypatch.setattr(docfraud.cli, "code_version", lambda: CodeVersion(commit="a", dirty=True))
+    monkeypatch.setattr(cli_common, "code_version", lambda: CodeVersion(commit="a", dirty=True))
     assert "commit all changes first" in runner.invoke(app, command).output
-    monkeypatch.setattr(docfraud.cli, "code_version", lambda: CodeVersion(commit="a", dirty=False))
+    monkeypatch.setattr(cli_common, "code_version", lambda: CodeVersion(commit="a", dirty=False))
     result = runner.invoke(app, command)
     assert result.exit_code == 0, result.output
     (record,) = JsonRunStore(tmp_path / "runs").records("rules-validation")
@@ -483,3 +487,26 @@ def test_rules_need_the_baseline_runs(tmp_path: Path, monkeypatch: pytest.Monkey
     assert "run the baseline first" in result.output
     report = ["rules", "report", "--runs", str(tmp_path / "runs")]
     assert "need rules-cv and bow-lr-cv" in runner.invoke(app, report).output
+
+
+def test_rules_breakdown_groups_recorded_decisions(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    options = rules_setup(tmp_path, monkeypatch)
+    runs = ["--runs", str(tmp_path / "runs")]
+    missing = runner.invoke(app, ["rules", "breakdown", *runs])
+    assert missing.exit_code == 1
+    assert "no rules-cv run" in missing.output
+    assert runner.invoke(app, ["rules", "evaluate", *options]).exit_code == 0
+    result = runner.invoke(app, ["rules", "breakdown", *runs])
+    assert result.exit_code == 0, result.output
+    (record,) = JsonRunStore(tmp_path / "runs").records("rules-breakdown")
+    assert set(record.results) == {"training"}
+    flagged = record.results["training"]["transcript"]["any_fail"]["forged"]["software"]
+    assert flagged == {"not recorded": {"receipts": 12.0, "found": 12.0}}
+    report = tmp_path / "rules.md"
+    assert runner.invoke(app, ["rules", "report", *runs, "--output", str(report)]).exit_code == 0
+    assert (
+        "Training, cross-validated: forged receipts found, by editing software"
+        in report.read_text(encoding="utf-8")
+    )

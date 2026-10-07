@@ -30,6 +30,8 @@ Receipts on which the rule failed / receipts on which it applied. The fields are
 | Recall at 10 % review | 17.1 [10.6, 24.5] | 13.8 [7.7, 20.2] | 13.0 [10.6, 15.4] | 13.3 [11.1, 15.5] | 7.4 [3.2, 13.0] | 10.0 [10.0, 10.0] |
 | Recall at 20 % review | 23.4 [16.0, 31.9] | 29.8 [21.3, 38.3] | 26.0 [21.2, 30.7] | 26.6 [22.1, 31.0] | 17.0 [8.5, 24.5] | 20.0 [20.0, 20.0] |
 | Forged found / authentic flagged / forged missed | 94 / 468 / 0 | 94 / 464 / 0 | 48 / 173 / 46 | 52 / 182 / 42 | 5 / 33 / 89 | 94 / 468 / 0 |
+| Brier score | 0.141 [0.135, 0.146] | 0.139 [0.134, 0.144] | — | — | — | — |
+| Calibration error | 0.058 [0.044, 0.095] | 0.052 [0.040, 0.090] | — | — | — | — |
 
 Out-of-fold scores of the 562 training receipts (94 forged), 5 stored folds; percentages with 95 % stratified bootstrap intervals. 'Flag everything' marks every receipt as forged: the floor for F1 and the chance level for ranking. Operating thresholds (F1-optimal out of fold): T1 0.088, T2 0.089. Runs `20261007T081917538483Z-rules-cv` (commit 2d8be5d) and `20261007T074135747237Z-bow-lr-cv` (commit 4fd2217).
 
@@ -89,6 +91,8 @@ Change in the log-odds of forgery when the outcome occurs, relative to the rule 
 | Recall at 10 % review | 29.7 [18.2, 42.4] | 24.7 [12.1, 36.4] | 15.3 [11.7, 19.2] | 13.5 [9.8, 17.3] | 3.0 [0.0, 12.1] | 10.0 [10.0, 10.0] |
 | Recall at 20 % review | 36.4 [24.2, 51.5] | 30.3 [18.2, 45.5] | 30.6 [23.3, 38.4] | 27.0 [19.7, 34.5] | 12.1 [3.0, 24.2] | 20.0 [20.0, 20.0] |
 | Forged found / authentic flagged / forged missed | 33 / 157 / 0 | 33 / 157 / 0 | 21 / 58 / 12 | 19 / 62 / 14 | 1 / 7 / 32 | 33 / 157 / 0 |
+| Brier score | 0.131 [0.119, 0.143] | 0.137 [0.127, 0.147] | — | — | — | — |
+| Calibration error | 0.084 [0.053, 0.132] | 0.057 [0.049, 0.122] | — | — | — | — |
 
 190 validation receipts (33 forged). Scorers and BoW + LR fitted on the whole training split; rule thresholds from the training cross-validation, BoW + LR at 0.5. Run `20261007T082342276385Z-rules-validation` (commit cb0ede6).
 
@@ -116,3 +120,106 @@ Percentage points; paired stratified bootstrap over the same receipts. * marks a
 | tax_rates | 10 / 70 | 4 / 20 | 5 / 56 | 1 / 13 |
 
 Receipts on which the rule failed / receipts on which it applied.
+
+## Breakdowns
+
+From run `20261007T092159304157Z-rules-breakdown` (commit 15c26ef).
+
+### Validation: forged receipts found, by forgery technique
+
+| Group | Forged receipts | Any rule fails T1 | Any rule fails T2 | Top 10 % review T1 | Top 10 % review T2 |
+|---|---|---|---|---|---|
+| cpi | 26 | 17.0 | 16.0 | 6.8 | 6.2 |
+| cpo | 1 | 0.0 | 0.0 | 0.0 | 0.0 |
+| cut | 6 | 4.0 | 4.0 | 1.0 | 1.0 |
+| imi | 1 | 1.0 | 1.0 | 1.0 | 1.0 |
+| other | 1 | 0.0 | 0.0 | 0.0 | 0.0 |
+| pix | 3 | 2.0 | 1.0 | 1.0 | 0.0 |
+
+A receipt counts in every group it belongs to. Top 10 % review: the learned scorer's 10 % most suspicious receipts; receipts tied at the cut-off count in part, so counts can be fractional. Groups are small: descriptive only.
+
+### Validation: forged receipts found, by changed information
+
+| Group | Forged receipts | Any rule fails T1 | Any rule fails T2 | Top 10 % review T1 | Top 10 % review T2 |
+|---|---|---|---|---|---|
+| company | 2 | 2.0 | 2.0 | 1.0 | 1.0 |
+| metadata | 12 | 3.0 | 2.0 | 2.0 | 2.0 |
+| other | 4 | 3.0 | 3.0 | 1.0 | 1.0 |
+| product | 8 | 7.0 | 7.0 | 2.0 | 2.0 |
+| total_payment | 17 | 16.0 | 15.0 | 7.8 | 6.2 |
+
+A receipt counts in every group it belongs to. Top 10 % review: the learned scorer's 10 % most suspicious receipts; receipts tied at the cut-off count in part, so counts can be fractional. Groups are small: descriptive only.
+
+### Validation: forged receipts found, by editing software
+
+| Group | Forged receipts | Any rule fails T1 | Any rule fails T2 | Top 10 % review T1 | Top 10 % review T2 |
+|---|---|---|---|---|---|
+| aperçu | 5 | 2.0 | 2.0 | 2.0 | 2.0 |
+| gimp | 11 | 7.0 | 6.0 | 2.0 | 2.2 |
+| kolourpaint | 2 | 2.0 | 2.0 | 1.0 | 1.0 |
+| paint | 13 | 9.0 | 8.0 | 4.8 | 3.0 |
+| paint3d | 2 | 1.0 | 1.0 | 0.0 | 0.0 |
+
+A receipt counts in every group it belongs to. Top 10 % review: the learned scorer's 10 % most suspicious receipts; receipts tied at the cut-off count in part, so counts can be fractional. Groups are small: descriptive only.
+
+### Validation: authentic receipts flagged, by benign annotation
+
+| Annotation | Authentic receipts | Any rule fails T1 | Any rule fails T2 | Top 10 % review T1 | Top 10 % review T2 |
+|---|---|---|---|---|---|
+| digital | 3 | 1.0 | 1.0 | 0.0 | 0.0 |
+| handwritten | 66 | 22.0 | 21.0 | 3.8 | 3.2 |
+| handwritten and digital | 5 | 2.0 | 4.0 | 0.0 | 1.2 |
+| none | 83 | 33.0 | 36.0 | 5.4 | 6.5 |
+
+Handwritten and digital annotations (case numbers, notes, stamps) are benign and must not raise alarms.
+
+### Training, cross-validated: forged receipts found, by forgery technique
+
+| Group | Forged receipts | Any rule fails T1 | Any rule fails T2 | Top 10 % review T1 | Top 10 % review T2 |
+|---|---|---|---|---|---|
+| cpi | 73 | 34.0 | 38.0 | 12.0 | 10.0 |
+| cpo | 4 | 2.0 | 2.0 | 0.0 | 0.0 |
+| cut | 16 | 8.0 | 9.0 | 3.1 | 2.0 |
+| imi | 9 | 5.0 | 5.0 | 2.0 | 1.0 |
+| not annotated | 1 | 1.0 | 1.0 | 0.0 | 0.0 |
+| other | 3 | 1.0 | 1.0 | 1.0 | 1.0 |
+| pix | 13 | 6.0 | 7.0 | 2.0 | 2.0 |
+
+A receipt counts in every group it belongs to. Top 10 % review: the learned scorer's 10 % most suspicious receipts; receipts tied at the cut-off count in part, so counts can be fractional. Groups are small: descriptive only.
+
+### Training, cross-validated: forged receipts found, by changed information
+
+| Group | Forged receipts | Any rule fails T1 | Any rule fails T2 | Top 10 % review T1 | Top 10 % review T2 |
+|---|---|---|---|---|---|
+| company | 7 | 1.0 | 1.0 | 1.0 | 1.0 |
+| metadata | 33 | 14.0 | 16.0 | 2.0 | 2.0 |
+| not annotated | 1 | 1.0 | 1.0 | 0.0 | 0.0 |
+| other | 9 | 4.0 | 4.0 | 2.0 | 1.0 |
+| product | 28 | 14.0 | 17.0 | 3.1 | 2.0 |
+| total_payment | 46 | 30.0 | 31.0 | 12.1 | 10.0 |
+
+A receipt counts in every group it belongs to. Top 10 % review: the learned scorer's 10 % most suspicious receipts; receipts tied at the cut-off count in part, so counts can be fractional. Groups are small: descriptive only.
+
+### Training, cross-validated: forged receipts found, by editing software
+
+| Group | Forged receipts | Any rule fails T1 | Any rule fails T2 | Top 10 % review T1 | Top 10 % review T2 |
+|---|---|---|---|---|---|
+| aperçu | 7 | 3.0 | 3.0 | 2.0 | 1.0 |
+| gimp | 40 | 18.0 | 20.0 | 6.1 | 4.0 |
+| kolourpaint | 1 | 1.0 | 1.0 | 0.0 | 0.0 |
+| not recorded | 1 | 1.0 | 1.0 | 0.0 | 0.0 |
+| paint | 38 | 20.0 | 22.0 | 4.0 | 5.0 |
+| paint3d | 7 | 5.0 | 5.0 | 4.0 | 3.0 |
+
+A receipt counts in every group it belongs to. Top 10 % review: the learned scorer's 10 % most suspicious receipts; receipts tied at the cut-off count in part, so counts can be fractional. Groups are small: descriptive only.
+
+### Training, cross-validated: authentic receipts flagged, by benign annotation
+
+| Annotation | Authentic receipts | Any rule fails T1 | Any rule fails T2 | Top 10 % review T1 | Top 10 % review T2 |
+|---|---|---|---|---|---|
+| digital | 10 | 4.0 | 5.0 | 0.0 | 0.0 |
+| handwritten | 233 | 81.0 | 86.0 | 21.0 | 29.0 |
+| handwritten and digital | 18 | 5.0 | 9.0 | 0.0 | 1.0 |
+| none | 207 | 83.0 | 82.0 | 19.1 | 13.2 |
+
+Handwritten and digital annotations (case numbers, notes, stamps) are benign and must not raise alarms.

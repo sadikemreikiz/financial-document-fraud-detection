@@ -7,6 +7,10 @@ amounts it needs.
 
 Authentic receipts can still fail some relations, for example when zero-rated items are left out
 of the printed total excluding tax, so pass rates are lower bounds, not accuracy.
+
+These checks are kept as they were, because the Phase 2 development measurement and the gold
+annotation checks depend on them. Forgery detection uses the accounting rules of
+``docfraud.detectors.rules``, which model receipt structure these checks do not (ADR-0012).
 """
 
 from collections.abc import Callable

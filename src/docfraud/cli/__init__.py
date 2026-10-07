@@ -1,0 +1,40 @@
+"""Command-line interface for docfraud: one command group per module."""
+
+from typing import Annotated
+
+import typer
+
+from docfraud import __version__
+from docfraud.cli import baseline, data, reading, rules
+
+app = typer.Typer(
+    name="docfraud",
+    help="Explainable multimodal detection of forged financial documents.",
+    no_args_is_help=True,
+    add_completion=False,
+)
+app.add_typer(data.app, name="data")
+app.add_typer(reading.app, name="reading")
+app.add_typer(baseline.app, name="baseline")
+app.add_typer(rules.app, name="rules")
+
+
+def _print_version(value: bool) -> None:
+    if value:
+        typer.echo(f"docfraud {__version__}")
+        raise typer.Exit
+
+
+@app.callback()
+def main(
+    version: Annotated[
+        bool,
+        typer.Option(
+            "--version",
+            callback=_print_version,
+            is_eager=True,
+            help="Show the installed version and exit.",
+        ),
+    ] = False,
+) -> None:
+    """Detect forged financial documents and explain why."""
