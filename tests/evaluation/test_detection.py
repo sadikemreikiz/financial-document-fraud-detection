@@ -61,11 +61,18 @@ def test_brier_matches_scikit_learn() -> None:
 
 
 def test_expected_calibration_error_on_equal_mass_bins() -> None:
-    y = np.array([False, False, True, True])
-    p = np.array([0.0, 0.5, 0.5, 1.0])
-    # two bins of two: |0 - 0.25| and |1 - 0.75|, each weighted by half
-    assert expected_calibration_error(y, p, bins=2) == pytest.approx(0.25)
+    y = np.array([False, True, False, True])
+    p = np.array([0.1, 0.3, 0.6, 0.9])
+    # bins {0.1, 0.3} and {0.6, 0.9}: |0.5 - 0.2| and |0.5 - 0.75|, each weighted by half
+    assert expected_calibration_error(y, p, bins=2) == pytest.approx(0.275)
     assert expected_calibration_error(y, y.astype(float), bins=2) == 0.0
+
+
+def test_expected_calibration_error_does_not_depend_on_order_of_ties() -> None:
+    p = np.full(4, 0.5)
+    ordered = expected_calibration_error(np.array([True, True, False, False]), p, bins=2)
+    shuffled = expected_calibration_error(np.array([True, False, True, False]), p, bins=2)
+    assert ordered == shuffled == 0.0
 
 
 def test_recall_at_budget_shares_the_cut_off_among_tied_documents() -> None:

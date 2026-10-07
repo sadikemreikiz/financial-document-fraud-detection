@@ -70,6 +70,7 @@ finding.
 | `docfraud.data` | Dataset adapters, the `Document` model, split handling with the test lock | 1 |
 | `docfraud.reading` | Image normalisation, OCR, field extraction | 2 |
 | `docfraud.detectors` | Accounting rules, pixel forensics, copy-move, file metadata | 3–5 |
+| `docfraud.baselines` | Published baselines, re-implemented to anchor results to prior work | 3 |
 | `docfraud.evaluation` | Metrics, bootstrap, cross-validation, run records | 3 |
 | `docfraud.synthesis` | Synthetic forgery engine (training data only) | 4 |
 | `docfraud.linking` | Cross-modal evidence linking | 5 |

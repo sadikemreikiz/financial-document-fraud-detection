@@ -102,7 +102,7 @@ def _git(cwd: Path, *args: str) -> str:
 
 def environment() -> Environment:
     """Python, package versions and hardware of the current process."""
-    packages = {d.metadata["Name"].lower(): d.version for d in distributions()}
+    packages = {name.lower(): d.version for d in distributions() if (name := d.metadata["Name"])}
     return Environment(
         python=platform.python_version(),
         docfraud=__version__,

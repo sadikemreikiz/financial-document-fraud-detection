@@ -149,12 +149,17 @@ def brier(y: Labels, p: Scores) -> float:
 
 
 def expected_calibration_error(y: Labels, p: Scores, bins: int = ECE_BINS) -> float:
-    """Calibration error over equal-mass bins of the sorted probabilities."""
-    order = np.argsort(p, kind="stable")
+    """Calibration error over equal-mass bins of the probabilities.
+
+    Bin edges are quantiles of the probabilities and documents are binned by value, so tied
+    probabilities always share a bin; bins are then only approximately equal in size.
+    """
+    edges = np.quantile(p, np.linspace(0, 1, bins + 1)[1:-1])
+    assigned = np.searchsorted(edges, p, side="right")
     total = 0.0
-    for part in np.array_split(order, bins):
-        if part.size:
-            total += part.size * abs(float(np.mean(y[part])) - float(np.mean(p[part])))
+    for b in np.unique(assigned):
+        part = assigned == b
+        total += part.sum() * abs(float(np.mean(y[part])) - float(np.mean(p[part])))
     return total / y.size
 
 
