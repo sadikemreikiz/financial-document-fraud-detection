@@ -1,3 +1,5 @@
+import json
+
 import numpy as np
 import pytest
 from sklearn import metrics as sk
@@ -13,6 +15,7 @@ from docfraud.evaluation.detection import (
     expected_calibration_error,
     recall_at_budget,
     roc_auc,
+    summary,
 )
 
 
@@ -140,3 +143,12 @@ def test_a_perfect_candidate_beats_a_random_baseline() -> None:
 def test_invalid_inputs_are_rejected(labels: list[bool], scores: list[float], message: str) -> None:
     with pytest.raises(ValueError, match=message):
         as_arrays(labels, scores)
+
+
+def test_summary_is_json_ready() -> None:
+    y, s = random_case(5, n=40)
+    result = summary(y, s, 0.5, [f"D{i}" for i in range(40)])
+    assert result["n_documents"] == 40
+    assert sum(result["counts"].values()) == 40
+    assert result["scores"]["D0"] == pytest.approx(float(s[0]))
+    json.dumps(result)

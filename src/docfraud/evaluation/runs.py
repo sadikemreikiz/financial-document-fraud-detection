@@ -190,6 +190,13 @@ class JsonRunStore:
         path = self.root / run_id / RECORD_NAME
         return RunRecord.model_validate_json(path.read_text(encoding="utf-8"))
 
+    def records(self, name: str) -> list[RunRecord]:
+        """All stored runs with this name, oldest first."""
+        if not self.root.is_dir():
+            return []
+        found = [self.load(p.parent.name) for p in sorted(self.root.glob(f"*/{RECORD_NAME}"))]
+        return [r for r in found if r.name == name]
+
 
 @contextmanager
 def run(  # noqa: PLR0913 - every argument is part of the record

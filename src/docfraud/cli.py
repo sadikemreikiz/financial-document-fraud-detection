@@ -2,6 +2,7 @@
 
 import json
 from enum import StrEnum
+from functools import partial
 from pathlib import Path
 from typing import Annotated
 
@@ -10,6 +11,8 @@ from rich.console import Console
 from rich.progress import BarColumn, DownloadColumn, Progress, TransferSpeedColumn
 
 from docfraud import __version__
+from docfraud.baselines import bow
+from docfraud.baselines.report import render_report
 from docfraud.data.audit import audit_dataset
 from docfraud.data.download import SOURCES, download, safe_extract, verify
 from docfraud.data.duplicates import resolve_duplicates
@@ -39,8 +42,17 @@ from docfraud.data.gold_review import (
 from docfraud.data.models import Label, Split
 from docfraud.data.normalize import load_grayscale
 from docfraud.data.splits import select
+from docfraud.evaluation.detection import summary
 from docfraud.evaluation.extraction import render_extraction_report, score_document
-from docfraud.evaluation.folds import CV_FOLDS, FOLD_SEED, assign_folds, save_folds
+from docfraud.evaluation.folds import (
+    CV_FOLDS,
+    FOLD_SEED,
+    assign_folds,
+    check_folds,
+    load_folds,
+    save_folds,
+)
+from docfraud.evaluation.runs import JsonRunStore, code_version, run
 from docfraud.reading.consistency import CHECKS
 from docfraud.reading.fields import ReceiptFields
 from docfraud.reading.ocr import CachedOcr, RapidOcrEngine
@@ -56,6 +68,8 @@ data_app = typer.Typer(help="Download, prepare and audit datasets.", no_args_is_
 app.add_typer(data_app, name="data")
 reading_app = typer.Typer(help="OCR and field extraction.", no_args_is_help=True)
 app.add_typer(reading_app, name="reading")
+baseline_app = typer.Typer(help="Published baselines, re-implemented.", no_args_is_help=True)
+app.add_typer(baseline_app, name="baseline")
 
 console = Console()
 
@@ -447,4 +461,97 @@ def reading_compare_gold(  # noqa: PLR0913, PLR0917 - one option per input and o
     )
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(header + "\n".join(sections), encoding="utf-8")
+    console.print(f"[green]written[/green] {output}")
+
+
+REPORTED_RUNS = Path("reports/runs")
+BOW_CV_RUN = "bow-lr-cv"
+BOW_TEST_RUN = "bow-lr-test"
+BOW_TEST_REASON = "baseline reproduction, evaluation protocol section 3, exception 1 (ADR-0011)"
+BOW_CONFIG = {
+    "baseline": "bag of words + logistic regression (Martinez Tornes et al., 2023)",
+    "decision": "ADR-0011",
+    "text": "T1, normalised dataset transcripts",
+    "features": "sklearn CountVectorizer(), default settings",
+    "classifier": "sklearn LogisticRegression(), default settings",
+    "threshold": bow.THRESHOLD,
+    "training": "training split",
+}
+
+
+@baseline_app.command("bow-lr")
+def baseline_bow_lr(
+    data_dir: DataDir = Path("data"),
+    runs: Annotated[Path, typer.Option(help="Where reported run records are kept.")] = (
+        REPORTED_RUNS
+    ),
+    folds_path: Annotated[Path, typer.Option("--folds", help="Stored folds.")] = CV_FOLDS_PATH,
+    unlock_test: Annotated[
+        bool,
+        typer.Option(
+            "--unlock-test",
+            help="Evaluate once on the test split (protocol exception 1) instead of in "
+            "cross-validation.",
+        ),
+    ] = False,
+) -> None:
+    """Run the published BoW + LR baseline: cross-validated, or once on the test split."""
+    source = SOURCES[DatasetName.FINDIT2.value]
+    documents = load_findit2(data_dir / "raw" / source.name)
+    store = JsonRunStore(runs)
+    recorded = partial(
+        run, store=store, seeds={"bootstrap": 0}, dataset_sha256={source.name: source.sha256}
+    )
+    if not unlock_test:
+        folds = load_folds(folds_path)
+        check_folds(folds, documents)
+        with recorded(BOW_CV_RUN, config=BOW_CONFIG | {"folds": str(folds_path)}) as current:
+            cv = bow.cross_validate(documents, folds)
+            current.log("max_iter", list(cv.max_iter))
+            for key, value in summary(cv.labels, cv.scores, bow.THRESHOLD, cv.doc_ids).items():
+                current.log(key, value)
+        f1 = current.results["metrics"]["f1"]["value"]
+        console.print(f"[green]recorded[/green] {BOW_CV_RUN}: cross-validated F1 {f1:.3f}")
+        return
+    if store.records(BOW_TEST_RUN):
+        console.print(f"[red]refusing to run again:[/red] a {BOW_TEST_RUN} record exists in {runs}")
+        raise typer.Exit(1)
+    if code_version().dirty is not False:
+        console.print("[red]commit all changes first[/red]: the test run must name a clean commit")
+        raise typer.Exit(1)
+    with recorded(BOW_TEST_RUN, config=BOW_CONFIG) as current:
+        train = select(documents, Split.TRAIN)
+        test = select(documents, Split.TEST, unlock_test=True, reason=BOW_TEST_REASON)
+        fitted = bow.fit(train)
+        current.log("max_iter", fitted.max_iter)
+        doc_ids = [d.doc_id for d in test]
+        for key, value in summary(
+            bow.labels(test), fitted.scores(test), bow.THRESHOLD, doc_ids
+        ).items():
+            current.log(key, value)
+        current.log("published", bow.PUBLISHED)
+        f1 = current.results["metrics"]["f1"]
+        current.log("reproduced", bool(f1["low"] <= bow.PUBLISHED["f1"] <= f1["high"]))
+    verdict = "passed" if current.results["reproduced"] else "failed"
+    console.print(f"[green]recorded[/green] {BOW_TEST_RUN}: reproduction {verdict}")
+
+
+@baseline_app.command("report")
+def baseline_report(
+    runs: Annotated[Path, typer.Option(help="Where reported run records are kept.")] = (
+        REPORTED_RUNS
+    ),
+    output: Annotated[Path, typer.Option(help="Where to write the report.")] = Path(
+        "reports/baselines/bow-lr.md"
+    ),
+) -> None:
+    """Render the BoW + LR report from the latest cross-validation run and the test run."""
+    store = JsonRunStore(runs)
+    cv = store.records(BOW_CV_RUN)
+    if not cv:
+        console.print(f"[red]no {BOW_CV_RUN} run in {runs}[/red]")
+        raise typer.Exit(1)
+    test = store.records(BOW_TEST_RUN)
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text(render_report(cv[-1], test[-1] if test else None), encoding="utf-8")
     console.print(f"[green]written[/green] {output}")

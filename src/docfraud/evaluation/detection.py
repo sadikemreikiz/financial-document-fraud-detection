@@ -9,9 +9,10 @@ Ties matter here: accounting rules produce few distinct scores, so many document
 Every metric treats tied documents alike, never by their order in the input.
 """
 
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from functools import partial
+from typing import Any
 
 import numpy as np
 import numpy.typing as npt
@@ -264,3 +265,22 @@ def _on(metric: Metric, y: Labels, s: Scores) -> Statistic:
 
 def _difference(of_a: Metric, of_b: Metric, y: Labels, a: Scores, b: Scores) -> Statistic:
     return lambda idx: of_b(y[idx], b[idx]) - of_a(y[idx], a[idx])
+
+
+def summary(
+    labels: object, scores: object, threshold: float, doc_ids: Sequence[str]
+) -> dict[str, Any]:
+    """JSON-ready results of one detector: sizes, metrics with intervals, counts and scores."""
+    y, s = as_arrays(labels, scores)
+    counts = Counts.of(y, s >= threshold)
+    return {
+        "n_documents": int(y.size),
+        "n_forged": int(y.sum()),
+        "threshold": threshold,
+        "metrics": {
+            name: {"value": e.value, "low": e.low, "high": e.high}
+            for name, e in evaluate(y, s, threshold).items()
+        },
+        "counts": {"tp": counts.tp, "fp": counts.fp, "fn": counts.fn, "tn": counts.tn},
+        "scores": dict(zip(doc_ids, (float(v) for v in s), strict=True)),
+    }

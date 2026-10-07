@@ -100,3 +100,14 @@ def test_environment_lists_installed_packages() -> None:
     assert "numpy" in env.packages
     assert env.cpu_count
     json.dumps(env.model_dump())
+
+
+def test_records_are_listed_by_name_oldest_first(tmp_path: Path) -> None:
+    store = JsonRunStore(tmp_path / "runs")
+    assert store.records("a") == []
+    for name in ("a", "b", "a"):
+        with run(name, store=store, config={}, seeds={}, dataset_sha256={}):
+            pass
+    found = store.records("a")
+    assert [r.name for r in found] == ["a", "a"]
+    assert found[0].started <= found[1].started

@@ -15,8 +15,10 @@ from docfraud.data.download import SOURCES, DatasetSource
 from docfraud.data.gold import GoldManifest, load_manifest
 from docfraud.data.models import Split
 from docfraud.data.splits import TestSetLockedError
-from docfraud.evaluation.folds import load_folds
+from docfraud.evaluation.folds import assign_folds, load_folds, save_folds
+from docfraud.evaluation.runs import CodeVersion, JsonRunStore
 from docfraud.reading.ocr import OcrResult
+from tests.baselines.test_bow import corpus
 from tests.evaluation.test_folds import documents as fold_documents
 from tests.fixtures.findit import load_toy
 
@@ -352,3 +354,55 @@ def test_reading_evaluate_gold_needs_every_annotation(tmp_path: Path) -> None:
     result = runner.invoke(app, ["reading", "evaluate-gold", "--manifest", str(manifest)])
     assert result.exit_code == 1
     assert "not annotated yet: XA" in result.output
+
+
+def baseline_setup(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> list[str]:
+    docs = corpus(tmp_path / "corpus")
+    monkeypatch.setattr(docfraud.cli, "load_findit2", lambda _: docs)
+    folds = tmp_path / "folds.json"
+    save_folds(assign_folds(docs), folds)
+    return ["--runs", str(tmp_path / "runs"), "--folds", str(folds)]
+
+
+def test_baseline_cross_validation_is_recorded_and_reported(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    options = baseline_setup(tmp_path, monkeypatch)
+    result = runner.invoke(app, ["baseline", "bow-lr", *options])
+    assert result.exit_code == 0, result.output
+    assert "cross-validated F1 1.000" in result.output
+    (record,) = JsonRunStore(tmp_path / "runs").records("bow-lr-cv")
+    assert record.test_unlocks == ()
+    assert record.results["counts"]["fp"] == 0
+    report = tmp_path / "bow-lr.md"
+    args = ["baseline", "report", "--runs", str(tmp_path / "runs"), "--output", str(report)]
+    assert runner.invoke(app, args).exit_code == 0
+    assert "Not run yet" in report.read_text(encoding="utf-8")
+
+
+def test_baseline_test_run_happens_once_from_a_clean_commit(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    options = baseline_setup(tmp_path, monkeypatch)
+    command = ["baseline", "bow-lr", *options, "--unlock-test"]
+    monkeypatch.setattr(docfraud.cli, "code_version", lambda: CodeVersion(commit="a", dirty=True))
+    dirty = runner.invoke(app, command)
+    assert dirty.exit_code == 1
+    assert "commit all changes first" in dirty.output
+    monkeypatch.setattr(docfraud.cli, "code_version", lambda: CodeVersion(commit="a", dirty=False))
+    first = runner.invoke(app, command)
+    assert first.exit_code == 0, first.output
+    assert "reproduction failed" in first.output  # perfect toy scores are far above 17.78
+    (record,) = JsonRunStore(tmp_path / "runs").records("bow-lr-test")
+    assert record.test_unlocks == (docfraud.cli.BOW_TEST_REASON,)
+    assert record.results["n_documents"] == 12
+    again = runner.invoke(app, command)
+    assert again.exit_code == 1
+    assert "refusing to run again" in again.output
+
+
+def test_baseline_report_needs_a_cross_validation_run(tmp_path: Path) -> None:
+    args = ["baseline", "report", "--runs", str(tmp_path), "--output", str(tmp_path / "r.md")]
+    result = runner.invoke(app, args)
+    assert result.exit_code == 1
+    assert "no bow-lr-cv run" in result.output
