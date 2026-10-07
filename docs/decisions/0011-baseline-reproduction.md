@@ -66,6 +66,11 @@ later systems can be compared with without touching the test split.
 checks only (exception 2: counts, labels, file matching), never by evaluating other
 configurations on the test split.
 
+**Result (2026-10-07).** Run once on the test split from commit `c79b8b2`; F1 18.18
+[4.7, 33.3] with 4 forged receipts found, 5 authentic flagged and 31 forged missed, against the
+published 17.78 (4 / 6 / 31). The reproduction passed ([report](../../reports/baselines/bow-lr.md)).
+Exception 1 of the evaluation protocol is now used up.
+
 ## Consequences
 
 - A pass shows that nothing is grossly wrong; it does not show that our setup matches the paper
