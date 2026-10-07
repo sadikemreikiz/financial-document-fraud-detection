@@ -52,6 +52,10 @@ T1 and T2 are both headline results and are always reported side by side.
   and the **validation split** (calibration and thresholds).
 - Synthetic forgeries are generated only from documents of the training data in use, so that no
   test or validation document can leak in through augmentation.
+- Pixel forensics (Phase 4) is developed on one design fold of the training split; the other
+  four folds are not inspected by a person and measure each pre-registered system once. Within
+  cross-validation, synthetic forgeries come only from the training folds of each round.
+  *(Added on 2026-10-07 by [ADR-0014](decisions/0014-pixel-forensics-preregistration.md).)*
 - **The test split is locked.** Loading it requires an explicit unlock flag in code, and every
   unlock is written to the run record. It is unlocked once, in Phase 7, after the configuration
   is frozen at a tagged commit.

@@ -41,6 +41,7 @@ reports:  ## Regenerate every report that the current code produces
 	uv run docfraud data audit
 	uv run python experiments/parser_development.py
 	uv run python experiments/rules_development.py
+	uv run python experiments/forensics_preregistration.py
 	uv run docfraud reading score-review annotations/findit2/gold-review.json
 	uv run docfraud reading score-review annotations/findit2/gold-review-b.json \
 		--manifest annotations/findit2/gold-fields-b/manifest.json --authentic 4 --forged 1 \

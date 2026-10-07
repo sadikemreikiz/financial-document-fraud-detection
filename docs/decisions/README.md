@@ -19,5 +19,6 @@ change of mind is a new record that supersedes the old one.
 | [0011](0011-baseline-reproduction.md) | Reproducing the published BoW + LR baseline: configuration and success criterion | Accepted |
 | [0012](0012-accounting-rules-evaluation.md) | How the accounting rules are developed and measured | Accepted |
 | [0013](0013-success-criterion-and-floors.md) | Success against published work must beat the floor, not only the published number | Accepted |
+| [0014](0014-pixel-forensics-preregistration.md) | How pixel forensics is developed and measured | Accepted |
 
 New records copy [template.md](template.md).
