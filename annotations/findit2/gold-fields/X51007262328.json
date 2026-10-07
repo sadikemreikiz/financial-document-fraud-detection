@@ -1,0 +1,55 @@
+{
+  "doc_id": "X51007262328",
+  "annotator": "claude",
+  "fields": {
+    "merchant": "FARMASI LIGAMAS",
+    "dates": [
+      "2018-05-20"
+    ],
+    "items": [
+      {
+        "description": "NON WOWEN 3 PLY FACE MASK EAR LOOP 50'S",
+        "quantity": "1",
+        "unit_price": "25.00",
+        "amount": "25.00"
+      }
+    ],
+    "amounts": {
+      "subtotal": [
+        "25.00"
+      ],
+      "total_excluding_tax": [
+        "23.58"
+      ],
+      "discount": [
+        "0.00"
+      ],
+      "tax": [
+        "1.42"
+      ],
+      "rounding": [
+        "0.00"
+      ],
+      "total_including_tax": [
+        "25.00"
+      ],
+      "tendered": [
+        "50.00"
+      ],
+      "change": [
+        "25.00"
+      ]
+    },
+    "tax_summary": [
+      {
+        "code": "SR",
+        "rate_percent": "6",
+        "taxable_amount": "23.58",
+        "tax": "1.42"
+      }
+    ],
+    "item_count": null,
+    "quantity_total": "1"
+  },
+  "notes": "Description is printed below the number row; the item code 1264 is left out. 25.00 on the Total Qty row is the unlabelled item total (subtotal). The GST summary's Total row is not a separate row. Owner review questioned the subtotal because item prices include tax; kept as the receipt's own item total (guidelines section 3, subtotal on tax-inclusive receipts)."
+}

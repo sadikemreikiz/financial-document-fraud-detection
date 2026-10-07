@@ -1,0 +1,64 @@
+{
+  "doc_id": "X51006913018",
+  "annotator": "claude",
+  "fields": {
+    "merchant": "AEON CO. (M) BHD",
+    "dates": [
+      "2018-05-11"
+    ],
+    "items": [
+      {
+        "description": "PHILIPS I/COOKE",
+        "quantity": "1",
+        "unit_price": null,
+        "amount": "369.00"
+      },
+      {
+        "description": "C61796 - TEFAL",
+        "quantity": "1",
+        "unit_price": null,
+        "amount": "269.00"
+      },
+      {
+        "description": "MEMBER DISC @189.00",
+        "quantity": null,
+        "unit_price": null,
+        "amount": "-80.00"
+      },
+      {
+        "description": "AEON CARD DISC @179.55",
+        "quantity": null,
+        "unit_price": null,
+        "amount": "-9.45"
+      }
+    ],
+    "amounts": {
+      "subtotal": [
+        "548.55"
+      ],
+      "total_including_tax": [
+        "548.55"
+      ],
+      "total_due": [
+        "548.55"
+      ],
+      "tendered": [
+        "500.00"
+      ],
+      "change": [
+        "1.45"
+      ]
+    },
+    "tax_summary": [
+      {
+        "code": "SR",
+        "rate_percent": "6",
+        "taxable_amount": "517.50",
+        "tax": "31.05"
+      }
+    ],
+    "item_count": 2,
+    "quantity_total": null
+  },
+  "notes": "The image differs from the transcript: the image prints a second item 269.00 and no 'ITEM PROMO @279.00' line, while the transcript has the promo line and no 269.00. The image is recorded. Cash 500.00 is less than the amount due 548.55 although change 1.45 is printed; recorded as printed. AEON layout: discount lines are negative items; handwritten Chinese notes and the number at the top are benign."
+}

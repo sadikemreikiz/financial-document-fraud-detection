@@ -1,0 +1,39 @@
+{
+  "doc_id": "X51006466060",
+  "annotator": "claude",
+  "fields": {
+    "merchant": "WESTERN EASTERN STATIONERY SDN. BHD",
+    "dates": [
+      "2018-04-30"
+    ],
+    "items": [
+      {
+        "description": "B/W P.S A4/A3",
+        "quantity": "1",
+        "unit_price": null,
+        "amount": "1.38"
+      }
+    ],
+    "amounts": {
+      "total_excluding_tax": [
+        "1.30"
+      ],
+      "tax": [
+        "0.08"
+      ],
+      "total_due": [
+        "1.38"
+      ],
+      "rounding": [
+        "0.02"
+      ],
+      "tendered": [
+        "1.40"
+      ]
+    },
+    "tax_summary": [],
+    "item_count": null,
+    "quantity_total": null
+  },
+  "notes": "'GST TA AMT' (taxable amount) is the total excluding tax. The rounded amount 1.40 is printed only as the cash tendered. Handwritten notes and the number at the top are benign."
+}

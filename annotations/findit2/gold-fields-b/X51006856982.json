@@ -1,0 +1,88 @@
+{
+  "doc_id": "X51006856982",
+  "annotator": "claude",
+  "fields": {
+    "merchant": "GUARDIAN HEALTH AND BEAUTY SDN BHD",
+    "dates": [
+      "2017-08-16"
+    ],
+    "items": [
+      {
+        "description": "OPTICARE 500X3",
+        "quantity": null,
+        "unit_price": null,
+        "amount": "13.78"
+      },
+      {
+        "description": "OPTICARE 500X3",
+        "quantity": null,
+        "unit_price": null,
+        "amount": "13.78"
+      },
+      {
+        "description": "OPTICARE 500X3",
+        "quantity": null,
+        "unit_price": null,
+        "amount": "13.78"
+      },
+      {
+        "description": "OPTICARE 500X3",
+        "quantity": null,
+        "unit_price": null,
+        "amount": "13.78"
+      },
+      {
+        "description": "GDN PLASTIC BAG",
+        "quantity": null,
+        "unit_price": null,
+        "amount": "0.20"
+      },
+      {
+        "description": "HASK COND335 CHA",
+        "quantity": null,
+        "unit_price": null,
+        "amount": "39.01"
+      },
+      {
+        "description": "COUNTERPAIN 30G",
+        "quantity": null,
+        "unit_price": null,
+        "amount": "8.88"
+      },
+      {
+        "description": "SALONPAS 1*10S",
+        "quantity": null,
+        "unit_price": null,
+        "amount": "5.00"
+      }
+    ],
+    "amounts": {
+      "subtotal": [
+        "108.21"
+      ],
+      "total_including_tax": [
+        "108.21"
+      ],
+      "tendered": [
+        "110.00"
+      ],
+      "rounding": [
+        "-0.01"
+      ],
+      "change": [
+        "1.80"
+      ]
+    },
+    "tax_summary": [
+      {
+        "code": "S",
+        "rate_percent": "6",
+        "taxable_amount": "102.08",
+        "tax": "6.13"
+      }
+    ],
+    "item_count": null,
+    "quantity_total": null
+  },
+  "notes": "Leading item codes, the '~~' prefix and the promo marker '^' are left out. Rounding is printed with a trailing minus (0.01-) and recorded as -0.01; no rounded amount due is printed. 'Your savings for today' is not an amount role."
+}

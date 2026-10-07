@@ -117,3 +117,15 @@ def standard_entries() -> list[Entry]:
 @pytest.fixture
 def findit_root(tmp_path: Path) -> Path:
     return write_dataset(tmp_path / "findit2", standard_entries())
+
+
+def load_toy(root: Path, **overrides: Any) -> tuple[Any, ...]:
+    """Load a miniature dataset without the corrections that only apply to the real one."""
+    from docfraud.data.findit import load_findit2  # noqa: PLC0415 - avoid import at collection
+
+    options: dict[str, Any] = {
+        "duplicate_resolutions": {},
+        "unannotated_forgeries": frozenset(),
+        "duplicate_groups": (),
+    }
+    return load_findit2(root, **(options | overrides))

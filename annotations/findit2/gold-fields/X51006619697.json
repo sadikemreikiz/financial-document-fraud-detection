@@ -1,0 +1,84 @@
+{
+  "doc_id": "X51006619697",
+  "annotator": "claude",
+  "fields": {
+    "merchant": "OLD ASIA",
+    "dates": [
+      "2016-02-13"
+    ],
+    "items": [
+      {
+        "description": "SEAFOOD FRIED PRICE",
+        "quantity": null,
+        "unit_price": null,
+        "amount": "15.50"
+      },
+      {
+        "description": "FISH HEAD",
+        "quantity": null,
+        "unit_price": null,
+        "amount": "11.50"
+      },
+      {
+        "description": "FISH CAKE",
+        "quantity": null,
+        "unit_price": null,
+        "amount": "7.90"
+      },
+      {
+        "description": "G.CRISPY CHIC RICE",
+        "quantity": null,
+        "unit_price": null,
+        "amount": "15.90"
+      },
+      {
+        "description": "V.GRILL CHIC RICE",
+        "quantity": null,
+        "unit_price": null,
+        "amount": "16.50"
+      },
+      {
+        "description": "W/MELON JUICE",
+        "quantity": null,
+        "unit_price": null,
+        "amount": "7.50"
+      },
+      {
+        "description": "RIBENA",
+        "quantity": null,
+        "unit_price": null,
+        "amount": "5.90"
+      },
+      {
+        "description": "ICED CHINESE TEA",
+        "quantity": "2",
+        "unit_price": "1.90",
+        "amount": "3.80"
+      }
+    ],
+    "amounts": {
+      "service_charge": [
+        "8.25"
+      ],
+      "total_excluding_tax": [
+        "90.75"
+      ],
+      "tax": [
+        "5.45"
+      ],
+      "total_due": [
+        "98.20"
+      ],
+      "tendered": [
+        "100.00"
+      ],
+      "change": [
+        "1.80"
+      ]
+    },
+    "tax_summary": [],
+    "item_count": null,
+    "quantity_total": null
+  },
+  "notes": "'SUBTOTAL' is printed after service charge and GST and is the amount paid, so it is recorded as total_due (guidelines section 3). 'GST TA AMT' (taxable amount) is the total excluding tax. The quantity line '2X @ 1.90' is printed above ICED CHINESE TEA and belongs to it. '9 No' is not recorded as a count, as on receipt X51006466060. The owning company CHEF LEE SDN BHD is printed below the trading name."
+}

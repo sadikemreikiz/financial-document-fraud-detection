@@ -1,0 +1,94 @@
+{
+  "doc_id": "X51005746203",
+  "annotator": "claude",
+  "fields": {
+    "merchant": "SUPER SEVEN CASH & CARRY SDN BHD",
+    "dates": [
+      "2018-03-01"
+    ],
+    "items": [
+      {
+        "description": "TENDERLION",
+        "quantity": "1",
+        "unit_price": "43.37",
+        "amount": "43.37"
+      },
+      {
+        "description": "D31 TENDERLOIN",
+        "quantity": "1",
+        "unit_price": "49.42",
+        "amount": "49.42"
+      },
+      {
+        "description": "D31 TENDERLOIN",
+        "quantity": "1",
+        "unit_price": "43.90",
+        "amount": "43.90"
+      },
+      {
+        "description": "D31 TENDERLOIN",
+        "quantity": "1",
+        "unit_price": "49.66",
+        "amount": "49.66"
+      },
+      {
+        "description": "AYAMAS CHICKEN FRANKFURTER 340G",
+        "quantity": "8",
+        "unit_price": "4.30",
+        "amount": "34.40"
+      },
+      {
+        "description": "BUTTERCUP LUXURY SPREAD 500G",
+        "quantity": "1",
+        "unit_price": "9.90",
+        "amount": "9.90"
+      },
+      {
+        "description": "BUTTERCUP LUXURY SPREAD 500G",
+        "quantity": "1",
+        "unit_price": "9.90",
+        "amount": "9.90"
+      },
+      {
+        "description": "QY CINCAU 2KG",
+        "quantity": "1",
+        "unit_price": "3.90",
+        "amount": "3.90"
+      },
+      {
+        "description": "CRAB NUGGET 500G MUSHROOM",
+        "quantity": "20",
+        "unit_price": "8.20",
+        "amount": "164.00"
+      }
+    ],
+    "amounts": {
+      "total_including_tax": [
+        "408.45"
+      ],
+      "rounding": [
+        "0.00"
+      ],
+      "total_due": [
+        "408.45"
+      ]
+    },
+    "tax_summary": [
+      {
+        "code": "ZR",
+        "rate_percent": "0",
+        "taxable_amount": "186.35",
+        "tax": "0.00"
+      },
+      {
+        "code": "SR",
+        "rate_percent": "6",
+        "taxable_amount": "209.53",
+        "tax": "12.57"
+      }
+    ],
+    "item_count": null,
+    "quantity_total": "35"
+  },
+  "notes": "Unit prices follow '@', quantities follow '*'. Paid by MASTER CARD without a printed amount. A customer name is printed and deliberately not annotated. Handwritten marks are benign."
+}

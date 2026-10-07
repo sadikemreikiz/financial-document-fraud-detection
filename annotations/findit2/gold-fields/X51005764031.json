@@ -1,0 +1,64 @@
+{
+  "doc_id": "X51005764031",
+  "annotator": "claude",
+  "fields": {
+    "merchant": "SUPER SEVEN CASH & CARRY SDN BHD",
+    "dates": [
+      "2018-02-01"
+    ],
+    "items": [
+      {
+        "description": "LADY CHOICE 3L TARTAR SAUC",
+        "quantity": "1",
+        "unit_price": "35.50",
+        "amount": "35.50"
+      },
+      {
+        "description": "SAYUR RM1.00",
+        "quantity": "2",
+        "unit_price": "1.00",
+        "amount": "2.00"
+      },
+      {
+        "description": "SAYUR RM1.00",
+        "quantity": "3",
+        "unit_price": "1.00",
+        "amount": "3.00"
+      },
+      {
+        "description": "KOBIS MERAH",
+        "quantity": "1",
+        "unit_price": "1.60",
+        "amount": "1.60"
+      }
+    ],
+    "amounts": {
+      "total_including_tax": [
+        "42.10"
+      ],
+      "rounding": [
+        "0.00"
+      ],
+      "total_due": [
+        "42.10"
+      ]
+    },
+    "tax_summary": [
+      {
+        "code": "SR",
+        "rate_percent": "6",
+        "taxable_amount": "33.49",
+        "tax": "2.01"
+      },
+      {
+        "code": "ZR",
+        "rate_percent": "0",
+        "taxable_amount": "6.60",
+        "tax": "0.00"
+      }
+    ],
+    "item_count": null,
+    "quantity_total": "7"
+  },
+  "notes": "Paid by VISA CARD without a printed amount. A customer name is printed and deliberately not annotated. Handwritten marks are benign."
+}

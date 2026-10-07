@@ -1,0 +1,76 @@
+{
+  "doc_id": "X51007579719",
+  "annotator": "claude",
+  "fields": {
+    "merchant": "SOUP & PORRIDGE",
+    "dates": [
+      "2018-06-05"
+    ],
+    "items": [
+      {
+        "description": "MEE GRG BERLAUK",
+        "quantity": "1",
+        "unit_price": "7.00",
+        "amount": "7.00"
+      },
+      {
+        "description": "TEH O AIS",
+        "quantity": "1",
+        "unit_price": "1.60",
+        "amount": "1.60"
+      },
+      {
+        "description": "TEH TARIK",
+        "quantity": "1",
+        "unit_price": "1.50",
+        "amount": "1.50"
+      },
+      {
+        "description": "TEH O AIS",
+        "quantity": "1",
+        "unit_price": "1.60",
+        "amount": "1.60"
+      },
+      {
+        "description": "MIHUN GRG BERLAUK",
+        "quantity": "1",
+        "unit_price": "5.00",
+        "amount": "5.00"
+      },
+      {
+        "description": "MIHUN GORENG",
+        "quantity": "1",
+        "unit_price": "4.00",
+        "amount": "4.00"
+      }
+    ],
+    "amounts": {
+      "total_excluding_tax": [
+        "20.70"
+      ],
+      "total_including_tax": [
+        "20.70"
+      ],
+      "total_due": [
+        "20.70"
+      ],
+      "tendered": [
+        "21.00"
+      ],
+      "change": [
+        "0.30"
+      ]
+    },
+    "tax_summary": [
+      {
+        "code": "SR",
+        "rate_percent": "0",
+        "taxable_amount": "20.70",
+        "tax": "0.00"
+      }
+    ],
+    "item_count": null,
+    "quantity_total": "6"
+  },
+  "notes": "Layout as on X51005711401, GST at 0% (June 2018), so no GST payable line is printed. Handwritten mark is benign."
+}

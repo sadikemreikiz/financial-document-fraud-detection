@@ -1,0 +1,55 @@
+{
+  "doc_id": "X51007103691",
+  "annotator": "claude",
+  "fields": {
+    "merchant": "AEON CO. (M) BHD",
+    "dates": [
+      "2018-04-28"
+    ],
+    "items": [
+      {
+        "description": "MUNCHY`S CREAM",
+        "quantity": "1",
+        "unit_price": null,
+        "amount": "7.51"
+      },
+      {
+        "description": "TOPVALU BESTPRI",
+        "quantity": "3",
+        "unit_price": "6.20",
+        "amount": "18.60"
+      }
+    ],
+    "amounts": {
+      "subtotal": [
+        "26.11"
+      ],
+      "total_including_tax": [
+        "26.11"
+      ],
+      "rounding": [
+        "-0.01"
+      ],
+      "total_due": [
+        "26.10"
+      ],
+      "tendered": [
+        "50.00"
+      ],
+      "change": [
+        "23.90"
+      ]
+    },
+    "tax_summary": [
+      {
+        "code": "SR",
+        "rate_percent": "6",
+        "taxable_amount": "24.63",
+        "tax": "1.48"
+      }
+    ],
+    "item_count": 4,
+    "quantity_total": null
+  },
+  "notes": "Handwritten marks strike through 7.51 and the totals and circle 18.60; they are benign and the printed values are recorded. 'Total After Adj Incl GST' is the amount due. The GST summary's Total row is not a separate row. A second receipt overlaps the top right corner."
+}

@@ -1,0 +1,68 @@
+{
+  "doc_id": "X51006349083",
+  "annotator": "claude",
+  "fields": {
+    "merchant": "CHA FOR TEA",
+    "dates": [
+      "2018-04-19"
+    ],
+    "items": [
+      {
+        "description": "MUSHROOM BR",
+        "quantity": "1",
+        "unit_price": null,
+        "amount": "12.90"
+      },
+      {
+        "description": "SIZZLING PO",
+        "quantity": "1",
+        "unit_price": null,
+        "amount": "13.90"
+      },
+      {
+        "description": "BLACK SUGAR",
+        "quantity": "1",
+        "unit_price": null,
+        "amount": "11.90"
+      },
+      {
+        "description": "BROWN SUGAR",
+        "quantity": "1",
+        "unit_price": null,
+        "amount": "4.95"
+      }
+    ],
+    "amounts": {
+      "subtotal": [
+        "43.65"
+      ],
+      "rounding": [
+        "-0.02"
+      ],
+      "tax": [
+        "2.62"
+      ],
+      "total_due": [
+        "46.25"
+      ],
+      "tendered": [
+        "46.25",
+        "100.00"
+      ],
+      "change": [
+        "53.75"
+      ]
+    },
+    "tax_summary": [
+      {
+        "code": "SR",
+        "rate_percent": "6",
+        "taxable_amount": "43.63",
+        "tax": "2.62"
+      }
+    ],
+    "item_count": null,
+    "quantity_total": null
+  },
+  "notes": "Menu codes (B01, D01, Q03, P05) are left out. 'Round+' prints no amount; 'Round-' is the rounding. 'Cash' 46.25 and 'Paid' 100.00 are both payment lines and recorded as tendered; the change 53.75 follows from the amount paid. '*1 ***ITEM DISCOUNT' prints no amount. The summary prints tax before amount. The last digit of the subtotal is faded; the transcript reads 43.65."
+}

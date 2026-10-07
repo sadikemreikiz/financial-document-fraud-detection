@@ -3,14 +3,13 @@ from pathlib import Path
 import pytest
 
 from docfraud.data.audit import audit_dataset, build_audit, inspect_files, roc_auc
-from docfraud.data.findit import load_findit2
 from docfraud.data.models import Document
 from docfraud.markdown import Cell, Table
-from tests.fixtures.findit import Entry, standard_entries, write_dataset
+from tests.fixtures.findit import Entry, load_toy, standard_entries, write_dataset
 
 
 def documents(root: Path) -> tuple[Document, ...]:
-    return load_findit2(root, duplicate_resolutions={}, unannotated_forgeries=frozenset())
+    return load_toy(root)
 
 
 @pytest.mark.parametrize(
@@ -78,7 +77,7 @@ def test_audit_region_statistics(findit_root: Path) -> None:
 
 def test_audit_handles_forgeries_without_regions(tmp_path: Path) -> None:
     root = write_dataset(tmp_path / "d", [Entry("A"), Entry("U", forged="1")])
-    docs = load_findit2(root, duplicate_resolutions={}, unannotated_forgeries=frozenset({"U"}))
+    docs = load_toy(root, unannotated_forgeries=frozenset({"U"}))
     audit = {t.title: t for t in build_audit([inspect_files(d) for d in docs])}
     rows = by_first_column(audit["Forged regions"])
     assert rows["Region area in px² (median / 90th percentile)"] == ["\N{EM DASH}"]
@@ -100,3 +99,18 @@ def test_single_region_dataset(tmp_path: Path) -> None:
     root = write_dataset(tmp_path / "d", entries)
     rows = by_first_column(tables(root)["Forged regions"])
     assert rows["Region area in % of the page (median / 90th percentile)"] == ["0.500 / 0.500"]
+
+
+def test_duplicate_table_lists_kept_and_removed_copies(findit_root: Path) -> None:
+    from docfraud.data.duplicates import (  # noqa: PLC0415
+        DuplicateGroup,
+        DuplicateKind,
+        resolve_duplicates,
+    )
+
+    groups = [DuplicateGroup(("A1", "A3"), DuplicateKind.COPY, "identical pixels")]
+    kept, dropped = resolve_duplicates(list(documents(findit_root)), groups)
+    table = {t.title: t for t in build_audit([inspect_files(d) for d in kept], groups, dropped)}
+    rows = table["Copies of the same receipt"].rows
+    assert rows == [["copy", "identical pixels", "A3", "A1 (train, authentic)"]]
+    assert "1 documents removed" in table["Copies of the same receipt"].note

@@ -1,0 +1,46 @@
+{
+  "doc_id": "X51006332641",
+  "annotator": "claude",
+  "fields": {
+    "merchant": "YONG CEN ENTERPRISE",
+    "dates": [
+      "2017-02-11"
+    ],
+    "items": [
+      {
+        "description": "GROUNDNUT INDIA 2.80KG",
+        "quantity": "1",
+        "unit_price": "18.00",
+        "amount": "18.00"
+      }
+    ],
+    "amounts": {
+      "subtotal": [
+        "18.00"
+      ],
+      "discount": [
+        "0.00"
+      ],
+      "tax": [
+        "1.08",
+        "0.00"
+      ],
+      "rounding": [
+        "0.02"
+      ],
+      "total_due": [
+        "19.10"
+      ],
+      "tendered": [
+        "50.10"
+      ],
+      "change": [
+        "31.00"
+      ]
+    },
+    "tax_summary": [],
+    "item_count": null,
+    "quantity_total": "1"
+  },
+  "notes": "Two tax lines are printed, 'GST 1.08' and 'TAX 0.00'; both are recorded as tax, in order. Description below the code row; the 'SR:' prefix and the code are left out; the weight in the name is blurred and taken from the transcript. Handwritten marks are benign."
+}

@@ -1,0 +1,70 @@
+{
+  "doc_id": "X51006466066",
+  "annotator": "claude",
+  "fields": {
+    "merchant": "MENTAI INITIAL SDN BHD",
+    "dates": [
+      "2018-04-21"
+    ],
+    "items": [
+      {
+        "description": "GREEN TEA",
+        "quantity": "2",
+        "unit_price": "1.00",
+        "amount": "2.00"
+      },
+      {
+        "description": "SHIRO RAMEN",
+        "quantity": "1",
+        "unit_price": "12.80",
+        "amount": "12.80"
+      },
+      {
+        "description": "SUSHI 1.80",
+        "quantity": "10",
+        "unit_price": "1.80",
+        "amount": "18.00"
+      },
+      {
+        "description": "SUSHI 2.80",
+        "quantity": "1",
+        "unit_price": "2.80",
+        "amount": "2.80"
+      }
+    ],
+    "amounts": {
+      "total_excluding_tax": [
+        "35.60"
+      ],
+      "service_charge": [
+        "3.56"
+      ],
+      "tax": [
+        "2.36"
+      ],
+      "total_including_tax": [
+        "41.52"
+      ],
+      "rounding": [
+        "-0.02"
+      ],
+      "total_due": [
+        "41.50"
+      ],
+      "tendered": [
+        "41.50"
+      ]
+    },
+    "tax_summary": [
+      {
+        "code": "SR",
+        "rate_percent": "6",
+        "taxable_amount": "39.16",
+        "tax": "2.36"
+      }
+    ],
+    "item_count": null,
+    "quantity_total": null
+  },
+  "notes": "Company name printed before the trading name SUSHI MENTAI PLAZA DANAU. Item 3 is named 'Sushi 1.80' on the image (the transcript reads 1.30). Paid by VISA. Handwritten note and number at the top are benign."
+}

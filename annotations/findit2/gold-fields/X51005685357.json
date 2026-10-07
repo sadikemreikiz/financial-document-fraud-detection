@@ -1,0 +1,58 @@
+{
+  "doc_id": "X51005685357",
+  "annotator": "claude",
+  "fields": {
+    "merchant": "FARMASI MALURI S/B",
+    "dates": [
+      "2018-03-02"
+    ],
+    "items": [
+      {
+        "description": "BMS MILK THISTLE",
+        "quantity": "1",
+        "unit_price": "111.30",
+        "amount": "72.35"
+      },
+      {
+        "description": "TRILON-E CRM",
+        "quantity": "1",
+        "unit_price": "7.00",
+        "amount": "7.00"
+      }
+    ],
+    "amounts": {
+      "total_including_tax": [
+        "79.35"
+      ],
+      "rounding": [
+        "0.00"
+      ],
+      "total_due": [
+        "79.35"
+      ],
+      "tendered": [
+        "100.00"
+      ],
+      "change": [
+        "20.65"
+      ]
+    },
+    "tax_summary": [
+      {
+        "code": "ZRL",
+        "rate_percent": "0.00",
+        "taxable_amount": "7.00",
+        "tax": "0.00"
+      },
+      {
+        "code": "SR",
+        "rate_percent": "6.00",
+        "taxable_amount": "68.25",
+        "tax": "4.10"
+      }
+    ],
+    "item_count": null,
+    "quantity_total": null
+  },
+  "notes": "Item 1 has a printed line discount of 36.75 and a subtotal of 72.35 (111.30 - 36.75 would be 74.55); recorded as printed. 'NET' is the amount due. Handwritten note and number at the top are benign."
+}

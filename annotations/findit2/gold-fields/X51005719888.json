@@ -1,0 +1,61 @@
+{
+  "doc_id": "X51005719888",
+  "annotator": "claude",
+  "fields": {
+    "merchant": "POTTERS GARDEN SDN BHD",
+    "dates": [
+      "2018-01-04"
+    ],
+    "items": [
+      {
+        "description": "PLASTIC PLATE",
+        "quantity": null,
+        "unit_price": null,
+        "amount": "101.00"
+      },
+      {
+        "description": "CHINA POT",
+        "quantity": "2",
+        "unit_price": "7.90",
+        "amount": "15.80"
+      },
+      {
+        "description": "PLANT",
+        "quantity": null,
+        "unit_price": null,
+        "amount": "16.00"
+      },
+      {
+        "description": "PLANT",
+        "quantity": null,
+        "unit_price": null,
+        "amount": "7.00"
+      }
+    ],
+    "amounts": {
+      "subtotal": [
+        "139.80"
+      ],
+      "total_due": [
+        "139.80"
+      ],
+      "tendered": [
+        "439.80"
+      ],
+      "change": [
+        "300.00"
+      ]
+    },
+    "tax_summary": [
+      {
+        "code": "SR",
+        "rate_percent": "6",
+        "taxable_amount": "37.54",
+        "tax": "2.26"
+      }
+    ],
+    "item_count": null,
+    "quantity_total": null
+  },
+  "notes": "The image prints SUB TOTAL 139.80; the transcript reads 39.80 there. The image value is recorded. The '5' before SUB TOTAL has no label and is not recorded as a count. Item codes are left out of descriptions."
+}

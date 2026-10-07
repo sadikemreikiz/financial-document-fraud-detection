@@ -10,8 +10,8 @@ results exist so that metrics, thresholds and comparisons cannot be chosen after
 
 ## 1. Data and splits
 
-- **Dataset**: Find-it-again (Tornés et al., ICDAR 2023), 987 unique scanned receipts with image
-  and transcript; 163 forged by human participants. Selection rationale:
+- **Dataset**: Find-it-again (Tornés et al., ICDAR 2023), 987 distinct receipt files with image
+  and transcript, 163 of them forged by human participants. Selection rationale:
   [ADR-0002](decisions/0002-primary-dataset.md).
 - **Splits**: the official train / validation / test splits, after the corrections documented in
   the data card (Phase 1). The known corrections are:
@@ -21,8 +21,12 @@ results exist so that metrics, thresholds and comparisons cannot be chosen after
     and removed from validation.
   - `X51008114260` is forged but has no region annotations. It is used for classification and
     excluded from localisation metrics.
-- **Resulting sizes**: 987 unique receipts, 163 forged. Train 577 (95 forged), validation 192
-  (33 forged), test 218 (35 forged). The test split is unaffected by the corrections.
+  - Copies of the same physical receipt under different identifiers (20 reviewed groups,
+    including five authentic/forged twins) are resolved by
+    [ADR-0009](decisions/0009-duplicate-receipts.md): the test split is kept whole and copies
+    are removed from training and validation.
+- **Resulting sizes**: 970 documents, 162 forged. Train 562 (94 forged), validation 190
+  (33 forged), test 218 (35 forged). The test split is identical to the published one.
 - **Positive class**: forged.
 
 ## 2. Evaluation tracks
@@ -65,8 +69,13 @@ T1 and T2 are both headline results and are always reported side by side.
 1. Freeze the configuration at a tagged commit.
 2. Train on the training split, calibrate and choose thresholds on the validation split.
 3. Unlock the test split and evaluate each reported system and baseline once.
-4. As a secondary estimate with narrower intervals, run stratified 5-fold cross-validation over
-   all 987 documents with the frozen pipeline. Each outer fold retrains every component on its
+4. Report every headline metric a second time on the test split without the eight receipts that
+   had copies elsewhere in the published dataset (210 receipts, all 35 forged ones included;
+   `SENSITIVITY_EXCLUSIONS`, [ADR-0009](decisions/0009-duplicate-receipts.md)). Similar results
+   show that the copies did not matter.
+5. As a secondary estimate with narrower intervals, run stratified 5-fold cross-validation over
+   all 970 documents with the frozen pipeline, grouped by `source_id` so that twins stay in one
+   fold. Each outer fold retrains every component on its
    training part, generates synthetic data only from that part, and calibrates on a stratified
    20 % inner hold-out. This is run once, after step 3.
 
@@ -135,3 +144,20 @@ Reported descriptively, always with group sizes, because most groups are small:
   checksum, seeds, package versions and hardware.
 - Tables and figures in the documentation are generated from run records by code. No number is
   copied by hand.
+
+## 9. Disclosures
+
+Contacts with the test split that happened before or outside the procedures above:
+
+- **2026-10-06, before this protocol was fixed**: during dataset exploration, one forged test
+  receipt (`X51006329183`) was viewed with its annotation and transcript to illustrate what a
+  real forgery looks like; to pick it, file metadata of the forged test receipts (file size,
+  colour mode, annotated entities and techniques) was listed. Label-level statistics of the
+  test split (counts, alpha-channel shortcut) were computed for the dataset audit. No model, rule or threshold was developed or
+  evaluated on test data.
+- **2026-10-06, duplicate review (data-integrity exception)**: to decide whether candidate pairs
+  were copies of the same receipt ([ADR-0009](decisions/0009-duplicate-receipts.md)), the
+  transcript lines that differ between the members of each pair were read. Eight candidate
+  pairs had a member in the test split, so a few lines (receipt numbers, dates, item names and
+  the changed amounts of one twin) of those test receipts were seen. Nothing was developed or
+  tuned from them.

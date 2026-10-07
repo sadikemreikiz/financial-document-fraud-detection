@@ -1,0 +1,67 @@
+{
+  "doc_id": "X51005676536",
+  "annotator": "claude",
+  "fields": {
+    "merchant": "SYARIKAT PERNIAGAAN GIN KEE",
+    "dates": [
+      "2018-01-02"
+    ],
+    "items": [
+      {
+        "description": "8' 2 X 3",
+        "quantity": "1",
+        "unit_price": "13.57",
+        "amount": "13.57"
+      },
+      {
+        "description": "7' X 35# CORRUGATED ROOFING SHEET",
+        "quantity": "4",
+        "unit_price": "18.55",
+        "amount": "74.20"
+      },
+      {
+        "description": "NAIL (PER/PACK) - RM5",
+        "quantity": "1",
+        "unit_price": "5.30",
+        "amount": "5.30"
+      }
+    ],
+    "amounts": {
+      "subtotal": [
+        "93.07"
+      ],
+      "total_excluding_tax": [
+        "87.80"
+      ],
+      "discount": [
+        "0.00"
+      ],
+      "tax": [
+        "5.27"
+      ],
+      "rounding": [
+        "0.00"
+      ],
+      "total_including_tax": [
+        "93.07"
+      ],
+      "tendered": [
+        "93.07"
+      ],
+      "change": [
+        "0.00"
+      ]
+    },
+    "tax_summary": [
+      {
+        "code": "SR",
+        "rate_percent": "6",
+        "taxable_amount": "87.80",
+        "tax": "5.27"
+      }
+    ],
+    "item_count": null,
+    "quantity_total": "6"
+  },
+  "notes": "Description is printed below each code row; item codes are left out. 93.07 on the Total Qty row is the unlabelled item total (subtotal). The summary prints 87.80 (the transcript reads 87.8). The GST summary's Total row is not a separate row. Handwritten number at the top is benign."
+}

@@ -1,0 +1,82 @@
+{
+  "doc_id": "X51005663307",
+  "annotator": "claude",
+  "fields": {
+    "merchant": "LA STATIONERY SDN BHD",
+    "dates": [
+      "2018-02-09"
+    ],
+    "items": [
+      {
+        "description": "GELPEN REFILL PILOT G2 0.5 BLACK",
+        "quantity": "5",
+        "unit_price": "2.86",
+        "amount": "14.30"
+      },
+      {
+        "description": "GELPEN REFILL PILOT G2 0.5 BLUE",
+        "quantity": "5",
+        "unit_price": "2.86",
+        "amount": "14.30"
+      },
+      {
+        "description": "GELPEN REFILL PILOT G2 0.5 RED",
+        "quantity": "2",
+        "unit_price": "2.86",
+        "amount": "5.72"
+      },
+      {
+        "description": "GLUE - CLEAR GLUE 1000ML",
+        "quantity": "1",
+        "unit_price": "7.42",
+        "amount": "7.42"
+      },
+      {
+        "description": "LIQUID PAPER - PAPERMATE NP10 7ML.",
+        "quantity": "2",
+        "unit_price": "3.71",
+        "amount": "7.42"
+      },
+      {
+        "description": "PERMANENT MARKER SHARPIE FINE BLACK 30051",
+        "quantity": "1",
+        "unit_price": "2.33",
+        "amount": "2.33"
+      },
+      {
+        "description": "BALLPEN PILOT FRIXION 0.5 BLACK",
+        "quantity": "1",
+        "unit_price": "5.30",
+        "amount": "5.30"
+      }
+    ],
+    "amounts": {
+      "subtotal": [
+        "56.80"
+      ],
+      "rounding": [
+        "0.01"
+      ],
+      "total_due": [
+        "56.80"
+      ],
+      "tendered": [
+        "100.00"
+      ],
+      "change": [
+        "43.20"
+      ]
+    },
+    "tax_summary": [
+      {
+        "code": "SR",
+        "rate_percent": "6",
+        "taxable_amount": "53.58",
+        "tax": "3.21"
+      }
+    ],
+    "item_count": null,
+    "quantity_total": null
+  },
+  "notes": "Description is printed above each quantity row; units (PCS, BTL) and the per-item discount column (0.00) are not recorded. 'Sub Total (Inclusive GST)' is the subtotal; it prints 56.80 although the items add up to 56.79 and the rounding of 0.01 brings them to 56.80, recorded as printed. Handwritten number at the top is benign."
+}

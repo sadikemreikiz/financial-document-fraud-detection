@@ -1,0 +1,52 @@
+{
+  "doc_id": "X51006414433",
+  "annotator": "claude",
+  "fields": {
+    "merchant": "UNIHAKKA INTERNATIONAL SDN BHD",
+    "dates": [
+      "2018-04-12"
+    ],
+    "items": [
+      {
+        "description": "1 MEAT + 3 VEGE",
+        "quantity": "1",
+        "unit_price": "7.10",
+        "amount": "7.10"
+      },
+      {
+        "description": "ADD VEGETABLE",
+        "quantity": "1",
+        "unit_price": "0.50",
+        "amount": "0.50"
+      }
+    ],
+    "amounts": {
+      "total_including_tax": [
+        "7.60"
+      ],
+      "tax": [
+        "0.43"
+      ],
+      "total_due": [
+        "7.60"
+      ],
+      "tendered": [
+        "7.60"
+      ],
+      "change": [
+        "0.00"
+      ]
+    },
+    "tax_summary": [
+      {
+        "code": "SR",
+        "rate_percent": "6",
+        "taxable_amount": "7.17",
+        "tax": "0.43"
+      }
+    ],
+    "item_count": null,
+    "quantity_total": null
+  },
+  "notes": "Prices include GST. 'Total Amount' precedes 'Nett Total', so it is recorded as the total including tax. Handwritten note at the top is benign."
+}

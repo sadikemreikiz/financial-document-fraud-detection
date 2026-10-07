@@ -1,0 +1,55 @@
+{
+  "doc_id": "X00016469622",
+  "annotator": "claude",
+  "fields": {
+    "merchant": "YONGFATT ENTERPRISE",
+    "dates": [
+      "2018-12-25"
+    ],
+    "items": [
+      {
+        "description": "ELEGANT SCHTR BAG 15",
+        "quantity": "1",
+        "unit_price": "88.91",
+        "amount": "88.91"
+      }
+    ],
+    "amounts": {
+      "subtotal": [
+        "88.91"
+      ],
+      "total_excluding_tax": [
+        "88.91"
+      ],
+      "discount": [
+        "0.00"
+      ],
+      "tax": [
+        "0.00"
+      ],
+      "rounding": [
+        "-0.01"
+      ],
+      "total_including_tax": [
+        "88.90"
+      ],
+      "tendered": [
+        "100.00"
+      ],
+      "change": [
+        "11.10"
+      ]
+    },
+    "tax_summary": [
+      {
+        "code": "SR",
+        "rate_percent": "0",
+        "taxable_amount": "88.91",
+        "tax": "0.00"
+      }
+    ],
+    "item_count": null,
+    "quantity_total": "1"
+  },
+  "notes": "The name 'tan woon yann' above the header is a benign digital annotation, not the merchant. 88.91 on the Total Qty row is the unlabelled item total (subtotal); item code E8318 is left out. No amount labelled as due; the final total is 'Total Sales (Inclusive of GST)'. Handwritten '80.90' is benign."
+}

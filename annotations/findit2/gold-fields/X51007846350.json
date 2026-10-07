@@ -1,0 +1,67 @@
+{
+  "doc_id": "X51007846350",
+  "annotator": "claude",
+  "fields": {
+    "merchant": "PASARAYA CINWA SDN BHD",
+    "dates": [
+      "2018-06-15"
+    ],
+    "items": [
+      {
+        "description": "YELLOW ROCK SUGAR 250G",
+        "quantity": "1",
+        "unit_price": "2.50",
+        "amount": "2.50"
+      },
+      {
+        "description": "GREEN BEAN 280G",
+        "quantity": "1",
+        "unit_price": "2.80",
+        "amount": "2.80"
+      },
+      {
+        "description": "ROYAL UMBRELLA BERAS WANGI 1KG",
+        "quantity": "1",
+        "unit_price": "8.90",
+        "amount": "8.90"
+      }
+    ],
+    "amounts": {
+      "subtotal": [
+        "14.20"
+      ],
+      "total_excluding_tax": [
+        "14.20"
+      ],
+      "discount": [
+        "0.00"
+      ],
+      "tax": [
+        "0.00"
+      ],
+      "rounding": [
+        "0.00"
+      ],
+      "total_including_tax": [
+        "14.20"
+      ],
+      "tendered": [
+        "20.20"
+      ],
+      "change": [
+        "6.00"
+      ]
+    },
+    "tax_summary": [
+      {
+        "code": "SR0",
+        "rate_percent": "0",
+        "taxable_amount": "14.20",
+        "tax": "0.00"
+      }
+    ],
+    "item_count": null,
+    "quantity_total": "3"
+  },
+  "notes": "Description is printed below each barcode row; barcodes are left out. 14.20 on the Total Qty row is the unlabelled item total (subtotal). The GST summary's Total row is not a separate row. Re-print. Handwritten note at the top is benign."
+}

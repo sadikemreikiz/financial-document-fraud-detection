@@ -1,0 +1,71 @@
+{
+  "doc_id": "X51005719823",
+  "annotator": "claude",
+  "fields": {
+    "merchant": "AA PHARMACY",
+    "dates": [
+      "2018-01-29"
+    ],
+    "items": [
+      {
+        "description": "IBUPROFEN FILM COATED TAB",
+        "quantity": "4",
+        "unit_price": "3.00",
+        "amount": "12.00"
+      },
+      {
+        "description": "FEBRICOL - RX 10X10'S",
+        "quantity": "4",
+        "unit_price": "3.00",
+        "amount": "12.00"
+      },
+      {
+        "description": "NOFLUX TABLET",
+        "quantity": "6",
+        "unit_price": "3.49",
+        "amount": "20.94"
+      }
+    ],
+    "amounts": {
+      "subtotal": [
+        "44.94"
+      ],
+      "discount": [
+        "0.00"
+      ],
+      "tax": [
+        "21.26",
+        "1.26"
+      ],
+      "rounding": [
+        "0.00"
+      ],
+      "total_due": [
+        "66.20"
+      ],
+      "tendered": [
+        "66.20"
+      ],
+      "change": [
+        "0.00"
+      ]
+    },
+    "tax_summary": [
+      {
+        "code": "SR",
+        "rate_percent": "6",
+        "taxable_amount": "20.94",
+        "tax": "1.26"
+      },
+      {
+        "code": "ZRL",
+        "rate_percent": "0",
+        "taxable_amount": "24.00",
+        "tax": "0.00"
+      }
+    ],
+    "item_count": null,
+    "quantity_total": "14"
+  },
+  "notes": "Description is printed below each code row. 'GST' 21.26 and 'TAX TOTAL' 1.26 are both recorded as printed; they disagree. Paid by MASTER."
+}

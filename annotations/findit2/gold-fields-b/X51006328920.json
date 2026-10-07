@@ -1,0 +1,42 @@
+{
+  "doc_id": "X51006328920",
+  "annotator": "claude",
+  "fields": {
+    "merchant": "B & BEST RESTAURANT",
+    "dates": [
+      "2017-03-20"
+    ],
+    "items": [
+      {
+        "description": "FISHBALL NOODLE",
+        "quantity": "2",
+        "unit_price": "7.00",
+        "amount": "14.00"
+      }
+    ],
+    "amounts": {
+      "subtotal": [
+        "14.00"
+      ],
+      "tax": [
+        "0.84"
+      ],
+      "rounding": [
+        "0.01"
+      ],
+      "total_due": [
+        "14.85"
+      ],
+      "tendered": [
+        "14.85"
+      ],
+      "change": [
+        "0.00"
+      ]
+    },
+    "tax_summary": [],
+    "item_count": null,
+    "quantity_total": null
+  },
+  "notes": "The leading 'B' of the name is faded; the transcript and the web address confirm it. The business date and the print date are the same day. The '2' before SUB TOTAL has no label and is not recorded as a count. Handwritten 'Staff lunch' is benign."
+}

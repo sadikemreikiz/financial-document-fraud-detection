@@ -1,0 +1,61 @@
+{
+  "doc_id": "X51005447840",
+  "annotator": "claude",
+  "fields": {
+    "merchant": "PASARAYA BORONG PINTAR SDN BHD",
+    "dates": [
+      "2018-03-20"
+    ],
+    "items": [
+      {
+        "description": "WALL'S TOPTEN CHOCOLATE 73ML",
+        "quantity": "1",
+        "unit_price": "1.60",
+        "amount": "1.60"
+      },
+      {
+        "description": "WALL'S TOPTEN CHOCOLATE 73ML",
+        "quantity": "1",
+        "unit_price": "1.60",
+        "amount": "1.60"
+      },
+      {
+        "description": "MAGNUM ALMOND 90ML",
+        "quantity": "1",
+        "unit_price": "4.50",
+        "amount": "4.50"
+      },
+      {
+        "description": "Cloud 9 plus 22g",
+        "quantity": "1",
+        "unit_price": "0.50",
+        "amount": "0.50"
+      }
+    ],
+    "amounts": {
+      "subtotal": [
+        "8.20"
+      ],
+      "total_including_tax": [
+        "8.20"
+      ],
+      "tendered": [
+        "20.20"
+      ],
+      "change": [
+        "12.00"
+      ]
+    },
+    "tax_summary": [
+      {
+        "code": "ZRL",
+        "rate_percent": "0",
+        "taxable_amount": "8.20",
+        "tax": "0.00"
+      }
+    ],
+    "item_count": null,
+    "quantity_total": "4.00"
+  },
+  "notes": "8.20 on the Total Qty row is the unlabelled item total (subtotal). No amount labelled as due; the final total is 'Total Includes GST 0%'. Handwritten date and numbers on the right are benign."
+}

@@ -5,6 +5,14 @@ This is the target architecture. It is implemented phase by phase (see the
 phase is complete. The rationale is in [ADR-0005](decisions/0005-evidence-based-architecture.md)
 and [ADR-0006](decisions/0006-llm-placement.md).
 
+## Implementation status
+
+| Layer | Status |
+|---|---|
+| Data (Phase 1) | Done: Find-it-again adapter, normalisation, test lock, audits |
+| Reading (Phase 2) | Done: RapidOCR behind `OcrEngine`, rule-based parser (v2), gold-set evaluation ([results](../reports/reading/README.md)). `ReceiptFields` does not yet keep references to source tokens; that comes with linking in Phase 5 |
+| Detection, linking, fusion, decision, reporting, LLM | Not started (Phases 3 to 6) |
+
 ## Overview
 
 ```mermaid

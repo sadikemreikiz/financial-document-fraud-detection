@@ -10,9 +10,10 @@ This repository is **v2** of my M.Sc. thesis (University of Europe for Applied S
 headline results were not valid, and v2 is designed to answer the same research questions
 properly. See [From thesis to v2](docs/thesis-review.md).
 
-> **Status: under active development (Phase 1 of 8: data).** No model results are reported yet. The
-> evaluation protocol was fixed before any model was trained, and the test set stays locked
-> until the final evaluation.
+> **Status: under active development (Phases 0 to 2 of 8 complete: foundations, data, reading).**
+> No fraud detection results are reported yet; field extraction accuracy is in the
+> [Phase 2 results](reports/reading/README.md). The evaluation protocol was fixed before any
+> model was trained, and the test set stays locked until the final evaluation.
 
 ## Documentation
 
@@ -23,6 +24,8 @@ properly. See [From thesis to v2](docs/thesis-review.md).
 | [Architecture](docs/architecture.md) | Layers, data model and extension points |
 | [Decision records](docs/decisions/README.md) | Why each significant choice was made |
 | [Data card](docs/data-card.md) and [data audit](reports/data/findit2-audit.md) | The dataset, its known issues and the shortcut analysis |
+| [Annotation guidelines](docs/annotation-guidelines.md) | How the gold sets for field extraction are drawn, annotated and verified |
+| [Phase 2 results](reports/reading/README.md) | OCR choice, field extraction accuracy on two gold sets, known limitations |
 | [From thesis to v2](docs/thesis-review.md) | Code-verified review of the original implementation |
 
 ## Development

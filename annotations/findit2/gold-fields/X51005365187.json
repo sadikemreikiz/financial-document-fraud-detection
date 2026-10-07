@@ -1,0 +1,91 @@
+{
+  "doc_id": "X51005365187",
+  "annotator": "claude",
+  "fields": {
+    "merchant": "F&P PHARMACY",
+    "dates": [
+      "2018-03-02"
+    ],
+    "items": [
+      {
+        "description": "HOMECARE GASCOAL 50MG",
+        "quantity": "1",
+        "unit_price": "6.00",
+        "amount": "6.00"
+      },
+      {
+        "description": "P.P NAPROXEN NA 275 MG",
+        "quantity": "1",
+        "unit_price": "6.00",
+        "amount": "6.00"
+      },
+      {
+        "description": "YELLOW LOTION 30 ML",
+        "quantity": "1",
+        "unit_price": "4.30",
+        "amount": "4.30"
+      },
+      {
+        "description": "PANADOL SOLUBLE TABLET",
+        "quantity": "1",
+        "unit_price": "3.80",
+        "amount": "3.80"
+      },
+      {
+        "description": "PMS GAUZE BANDAGE 5CM X 4M",
+        "quantity": "1",
+        "unit_price": "6.50",
+        "amount": "6.50"
+      },
+      {
+        "description": "DETTOL 50 ML",
+        "quantity": "1",
+        "unit_price": "5.30",
+        "amount": "5.30"
+      }
+    ],
+    "amounts": {
+      "subtotal": [
+        "31.90"
+      ],
+      "total_excluding_tax": [
+        "30.68"
+      ],
+      "discount": [
+        "0.00"
+      ],
+      "tax": [
+        "1.22"
+      ],
+      "rounding": [
+        "0.00"
+      ],
+      "total_including_tax": [
+        "31.90"
+      ],
+      "tendered": [
+        "50.00"
+      ],
+      "change": [
+        "18.10"
+      ]
+    },
+    "tax_summary": [
+      {
+        "code": "SR",
+        "rate_percent": "6",
+        "taxable_amount": "20.38",
+        "tax": "1.22"
+      },
+      {
+        "code": "ZRL",
+        "rate_percent": "0",
+        "taxable_amount": "10.30",
+        "tax": "0.00"
+      }
+    ],
+    "item_count": null,
+    "quantity_total": "6"
+  },
+  "notes": "Description is printed below each number row. 31.90 is the unlabelled item total on the Total Qty row (recorded as subtotal). The number 3-1707067 at the top is a benign digital annotation."
+}

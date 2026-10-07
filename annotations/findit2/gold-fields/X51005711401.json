@@ -1,0 +1,52 @@
+{
+  "doc_id": "X51005711401",
+  "annotator": "claude",
+  "fields": {
+    "merchant": "RESTORAN WAN SHENG",
+    "dates": [
+      "2018-03-19"
+    ],
+    "items": [
+      {
+        "description": "MILO (B)",
+        "quantity": "2",
+        "unit_price": "2.80",
+        "amount": "5.60"
+      },
+      {
+        "description": "TAKE AWAY",
+        "quantity": "2",
+        "unit_price": "0.20",
+        "amount": "0.40"
+      }
+    ],
+    "amounts": {
+      "total_excluding_tax": [
+        "5.66"
+      ],
+      "tax": [
+        "0.34"
+      ],
+      "total_including_tax": [
+        "6.00"
+      ],
+      "total_due": [
+        "6.00"
+      ],
+      "tendered": [
+        "6.00"
+      ]
+    },
+    "tax_summary": [
+      {
+        "code": "SR",
+        "rate_percent": "6",
+        "taxable_amount": "5.66",
+        "tax": "0.34"
+      }
+    ],
+    "item_count": null,
+    "quantity_total": "4"
+  },
+  "notes": ""
+}

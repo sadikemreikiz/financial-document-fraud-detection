@@ -1,0 +1,109 @@
+{
+  "doc_id": "X51005268472",
+  "annotator": "claude",
+  "fields": {
+    "merchant": "ASIA MART",
+    "dates": [
+      "2017-12-22"
+    ],
+    "items": [
+      {
+        "description": "DELICIA CHOCOLATE [50G]",
+        "quantity": "17",
+        "unit_price": "0.85",
+        "amount": "15.25"
+      },
+      {
+        "description": "GARDENIA ORIGINAL CLASSIC JUMBO [600G]",
+        "quantity": "1",
+        "unit_price": "3.55",
+        "amount": "3.55"
+      },
+      {
+        "description": "HU S LIME 50G",
+        "quantity": "1",
+        "unit_price": "1.50",
+        "amount": "1.50"
+      },
+      {
+        "description": "DOREMON CATCAT JOY 15G",
+        "quantity": "1",
+        "unit_price": "1.51",
+        "amount": "1.51"
+      },
+      {
+        "description": "DOREMON CATCAT JOY 15G",
+        "quantity": "1",
+        "unit_price": "1.51",
+        "amount": "1.51"
+      },
+      {
+        "description": "MINUTE MAID PULPY [OREN] [350ML]",
+        "quantity": "1",
+        "unit_price": "2.44",
+        "amount": "2.44"
+      },
+      {
+        "description": "MINUTE MAID PULPY [OREN] [350ML]",
+        "quantity": "1",
+        "unit_price": "2.44",
+        "amount": "2.44"
+      },
+      {
+        "description": "TINGE LEMON DRINK 500ML",
+        "quantity": "1",
+        "unit_price": "1.60",
+        "amount": "1.60"
+      },
+      {
+        "description": "100 PLUS [1.5L]",
+        "quantity": null,
+        "unit_price": "2.74",
+        "amount": "2.90"
+      }
+    ],
+    "amounts": {
+      "subtotal": [
+        "32.69"
+      ],
+      "total_excluding_tax": [
+        "31.03"
+      ],
+      "discount": [
+        "0.00"
+      ],
+      "tax": [
+        "1.65"
+      ],
+      "rounding": [
+        "0.02"
+      ],
+      "total_including_tax": [
+        "32.70"
+      ],
+      "tendered": [
+        "40.00"
+      ],
+      "change": [
+        "7.30"
+      ]
+    },
+    "tax_summary": [
+      {
+        "code": "SR",
+        "rate_percent": "6",
+        "taxable_amount": "27.48",
+        "tax": "1.65"
+      },
+      {
+        "code": "ZRL",
+        "rate_percent": "0",
+        "taxable_amount": "3.55",
+        "tax": "0.00"
+      }
+    ],
+    "item_count": null,
+    "quantity_total": "25"
+  },
+  "notes": "Description is printed below each number row. Item 1: neither price column times 17 gives the printed 15.25, so the first column is recorded. Item 9 quantity is faded. 32.69 is the unlabelled item total on the Total Qty row (recorded as subtotal). 'Total Sales (Inclusive of GST)' 32.70 is printed after rounding."
+}

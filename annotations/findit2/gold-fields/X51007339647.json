@@ -1,0 +1,52 @@
+{
+  "doc_id": "X51007339647",
+  "annotator": "claude",
+  "fields": {
+    "merchant": "AIK HUAT HARDWARE ENTERPRISE (SETIA ALAM) SDN BHD",
+    "dates": [
+      "2017-11-15"
+    ],
+    "items": [
+      {
+        "description": "SCHNEIDER VIVACE 15A S/SOCKET",
+        "quantity": "1",
+        "unit_price": "16.00",
+        "amount": "16.00"
+      }
+    ],
+    "amounts": {
+      "subtotal": [
+        "16.00"
+      ],
+      "discount": [
+        "0.00"
+      ],
+      "rounding": [
+        "0.00"
+      ],
+      "total_due": [
+        "16.00"
+      ],
+      "tendered": [
+        "16.00"
+      ],
+      "change": [
+        "0.00"
+      ],
+      "tax": [
+        "0.91"
+      ]
+    },
+    "tax_summary": [
+      {
+        "code": "SR",
+        "rate_percent": "6",
+        "taxable_amount": "15.09",
+        "tax": "0.91"
+      }
+    ],
+    "item_count": null,
+    "quantity_total": "1"
+  },
+  "notes": "Description is printed below the code row. '*GST @ 6% included in total' carries no amount; the tax amount is 'TAX TOTAL' 0.91, as on X51005719823. Partly seen before the second draw (see guidelines section 1); its amounts were first read now."
+}

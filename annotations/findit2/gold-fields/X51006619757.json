@@ -1,0 +1,82 @@
+{
+  "doc_id": "X51006619757",
+  "annotator": "claude",
+  "fields": {
+    "merchant": "99 SPEED MART S/B",
+    "dates": [
+      "2016-01-13"
+    ],
+    "items": [
+      {
+        "description": "MASSIMO WHEAT GERM 400",
+        "quantity": null,
+        "unit_price": null,
+        "amount": "2.25"
+      },
+      {
+        "description": "PANTENE HAIR FALL CONT",
+        "quantity": null,
+        "unit_price": null,
+        "amount": "10.95"
+      },
+      {
+        "description": "PANTENE TTL DAMAGE CARE",
+        "quantity": null,
+        "unit_price": null,
+        "amount": "10.95"
+      },
+      {
+        "description": "AJI-SHIO BLACK PEPPER",
+        "quantity": null,
+        "unit_price": null,
+        "amount": "5.75"
+      },
+      {
+        "description": "COLGATE BERUS GIGI ZIG",
+        "quantity": null,
+        "unit_price": null,
+        "amount": "7.20"
+      },
+      {
+        "description": "COLGATE GREAT REGULAR",
+        "quantity": null,
+        "unit_price": null,
+        "amount": "7.50"
+      },
+      {
+        "description": "YEO'S SOYA BEAN PEK 4*6",
+        "quantity": null,
+        "unit_price": null,
+        "amount": "13.50"
+      },
+      {
+        "description": "YEO'S TEH BUNGA PEK 4*6",
+        "quantity": null,
+        "unit_price": null,
+        "amount": "13.50"
+      }
+    ],
+    "amounts": {
+      "total_including_tax": [
+        "71.60"
+      ],
+      "tendered": [
+        "71.60"
+      ],
+      "change": [
+        "0.00"
+      ]
+    },
+    "tax_summary": [
+      {
+        "code": "S",
+        "rate_percent": "6",
+        "taxable_amount": "67.55",
+        "tax": "4.05"
+      }
+    ],
+    "item_count": null,
+    "quantity_total": null
+  },
+  "notes": "Leading item codes are left out. Paid by CREDIT. Change printed as '.00'. No amount labelled as due; the final total is 'Total Sales (Inclusive GST)'."
+}

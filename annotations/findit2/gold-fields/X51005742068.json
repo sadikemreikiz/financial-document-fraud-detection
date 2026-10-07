@@ -1,0 +1,27 @@
+{
+  "doc_id": "X51005742068",
+  "annotator": "claude",
+  "fields": {
+    "merchant": "BHPETROL PALEKBANG",
+    "dates": [
+      "2018-03-24"
+    ],
+    "items": [
+      {
+        "description": "PPF",
+        "quantity": "6",
+        "unit_price": "1.000",
+        "amount": "6.00"
+      }
+    ],
+    "amounts": {
+      "tendered": [
+        "6.00"
+      ]
+    },
+    "tax_summary": [],
+    "item_count": null,
+    "quantity_total": null
+  },
+  "notes": "Prepay chit, not a tax invoice. 'TOTAL AMOUNT' has no value on its own line; the only value, RM 6.00, is on the CASH line. Unit price printed with three decimals."
+}

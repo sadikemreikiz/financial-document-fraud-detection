@@ -1,0 +1,67 @@
+{
+  "doc_id": "X51007846268",
+  "annotator": "claude",
+  "fields": {
+    "merchant": "UNIHAKKA INTERNATIONAL SDN BHD",
+    "dates": [
+      "2018-06-02"
+    ],
+    "items": [
+      {
+        "description": "HERBAL TEA (ICED)",
+        "quantity": "1",
+        "unit_price": "1.88",
+        "amount": "1.88"
+      },
+      {
+        "description": "3 VEGE",
+        "quantity": "1",
+        "unit_price": "4.15",
+        "amount": "4.15"
+      },
+      {
+        "description": "MEAT DISH",
+        "quantity": "1",
+        "unit_price": "2.83",
+        "amount": "2.83"
+      },
+      {
+        "description": "IMPORTED VEGGIES",
+        "quantity": "1",
+        "unit_price": "1.50",
+        "amount": "1.50"
+      }
+    ],
+    "amounts": {
+      "total_including_tax": [
+        "10.36"
+      ],
+      "tax": [
+        "0.00"
+      ],
+      "rounding": [
+        "-0.01"
+      ],
+      "total_due": [
+        "10.35"
+      ],
+      "tendered": [
+        "10.35"
+      ],
+      "change": [
+        "0.00"
+      ]
+    },
+    "tax_summary": [
+      {
+        "code": "SR",
+        "rate_percent": "0",
+        "taxable_amount": "10.36",
+        "tax": "0.00"
+      }
+    ],
+    "item_count": null,
+    "quantity_total": null
+  },
+  "notes": "GST at 0% (June 2018), as on X51007846304. 'Total Amount' precedes 'Nett Total', so it is recorded as the total including tax. Rounding printed as '-RM0.01'. Handwritten note at the top is benign."
+}

@@ -1,0 +1,109 @@
+{
+  "doc_id": "X51007846302",
+  "annotator": "claude",
+  "fields": {
+    "merchant": "MOONLIGHT CAKE HOUSE SDN BHD",
+    "dates": [
+      "2018-06-09"
+    ],
+    "items": [
+      {
+        "description": "T-BUTTER SUGAR BUN",
+        "quantity": "1",
+        "unit_price": null,
+        "amount": "2.25"
+      },
+      {
+        "description": "DISCOUNT",
+        "quantity": null,
+        "unit_price": null,
+        "amount": "-0.45"
+      },
+      {
+        "description": "T-COOKIE CREAM BUN",
+        "quantity": "1",
+        "unit_price": null,
+        "amount": "3.20"
+      },
+      {
+        "description": "DISCOUNT",
+        "quantity": null,
+        "unit_price": null,
+        "amount": "-0.16"
+      },
+      {
+        "description": "T-GREEN TEA MOCHI",
+        "quantity": "1",
+        "unit_price": null,
+        "amount": "3.30"
+      },
+      {
+        "description": "DISCOUNT",
+        "quantity": null,
+        "unit_price": null,
+        "amount": "-0.16"
+      },
+      {
+        "description": "T-PASTRY CHICKEN FLOSS",
+        "quantity": "1",
+        "unit_price": null,
+        "amount": "3.20"
+      },
+      {
+        "description": "DISCOUNT",
+        "quantity": null,
+        "unit_price": null,
+        "amount": "-0.16"
+      },
+      {
+        "description": "T-SAHA BREAD",
+        "quantity": "1",
+        "unit_price": null,
+        "amount": "4.60"
+      },
+      {
+        "description": "DISCOUNT",
+        "quantity": null,
+        "unit_price": null,
+        "amount": "-0.23"
+      }
+    ],
+    "amounts": {
+      "total_including_tax": [
+        "15.39"
+      ],
+      "rounding": [
+        "0.01"
+      ],
+      "total_due": [
+        "15.40"
+      ],
+      "tendered": [
+        "50.00"
+      ],
+      "change": [
+        "34.60"
+      ],
+      "discount": [
+        "1.16"
+      ]
+    },
+    "tax_summary": [
+      {
+        "code": "ST",
+        "rate_percent": "0",
+        "taxable_amount": "15.39",
+        "tax": "0.00"
+      },
+      {
+        "code": "NS",
+        "rate_percent": "0",
+        "taxable_amount": "0.00",
+        "tax": "0.00"
+      }
+    ],
+    "item_count": null,
+    "quantity_total": null
+  },
+  "notes": "Item-level discount lines are negative items. The 'Discount Summary' 1.16 repeats them, as on X51007846289. The '*#' markers are left out. The date is printed twice and recorded once. The top of the header line is cut but readable. Handwritten note at the top is benign."
+}

@@ -1,0 +1,39 @@
+{
+  "doc_id": "X51006619698",
+  "annotator": "claude",
+  "fields": {
+    "merchant": "MR. D.I.Y. (M) SDN BHD",
+    "dates": [
+      "2016-01-25"
+    ],
+    "items": [
+      {
+        "description": "BASKET W/HOOK 9314#",
+        "quantity": "1",
+        "unit_price": "3.50",
+        "amount": "3.50"
+      },
+      {
+        "description": "TOILET PAPER HOLDER BWJ-2503#",
+        "quantity": "1",
+        "unit_price": "17.50",
+        "amount": "17.50"
+      }
+    ],
+    "amounts": {
+      "total_including_tax": [
+        "21.00"
+      ],
+      "tendered": [
+        "21.00"
+      ],
+      "tax": [
+        "1.19"
+      ]
+    },
+    "tax_summary": [],
+    "item_count": 2,
+    "quantity_total": "2"
+  },
+  "notes": "Each item has a name line, a supplier code line and a barcode line; codes are left out. No amount labelled as due; the final total is 'Total Incl. GST@6%'."
+}

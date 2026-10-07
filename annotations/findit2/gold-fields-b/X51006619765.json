@@ -1,0 +1,72 @@
+{
+  "doc_id": "X51006619765",
+  "annotator": "claude",
+  "fields": {
+    "merchant": "MR. D.I.Y. (M) SDN BHD",
+    "dates": [
+      "2016-01-08"
+    ],
+    "items": [
+      {
+        "description": "CUSHION 43*43CM",
+        "quantity": "1",
+        "unit_price": "14.90",
+        "amount": "14.90"
+      },
+      {
+        "description": "COLANDER 12610#*VS",
+        "quantity": "1",
+        "unit_price": "5.90",
+        "amount": "5.90"
+      },
+      {
+        "description": "S/S SQUARE STAND SSB0775-A#",
+        "quantity": "1",
+        "unit_price": "6.50",
+        "amount": "6.50"
+      },
+      {
+        "description": "POT HOLDER (SQUARE)",
+        "quantity": "5",
+        "unit_price": "2.50",
+        "amount": "12.50"
+      },
+      {
+        "description": "MOSQUITO RACKET 108#",
+        "quantity": "1",
+        "unit_price": "13.50",
+        "amount": "13.50"
+      },
+      {
+        "description": "STEMGLASS ST01-9AW/6WGB-CG 8ST 9OZ",
+        "quantity": "1",
+        "unit_price": "24.90",
+        "amount": "24.90"
+      },
+      {
+        "description": "MOSQUITO RACKET 108#",
+        "quantity": "-1",
+        "unit_price": "13.50",
+        "amount": "-13.50"
+      }
+    ],
+    "amounts": {
+      "total_including_tax": [
+        "64.70"
+      ],
+      "tendered": [
+        "100.00"
+      ],
+      "change": [
+        "35.30"
+      ],
+      "tax": [
+        "3.66"
+      ]
+    },
+    "tax_summary": [],
+    "item_count": 7,
+    "quantity_total": "9"
+  },
+  "notes": "Same layout as X51006619698: name line, supplier code line and barcode line per item; codes and the *S tax marker are left out. The last line is a return (-1 x 13.50). No amount labelled as due; the final total is 'Total Incl. GST@6%'. Duplicate copy; its print date is the same day."
+}

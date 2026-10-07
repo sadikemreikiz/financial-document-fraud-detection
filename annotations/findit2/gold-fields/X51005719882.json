@@ -1,0 +1,46 @@
+{
+  "doc_id": "X51005719882",
+  "annotator": "claude",
+  "fields": {
+    "merchant": "99 SPEED MART S/B",
+    "dates": [
+      "2018-02-17"
+    ],
+    "items": [
+      {
+        "description": "CARLSBERG CAN 4*6*320ML",
+        "quantity": null,
+        "unit_price": null,
+        "amount": "106.50"
+      },
+      {
+        "description": "CARLSBERG SMOOTH DRAUG",
+        "quantity": null,
+        "unit_price": null,
+        "amount": "106.50"
+      }
+    ],
+    "amounts": {
+      "total_including_tax": [
+        "213.00"
+      ],
+      "tendered": [
+        "213.00"
+      ],
+      "change": [
+        "0.00"
+      ]
+    },
+    "tax_summary": [
+      {
+        "code": "S",
+        "rate_percent": "6",
+        "taxable_amount": "200.94",
+        "tax": "12.06"
+      }
+    ],
+    "item_count": null,
+    "quantity_total": null
+  },
+  "notes": "Change printed as '.00'. No quantities or unit prices are printed."
+}

@@ -1,0 +1,58 @@
+{
+  "doc_id": "X51008042778",
+  "annotator": "claude",
+  "fields": {
+    "merchant": "RESTORAN WAN SHENG",
+    "dates": [
+      "2018-05-05"
+    ],
+    "items": [
+      {
+        "description": "CHAM (B)",
+        "quantity": "1",
+        "unit_price": "2.20",
+        "amount": "2.20"
+      },
+      {
+        "description": "DUNHILL",
+        "quantity": "1",
+        "unit_price": "17.00",
+        "amount": "17.00"
+      },
+      {
+        "description": "TAKE AWAY",
+        "quantity": "1",
+        "unit_price": "0.20",
+        "amount": "0.20"
+      }
+    ],
+    "amounts": {
+      "total_excluding_tax": [
+        "18.31"
+      ],
+      "tax": [
+        "1.09"
+      ],
+      "total_including_tax": [
+        "19.40"
+      ],
+      "total_due": [
+        "19.40"
+      ],
+      "tendered": [
+        "19.40"
+      ]
+    },
+    "tax_summary": [
+      {
+        "code": "SR",
+        "rate_percent": "6",
+        "taxable_amount": "18.31",
+        "tax": "1.09"
+      }
+    ],
+    "item_count": null,
+    "quantity_total": "3"
+  },
+  "notes": "Layout as on X51005711401. The take-away fee is an item. Parts of the header are faded but legible."
+}

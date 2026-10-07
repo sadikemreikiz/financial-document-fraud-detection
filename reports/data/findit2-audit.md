@@ -8,10 +8,10 @@ Source: B. Martínez Tornés et al., Receipt Dataset for Document Forgery Detect
 
 | Split | Documents | Forged | Authentic | Forged share | Handwritten | Digital |
 |---|---|---|---|---|---|---|
-| train | 577 | 95 | 482 | 16.5 % | 305 | 34 |
-| val | 192 | 33 | 159 | 17.2 % | 86 | 9 |
+| train | 562 | 94 | 468 | 16.7 % | 297 | 30 |
+| val | 190 | 33 | 157 | 17.4 % | 84 | 9 |
 | test | 218 | 35 | 183 | 16.1 % | 109 | 11 |
-| total | 987 | 163 | 824 | 16.5 % | 500 | 54 |
+| total | 970 | 162 | 808 | 16.7 % | 490 | 50 |
 
 Handwritten and digital annotations are benign modifications that occur on authentic and forged receipts alike.
 
@@ -22,11 +22,38 @@ Handwritten and digital annotations are benign modifications that occur on authe
 | X51006619709 | Listed twice: in train.txt as authentic and in val.txt as forged. Both rows carry forgery region annotations, the paper's count of 163 forged receipts includes it as forged, its image is the only alpha-channel PNG among the 'authentic' receipts, and the file ships in train/. | Kept in train, labelled forged, removed from validation. |
 | X51008114260 | Labelled forged but has no region annotations. | Used for classification; excluded from localisation metrics. |
 
+### Copies of the same receipt
+
+| Kind | Evidence | Kept | Removed (split, label) |
+|---|---|---|---|
+| copy | identical pixels | X51005268262 | X51005301659 (train, authentic) |
+| copy | identical pixels | X51005301661 | X51005303661 (train, authentic) |
+| copy | identical pixels | X51005268275 | X51005301666 (train, authentic) |
+| copy | identical pixels | X51005453801 | X51009453801 (train, authentic) |
+| copy | identical pixels | X51005453804 | X51009453804 (train, authentic) |
+| copy | identical pixels | X510056849111 | X51005684949 (train, authentic) |
+| copy | identical pixels | X51009008091 | X51006008091 (train, authentic) |
+| copy | identical pixels | X51006329388 | X51006328913 (val, authentic) |
+| copy | identical pixels | X51006328937 | X51006329399 (train, authentic) |
+| copy | identical pixels | X51006328967 | X51006332575 (train, authentic) |
+| copy | identical pixels | X51006401723 | X51007135037 (train, authentic) |
+| copy | identical pixels | X51005453729 | X51009453729 (train, authentic) |
+| copy | identical transcripts, rescan | X51006328919 | X51006329395 (val, authentic) |
+| copy | identical transcripts, rescan | X51007103641 | X51007103643 (train, authentic) |
+| copy | same time 15:23:00, spacing differs | X51006387740 | X51006401940 (train, authentic) |
+| twin | quantity 5 (50PCS) forged to 2 (20PCS) | X51009568881, X51005568881 | none |
+| twin | amount 35.32 forged to 3535.32 | X51007135247 | X51006401853 (train, authentic) |
+| twin | 0.90 and 5.00 forged to 100.90, 105.00 | X51005447842 | X51009447842 (train, forged) |
+| twin | same receipt CS180319-0015, forged | X51006008095, X51009008095 | none |
+| twin | 3.30 forged to 903.90, 5.00 to 1000.00 | X51007339105, X51007339115 | none |
+
+20 reviewed groups, 17 documents removed (ADR-0009). Copies in several splits keep the test, then the validation copy; twins (an authentic receipt and its forged version) in the same split are both kept and share one source identity.
+
 ### Forgery techniques
 
 | Technique | Modified regions | Forged documents |
 |---|---|---|
-| cpi | 355 | 127 |
+| cpi | 353 | 126 |
 | cut | 45 | 27 |
 | imi | 36 | 13 |
 | pix | 35 | 19 |
@@ -39,7 +66,7 @@ A region can combine several techniques, so counts may exceed the number of regi
 
 | Entity | Modified regions | Forged documents |
 |---|---|---|
-| total_payment | 243 | 78 |
+| total_payment | 241 | 77 |
 | product | 96 | 51 |
 | metadata | 82 | 60 |
 | company | 26 | 14 |
@@ -51,13 +78,13 @@ Each modified region is annotated with exactly one entity type.
 
 | Statistic | Value |
 |---|---|
-| Annotated forged documents | 162 |
-| Modified regions | 465 |
-| Copy-source regions | 199 |
+| Annotated forged documents | 161 |
+| Modified regions | 463 |
+| Copy-source regions | 198 |
 | Modified regions per document (median / max) | 2 / 19 |
-| Region area in px² (median / 90th percentile) | 874 / 5678 |
-| Region area in % of the page (median / 90th percentile) | 0.044 / 0.210 |
-| Modified share of page pixels, all forged pages | 1.202 % |
+| Region area in px² (median / 90th percentile) | 864 / 5722 |
+| Region area in % of the page (median / 90th percentile) | 0.043 / 0.210 |
+| Modified share of page pixels, all forged pages | 1.204 % |
 
 Areas come from annotated rectangles, which are larger than the edited pixels.
 
@@ -65,7 +92,7 @@ Areas come from annotated rectangles, which are larger than the edited pixels.
 
 | Software | Documents |
 |---|---|
-| paint | 70 |
+| paint | 69 |
 | gimp | 64 |
 | aperçu | 15 |
 | paint3d | 10 |
@@ -77,8 +104,8 @@ Areas come from annotated rectangles, which are larger than the edited pixels.
 | Check | Result |
 |---|---|
 | No document or source document in more than one split | passed |
-| Images decoded | 987 / 987 |
-| Transcripts decoded as strict UTF-8 | 987 / 987 |
+| Images decoded | 970 / 970 |
+| Transcripts decoded as strict UTF-8 | 970 / 970 |
 | Regions outside the image bounds | 0 |
 | Forged documents without region annotations | X51008114260 |
 
@@ -86,10 +113,10 @@ Areas come from annotated rectangles, which are larger than the edited pixels.
 
 | Trait | Forged | Authentic | Treatment |
 |---|---|---|---|
-| Image has an alpha channel | 63.2 % | 0.0 % | removed: rendered onto white, then grayscale |
-| Image stored in colour mode | 76.1 % | 39.0 % | removed: grayscale |
-| Image content is colour (channels differ) | 41.1 % | 39.0 % | content, kept: property of the original scan |
-| Transcript has CR line endings | 1.8 % | 0.0 % | removed: LF only |
+| Image has an alpha channel | 63.0 % | 0.0 % | removed: rendered onto white, then grayscale |
+| Image stored in colour mode | 75.9 % | 38.7 % | removed: grayscale |
+| Image content is colour (channels differ) | 41.4 % | 38.7 % | content, kept: property of the original scan |
+| Transcript has CR line endings | 1.9 % | 0.0 % | removed: LF only |
 | Transcript has trailing whitespace | 1.2 % | 0.2 % | removed: stripped |
 | Transcript has non-ASCII characters | 1.2 % | 0.1 % | content, kept: e.g. a wrong currency symbol |
 | After normalisation: CR line endings | 0.0 % | 0.0 % | must be 0 % |
@@ -102,9 +129,9 @@ A trait that differs between classes but is not evidence of forgery is a shortcu
 | Trait used as a fraud score | ROC-AUC |
 |---|---|
 | Image file size | 0.755 |
-| Image width | 0.530 |
-| Image height | 0.521 |
-| Image area | 0.526 |
+| Image width | 0.525 |
+| Image height | 0.518 |
+| Image area | 0.522 |
 | Transcript bytes, raw | 0.486 |
 | Transcript bytes, normalised | 0.485 |
 
@@ -114,7 +141,7 @@ A trait that differs between classes but is not evidence of forgery is a shortcu
 
 | Split | Precision | Recall | F1 |
 |---|---|---|---|
-| train | 1.000 | 0.600 | 0.750 |
+| train | 1.000 | 0.596 | 0.747 |
 | val | 1.000 | 0.697 | 0.821 |
 | test | 1.000 | 0.657 | 0.793 |
 

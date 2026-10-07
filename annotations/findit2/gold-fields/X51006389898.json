@@ -1,0 +1,52 @@
+{
+  "doc_id": "X51006389898",
+  "annotator": "claude",
+  "fields": {
+    "merchant": "RESTORAN WAN SHE",
+    "dates": [
+      "2017-09-29"
+    ],
+    "items": [
+      {
+        "description": "TIGER (B)",
+        "quantity": "6",
+        "unit_price": "12.00",
+        "amount": "72.00"
+      },
+      {
+        "description": "GUINESS STOUT (B) PROMOTION",
+        "quantity": "6",
+        "unit_price": "15.40",
+        "amount": "92.40"
+      }
+    ],
+    "amounts": {
+      "total_excluding_tax": [
+        "155.09"
+      ],
+      "tax": [
+        "9.31"
+      ],
+      "total_including_tax": [
+        "164.40"
+      ],
+      "total_due": [
+        "164.40"
+      ],
+      "tendered": [
+        "164.40"
+      ]
+    },
+    "tax_summary": [
+      {
+        "code": "SR",
+        "rate_percent": "6",
+        "taxable_amount": "155.09",
+        "tax": "9.31"
+      }
+    ],
+    "item_count": null,
+    "quantity_total": "12"
+  },
+  "notes": "The end of the merchant name is faded; only the readable part is recorded."
+}

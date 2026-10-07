@@ -1,5 +1,5 @@
 .DEFAULT_GOAL := help
-.PHONY: help install lint format typecheck test test-data check data audit clean
+.PHONY: help install lint format typecheck test test-data check data audit bench-ocr clean
 
 help:  ## Show available targets
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*## "}; {printf "  %-12s %s\n", $$1, $$2}'
@@ -33,6 +33,10 @@ data:  ## Download, verify and prepare the Find-it-again dataset
 
 audit:  ## Regenerate the data audit report
 	uv run docfraud data audit
+
+bench-ocr:  ## Compare OCR engines on training receipts (downloads docTR and PyTorch)
+	uv run --with "python-doctr[torch]>=1.1.0" --with "torch>=2.14.1" --with "torchvision>=0.29.1" \
+		python experiments/ocr_benchmark.py
 
 clean:  ## Remove caches and build outputs (never touches data/ or artifacts/)
 	rm -rf .mypy_cache .ruff_cache .pytest_cache .coverage htmlcov dist build
