@@ -4,7 +4,7 @@
 |---|---|
 | **Project** | docfraud: explainable multimodal detection of forged financial documents |
 | **Origin** | v2 of the M.Sc. thesis *AI-Based Expert System for Detecting Fraud in Financial Documents* (S. E. Ikiz, University of Europe for Applied Sciences, Berlin, 2026) |
-| **Status** | Phase 3 (accounting rules) next; Phases 0 to 2 complete |
+| **Status** | Phase 3 (accounting rules) under review; Phases 0 to 2 complete |
 | **Last updated** | 2026-10-07 |
 
 ## Problem
@@ -63,8 +63,13 @@ These are fixed before any model is trained. They define what may be claimed, no
 numbers will be.
 
 - **Comparison with published work.** The best published document-level result on the
-  Find-it-again test split is F1 = 28.39 (ChatGPT, relaxed; Tornés et al., 2023). An improvement
-  is claimed only if the lower bound of our 95 % confidence interval exceeds 0.284.
+  Find-it-again test split is F1 = 28.39 (ChatGPT, relaxed; Tornés et al., 2023). Marking every
+  test receipt as forged already reaches F1 = 27.7, so an improvement is claimed only if both
+  hold: the lower bound of our 95 % confidence interval of F1 exceeds 0.284, and the lower bound
+  of our 95 % interval of recall at the 10 % review budget exceeds 0.10, the share a random
+  choice would find. *(Second condition added on 2026-10-07 by
+  [ADR-0013](decisions/0013-success-criterion-and-floors.md), before any of our systems met the
+  test split.)*
 - **Component claims** (RQ2, RQ5) are made only when the paired-bootstrap 95 % interval of the
   difference excludes zero. Otherwise the result is reported as inconclusive.
 - **Shortcut freedom.** Headline results must not depend on file-format artefacts

@@ -18,5 +18,6 @@ change of mind is a new record that supersedes the old one.
 | [0010](0010-second-gold-set.md) | A second, untouched gold set to measure parser improvements | Accepted |
 | [0011](0011-baseline-reproduction.md) | Reproducing the published BoW + LR baseline: configuration and success criterion | Accepted |
 | [0012](0012-accounting-rules-evaluation.md) | How the accounting rules are developed and measured | Accepted |
+| [0013](0013-success-criterion-and-floors.md) | Success against published work must beat the floor, not only the published number | Accepted |
 
 New records copy [template.md](template.md).
