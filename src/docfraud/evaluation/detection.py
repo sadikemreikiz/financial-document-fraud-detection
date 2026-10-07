@@ -273,7 +273,12 @@ def _difference(of_a: Metric, of_b: Metric, y: Labels, a: Scores, b: Scores) -> 
 
 
 def summary(
-    labels: object, scores: object, threshold: float, doc_ids: Sequence[str]
+    labels: object,
+    scores: object,
+    threshold: float,
+    doc_ids: Sequence[str],
+    *,
+    probabilities: bool = False,
 ) -> dict[str, Any]:
     """JSON-ready results of one detector: sizes, metrics with intervals, counts and scores."""
     y, s = as_arrays(labels, scores)
@@ -284,7 +289,7 @@ def summary(
         "threshold": threshold,
         "metrics": {
             name: {"value": e.value, "low": e.low, "high": e.high}
-            for name, e in evaluate(y, s, threshold).items()
+            for name, e in evaluate(y, s, threshold, probabilities=probabilities).items()
         },
         "counts": {"tp": counts.tp, "fp": counts.fp, "fn": counts.fn, "tn": counts.tn},
         "scores": dict(zip(doc_ids, (float(v) for v in s), strict=True)),
