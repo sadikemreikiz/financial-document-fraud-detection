@@ -16,5 +16,6 @@ change of mind is a new record that supersedes the old one.
 | [0008](0008-ocr-engine.md) | RapidOCR (PP-OCRv6 small) as the OCR engine | Accepted |
 | [0009](0009-duplicate-receipts.md) | Resolving copies of the same receipt across splits | Accepted |
 | [0010](0010-second-gold-set.md) | A second, untouched gold set to measure parser improvements | Accepted |
+| [0011](0011-baseline-reproduction.md) | Reproducing the published BoW + LR baseline: configuration and success criterion | Accepted |
 
 New records copy [template.md](template.md).
