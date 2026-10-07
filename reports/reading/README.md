@@ -78,4 +78,4 @@ into a false alarm of an accounting rule.
 Gold annotations, owner reviews and predictions per receipt are reproducible with the
 `docfraud reading` commands (`evaluate-gold`, `compare-gold`, `score-review`); each generated
 report names the command that wrote it. Parser v1 predictions come from a checkout of commit
-`45f930a`, whose parser is identical to the frozen v1 at `30d660e`.
+`628e03e`, whose parser is identical to the frozen v1 at `1b6e7fb`.

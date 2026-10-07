@@ -45,7 +45,7 @@ Option 3.
   but labelled as optimistic. The result of the first parser on gold set A stays in the record.
 - Phase 6 evaluates LLM extraction on both gold sets.
 
-**Record.** Parser v2 was developed on development receipts only and frozen at commit `6ff3d3e`,
+**Record.** Parser v2 was developed on development receipts only and frozen at commit `ef22443`,
 before any gold set B receipt was opened.
 
 **Result (2026-10-07).** The owner verified 5 gold set B receipts (82 of 82 values accepted).
