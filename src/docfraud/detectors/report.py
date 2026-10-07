@@ -281,4 +281,4 @@ def render_rules_report(
         ):
             if scope in b:
                 parts += [render_table(t) + "\n" for t in _breakdown_tables(b[scope], label)]
-    return "".join(parts)
+    return "".join(parts).rstrip("\n") + "\n"  # one final newline, as the hooks require
