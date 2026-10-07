@@ -5,7 +5,7 @@ receipt fails on many of its amounts at once. Resampling whole documents keeps t
 and gives honest intervals.
 """
 
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 
 import numpy as np
@@ -72,6 +72,38 @@ def paired_ratio_difference(  # noqa: PLR0913 - mirrors ratio() for two systems
     den = np.asarray(denominator, float)
     ratio_a, ratio_b = _resample([a, b], den, resamples, seed)
     return _estimate((b.sum() - a.sum()) / den.sum(), ratio_b - ratio_a, level)
+
+
+def stratified(
+    statistic: Callable[[np.ndarray], float],
+    strata: Sequence[int] | np.ndarray,  # one class (or stratum) per document
+    *,
+    resamples: int = DEFAULT_RESAMPLES,
+    level: float = 0.95,
+    seed: int = 0,
+) -> Estimate:
+    """A document-level statistic with an interval from resampling within each stratum.
+
+    ``statistic`` receives an array of document indices and returns the statistic computed on
+    those documents. Resampling within each class keeps the class sizes fixed, so that every
+    resample contains both classes (evaluation protocol, section 6). For a paired comparison,
+    pass a statistic that returns the difference between two systems: both are then evaluated on
+    the same draws.
+
+    Raises:
+        ValueError: If there are no documents.
+    """
+    labels = np.asarray(strata)
+    if labels.size == 0:
+        msg = "at least one document is needed"
+        raise ValueError(msg)
+    rng = np.random.default_rng(seed)
+    members = [np.flatnonzero(labels == stratum) for stratum in np.unique(labels)]
+    draws = np.concatenate(
+        [m[rng.integers(0, m.size, size=(resamples, m.size))] for m in members], axis=1
+    )
+    samples = np.array([statistic(draw) for draw in draws], dtype=float)
+    return _estimate(statistic(np.arange(labels.size)), samples, level)
 
 
 def _resample(

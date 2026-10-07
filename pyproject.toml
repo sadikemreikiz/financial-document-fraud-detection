@@ -21,6 +21,7 @@ dependencies = [
     "pillow>=12.3.0",
     "pydantic>=2.13.5",
     "rapidocr>=3.9.2",
+    "scikit-learn>=1.9.1",
     "typer>=0.27.2",
 ]
 
@@ -89,6 +90,10 @@ plugins = ["pydantic.mypy"]
 files = ["src", "tests", "experiments"]
 warn_unreachable = true
 enable_error_code = ["ignore-without-code", "redundant-expr", "truthy-bool"]
+
+[[tool.mypy.overrides]]
+module = ["sklearn", "sklearn.*"]  # scikit-learn ships no type information
+ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 minversion = "9.0"
