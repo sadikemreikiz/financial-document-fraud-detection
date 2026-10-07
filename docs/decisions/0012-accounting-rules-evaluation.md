@@ -1,0 +1,86 @@
+# 0012. How the accounting rules are developed and measured
+
+- **Status**: Accepted
+- **Date**: 2026-10-07 (before any rule was written; no parser or rule output on the validation
+  split has been produced or inspected. Our OCR was run on the validation images in Phase 2 to
+  fill the page cache; its output was not inspected.)
+
+## Context
+
+Accounting rules check that a receipt's printed amounts are consistent: the items add up, tax
+and service charge lead to the total, the change matches the payment. A forger who edits one
+amount and forgets the others breaks this arithmetic.
+
+An exploration on the training split, with the six arithmetic checks of Phase 2 and parser v2,
+showed that at least one check fails on 36 % of authentic receipts (39 % with our OCR) and on 49 %
+of forged ones. Running the same checks on the hand-annotated fields of the 80 gold receipts
+separated the two causes of these false alarms:
+
+| Fields | Authentic receipts failing a check | Forged receipts failing a check |
+|---|---|---|
+| Gold annotations (correct reading) | 10 of 64 | 8 of 16 |
+| Parser v2 on transcripts | 23 of 64 | 6 of 16 |
+
+About half of the false alarms come from the checks themselves: 8 of the 10 authentic failures
+on gold fields are receipt structures the checks do not model (service charge in the tax
+equation, delivery notes without a subtotal, a cash amount printed with a minus sign, several
+payment or tax lines). The other half come from reading errors of parser v2, which also hide some
+forgeries. In a random sample of 15 failing authentic receipts read by the parser, 13 failures
+were reading errors.
+
+Rules are written by hand, by looking at receipts. Cross-validation protects parameters that are
+learned from data, not choices made by a person who has seen all folds, so a cross-validated
+result of hand-written rules on the training split is optimistic.
+
+Of the 94 forged training receipts, 53 change amounts or products; 40 change only the date, the
+merchant or other text, which arithmetic cannot detect. Rules alone can therefore find at most
+about half of the forgeries; the rest is the task of pixel forensics (Phase 4).
+
+## Options
+
+1. **Patch reading errors inside the rules** (for example, ignore duplicated item lines). This
+   would hide a third parser version inside the rule layer and make rule quality and reading
+   quality impossible to tell apart.
+2. **Leave the checks as they are and let a model learn how far to trust each one.** Cheap, but
+   it only hides the false alarms that better rules would remove.
+3. **Develop the rules on correctly read fields, keep reading separate, learn weights on top and
+   measure once on the validation split.**
+
+## Decision
+
+Option 3.
+
+**Development data.** Rules are developed only on the training split: on the gold annotations
+of the 80 gold receipts, where reading is correct, and on parser output for the other training
+receipts. No parser or rule output on the validation split is produced until the rules and the
+scoring are frozen at a commit.
+
+**Rule scope.** Rules model receipt structure (service charge, discounts, rounding, several
+payment or tax lines, delivery notes, tax rates). They never compensate for reading errors;
+parser v2 stays as it is.
+
+**Scoring.** Each rule reports pass, fail or not applicable per receipt. A logistic regression
+on these outcomes learns how much to trust each rule; its weights are part of the explanation.
+On the training split it is fitted in the stored 5-fold cross-validation; the operating threshold
+maximises F1 on the out-of-fold scores (ties to the higher threshold). "Any rule fails" is
+reported alongside as a reference without learned parameters.
+
+**Measurement**, for both text sources (T1 transcripts, T2 OCR):
+
+- Gold fields, 80 training receipts: how good the rules are when reading is correct.
+  Descriptive only, because the rules were developed on these receipts.
+- Training split in cross-validation: development reference, labelled optimistic.
+- **Validation split, once, after freezing:** the scoring model is fitted on the whole training
+  split and applied with the threshold from cross-validation. This is the unbiased Phase 3 result
+  for the rules. The BoW + LR baseline is measured on the same receipts the same way, and the two
+  are compared with the paired bootstrap of the evaluation protocol.
+
+## Consequences
+
+- The gap between gold fields and parser output measures the cost of reading errors directly.
+  It is the reason to compare parser and LLM extraction in Phase 6.
+- The validation split is used once here as an evaluation set. It stays the calibration and
+  threshold set of later phases, as the evaluation protocol defines; those phases are designed
+  knowing this result, which is disclosed.
+- With 190 validation receipts (33 forged), intervals are wide; comparisons are stated with
+  their intervals.
