@@ -40,6 +40,7 @@ from docfraud.data.models import Label, Split
 from docfraud.data.normalize import load_grayscale
 from docfraud.data.splits import select
 from docfraud.evaluation.extraction import render_extraction_report, score_document
+from docfraud.evaluation.folds import CV_FOLDS, FOLD_SEED, assign_folds, save_folds
 from docfraud.reading.consistency import CHECKS
 from docfraud.reading.fields import ReceiptFields
 from docfraud.reading.ocr import CachedOcr, RapidOcrEngine
@@ -173,6 +174,31 @@ def data_draw_gold(  # noqa: PLR0913, PLR0917 - one option per draw parameter
         f"[green]written[/green] {output}: {len(manifest.authentic)} authentic and "
         f"{len(manifest.forged)} forged training receipts (seed {manifest.seed})"
     )
+
+
+CV_FOLDS_PATH = Path("annotations/findit2/cv-folds.json")
+
+
+@data_app.command("draw-folds")
+def data_draw_folds(
+    data_dir: DataDir = Path("data"),
+    output: Annotated[Path, typer.Option(help="Where to write the folds.")] = CV_FOLDS_PATH,
+    folds: Annotated[int, typer.Option(help="Number of folds.")] = CV_FOLDS,
+    seed: Annotated[int, typer.Option(help="Random seed of the draw.")] = FOLD_SEED,
+) -> None:
+    """Draw the cross-validation folds of the training split (seeded, stratified, grouped).
+
+    Folds are drawn once: an existing file is never overwritten, so every experiment is measured
+    on the same partition.
+    """
+    if output.exists():
+        console.print(f"[red]refusing to overwrite[/red] {output}")
+        raise typer.Exit(1)
+    documents = load_findit2(data_dir / "raw" / SOURCES[DatasetName.FINDIT2.value].name)
+    assignment = assign_folds(documents, n_folds=folds, seed=seed)
+    save_folds(assignment, output)
+    sizes = ", ".join(str(len(assignment.documents(f))) for f in range(assignment.n_folds))
+    console.print(f"[green]written[/green] {output}: fold sizes {sizes} (seed {assignment.seed})")
 
 
 OCR_CACHE = Path("artifacts/ocr")

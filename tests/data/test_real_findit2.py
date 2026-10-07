@@ -17,10 +17,12 @@ from docfraud.data.findit import (
 from docfraud.data.models import Document, Label, Split
 from docfraud.data.normalize import read_transcript
 from docfraud.data.splits import check_disjoint
+from docfraud.evaluation.folds import assign_folds, check_folds, load_folds
 
 ROOT = Path(__file__).resolve().parents[2]
 DATA = ROOT / "data" / "raw" / "findit2"
 REPORT = ROOT / "reports" / "data" / "findit2-audit.md"
+CV_FOLDS = ROOT / "annotations" / "findit2" / "cv-folds.json"
 
 pytestmark = [
     pytest.mark.data,
@@ -99,3 +101,9 @@ def test_committed_audit_report_is_up_to_date(raw_documents: tuple[Document, ...
     tables = build_audit([inspect_files(d) for d in documents], DUPLICATE_GROUPS, dropped)
     expected = render_audit(tables, source=FINDIT2.citation)
     assert REPORT.read_text(encoding="utf-8") == expected, "run `docfraud data audit`"
+
+
+def test_stored_folds_match_the_training_split(documents: tuple[Document, ...]) -> None:
+    stored = load_folds(CV_FOLDS)
+    check_folds(stored, documents)
+    assert stored == assign_folds(documents, n_folds=stored.n_folds, seed=stored.seed)

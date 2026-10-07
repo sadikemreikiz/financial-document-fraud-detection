@@ -15,7 +15,9 @@ from docfraud.data.download import SOURCES, DatasetSource
 from docfraud.data.gold import GoldManifest, load_manifest
 from docfraud.data.models import Split
 from docfraud.data.splits import TestSetLockedError
+from docfraud.evaluation.folds import load_folds
 from docfraud.reading.ocr import OcrResult
+from tests.evaluation.test_folds import documents as fold_documents
 from tests.fixtures.findit import load_toy
 
 runner = CliRunner()
@@ -118,6 +120,21 @@ def test_data_draw_gold_draws_around_earlier_sets(toy_source: Path, tmp_path: Pa
     result = runner.invoke(app, [*base, *later])
     assert result.exit_code == 0, result.output
     assert not load_manifest(first).doc_ids & load_manifest(second).doc_ids
+
+
+def test_data_draw_folds_writes_folds_once(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(docfraud.cli, "load_findit2", lambda _: fold_documents())
+    output = tmp_path / "folds.json"
+    args = ["data", "draw-folds", "--output", str(output)]
+    result = runner.invoke(app, args)
+    assert result.exit_code == 0, result.output
+    assert "(seed 0)" in result.output
+    folds = load_folds(output)
+    assert folds.n_folds == 5
+    again = runner.invoke(app, [*args, "--seed", "1"])
+    assert again.exit_code == 1
+    assert "refusing to overwrite" in again.output
+    assert load_folds(output) == folds
 
 
 class FakeOcr:
