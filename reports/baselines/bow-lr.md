@@ -6,7 +6,14 @@ The published bag-of-words + logistic-regression baseline (Martínez Tornés et 
 
 ### Reproduction on the test split
 
-Not run yet. The test split is unlocked once, under the evaluation protocol's exception 1.
+| Metric | Published | Ours [95 % interval] |
+|---|---|---|
+| Precision | 40.00 | 44.44 [12.5, 80.0] |
+| Recall | 11.43 | 11.43 [2.9, 22.9] |
+| F1 | 17.78 | 18.18 [4.7, 33.3] |
+| Forged found / authentic flagged / forged missed | 4 / 6 / 31 | 4 / 5 / 31 |
+
+218 test receipts, 35 forged; run `20261007T074152486338Z-bow-lr-test` (commit c79b8b2), test split unlocked once: "baseline reproduction, evaluation protocol section 3, exception 1 (ADR-0011)". Criterion (ADR-0011): the published F1 lies inside our 95 % interval. **Reproduction passed.** The criterion is weak by design: the published F1 rests on four forged receipts, so it rules out gross errors such as inverted labels, not small differences.
 
 ### Cross-validation on the training split (development reference)
 
