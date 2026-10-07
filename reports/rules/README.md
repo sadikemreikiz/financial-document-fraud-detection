@@ -56,6 +56,13 @@ reaches: a random review, or marking every receipt as forged for F1.
   F1-optimal threshold, chosen in cross-validation, marks every receipt as forged, so its F1 is
   the floor.
 
+**What they catch** ([breakdowns](accounting-rules.md#breakdowns), descriptive because groups are
+small). On the validation split, "any rule fails" finds 16 of the 17 forged receipts whose total
+or payment was changed (transcripts), but only 3 of the 12 whose date or time was changed: as
+expected, arithmetic sees changed amounts and not changed text. Benign handwritten notes do not
+add false alarms: on the training split the rules flag 35 % of authentic receipts with
+handwriting and 40 % of those without any annotation.
+
 **Why: reading, not the rules.** With the hand-annotated fields of the 80 gold receipts, where
 reading is correct, at least one rule fails on 2 of 64 authentic receipts (both print
 inconsistent line arithmetic themselves) and on 8 of 16 forged ones. With parser v2 on the
