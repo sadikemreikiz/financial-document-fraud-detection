@@ -61,8 +61,9 @@ reading is correct, at least one rule fails on 2 of 64 authentic receipts (both 
 inconsistent line arithmetic themselves) and on 8 of 16 forged ones. With parser v2 on the
 whole training split, at least one rule fails on 173 of 468 authentic receipts (transcripts).
 A review of 15 randomly chosen authentic receipts that failed the Phase 2 checks found 13
-reading errors and 2 receipt structures the checks did not model; the rules now model those
-structures, so the false alarms that remain are mostly reading errors. These gold-field numbers are descriptive, because the rules were developed on
+reading errors, one receipt structure the checks did not model, and one receipt with both; the
+rules now model those structures, so the false alarms that remain are mostly reading errors
+([development measurements](rules-development.md)). These gold-field numbers are descriptive, because the rules were developed on
 these receipts.
 
 ## Limits and what follows

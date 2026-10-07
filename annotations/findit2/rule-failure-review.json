@@ -1,0 +1,27 @@
+{
+  "purpose": "Why do authentic receipts fail arithmetic checks? Manual diagnosis behind ADR-0012.",
+  "population": "Authentic training receipts on which at least one Phase 2 check (docfraud.reading.consistency.CHECKS) fails, fields read by parser v2 from the dataset transcripts, in the order of the training split",
+  "sample": "15 receipts drawn with numpy default_rng(20261007).choice(population size, 15, replace=False); experiments/rules_development.py re-draws them and checks that they match",
+  "reviewer": "claude (annotator), 2026-10-07; each receipt's parsed fields compared with its transcript",
+  "causes": {
+    "reading_error": "parser v2 misread, missed, duplicated or mislabelled an amount or line",
+    "rule_gap": "the receipt prints a structure the Phase 2 checks did not model"
+  },
+  "receipts": [
+    {"doc_id": "X51005711451", "causes": ["reading_error"], "note": "The take-away line's unit price is read as its amount, and the 0.40 next to the tax is not the tax."},
+    {"doc_id": "X51005711456", "causes": ["rule_gap"], "note": "Service charge 5.62 lies between the total excluding tax and the total including tax; the check ignores it."},
+    {"doc_id": "X51005746207", "causes": ["reading_error"], "note": "Every item line is read twice (code row and description row), doubling the item sum."},
+    {"doc_id": "X51005806703", "causes": ["reading_error"], "note": "Quantity, price and amount columns are misaligned across lines."},
+    {"doc_id": "X51006334139", "causes": ["reading_error"], "note": "A line total is read as a separate item."},
+    {"doc_id": "X51006387660", "causes": ["reading_error"], "note": "The tax amount is read as the total including tax; the amount due is missing."},
+    {"doc_id": "X51006388081", "causes": ["reading_error"], "note": "The quantity row is read as an item and the totals are mislabelled."},
+    {"doc_id": "X51006401869", "causes": ["reading_error"], "note": "The quantity row is read as an item and the amount due is misread."},
+    {"doc_id": "X51006414713", "causes": ["reading_error"], "note": "The amount excluding tax is labelled as a third amount due."},
+    {"doc_id": "X51006466060", "causes": ["reading_error"], "note": "The taxable amount of the tax summary is read as a second tax amount."},
+    {"doc_id": "X51006556809", "causes": ["reading_error"], "note": "Delivery-note columns are misread, so item lines are missing or wrong."},
+    {"doc_id": "X51006556826", "causes": ["reading_error"], "note": "Unit price and amount columns are swapped on one line."},
+    {"doc_id": "X51006647984", "causes": ["reading_error"], "note": "A total is read as a tax amount and the change is misread."},
+    {"doc_id": "X51007231374", "causes": ["reading_error", "rule_gap"], "note": "No subtotal is printed: items 20.90 plus service charge 2.09, tax 1.38 and rounding 0.03 give 24.40, a chain the check did not model; the parser also reads the service charge as tax and misses the tax."},
+    {"doc_id": "X51007846358", "causes": ["reading_error"], "note": "Three different values are labelled as subtotal."}
+  ]
+}
