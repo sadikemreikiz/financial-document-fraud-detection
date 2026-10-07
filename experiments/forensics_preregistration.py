@@ -31,6 +31,7 @@ from docfraud.data.findit import (
 from docfraud.data.gold import load_manifest
 from docfraud.data.models import Document, Entity, Label, RegionRole, Split, Technique
 from docfraud.data.splits import select
+from docfraud.evaluation.design_fold import DESIGN_FOLD
 from docfraud.evaluation.folds import FoldAssignment, load_folds
 from docfraud.markdown import Cell, Table, render_table
 
@@ -38,7 +39,6 @@ ROOT = Path(__file__).resolve().parents[1]
 OUTPUT = ROOT / "reports" / "forensics" / "preregistration-data.md"
 ANNOTATIONS = ROOT / "annotations" / "findit2"
 FOLDS = ANNOTATIONS / "cv-folds.json"
-DESIGN_FOLD = 2
 ARITHMETIC_ENTITIES = {Entity.TOTAL_PAYMENT, Entity.PRODUCT}
 NAMED_TECHNIQUES = (Technique.CPI, Technique.CPO, Technique.CUT, Technique.PIX, Technique.IMI)
 TILE = 256
