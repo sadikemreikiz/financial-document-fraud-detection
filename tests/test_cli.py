@@ -483,3 +483,26 @@ def test_rules_need_the_baseline_runs(tmp_path: Path, monkeypatch: pytest.Monkey
     assert "run the baseline first" in result.output
     report = ["rules", "report", "--runs", str(tmp_path / "runs")]
     assert "need rules-cv and bow-lr-cv" in runner.invoke(app, report).output
+
+
+def test_rules_breakdown_groups_recorded_decisions(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    options = rules_setup(tmp_path, monkeypatch)
+    runs = ["--runs", str(tmp_path / "runs")]
+    missing = runner.invoke(app, ["rules", "breakdown", *runs])
+    assert missing.exit_code == 1
+    assert "no rules-cv run" in missing.output
+    assert runner.invoke(app, ["rules", "evaluate", *options]).exit_code == 0
+    result = runner.invoke(app, ["rules", "breakdown", *runs])
+    assert result.exit_code == 0, result.output
+    (record,) = JsonRunStore(tmp_path / "runs").records("rules-breakdown")
+    assert set(record.results) == {"training"}
+    flagged = record.results["training"]["transcript"]["any_fail"]["forged"]["software"]
+    assert flagged == {"not recorded": {"receipts": 12.0, "found": 12.0}}
+    report = tmp_path / "rules.md"
+    assert runner.invoke(app, ["rules", "report", *runs, "--output", str(report)]).exit_code == 0
+    assert (
+        "Training, cross-validated: forged receipts found, by editing software"
+        in report.read_text(encoding="utf-8")
+    )

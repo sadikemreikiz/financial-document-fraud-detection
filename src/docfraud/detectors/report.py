@@ -31,6 +31,12 @@ def _pct(e: dict[str, float]) -> str:
     return f"{e['value'] * 100:.1f} [{e['low'] * 100:.1f}, {e['high'] * 100:.1f}]"
 
 
+def _raw(e: dict[str, float] | None) -> str:
+    if e is None:
+        return "\N{EM DASH}"
+    return f"{e['value']:.3f} [{e['low']:.3f}, {e['high']:.3f}]"
+
+
 def _counts(r: dict[str, Any]) -> str:
     c = r["counts"]
     return f"{c['tp']} / {c['fp']} / {c['fn']}"
@@ -65,6 +71,11 @@ def _detection(results: dict[str, Any], bow: dict[str, Any], title: str, note: s
     rows.append(
         ["Forged found / authentic flagged / forged missed", *(_counts(r) for _, r in systems)]
     )
+    for key, label in (
+        ("brier", "Brier score"),
+        ("expected_calibration_error", "Calibration error"),
+    ):
+        rows.append([label, *(_raw(r["metrics"].get(key)) for _, r in systems)])
     return Table(title, ("Metric", *(name for name, _ in systems)), rows, note=note)
 
 
@@ -108,7 +119,61 @@ def _per_rule(results: dict[str, Any], title: str) -> Table:
     )
 
 
-def render_rules_report(cv: RunRecord, bow_cv: RunRecord, validation: RunRecord | None) -> str:
+def _breakdown_tables(scope: dict[str, Any], label: str) -> list[Table]:
+    """Forged receipts found and authentic receipts flagged, per group (protocol, section 7)."""
+    systems = [(f"Any rule fails {t}", scope[k]["any_fail"]) for k, t in TRACKS] + [
+        (f"Top 10 % review {t}", scope[k]["learned_at_budget"]) for k, t in TRACKS
+    ]
+    tables = []
+    first = scope["transcript"]["any_fail"]
+    for kind, title in (
+        ("technique", "forgery technique"),
+        ("entity", "changed information"),
+        ("software", "editing software"),
+    ):
+        rows: list[list[Cell]] = [
+            [
+                group,
+                int(counts["receipts"]),
+                *(f"{s[1]['forged'][kind][group]['found']:.1f}" for s in systems),
+            ]
+            for group, counts in first["forged"][kind].items()
+        ]
+        tables.append(
+            Table(
+                f"{label}: forged receipts found, by {title}",
+                ("Group", "Forged receipts", *(name for name, _ in systems)),
+                rows,
+                note="A receipt counts in every group it belongs to. Top 10 % review: the learned "
+                "scorer's 10 % most suspicious receipts; receipts tied at the cut-off count in "
+                "part, so counts can be fractional. Groups are small: descriptive only.",
+            )
+        )
+    tables.append(
+        Table(
+            f"{label}: authentic receipts flagged, by benign annotation",
+            ("Annotation", "Authentic receipts", *(name for name, _ in systems)),
+            [
+                [
+                    group,
+                    int(counts["receipts"]),
+                    *(f"{s[1]['authentic'][group]['flagged']:.1f}" for s in systems),
+                ]
+                for group, counts in first["authentic"].items()
+            ],
+            note="Handwritten and digital annotations (case numbers, notes, stamps) are benign "
+            "and must not raise alarms.",
+        )
+    )
+    return tables
+
+
+def render_rules_report(
+    cv: RunRecord,
+    bow_cv: RunRecord,
+    validation: RunRecord | None,
+    breakdowns: RunRecord | None = None,
+) -> str:
     """Correct-reading level, cross-validated development result and the validation result."""
     r = cv.results
     gold = r["gold_fields"]
@@ -207,4 +272,13 @@ def render_rules_report(cv: RunRecord, bow_cv: RunRecord, validation: RunRecord 
             "\n",
             render_table(_per_rule(v, "Rule outcomes on the validation split")),
         ]
+    if breakdowns is not None:
+        b = breakdowns.results
+        parts.append(f"\n## Breakdowns\n\nFrom run {_run(breakdowns)}.\n\n")
+        for scope, label in (
+            ("validation", "Validation"),
+            ("training", "Training, cross-validated"),
+        ):
+            if scope in b:
+                parts += [render_table(t) + "\n" for t in _breakdown_tables(b[scope], label)]
     return "".join(parts)

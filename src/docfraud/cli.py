@@ -51,6 +51,7 @@ from docfraud.detectors.evaluation import cross_validated, held_out, rule_counts
 from docfraud.detectors.report import render_rules_report
 from docfraud.detectors.rules import check
 from docfraud.detectors.scoring import any_fail
+from docfraud.evaluation.breakdowns import breakdown, flagged_by_budget, flagged_by_threshold
 from docfraud.evaluation.detection import compare, summary
 from docfraud.evaluation.extraction import render_extraction_report, score_document
 from docfraud.evaluation.folds import (
@@ -715,6 +716,60 @@ def _rules_validation(setup: _RulesSetup) -> None:
     console.print(f"[green]recorded[/green] {RULES_VALIDATION_RUN}")
 
 
+RULES_BREAKDOWN_RUN = "rules-breakdown"
+REVIEW_BUDGET = 0.10
+
+
+@rules_app.command("breakdown")
+def rules_breakdown(
+    data_dir: DataDir = Path("data"),
+    runs: Annotated[Path, typer.Option(help="Where reported run records are kept.")] = (
+        REPORTED_RUNS
+    ),
+) -> None:
+    """Group the recorded rule decisions by technique, entity, software and annotation.
+
+    Nothing is measured again: the scores come from the latest cross-validation and the
+    validation run records, grouped with the dataset's annotations (evaluation protocol, section 7).
+    """
+    source = SOURCES[DatasetName.FINDIT2.value]
+    by_id = {d.doc_id: d for d in load_findit2(data_dir / "raw" / source.name)}
+    store = JsonRunStore(runs)
+    scopes = {
+        "training": store.records(RULES_CV_RUN),
+        "validation": store.records(RULES_VALIDATION_RUN),
+    }
+    recorded = {scope: records[-1] for scope, records in scopes.items() if records}
+    if "training" not in recorded:
+        console.print(f"[red]no {RULES_CV_RUN} run in {runs}[/red]")
+        raise typer.Exit(1)
+    with run(
+        RULES_BREAKDOWN_RUN,
+        store=store,
+        config={
+            "from_runs": {s: r.run_id for s, r in recorded.items()},
+            "review_budget": REVIEW_BUDGET,
+        },
+        seeds={},
+        dataset_sha256={source.name: source.sha256},
+    ) as current:
+        for scope, record in recorded.items():
+            result: dict[str, Any] = {}
+            for text_source in TRACKS:
+                track = record.results[text_source.value]
+                documents = [by_id[i] for i in track["learned"]["scores"]]
+                result[text_source.value] = {
+                    "any_fail": breakdown(
+                        documents, flagged_by_threshold(track["any_fail"]["scores"], 1.0)
+                    ),
+                    "learned_at_budget": breakdown(
+                        documents, flagged_by_budget(track["learned"]["scores"], REVIEW_BUDGET)
+                    ),
+                }
+            current.log(scope, result)
+    console.print(f"[green]recorded[/green] {RULES_BREAKDOWN_RUN}: {', '.join(recorded)}")
+
+
 @rules_app.command("report")
 def rules_report(
     runs: Annotated[Path, typer.Option(help="Where reported run records are kept.")] = (
@@ -731,9 +786,15 @@ def rules_report(
         console.print(f"[red]need {RULES_CV_RUN} and {BOW_CV_RUN} runs in {runs}[/red]")
         raise typer.Exit(1)
     validation = store.records(RULES_VALIDATION_RUN)
+    breakdowns = store.records(RULES_BREAKDOWN_RUN)
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(
-        render_rules_report(cv[-1], bow_cv[-1], validation[-1] if validation else None),
+        render_rules_report(
+            cv[-1],
+            bow_cv[-1],
+            validation[-1] if validation else None,
+            breakdowns[-1] if breakdowns else None,
+        ),
         encoding="utf-8",
     )
     console.print(f"[green]written[/green] {output}")
