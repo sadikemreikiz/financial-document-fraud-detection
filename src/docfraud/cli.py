@@ -413,7 +413,8 @@ def reading_compare_gold(  # noqa: PLR0913, PLR0917 - one option per input and o
             render_extraction_report(scores, frozenset(manifest.forged), f"## {track}\n\n")
         )
     header = _report_header(title, "compare-gold", note) + (
-        f"{candidate_name} is compared with {baseline_name} on the same {len(doc_ids)} gold "
+        f"The candidate ({candidate_name}) is compared with the baseline ({baseline_name}) on "
+        f"the same {len(doc_ids)} gold "
         f"receipts ({len(manifest.authentic)} authentic, {len(manifest.forged)} forged), "
         "separately for the dataset transcripts (T1) and our OCR (T2). Metrics: "
         "docs/annotation-guidelines.md, section 7.\n\n"
