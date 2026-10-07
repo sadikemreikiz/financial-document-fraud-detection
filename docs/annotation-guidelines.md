@@ -89,6 +89,21 @@ printed after the service charge and tax and is the amount paid is recorded as `
 the role follows the arithmetic meaning, not the label alone. *(Clarified on 2026-10-06, at
 the 30th gold receipt.)*
 
+*(Clarified on 2026-10-07, after parser v2 was evaluated on gold set B; wording only, no
+recorded value changed.)* The rule for a plain total printed before the tax line depends on
+how the tax is applied, which the annotations of both gold sets already followed but the text
+above did not say:
+
+- If the tax is **added** to it (`TOTAL (MYR) 20.00`, `GST 1.20`, `NET TOTAL 21.20`), the plain
+  total is `subtotal`.
+- If the prices **include** the tax, so that the next total repeats or rounds the same amount
+  (`TOTAL AMOUNT 8.20`, `GST @6% 0.46`, `NETT TOTAL 8.20`), the plain total is
+  `total_including_tax`.
+
+Likewise, an unlabelled amount on the `TOTAL QTY` row is the receipt's own item total and is
+recorded as `subtotal`. Parser v2 followed the earlier wording literally, which is why it records
+such tax-inclusive totals as `subtotal` (see the [Phase 2 results](../reports/reading/README.md)).
+
 **Per-rate totals** such as `TOTAL 6% SUPPLIES (EXCL. GST)` or a `GST SUMMARY` table are not
 roles; they become tax summary rows (section 5).
 
