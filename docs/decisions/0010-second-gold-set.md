@@ -48,6 +48,13 @@ Option 3.
 **Record.** Parser v2 was developed on development receipts only and frozen at commit `6ff3d3e`,
 before any gold set B receipt was opened.
 
+**Result (2026-10-07).** The owner verified 5 gold set B receipts (82 of 82 values accepted).
+Parser v2 was then evaluated once on gold set B, and parser v1 on the same receipts for a paired
+comparison ([report](../../reports/reading/parser-comparison-b.md)): items recall +0.41
+[0.23, 0.59] on both text sources, merchant accuracy +0.23 [0.07, 0.40] on transcripts, amounts
+unchanged. Gold set B is now spent; parser v2 stays as it is for Phase 3, with its known errors
+listed in the [Phase 2 summary](../../reports/reading/README.md).
+
 ## Consequences
 
 - **Disclosure.** Gold set B was part of the development pool of the first parser: that parser
