@@ -64,6 +64,7 @@ and corrected the annotations.
 | Copy sources are only partly annotated (the authors removed uncertain ones) | Copy-source localisation is evaluated only where annotated |
 | Region rectangles are larger than the edited pixels | Pixel-level localisation scores are lower bounds; region-level hit rate is reported as well |
 | The same receipt appears under several identifiers: 15 groups of copies and 5 authentic/forged twins, 10 of the 20 groups spanning splits | Resolved by [ADR-0009](decisions/0009-duplicate-receipts.md): the test split stays whole, copies leave training and validation, twins in one split stay together; a data test re-runs the detection |
+| The transcript of `X51008030565` keeps SROIE box coordinates (see [Shortcuts](#shortcuts)) | Removed by normalisation since commit `35d1e82` (2026-10-12). Results measured before are marked in the [Phase 2](../reports/reading/README.md) and [Phase 3](../reports/rules/README.md) summaries; with the coordinates removed, duplicate detection finds no new candidate |
 
 The adapter (`docfraud.data.findit`) applies only the documented corrections. Any other
 inconsistency stops loading with an error, and a correction that is no longer needed raises as

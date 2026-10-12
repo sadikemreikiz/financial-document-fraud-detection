@@ -29,7 +29,7 @@ by hand; when a number here and a generated report disagree, the generated repor
 **The baseline reproduces.** On the test split our BoW + LR finds 4 forged receipts, flags 5
 authentic ones and misses 31 (F1 18.18 [4.7, 33.3]); the paper reports 4 / 6 / 31 (F1 17.78).
 Splits, labels and metric agree with the paper. In cross-validation on the training split the
-same baseline ranks at chance (ROC-AUC 48.6): word counts carry no forgery signal.
+same baseline ranks at chance (ROC-AUC 48.5): word counts carry no forgery signal.
 
 **The rules, measured once on the validation split** (190 receipts, 33 forged; unbiased):
 
@@ -87,6 +87,17 @@ these receipts.
   rates of forged receipts were visible (Phase 2 development report), and the rules were written
   by looking at training receipts; training-split results are therefore labelled optimistic. The
   validation result is free of both.
+- **Transcript fix after the phase.** Until commit `35d1e82` (2026-10-12) the transcript of one
+  forged training receipt, `X51008030565`, kept SROIE box coordinates before every line
+  ([data card](../../docs/data-card.md#shortcuts)). The cross-validated runs were repeated from
+  that commit, and the generated reports show the new runs: on transcripts the rules now find
+  this receipt and BoW + LR no longer does (it scored 0.96 with the coordinates and 0.16
+  without). The one-time measurements were not repeated. On the validation split, the learned
+  rule scorer on transcripts (T1) and BoW + LR were fitted while the coordinates were present;
+  the T1 scorer's weights are in its run record and differ from the refit shown in the report
+  (for example +0.40 instead of +0.17 for `items_reconcile:not_applicable`). The test
+  run of BoW + LR was trained the same way. Results on our OCR (T2) and "any rule fails" do not
+  depend on the transcripts and are unaffected.
 
 ## Reproducing
 

@@ -22,28 +22,28 @@ Receipts on which the rule failed / receipts on which it applied. The fields are
 
 | Metric | Rules T1 | Rules T2 | Any rule fails T1 | Any rule fails T2 | BoW + LR | Flag everything |
 |---|---|---|---|---|---|---|
-| Precision | 16.7 [16.7, 16.7] | 16.8 [16.8, 17.0] | 21.7 [17.8, 25.7] | 22.2 [18.5, 26.0] | 13.2 [3.1, 24.4] | 16.7 [16.7, 16.7] |
-| Recall | 100.0 [100.0, 100.0] | 100.0 [100.0, 100.0] | 51.1 [40.4, 61.7] | 55.3 [44.7, 66.0] | 5.3 [1.1, 10.6] | 100.0 [100.0, 100.0] |
-| F1 | 28.7 [28.7, 28.7] | 28.8 [28.7, 29.0] | 30.5 [24.8, 36.0] | 31.7 [26.3, 37.0] | 7.6 [1.6, 14.3] | 28.7 [28.7, 28.7] |
-| Average precision | 20.4 [16.6, 27.4] | 22.0 [17.4, 29.3] | 19.3 [17.1, 22.1] | 19.8 [17.6, 22.6] | 16.7 [14.5, 21.6] | 16.7 [16.7, 16.7] |
-| ROC-AUC | 51.5 [44.9, 58.1] | 51.4 [44.6, 58.6] | 57.0 [51.4, 62.6] | 58.2 [52.7, 63.8] | 48.6 [42.0, 55.1] | 50.0 [50.0, 50.0] |
-| Recall at 10 % review | 17.1 [10.6, 24.5] | 13.8 [7.7, 20.2] | 13.0 [10.6, 15.4] | 13.3 [11.1, 15.5] | 7.4 [3.2, 13.0] | 10.0 [10.0, 10.0] |
-| Recall at 20 % review | 23.4 [16.0, 31.9] | 29.8 [21.3, 38.3] | 26.0 [21.2, 30.7] | 26.6 [22.1, 31.0] | 17.0 [8.5, 24.5] | 20.0 [20.0, 20.0] |
-| Forged found / authentic flagged / forged missed | 94 / 468 / 0 | 94 / 464 / 0 | 48 / 173 / 46 | 52 / 182 / 42 | 5 / 33 / 89 | 94 / 468 / 0 |
+| Precision | 16.7 [16.7, 16.7] | 16.8 [16.8, 17.0] | 22.1 [18.1, 26.0] | 22.2 [18.5, 26.0] | 11.1 [2.6, 22.0] | 16.7 [16.7, 16.7] |
+| Recall | 100.0 [100.0, 100.0] | 100.0 [100.0, 100.0] | 52.1 [41.5, 61.7] | 55.3 [44.7, 66.0] | 4.3 [1.1, 8.5] | 100.0 [100.0, 100.0] |
+| F1 | 28.7 [28.7, 28.7] | 28.8 [28.7, 29.0] | 31.0 [25.4, 36.4] | 31.7 [26.3, 37.0] | 6.2 [1.5, 12.3] | 28.7 [28.7, 28.7] |
+| Average precision | 20.3 [16.4, 27.6] | 22.0 [17.4, 29.3] | 19.5 [17.3, 22.4] | 19.8 [17.6, 22.6] | 16.3 [14.3, 20.5] | 16.7 [16.7, 16.7] |
+| ROC-AUC | 49.8 [43.0, 56.6] | 51.4 [44.6, 58.6] | 57.6 [51.9, 63.1] | 58.2 [52.7, 63.8] | 48.5 [42.1, 54.9] | 50.0 [50.0, 50.0] |
+| Recall at 10 % review | 17.0 [10.6, 24.5] | 13.8 [7.7, 20.2] | 13.2 [10.8, 15.5] | 13.3 [11.1, 15.5] | 6.6 [2.1, 11.9] | 10.0 [10.0, 10.0] |
+| Recall at 20 % review | 25.5 [17.0, 33.0] | 29.8 [21.3, 38.3] | 26.4 [21.6, 31.1] | 26.6 [22.1, 31.0] | 14.9 [7.4, 22.3] | 20.0 [20.0, 20.0] |
+| Forged found / authentic flagged / forged missed | 94 / 468 / 0 | 94 / 464 / 0 | 49 / 173 / 45 | 52 / 182 / 42 | 4 / 32 / 90 | 94 / 468 / 0 |
 | Brier score | 0.141 [0.135, 0.146] | 0.139 [0.134, 0.144] | — | — | — | — |
-| Calibration error | 0.058 [0.044, 0.095] | 0.052 [0.040, 0.090] | — | — | — | — |
+| Calibration error | 0.055 [0.042, 0.094] | 0.052 [0.040, 0.090] | — | — | — | — |
 
-Out-of-fold scores of the 562 training receipts (94 forged), 5 stored folds; percentages with 95 % stratified bootstrap intervals. 'Flag everything' marks every receipt as forged: the floor for F1 and the chance level for ranking. Operating thresholds (F1-optimal out of fold): T1 0.088, T2 0.089. Runs `20261007T081917538483Z-rules-cv` (commit 2d8be5d) and `20261007T074135747237Z-bow-lr-cv` (commit 4fd2217).
+Out-of-fold scores of the 562 training receipts (94 forged), 5 stored folds; percentages with 95 % stratified bootstrap intervals. 'Flag everything' marks every receipt as forged: the floor for F1 and the chance level for ranking. Operating thresholds (F1-optimal out of fold): T1 0.088, T2 0.089. Runs `20261012T132413572418Z-rules-cv` (commit 35d1e82) and `20261012T131938206903Z-bow-lr-cv` (commit 35d1e82).
 
 ### Rules compared with BoW + LR, cross-validated
 
 | Metric | Rules T1 - BoW + LR | Rules T2 - BoW + LR |
 |---|---|---|
-| F1 | +21.1 [+14.4, +27.1] * | +21.3 [+14.5, +27.2] * |
-| Average precision | +3.7 [-2.6, +11.0] | +5.3 [-1.7, +12.8] |
-| ROC-AUC | +2.9 [-6.8, +12.5] | +2.9 [-7.1, +13.1] |
-| Recall at 10 % review | +9.6 [+1.1, +18.1] * | +6.4 [-2.1, +14.7] |
-| Recall at 20 % review | +6.4 [-4.3, +19.1] | +12.8 [+2.1, +24.5] * |
+| F1 | +22.5 [+16.4, +27.2] * | +22.7 [+16.5, +27.4] * |
+| Average precision | +4.0 [-1.9, +11.6] | +5.7 [-0.8, +13.2] |
+| ROC-AUC | +1.2 [-8.5, +11.1] | +2.9 [-7.1, +13.2] |
+| Recall at 10 % review | +10.4 [+2.1, +19.1] * | +7.2 [-1.1, +14.9] |
+| Recall at 20 % review | +10.6 [-1.1, +21.9] | +14.9 [+3.6, +26.4] * |
 
 Percentage points; paired stratified bootstrap over the same receipts. * marks an interval that excludes zero.
 
@@ -51,12 +51,12 @@ Percentage points; paired stratified bootstrap over the same receipts. * marks a
 
 | Rule | T1 authentic | T1 forged | T2 authentic | T2 forged |
 |---|---|---|---|---|
-| totals_reconcile | 26 / 317 | 8 / 59 | 32 / 287 | 7 / 58 |
-| items_reconcile | 115 / 458 | 29 / 90 | 122 / 441 | 25 / 86 |
-| line_amounts | 33 / 275 | 12 / 53 | 36 / 263 | 14 / 52 |
+| totals_reconcile | 26 / 317 | 8 / 60 | 32 / 287 | 7 / 58 |
+| items_reconcile | 115 / 458 | 29 / 91 | 122 / 441 | 25 / 86 |
+| line_amounts | 33 / 275 | 13 / 54 | 36 / 263 | 14 / 52 |
 | change_given | 13 / 283 | 12 / 56 | 16 / 248 | 12 / 52 |
 | repeats_agree | 18 / 44 | 4 / 11 | 18 / 43 | 5 / 13 |
-| tax_rates | 24 / 211 | 5 / 36 | 16 / 167 | 5 / 31 |
+| tax_rates | 24 / 211 | 5 / 37 | 16 / 167 | 5 / 31 |
 
 Receipts on which the rule failed / receipts on which it applied.
 
@@ -64,18 +64,18 @@ Receipts on which the rule failed / receipts on which it applied.
 
 | Outcome | T1 | T2 |
 |---|---|---|
-| totals_reconcile:fail | +0.22 | -0.21 |
-| totals_reconcile:not_applicable | +0.18 | -0.04 |
-| items_reconcile:fail | +0.11 | -0.01 |
-| items_reconcile:not_applicable | +0.40 | +0.28 |
-| line_amounts:fail | +0.57 | +0.76 |
-| line_amounts:not_applicable | +0.15 | +0.11 |
-| change_given:fail | +1.39 | +1.26 |
-| change_given:not_applicable | +0.06 | +0.04 |
-| repeats_agree:fail | -0.30 | -0.18 |
-| repeats_agree:not_applicable | -0.44 | -0.50 |
-| tax_rates:fail | +0.03 | +0.35 |
-| tax_rates:not_applicable | +0.18 | +0.14 |
+| totals_reconcile:fail | +0.24 | -0.21 |
+| totals_reconcile:not_applicable | +0.14 | -0.04 |
+| items_reconcile:fail | +0.10 | -0.01 |
+| items_reconcile:not_applicable | +0.17 | +0.28 |
+| line_amounts:fail | +0.67 | +0.76 |
+| line_amounts:not_applicable | +0.13 | +0.11 |
+| change_given:fail | +1.40 | +1.26 |
+| change_given:not_applicable | +0.09 | +0.04 |
+| repeats_agree:fail | -0.29 | -0.18 |
+| repeats_agree:not_applicable | -0.41 | -0.50 |
+| tax_rates:fail | -0.02 | +0.35 |
+| tax_rates:not_applicable | +0.13 | +0.14 |
 
 Change in the log-odds of forgery when the outcome occurs, relative to the rule passing.
 
@@ -123,7 +123,7 @@ Receipts on which the rule failed / receipts on which it applied.
 
 ## Breakdowns
 
-From run `20261007T092159304157Z-rules-breakdown` (commit 15c26ef).
+From run `20261012T132532799647Z-rules-breakdown` (commit 35d1e82).
 
 ### Validation: forged receipts found, by forgery technique
 
@@ -177,13 +177,13 @@ Handwritten and digital annotations (case numbers, notes, stamps) are benign and
 
 | Group | Forged receipts | Any rule fails T1 | Any rule fails T2 | Top 10 % review T1 | Top 10 % review T2 |
 |---|---|---|---|---|---|
-| cpi | 73 | 34.0 | 38.0 | 12.0 | 10.0 |
+| cpi | 73 | 35.0 | 38.0 | 12.0 | 10.0 |
 | cpo | 4 | 2.0 | 2.0 | 0.0 | 0.0 |
-| cut | 16 | 8.0 | 9.0 | 3.1 | 2.0 |
+| cut | 16 | 8.0 | 9.0 | 3.0 | 2.0 |
 | imi | 9 | 5.0 | 5.0 | 2.0 | 1.0 |
 | not annotated | 1 | 1.0 | 1.0 | 0.0 | 0.0 |
 | other | 3 | 1.0 | 1.0 | 1.0 | 1.0 |
-| pix | 13 | 6.0 | 7.0 | 2.0 | 2.0 |
+| pix | 13 | 7.0 | 7.0 | 2.0 | 2.0 |
 
 A receipt counts in every group it belongs to. Top 10 % review: the learned scorer's 10 % most suspicious receipts; receipts tied at the cut-off count in part, so counts can be fractional. Groups are small: descriptive only.
 
@@ -195,8 +195,8 @@ A receipt counts in every group it belongs to. Top 10 % review: the learned scor
 | metadata | 33 | 14.0 | 16.0 | 2.0 | 2.0 |
 | not annotated | 1 | 1.0 | 1.0 | 0.0 | 0.0 |
 | other | 9 | 4.0 | 4.0 | 2.0 | 1.0 |
-| product | 28 | 14.0 | 17.0 | 3.1 | 2.0 |
-| total_payment | 46 | 30.0 | 31.0 | 12.1 | 10.0 |
+| product | 28 | 15.0 | 17.0 | 3.0 | 2.0 |
+| total_payment | 46 | 31.0 | 31.0 | 12.0 | 10.0 |
 
 A receipt counts in every group it belongs to. Top 10 % review: the learned scorer's 10 % most suspicious receipts; receipts tied at the cut-off count in part, so counts can be fractional. Groups are small: descriptive only.
 
@@ -205,7 +205,7 @@ A receipt counts in every group it belongs to. Top 10 % review: the learned scor
 | Group | Forged receipts | Any rule fails T1 | Any rule fails T2 | Top 10 % review T1 | Top 10 % review T2 |
 |---|---|---|---|---|---|
 | aperçu | 7 | 3.0 | 3.0 | 2.0 | 1.0 |
-| gimp | 40 | 18.0 | 20.0 | 6.1 | 4.0 |
+| gimp | 40 | 19.0 | 20.0 | 6.0 | 4.0 |
 | kolourpaint | 1 | 1.0 | 1.0 | 0.0 | 0.0 |
 | not recorded | 1 | 1.0 | 1.0 | 0.0 | 0.0 |
 | paint | 38 | 20.0 | 22.0 | 4.0 | 5.0 |
@@ -218,8 +218,8 @@ A receipt counts in every group it belongs to. Top 10 % review: the learned scor
 | Annotation | Authentic receipts | Any rule fails T1 | Any rule fails T2 | Top 10 % review T1 | Top 10 % review T2 |
 |---|---|---|---|---|---|
 | digital | 10 | 4.0 | 5.0 | 0.0 | 0.0 |
-| handwritten | 233 | 81.0 | 86.0 | 21.0 | 29.0 |
+| handwritten | 233 | 81.0 | 86.0 | 23.0 | 29.0 |
 | handwritten and digital | 18 | 5.0 | 9.0 | 0.0 | 1.0 |
-| none | 207 | 83.0 | 82.0 | 19.1 | 13.2 |
+| none | 207 | 83.0 | 82.0 | 17.2 | 13.2 |
 
 Handwritten and digital annotations (case numbers, notes, stamps) are benign and must not raise alarms.
