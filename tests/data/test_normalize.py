@@ -26,6 +26,7 @@ from docfraud.data.normalize import (
         ("TOTAL 5.00 €", "TOTAL 5.00 €\n"),
         ("1,2,3,4,5,6,7,8,NO.2, JALAN\r\n\n1,2,3,4,5,6,7,8,RM 1,50\n", "NO.2, JALAN\n\nRM 1,50\n"),
         ("1,2,3,4,5,6,7,TOTAL\n12,50,RM\n", "1,2,3,4,5,6,7,TOTAL\n12,50,RM\n"),
+        ("1,2,3,4,5,6,7,8,TOTAL\n1,2,3,4,5,6,7,8,\n", "TOTAL\n"),
     ],
     ids=[
         "crlf",
@@ -39,6 +40,7 @@ from docfraud.data.normalize import (
         "euro-kept",
         "box-coordinates",
         "numbers-kept",
+        "box-empty-tail",
     ],
 )
 def test_normalize_transcript(raw: str, expected: str) -> None:

@@ -40,9 +40,9 @@ def normalize_transcript(text: str) -> str:
     """
     text = unicodedata.normalize("NFC", text)
     lines = [line.rstrip() for line in text.replace("\r\n", "\n").replace("\r", "\n").split("\n")]
+    lines = _strip_box_coordinates(lines)
     while lines and not lines[-1]:
         lines.pop()
-    lines = _strip_box_coordinates(lines)
     return "\n".join(lines) + "\n" if lines else ""
 
 
