@@ -21,7 +21,13 @@ from docfraud.cli import rules as cli_rules
 from docfraud.data.download import SOURCES, DatasetSource
 from docfraud.data.gold import GoldManifest, load_manifest
 from docfraud.data.models import Label, Split
-from docfraud.data.observation import ASSISTANT, ObservationLog, ReceiptObservation, save_log
+from docfraud.data.observation import (
+    ASSISTANT,
+    ObservationLog,
+    ReceiptObservation,
+    save_log,
+    seal,
+)
 from docfraud.data.splits import TestSetLockedError
 from docfraud.evaluation.folds import assign_folds, load_folds, save_folds
 from docfraud.evaluation.runs import CodeVersion, JsonRunStore
@@ -584,3 +590,21 @@ def test_observation_seal_is_written_once_and_verified(observation_cli: Path) ->
     result = runner.invoke(app, ["observation", "seal", *options, "--verify"])
     assert result.exit_code == 1
     assert "changed since it was sealed" in result.output
+
+
+def test_observation_report_needs_an_intact_seal(observation_cli: Path) -> None:
+    from tests.data.test_observation_report import observed  # noqa: PLC0415
+
+    _, _, assistant, owner = observed(observation_cli / "o")
+    records, output = observation_cli / "records", observation_cli / "report.md"
+    save_log(assistant, records / "claude.json")
+    save_log(owner, records / "emre.json")
+    seal(records / "claude.json", records / "claude.sha256")
+    options = ["--records", str(records), "--output", str(output)]
+    result = runner.invoke(app, ["observation", "report", *options])
+    assert result.exit_code == 0, result.output
+    assert output.read_text(encoding="utf-8").startswith("# Forgery observations")
+    (records / "claude.json").write_text("{}", encoding="utf-8")
+    result = runner.invoke(app, ["observation", "report", *options])
+    assert result.exit_code == 1
+    assert "no longer matches its seal" in result.output

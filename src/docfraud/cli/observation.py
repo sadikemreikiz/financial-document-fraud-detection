@@ -15,6 +15,7 @@ from docfraud.data.observation import (
     seal,
     seal_matches,
 )
+from docfraud.data.observation_report import build_report, load_resolutions, render_report
 from docfraud.data.observation_server import HOST, ObservationApp, make_server
 from docfraud.data.observation_text import PageLanguage
 from docfraud.evaluation.runs import code_version
@@ -31,6 +32,8 @@ app = typer.Typer(
 )
 
 Observer = Annotated[str, typer.Option(help="Observer name, lower case (e.g. emre).")]
+
+OBSERVATION_REPORT = Path("reports/forensics/observations.md")
 
 
 @app.command("page")
@@ -136,3 +139,33 @@ def observation_seal(
     load_log(log_path, observer)
     digest = seal(log_path, seal_path)
     console.print(f"[green]sealed[/green] {log_path}: {digest} in {seal_path}")
+
+
+@app.command("report")
+def observation_report(
+    owner: Observer = "emre",
+    data_dir: DataDir = Path("data"),
+    records: Annotated[Path, typer.Option(help="Finished logs and the seal.")] = (
+        OBSERVATION_RECORDS
+    ),
+    output: Annotated[Path, typer.Option(help="Where to write the report.")] = OBSERVATION_REPORT,
+) -> None:
+    """Analyse both finished logs as the guide fixed it and write the Markdown report.
+
+    The assistant's log must still match its seal; disagreements resolved by discussion are read
+    from ``resolutions.json`` next to the logs.
+    """
+    if not seal_matches(records / f"{ASSISTANT}.json", records / f"{ASSISTANT}.sha256"):
+        console.print("[red]the assistant's log no longer matches its seal[/red]")
+        raise typer.Exit(1)
+    documents = findit_documents(data_dir)
+    tables = build_report(
+        documents,
+        observation_plan(documents),
+        load_log(records / f"{ASSISTANT}.json", ASSISTANT),
+        load_log(records / f"{owner}.json", owner),
+        load_resolutions(records / "resolutions.json"),
+    )
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text(render_report(tables), encoding="utf-8")
+    console.print(f"[green]written[/green] {output}")
