@@ -41,6 +41,12 @@ modified regions, techniques, entities, software and region sizes); no image of 
   person, plus the agreement sample above. The form itself did not change. As a consequence,
   fields 1 to 9 and 11 rest on one observer, the assistant, for 33 regions, and their agreement
   is measured on 12 regions instead of 45.
+- **Language of the page.** After a first set of visibility answers on the English page, the
+  owner continued on a Turkish page (`--language tr`), because answering in a second language was
+  tiring; the log shows which answers came from which page. Its
+  questions and choices are translations that follow this guide, clarifications included
+  ([`docfraud.data.observation_text`](../src/docfraud/data/observation_text.py)); the recorded
+  values are the same English values, and every answer records the language of its page.
 
 ## What the observers see
 
@@ -139,7 +145,7 @@ the grid).
 ## Commands
 
 ```bash
-uv run docfraud observation page --observer emre   # the owner's page; Ctrl+C stops it
+uv run docfraud observation page --observer emre   # the owner's page (--language tr); Ctrl+C stops it
 uv run docfraud observation check --observer emre  # validate a log, show progress
 uv run docfraud observation crops                  # the assistant's crops
 uv run docfraud observation seal                   # seal the assistant's log (--verify checks)

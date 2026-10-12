@@ -11,8 +11,9 @@ import pytest
 from PIL import Image
 
 from docfraud.data.normalize import load_grayscale
-from docfraud.data.observation import ASSISTANT, load_log
+from docfraud.data.observation import ASSISTANT, FORM, load_log
 from docfraud.data.observation_server import ObservationApp, Response, make_server
+from docfraud.data.observation_text import PAGE_TEXT, TURKISH_FORM, PageLanguage
 from tests.data.test_observation import CLEAN, FOLD, observation_documents, region_answers
 
 JSON = "application/json"
@@ -182,3 +183,30 @@ def test_the_server_answers_local_requests_only(server: int) -> None:
     assert json.loads(payload)["observer"] == "emre"
     assert request(server, "GET", "/api/state", Host="attacker.example")[0] == 403
     assert request(server, "POST", f"/api/region/{FOLD[0]}-0", **{"Content-Type": JSON})[0] == 400
+
+
+def test_every_question_and_choice_has_a_turkish_translation() -> None:
+    assert set(TURKISH_FORM) == {f.name for f in FORM}
+    for field in FORM:
+        assert set(TURKISH_FORM[field.name][1]) == set(field.choices), field.name
+    english, turkish = (PAGE_TEXT[language] for language in PageLanguage)
+    assert set(english) == set(turkish)
+
+
+def test_the_turkish_page_records_english_values(tmp_path: Path) -> None:
+    turkish = ObservationApp(
+        observation_documents(tmp_path / "d"),
+        tmp_path / "logs" / "emre.json",
+        "emre",
+        "abc1234",
+        PageLanguage.TURKISH,
+    )
+    state = body(turkish.handle("GET", "/api/state"))
+    assert state["language"] == "tr"
+    assert state["ui"]["save"] == "Kaydet ve sonraki"
+    visibility = next(f for f in state["form"] if f["name"] == "visibility")
+    assert visibility["choices"][2] == ["not_found", "Bulamad\N{LATIN SMALL LETTER DOTLESS I}m"]
+    full, _ = sample_keys(turkish)
+    assert post(turkish, f"/api/region/{full}", page_answers()).status == 200
+    saved = turkish.log.regions[full]
+    assert (saved.visibility, saved.language) == ("at_100", "tr")

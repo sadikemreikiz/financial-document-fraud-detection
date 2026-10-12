@@ -394,6 +394,7 @@ class RegionObservation(_Frozen):
     observed_at: datetime
     commit: str | None
     display: Display | None = None
+    language: str | None = None  # of the page the answer was given on; None: English
 
     @property
     def detailed(self) -> bool:
@@ -423,6 +424,7 @@ class ReceiptObservation(_Frozen):
     observed_at: datetime
     commit: str | None
     display: Display | None = None
+    language: str | None = None  # of the page the answer was given on; None: English
 
     @model_validator(mode="after")
     def _yes_is_described(self) -> Self:

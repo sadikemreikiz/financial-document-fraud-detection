@@ -16,6 +16,7 @@ from docfraud.data.observation import (
     seal_matches,
 )
 from docfraud.data.observation_server import HOST, ObservationApp, make_server
+from docfraud.data.observation_text import PageLanguage
 from docfraud.evaluation.runs import code_version
 
 OBSERVATION_LOGS = Path("artifacts/observations")
@@ -33,7 +34,7 @@ Observer = Annotated[str, typer.Option(help="Observer name, lower case (e.g. emr
 
 
 @app.command("page")
-def observation_page(
+def observation_page(  # noqa: PLR0913, PLR0917 - one option per setting
     observer: Observer,
     data_dir: DataDir = Path("data"),
     logs: Annotated[Path, typer.Option(help="Directory of the logs in progress.")] = (
@@ -41,6 +42,9 @@ def observation_page(
     ),
     port: Annotated[int, typer.Option(help="Local port; 0 picks a free one.")] = 8770,
     browser: Annotated[bool, typer.Option(help="Open the page in the browser.")] = True,
+    language: Annotated[
+        PageLanguage, typer.Option(help="Language of the page; answers are recorded in English.")
+    ] = PageLanguage.ENGLISH,
 ) -> None:
     """Serve the observation page on 127.0.0.1 until interrupted (Ctrl+C).
 
@@ -50,7 +54,7 @@ def observation_page(
     require_clean_commit()
     log_path = logs / f"{observer}.json"
     observation = ObservationApp(
-        findit_documents(data_dir), log_path, observer, code_version().commit
+        findit_documents(data_dir), log_path, observer, code_version().commit, language
     )
     server = make_server(observation, port)
     url = f"http://{HOST}:{server.server_port}/"

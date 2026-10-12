@@ -41,6 +41,7 @@ from docfraud.data.observation import (
     png_bytes,
     save_log,
 )
+from docfraud.data.observation_text import PAGE_TEXT, TURKISH_FORM, PageLanguage
 from docfraud.evaluation.design_fold import (
     DESIGN_FOLD_IDS,
     NotInDesignFoldError,
@@ -72,9 +73,14 @@ class ObservationApp:
     """The observation page and its data, independent of any network."""
 
     def __init__(
-        self, documents: Iterable[Document], log_path: Path, observer: str, commit: str | None
+        self,
+        documents: Iterable[Document],
+        log_path: Path,
+        observer: str,
+        commit: str | None,
+        language: PageLanguage = PageLanguage.ENGLISH,
     ) -> None:
-        """Prepare the plan and resume the observer's log.
+        """Prepare the plan and resume the observer's log; the page speaks ``language``.
 
         Raises:
             ValueError: If the observer is the assistant, which observes from exported crops,
@@ -89,6 +95,7 @@ class ObservationApp:
         self._log_path = log_path
         self._log = load_log(log_path, observer)
         self._commit = commit
+        self._language = language
         self._pages: OrderedDict[str, npt.NDArray[np.uint8]] = OrderedDict()
 
     @property
@@ -132,7 +139,11 @@ class ObservationApp:
     def _post(self, parts: list[str], payload: Any) -> Response:
         if not isinstance(payload, dict):
             return _error(400, "expected a JSON object")
-        stamp = {"observed_at": datetime.now(UTC), "commit": self._commit}
+        stamp = {
+            "observed_at": datetime.now(UTC),
+            "commit": self._commit,
+            "language": self._language.value,
+        }
         match parts:
             case ["api", "region", key] if key in self._regions:
                 region = RegionObservation.model_validate(payload | stamp)
@@ -151,19 +162,25 @@ class ObservationApp:
         return _json({"saved": parts[-1]})
 
     def _state(self) -> dict[str, Any]:
-        return {
-            "observer": self._log.observer,
-            "form": [
+        turkish = self._language is PageLanguage.TURKISH
+        form = []
+        for f in FORM:
+            question, labels = TURKISH_FORM[f.name] if turkish else (f.question, f.choices)
+            form.append(
                 {
                     "number": f.number,
                     "name": f.name,
-                    "question": f.question,
-                    "choices": [[value, label] for value, label in f.choices.items()],
+                    "question": question,
+                    "choices": [[value, labels[value]] for value in f.choices],
                     "scope": f.scope,
                     "detail": f.detail,
                 }
-                for f in FORM
-            ],
+            )
+        return {
+            "observer": self._log.observer,
+            "language": self._language.value,
+            "ui": dict(PAGE_TEXT[self._language]),
+            "form": form,
             "regions": [item.key for item in self._plan.regions],
             "receipts": list(self._plan.receipts),
             "full_form": sorted(self._plan.full_form),
@@ -294,14 +311,14 @@ textarea, input[type=text] { width:100%; font:inherit; padding:4px 6px;
 </head>
 <body>
 <header>
-  <h1>Forgery observation</h1>
+  <h1 id="title">Forgery observation</h1>
   <span class="muted" id="who"></span>
   <button id="pass-regions">Pass 1: regions</button>
   <button id="pass-receipts">Pass 2: receipts</button>
   <button id="prev">&larr; Previous</button>
   <select id="jump"></select>
   <button id="next">Next &rarr;</button>
-  <span class="muted">Zoom</span>
+  <span class="muted" id="zoom-label">Zoom</span>
   <button data-zoom="1">100 %</button>
   <button data-zoom="2">200 %</button>
   <button data-zoom="4">400 %</button>
@@ -332,7 +349,15 @@ function firstOpen() {
 
 async function start() {
   state = await getJson("/api/state");
-  $("who").textContent = "observer: " + state.observer;
+  const ui = state.ui;
+  document.documentElement.lang = state.language;
+  document.title = ui.title;
+  $("title").textContent = ui.title;
+  $("who").textContent = `${ui.observer}: ${state.observer}`;
+  for (const id of ["pass-regions", "pass-receipts", "previous", "next", "zoom", "whole"]) {
+    const element = $({ previous: "prev", zoom: "zoom-label" }[id] || id);
+    element.textContent = ui[id.replace("-", "_")];
+  }
   pass = state.answered.regions.length < state.regions.length ? "regions" : "receipts";
   position = firstOpen();
   await show();
@@ -345,15 +370,16 @@ async function show() {
   $("pass-receipts").classList.toggle("on", pass === "receipts");
   const done = answered();
   $("jump").replaceChildren(...items().map((k, i) => {
-    const full = pass === "regions" && state.full_form.includes(k) ? " (full form)" : "";
+    const sample = pass === "regions" && state.full_form.includes(k);
+    const full = sample ? ` (${state.ui.full_form})` : "";
     const option = new Option(`${i + 1}. ${k}${full}${done.has(k) ? "  \\u2713" : ""}`, i);
     option.selected = i === position;
     return option;
   }));
   const total = state.regions.length + state.receipts.length;
   const finished = state.answered.regions.length + state.answered.receipts.length;
-  $("done").textContent =
-    finished === total ? "All items answered" : `${finished} of ${total} answered`;
+  const progress = state.ui.answered.replace("{done}", finished).replace("{total}", total);
+  $("done").textContent = finished === total ? state.ui.all_done : progress;
   if (pass === "regions") {
     const data = await getJson("/api/region/" + key);
     const answers = data.answer ? { ...data.answer } : {};
@@ -428,19 +454,14 @@ function renderForm() {
   form.replaceChildren();
   const title = document.createElement("h3");
   const full = current.kind === "region" && state.full_form.includes(current.key);
-  title.textContent = (current.kind === "region" ? "Region " : "Receipt ") + current.key;
-  if (full) title.textContent += " \u00b7 full form";
+  const kind = current.kind === "region" ? state.ui.region : state.ui.receipt;
+  title.textContent = `${kind} ${current.key}${full ? " \u00b7 " + state.ui.full_form : ""}`;
   form.appendChild(title);
   const hint = document.createElement("p");
   hint.className = "hint";
-  const hints = {
-    strip: "Look at the strip first. The rectangle appears after you answer this question.",
-    short: "This region asks question 10 only. The rectangle shows where the edit is.",
-    full: "100 % = one image pixel per CSS pixel. Zoom shows pixels without smoothing.",
-  };
-  if (current.kind === "region" && !current.boxShown) hint.textContent = hints.strip;
-  else if (current.kind === "region" && !full) hint.textContent = hints.short;
-  else hint.textContent = hints.full;
+  if (current.kind === "region" && !current.boxShown) hint.textContent = state.ui.hint_strip;
+  else if (current.kind === "region" && !full) hint.textContent = state.ui.hint_short;
+  else hint.textContent = state.ui.hint_full;
   form.appendChild(hint);
   for (const field of fieldsToShow()) {
     const set = document.createElement("fieldset");
@@ -460,7 +481,7 @@ function renderForm() {
     if (field.detail && current.answers[field.name] === "yes") {
       const input = document.createElement("input");
       input.type = "text";
-      input.placeholder = "Where or what? (required)";
+      input.placeholder = state.ui.detail;
       input.value = current.answers[field.detail] || "";
       input.oninput = () => { current.answers[field.detail] = input.value; updateSave(); };
       set.appendChild(input);
@@ -470,13 +491,13 @@ function renderForm() {
   if (current.kind === "receipt" || current.boxShown) {
     const note = document.createElement("textarea");
     note.rows = 3;
-    note.placeholder = "Free note (optional, exploratory, not counted)";
+    note.placeholder = state.ui.note;
     note.value = current.answers.note || "";
     note.oninput = () => { current.answers.note = note.value; };
     form.appendChild(note);
     const save = document.createElement("button");
     save.id = "save";
-    save.textContent = "Save and next";
+    save.textContent = state.ui.save;
     save.onclick = saveAnswers;
     form.appendChild(save);
     updateSave();
@@ -522,7 +543,7 @@ async function saveAnswers() {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
   });
-  if (!response.ok) { alert("Not saved: " + (await response.json()).error); return; }
+  if (!response.ok) { alert(state.ui.not_saved + (await response.json()).error); return; }
   if (!state.answered[pass].includes(current.key)) state.answered[pass].push(current.key);
   if (pass === "regions" && answered().size === items().length) pass = "receipts";
   position = firstOpen();
