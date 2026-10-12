@@ -88,6 +88,21 @@ Per forged receipt (pass 2):
 | 12 | An edit that no rectangle marks | **yes** (where) only if clearly seen while looking at the receipt; this is not a full search; **no** | Label quality |
 | 13 | A trace of the whole receipt | **yes** (what): tone, sharpness, noise or borders differ over the whole receipt; **no** | The global-trace probe (ADR-0014, system 5) and shortcut risk |
 
+## Clarifications
+
+Added on 2026-10-12, after the assistant's pass and before the owner's, because the form left
+these cases open. None adds a field or an option, and the assistant's answers follow them.
+
+- **Deletions.** Where content was removed and nothing put in its place, fields 5, 8 and 9
+  describe what remains: aligned, the same sharpness and not scaled, unless the deletion itself
+  left a shift, a blur or scaling. Fields 6 and 7 are not applicable.
+- **Inserted characters.** A character inserted into a value (for example a digit put before
+  1.07) counts as single characters. "New content added" means text on paper that was blank.
+- **Source of pasted content.** A source is named only when an identical-looking instance is
+  found on the receipt. Content that looks pasted but whose source is not found is "pasted,
+  source not visible"; when it cannot be told whether anything was pasted at all, the answer is
+  "unclear".
+
 ## Not observed by eye
 
 Some traces cannot be seen and are measured by code in step 4.3, on the design fold only: noise
