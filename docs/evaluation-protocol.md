@@ -31,10 +31,12 @@ results exist so that metrics, thresholds and comparisons cannot be chosen after
 
 ## 2. Evaluation tracks
 
-Inputs are normalised before any model sees them: images are decoded to 8-bit grayscale with any
-alpha channel discarded, and file metadata is ignored. Transcripts are normalised to LF line
-endings, stripped trailing whitespace and Unicode NFC. Both choices remove byte-level traces that
-correlate with the label without being evidence of forgery (Phase 1 shortcut audit).
+Inputs are normalised before any model sees them: images are rendered onto white where they are
+transparent and decoded to 8-bit grayscale, and file metadata is ignored. Transcripts are
+normalised to LF line endings, stripped trailing whitespace and Unicode NFC, and SROIE box
+coordinates are removed (one training transcript, found after Phase 3; see the data card). Both
+choices remove byte-level traces that correlate with the label without being evidence of forgery
+(Phase 1 shortcut audit).
 
 | Track | Inputs at inference | Purpose |
 |---|---|---|

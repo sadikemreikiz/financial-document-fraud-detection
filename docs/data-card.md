@@ -84,7 +84,8 @@ evidence of forgery ([ADR-0003](decisions/0003-content-only-headline.md)):
   whitespace introduced by the editor.
 - **Box coordinates**: the transcript of one forged training receipt, `X51008030565`, is in the
   SROIE format, with the eight corner coordinates of its text box before every line. No other
-  transcript in any split has them (audit, integrity checks).
+  of the 987 transcripts has them (audit, integrity checks; a data test also covers the copies
+  that the audit leaves out).
 
 Treatment in this project:
 

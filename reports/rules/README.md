@@ -96,8 +96,8 @@ these receipts.
   rule scorer on transcripts (T1) and BoW + LR were fitted while the coordinates were present;
   the T1 scorer's weights are in its run record and differ from the refit shown in the report
   (for example +0.40 instead of +0.17 for `items_reconcile:not_applicable`). The test
-  run of BoW + LR was trained the same way. Results on our OCR (T2) and "any rule fails" do not
-  depend on the transcripts and are unaffected.
+  run of BoW + LR was trained the same way. Unaffected are the results on our OCR (T2), which
+  never read the transcripts, and "any rule fails", which learns nothing from the training split.
 
 ## Reproducing
 
