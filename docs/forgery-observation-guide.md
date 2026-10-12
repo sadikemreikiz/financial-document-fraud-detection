@@ -18,7 +18,11 @@ modified regions, techniques, entities, software and region sizes); no image of 
 
 ## Who observes
 
-- **The project owner** answers all 13 fields.
+- **The project owner** answers what only a person can, for every item: visibility at 100 %
+  (field 10) for the 45 regions, and fields 12 and 13 for the 19 receipts. On an **agreement
+  sample** of 12 regions the owner also answers fields 1 to 9 and 11. The sample takes one region
+  from each of 12 receipts drawn at random (seed 20261012), so that receipts with many edits do
+  not dominate it; it depends on the region identifiers only.
 - **The assistant** (Claude, the AI assistant used for this project) answers fields 1 to 9 and 11
   from crops at native resolution. Images larger than about 2000 px reach it downscaled, which
   erases one-pixel detail (a synthetic probe on 2026-10-12: a one-pixel checkerboard vanished in
@@ -30,6 +34,13 @@ modified regions, techniques, entities, software and region sizes); no image of 
   seal). The owner then observes without seeing those answers; the owner's log stays out of
   version control until it is complete. Both logs are then committed, and the seal shows that the
   assistant's log was not changed after the owner's answers existed.
+- **Change of procedure, 2026-10-12.** The owner was first to answer all 13 fields for every
+  region. After the assistant's pass, and after the owner had looked at the first region without
+  saving an answer, the full form proved long and asked for fine distinctions the owner could not
+  make with confidence. The owner's part was therefore reduced to the questions that need a
+  person, plus the agreement sample above. The form itself did not change. As a consequence,
+  fields 1 to 9 and 11 rest on one observer, the assistant, for 33 regions, and their agreement
+  is measured on 12 regions instead of 45.
 
 ## What the observers see
 
@@ -54,8 +65,9 @@ modified regions, techniques, entities, software and region sizes); no image of 
    page: its full width, from 200 rows above the region to 200 rows below. The rectangle is not
    shown yet.
 2. Field 10 (visibility) is answered first. Then the rectangle appears, drawn 2 px outside the
-   region so that it covers none of its pixels, and fields 1 to 9 and 11 follow. A button shows
-   the whole receipt, for example to look for the source of a copy.
+   region so that it covers none of its pixels. For the regions of the agreement sample, marked
+   "full form" on the page, fields 1 to 9 and 11 follow. A button shows the whole receipt, for
+   example to look for the source of a copy.
 3. **Pass 2, receipts.** The 19 forged receipts appear whole, in an order shuffled with seed 0,
    with all their modified rectangles drawn. Fields 12 and 13 are answered.
 4. Every answer is saved at once; a session can stop and continue later.
@@ -115,9 +127,11 @@ the grid).
 - **Counts per region and per receipt.** 18 of the 45 regions come from two receipts (8 and 10
   regions); counted per region alone, those two forgers would dominate the engine. Every field is
   therefore also reported with each receipt weighted equally.
-- **Agreement** of the two observers on fields 1 to 9 and 11: percent agreement and Cohen's kappa
-  per field, with "unclear" as a category of its own. Disagreements are then resolved by
-  discussion into one final value per region; both raw logs and the resolutions are kept.
+- **Agreement** of the two observers on fields 1 to 9 and 11, on the 12 regions of the agreement
+  sample: percent agreement and Cohen's kappa per field, with "unclear" as a category of its own.
+  With 12 regions these are rough estimates and are reported with that caveat. Disagreements are
+  resolved by discussion into one final value per region; both raw logs and the resolutions are
+  kept. On the other 33 regions, fields 1 to 9 and 11 are the assistant's answers alone.
 - **Labels.** The answers are compared with the technique labels (for example a region labelled
   copy-paste whose source is "not applicable"). Differences are reported; labels are not changed.
 - The results go to `reports/forensics/observations.md`.

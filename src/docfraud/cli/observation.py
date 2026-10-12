@@ -86,19 +86,28 @@ def observation_check(
     data_dir: DataDir = Path("data"),
     logs: Annotated[Path, typer.Option(help="Directory of the logs.")] = OBSERVATION_LOGS,
 ) -> None:
-    """Validate an observer's log and show how much of the plan it covers."""
+    """Validate an observer's log against the plan and show how much of it is done."""
     log = load_log(logs / f"{observer}.json", observer)
     plan = observation_plan(findit_documents(data_dir))
     planned = {item.key for item in plan.regions}
-    unknown = sorted(set(log.regions) - planned) + sorted(set(log.receipts) - set(plan.receipts))
-    if unknown:
-        console.print(f"[red]not in the plan[/red]: {', '.join(unknown)}")
+    problems = sorted(set(log.regions) - planned) + sorted(set(log.receipts) - set(plan.receipts))
+    if observer != ASSISTANT:
+        problems += [
+            f"{key} (full form expected: {key in plan.full_form})"
+            for key, region in sorted(log.regions.items())
+            if region.detailed != (key in plan.full_form)
+        ]
+    if problems:
+        console.print(f"[red]not as planned[/red]: {', '.join(problems)}")
         raise typer.Exit(1)
-    receipts = "" if observer == ASSISTANT else f", {len(log.receipts)} of {len(plan.receipts)}"
-    console.print(
-        f"[green]valid[/green] log of {observer}: {len(log.regions)} of {len(plan.regions)} "
-        f"regions{receipts}{'' if observer == ASSISTANT else ' receipts'}"
-    )
+    progress = f"{len(log.regions)} of {len(plan.regions)} regions"
+    if observer != ASSISTANT:
+        full = sum(r.detailed for r in log.regions.values())
+        progress += (
+            f" ({full} of {len(plan.full_form)} full forms), "
+            f"{len(log.receipts)} of {len(plan.receipts)} receipts"
+        )
+    console.print(f"[green]valid[/green] log of {observer}: {progress}")
 
 
 @app.command("seal")

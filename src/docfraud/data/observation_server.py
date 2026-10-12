@@ -4,7 +4,8 @@ A local server, bound to 127.0.0.1 and built on the standard library, shows one 
 first every annotated region of the design fold, in the seeded order of the plan, then every
 forged receipt as a whole. A region opens as a strip of the normalised page without its
 rectangle; the rectangle appears once the visibility question (field 10) is answered
-(decision 3b). Every answer is written to the log at once, so a session can stop at any point.
+(decision 3b), and the regions of the agreement sample then ask the full form. Every answer is
+written to the log at once, so a session can stop at any point.
 
 :class:`ObservationApp` holds the logic and answers requests as plain values, so that it is
 tested without a network; :func:`make_server` puts it behind :mod:`http.server`. The page
@@ -135,6 +136,9 @@ class ObservationApp:
         match parts:
             case ["api", "region", key] if key in self._regions:
                 region = RegionObservation.model_validate(payload | stamp)
+                if region.detailed != (key in self._plan.full_form):
+                    asked = "the full form" if key in self._plan.full_form else "visibility only"
+                    return _error(400, f"region {key} asks {asked}")
                 log = self._log.model_copy(update={"regions": self._log.regions | {key: region}})
             case ["api", "receipt", doc_id] if doc_id in self._plan.receipts:
                 receipt = ReceiptObservation.model_validate(payload | stamp)
@@ -162,6 +166,7 @@ class ObservationApp:
             ],
             "regions": [item.key for item in self._plan.regions],
             "receipts": list(self._plan.receipts),
+            "full_form": sorted(self._plan.full_form),
             "answered": {"regions": list(self._log.regions), "receipts": list(self._log.receipts)},
         }
 
@@ -340,7 +345,8 @@ async function show() {
   $("pass-receipts").classList.toggle("on", pass === "receipts");
   const done = answered();
   $("jump").replaceChildren(...items().map((k, i) => {
-    const option = new Option(`${i + 1}. ${k}${done.has(k) ? "  \\u2713" : ""}`, i);
+    const full = pass === "regions" && state.full_form.includes(k) ? " (full form)" : "";
+    const option = new Option(`${i + 1}. ${k}${full}${done.has(k) ? "  \\u2713" : ""}`, i);
     option.selected = i === position;
     return option;
   }));
@@ -403,10 +409,17 @@ function centre() {
   viewer.scrollTop = (img.clientHeight - viewer.clientHeight) / 2;
 }
 
+function asked() {
+  const fields = state.form.filter((f) => f.scope === current.kind);
+  if (current.kind === "receipt" || state.full_form.includes(current.key)) return fields;
+  return fields.filter((f) => f.name === "visibility");
+}
+
 function fieldsToShow() {
-  const scope = current.kind;
-  const fields = state.form.filter((f) => f.scope === scope);
-  if (scope === "region" && !current.boxShown) return fields.filter((f) => f.name === "visibility");
+  const fields = asked();
+  if (current.kind === "region" && !current.boxShown) {
+    return fields.filter((f) => f.name === "visibility");
+  }
   return fields;
 }
 
@@ -414,13 +427,20 @@ function renderForm() {
   const form = $("form");
   form.replaceChildren();
   const title = document.createElement("h3");
+  const full = current.kind === "region" && state.full_form.includes(current.key);
   title.textContent = (current.kind === "region" ? "Region " : "Receipt ") + current.key;
+  if (full) title.textContent += " \u00b7 full form";
   form.appendChild(title);
   const hint = document.createElement("p");
   hint.className = "hint";
-  hint.textContent = current.kind === "region" && !current.boxShown
-    ? "Look at the strip first. The rectangle appears after you answer this question."
-    : "100 % = one image pixel per CSS pixel. Zoom shows pixels without smoothing.";
+  const hints = {
+    strip: "Look at the strip first. The rectangle appears after you answer this question.",
+    short: "This region asks question 10 only. The rectangle shows where the edit is.",
+    full: "100 % = one image pixel per CSS pixel. Zoom shows pixels without smoothing.",
+  };
+  if (current.kind === "region" && !current.boxShown) hint.textContent = hints.strip;
+  else if (current.kind === "region" && !full) hint.textContent = hints.short;
+  else hint.textContent = hints.full;
   form.appendChild(hint);
   for (const field of fieldsToShow()) {
     const set = document.createElement("fieldset");
@@ -478,8 +498,7 @@ function described(field) {
 }
 
 function complete() {
-  const fields = state.form.filter((f) => f.scope === current.kind);
-  return fields.every((f) => current.answers[f.name] && described(f));
+  return asked().every((f) => current.answers[f.name] && described(f));
 }
 
 function updateSave() { const save = $("save"); if (save) save.disabled = !complete(); }
@@ -494,7 +513,7 @@ async function saveAnswers() {
   };
   const a = current.answers;
   const payload = { note: a.note || "", display };
-  for (const field of state.form.filter((f) => f.scope === current.kind)) {
+  for (const field of asked()) {
     payload[field.name] = a[field.name];
     if (field.detail) payload[field.detail] = a[field.name] === "yes" ? a[field.detail] || "" : "";
   }

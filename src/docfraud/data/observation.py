@@ -2,12 +2,14 @@
 
 Before the synthetic forgery engine and the reference methods are designed, two observers record
 what each annotated edit of the design fold looks like, on a form that was fixed before any
-receipt was viewed for this purpose (``docs/forgery-observation-guide.md``). The project owner
-answers every field on the page served by :mod:`docfraud.data.observation_server`. The assistant
-answers only the region fields that need neither a view of the whole receipt nor a judgement of
-what a person sees at 100 %, from crops at native resolution (:func:`export_crops`), because
-larger images reach it downscaled. Neither observer sees the other's answers: the assistant's
-log is sealed by its SHA-256 (:func:`seal`) before the owner starts.
+receipt was viewed for this purpose (``docs/forgery-observation-guide.md``). The assistant
+answers the region fields that need neither a view of the whole receipt nor a judgement of what a
+person sees at 100 %, for every region, from crops at native resolution (:func:`export_crops`),
+because larger images reach it downscaled. The project owner answers, on the page served by
+:mod:`docfraud.data.observation_server`, what only a person can: visibility at 100 % for every
+region and the questions about whole receipts; and the full form for a seeded sample of regions,
+which measures how far the two observers agree. Neither observer sees the other's answers: the
+assistant's log is sealed by its SHA-256 (:func:`seal`) before the owner starts.
 
 Observers see the normalised grayscale image that the models see, and never the technique,
 entity or software labels: an observer who knows that an edit is labelled copy-paste looks for a
@@ -49,6 +51,27 @@ downscaled, which erases one-pixel detail; 1500 px leaves a margin."""
 
 ASSISTANT = "claude"
 """Observer name of the assistant, which answers the region fields only (decision 3a)."""
+
+AGREEMENT_REGIONS = 12
+"""Regions on which the owner answers the full form, one from each of as many receipts."""
+
+AGREEMENT_SEED = 20261012
+"""Seed of the agreement sample; it depends on the region identifiers only, never on answers."""
+
+DETAIL_FIELDS = (
+    "change",
+    "source",
+    "background",
+    "edge",
+    "alignment",
+    "font",
+    "tone",
+    "sharpness",
+    "scaled_or_rotated",
+    "box_fit",
+)
+"""Fields 1 to 9 and 11: the assistant answers them for every region, the owner for the
+agreement sample."""
 
 _OUTLINE = 2
 _OUTLINE_COLOUR = (220, 0, 0)
@@ -354,23 +377,39 @@ class Display(_Frozen):
 
 
 class RegionObservation(_Frozen):
-    """The answers for one annotated region."""
+    """The answers for one annotated region: visibility, the region fields, or both."""
 
     visibility: Visibility | None = None
-    change: Change
-    source: Source
-    background: Background
-    edge: Edge
-    alignment: Alignment
-    font: Font
-    tone: Tone
-    sharpness: Sharpness
-    scaled_or_rotated: Presence
-    box_fit: BoxFit
+    change: Change | None = None
+    source: Source | None = None
+    background: Background | None = None
+    edge: Edge | None = None
+    alignment: Alignment | None = None
+    font: Font | None = None
+    tone: Tone | None = None
+    sharpness: Sharpness | None = None
+    scaled_or_rotated: Presence | None = None
+    box_fit: BoxFit | None = None
     note: str = ""
     observed_at: datetime
     commit: str | None
     display: Display | None = None
+
+    @property
+    def detailed(self) -> bool:
+        """Whether fields 1 to 9 and 11 are answered."""
+        return self.change is not None
+
+    @model_validator(mode="after")
+    def _details_together(self) -> Self:
+        given = [getattr(self, name) is not None for name in DETAIL_FIELDS]
+        if any(given) and not all(given):
+            msg = "fields 1 to 9 and 11 are answered together or not at all"
+            raise ValueError(msg)
+        if not any(given) and self.visibility is None:
+            msg = "an observation needs visibility, the region fields, or both"
+            raise ValueError(msg)
+        return self
 
 
 class ReceiptObservation(_Frozen):
@@ -410,11 +449,12 @@ class ObservationLog(_Frozen):
         if self.form_version != FORM_VERSION:
             msg = f"log of form version {self.form_version}, expected {FORM_VERSION}"
             raise ValueError(msg)
-        answered = {key for key, r in self.regions.items() if r.visibility is not None}
-        if self.observer == ASSISTANT and (answered or self.receipts):
-            msg = "the assistant answers neither visibility nor whole receipts (decision 3a)"
-            raise ValueError(msg)
-        if self.observer != ASSISTANT and answered != set(self.regions):
+        regions = self.regions.values()
+        if self.observer == ASSISTANT:
+            if self.receipts or any(r.visibility or not r.detailed for r in regions):
+                msg = "the assistant answers the region fields only, for every region"
+                raise ValueError(msg)
+        elif any(r.visibility is None for r in regions):
             msg = "every region of the owner's log needs an answer on visibility"
             raise ValueError(msg)
         return self
@@ -475,10 +515,11 @@ class RegionItem:
 
 @dataclass(frozen=True, slots=True)
 class ObservationPlan:
-    """What is observed, in the order it is shown."""
+    """What is observed, in the order it is shown, and where the owner answers the full form."""
 
     regions: tuple[RegionItem, ...]
     receipts: tuple[str, ...]
+    full_form: frozenset[str]
 
 
 def observation_plan(documents: Iterable[Document]) -> ObservationPlan:
@@ -486,7 +527,8 @@ def observation_plan(documents: Iterable[Document]) -> ObservationPlan:
 
     Regions are shuffled across receipts, so that the edits of one forger do not follow each
     other. A region is named by its receipt and its position among the receipt's modified
-    regions, for example ``X51005230617-0``.
+    regions, for example ``X51005230617-0``. The agreement sample takes one region from each of
+    ``AGREEMENT_REGIONS`` receipts, so that receipts with many edits do not dominate it.
     """
     forged = sorted(
         (d for d in documents if d.doc_id in DESIGN_FOLD_IDS and d.label is Label.FORGED),
@@ -503,7 +545,20 @@ def observation_plan(documents: Iterable[Document]) -> ObservationPlan:
     return ObservationPlan(
         regions=tuple(regions[i] for i in region_order),
         receipts=tuple(forged[i].doc_id for i in receipt_order),
+        full_form=_agreement_sample(regions),
     )
+
+
+def _agreement_sample(regions: list[RegionItem]) -> frozenset[str]:
+    by_receipt: dict[str, list[str]] = {}
+    for item in regions:
+        by_receipt.setdefault(item.doc_id, []).append(item.key)
+    receipts = sorted(by_receipt)
+    rng = np.random.default_rng(AGREEMENT_SEED)
+    size = min(AGREEMENT_REGIONS, len(receipts))
+    chosen = sorted(int(i) for i in rng.choice(len(receipts), size=size, replace=False))
+    keys = [by_receipt[receipts[i]] for i in chosen]
+    return frozenset(options[int(rng.integers(len(options)))] for options in keys)
 
 
 def crop_rows(box: BBox, height: int, margin: int = CROP_MARGIN) -> tuple[int, int]:

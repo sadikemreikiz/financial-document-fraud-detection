@@ -92,19 +92,43 @@ def test_receipts_outside_the_design_fold_are_never_shown(app: ObservationApp) -
     assert app.handle("GET", "/api/region/unknown").status == 404
 
 
+def sample_keys(app: ObservationApp) -> tuple[str, str]:
+    state = body(app.handle("GET", "/api/state"))
+    full = state["full_form"][0]
+    short = next(key for key in state["regions"] if key not in state["full_form"])
+    return full, short
+
+
 def test_answers_are_saved_at_once_and_resumed(app: ObservationApp, tmp_path: Path) -> None:
-    key = f"{FOLD[0]}-0"
-    assert body(post(app, f"/api/region/{key}", page_answers())) == {"saved": key}
+    full, short = sample_keys(app)
+    assert body(post(app, f"/api/region/{full}", page_answers())) == {"saved": full}
     log_path = tmp_path / "logs" / "emre.json"
-    saved = load_log(log_path, "emre").regions[key]
+    saved = load_log(log_path, "emre").regions[full]
     assert (saved.commit, saved.display and saved.display.device_pixel_ratio) == ("abc1234", 2)
+    visibility = {"visibility": "not_found", "note": "", "display": None}
+    assert post(app, f"/api/region/{short}", visibility).status == 200
     resumed = ObservationApp(observation_documents(tmp_path / "d"), log_path, "emre", "def5678")
-    assert body(resumed.handle("GET", "/api/state"))["answered"]["regions"] == [key]
-    assert body(resumed.handle("GET", f"/api/region/{key}"))["answer"]["tone"] == "darker"
+    assert sorted(body(resumed.handle("GET", "/api/state"))["answered"]["regions"]) == sorted(
+        [full, short]
+    )
+    assert body(resumed.handle("GET", f"/api/region/{full}"))["answer"]["tone"] == "darker"
+    assert body(resumed.handle("GET", f"/api/region/{short}"))["answer"]["tone"] is None
+
+
+def test_the_full_form_is_asked_on_the_sample_only(app: ObservationApp) -> None:
+    full, short = sample_keys(app)
+    response = post(app, f"/api/region/{short}", page_answers())
+    assert (response.status, body(response)["error"]) == (
+        400,
+        f"region {short} asks visibility only",
+    )
+    response = post(app, f"/api/region/{full}", {"visibility": "at_100"})
+    assert (response.status, body(response)["error"]) == (400, f"region {full} asks the full form")
+    assert app.log.regions == {}
 
 
 def test_invalid_answers_are_refused_and_change_nothing(app: ObservationApp) -> None:
-    key = f"{FOLD[0]}-0"
+    key = sample_keys(app)[0]
     assert post(app, f"/api/region/{key}", page_answers(visibility=None)).status == 400
     assert post(app, f"/api/region/{key}", page_answers(tone="purple")).status == 400
     receipt = {"unannotated_edit": "yes", "global_trace": "no"}

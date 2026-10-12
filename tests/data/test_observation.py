@@ -125,6 +125,8 @@ def test_plan_covers_the_design_fold_forgeries_in_a_seeded_order(tmp_path: Path)
     assert observation_plan(reversed(documents)) == plan
     second = {item.key: item.box for item in plan.regions}[f"{FOLD[0]}-1"]
     assert second == BBox(x=1, y=40, width=6, height=5)  # the copy source is not a region
+    assert len(plan.full_form) == 2  # one region from each receipt, fewer than the sample size
+    assert {key.rsplit("-", 1)[0] for key in plan.full_form} == set(FOLD[:2])
 
 
 @pytest.mark.parametrize(
@@ -189,15 +191,29 @@ def test_logs_are_saved_and_resumed(tmp_path: Path) -> None:
         load_log(path, "someone")
 
 
-def test_the_owner_answers_visibility_and_the_assistant_does_not() -> None:
-    region = RegionObservation.model_validate(region_answers(visibility=None))
+def visibility_only() -> dict[str, object]:
+    return {"visibility": "only_zoomed", "observed_at": NOW, "commit": "abc1234"}
+
+
+def test_the_owner_answers_visibility_and_the_assistant_the_region_fields() -> None:
+    details = RegionObservation.model_validate(region_answers(visibility=None))
+    short = RegionObservation.model_validate(visibility_only())
+    full = RegionObservation.model_validate(region_answers())
+    assert (details.detailed, short.detailed, full.detailed) == (True, False, True)
+    assert ObservationLog(observer="emre", regions={"a": short, "b": full}).regions
     with pytest.raises(ValidationError, match="answer on visibility"):
-        ObservationLog(observer="emre", regions={"k": region})
-    assert ObservationLog(observer=ASSISTANT, regions={"k": region}).regions
-    with pytest.raises(ValidationError, match="assistant answers neither"):
-        ObservationLog(
-            observer=ASSISTANT, regions={"k": RegionObservation.model_validate(region_answers())}
-        )
+        ObservationLog(observer="emre", regions={"k": details})
+    assert ObservationLog(observer=ASSISTANT, regions={"k": details}).regions
+    for answered in (short, full):
+        with pytest.raises(ValidationError, match="region fields only"):
+            ObservationLog(observer=ASSISTANT, regions={"k": answered})
+
+
+def test_region_fields_are_answered_together() -> None:
+    with pytest.raises(ValidationError, match="together or not at all"):
+        RegionObservation.model_validate(visibility_only() | {"tone": "darker"})
+    with pytest.raises(ValidationError, match="needs visibility"):
+        RegionObservation.model_validate({"observed_at": NOW, "commit": None})
 
 
 def test_a_yes_on_the_whole_receipt_needs_a_description() -> None:

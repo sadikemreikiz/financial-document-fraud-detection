@@ -562,7 +562,7 @@ def test_observation_check_reports_progress_and_strays(observation_cli: Path) ->
     logs = observation_cli / "logs"
     result = runner.invoke(app, ["observation", "check", "--observer", "emre", "--logs", str(logs)])
     assert result.exit_code == 0, result.output
-    assert "0 of 3 regions, 0 of 2 receipts" in result.output
+    assert "0 of 3 regions (0 of 2 full forms), 0 of 2 receipts" in result.output
     stray = ObservationLog(
         observer="emre",
         receipts={"X51005268472": ReceiptObservation.model_validate(receipt_answers())},
