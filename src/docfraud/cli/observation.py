@@ -1,0 +1,125 @@
+"""`docfraud observation`: observe the real forgeries of the design fold (ADR-0014, step 4.2)."""
+
+import webbrowser
+from pathlib import Path
+from typing import Annotated
+
+import typer
+
+from docfraud.cli.common import DataDir, console, findit_documents, require_clean_commit
+from docfraud.data.observation import (
+    ASSISTANT,
+    export_crops,
+    load_log,
+    observation_plan,
+    seal,
+    seal_matches,
+)
+from docfraud.data.observation_server import HOST, ObservationApp, make_server
+from docfraud.evaluation.runs import code_version
+
+OBSERVATION_LOGS = Path("artifacts/observations")
+"""Logs in progress. They stay out of version control until both observers have finished."""
+
+OBSERVATION_RECORDS = Path("annotations/findit2/forgery-observations")
+"""Finished logs and the assistant's seal, under version control."""
+
+app = typer.Typer(
+    help="Observe the real forgeries of the design fold (docs/forgery-observation-guide.md).",
+    no_args_is_help=True,
+)
+
+Observer = Annotated[str, typer.Option(help="Observer name, lower case (e.g. emre).")]
+
+
+@app.command("page")
+def observation_page(
+    observer: Observer,
+    data_dir: DataDir = Path("data"),
+    logs: Annotated[Path, typer.Option(help="Directory of the logs in progress.")] = (
+        OBSERVATION_LOGS
+    ),
+    port: Annotated[int, typer.Option(help="Local port; 0 picks a free one.")] = 8770,
+    browser: Annotated[bool, typer.Option(help="Open the page in the browser.")] = True,
+) -> None:
+    """Serve the observation page on 127.0.0.1 until interrupted (Ctrl+C).
+
+    Every answer is saved at once, so the page can be closed and opened again at any time. The
+    page needs a clean commit, which every answer records as the form version.
+    """
+    require_clean_commit()
+    log_path = logs / f"{observer}.json"
+    observation = ObservationApp(
+        findit_documents(data_dir), log_path, observer, code_version().commit
+    )
+    server = make_server(observation, port)
+    url = f"http://{HOST}:{server.server_port}/"
+    console.print(f"observation page for [bold]{observer}[/bold] at {url} (Ctrl+C to stop)")
+    console.print(f"answers are saved to {log_path}")
+    if browser:
+        webbrowser.open(url)
+    try:
+        server.serve_forever()
+    except KeyboardInterrupt:
+        console.print("stopped; run the same command to continue")
+    finally:
+        server.server_close()
+
+
+@app.command("crops")
+def observation_crops(
+    data_dir: DataDir = Path("data"),
+    output: Annotated[Path, typer.Option(help="Where to write the crops.")] = (
+        OBSERVATION_LOGS / f"{ASSISTANT}-crops"
+    ),
+) -> None:
+    """Write the crops the assistant observes: native resolution, in the order of the plan."""
+    require_clean_commit()
+    documents = findit_documents(data_dir)
+    files = export_crops(documents, observation_plan(documents), output)
+    console.print(f"[green]written[/green] {len(files)} crops to {output}")
+
+
+@app.command("check")
+def observation_check(
+    observer: Observer,
+    data_dir: DataDir = Path("data"),
+    logs: Annotated[Path, typer.Option(help="Directory of the logs.")] = OBSERVATION_LOGS,
+) -> None:
+    """Validate an observer's log and show how much of the plan it covers."""
+    log = load_log(logs / f"{observer}.json", observer)
+    plan = observation_plan(findit_documents(data_dir))
+    planned = {item.key for item in plan.regions}
+    unknown = sorted(set(log.regions) - planned) + sorted(set(log.receipts) - set(plan.receipts))
+    if unknown:
+        console.print(f"[red]not in the plan[/red]: {', '.join(unknown)}")
+        raise typer.Exit(1)
+    receipts = "" if observer == ASSISTANT else f", {len(log.receipts)} of {len(plan.receipts)}"
+    console.print(
+        f"[green]valid[/green] log of {observer}: {len(log.regions)} of {len(plan.regions)} "
+        f"regions{receipts}{'' if observer == ASSISTANT else ' receipts'}"
+    )
+
+
+@app.command("seal")
+def observation_seal(
+    observer: Observer = ASSISTANT,
+    logs: Annotated[Path, typer.Option(help="Directory of the logs.")] = OBSERVATION_LOGS,
+    records: Annotated[Path, typer.Option(help="Where the seal is kept.")] = (OBSERVATION_RECORDS),
+    verify: Annotated[bool, typer.Option(help="Check the log against an existing seal.")] = False,
+) -> None:
+    """Seal an observer's log by its SHA-256, or check that it still matches its seal."""
+    log_path = logs / f"{observer}.json"
+    seal_path = records / f"{observer}.sha256"
+    if verify:
+        if not seal_matches(log_path, seal_path):
+            console.print(f"[red]changed since it was sealed[/red]: {log_path}")
+            raise typer.Exit(1)
+        console.print(f"[green]matches its seal[/green]: {log_path}")
+        return
+    if seal_path.exists():
+        console.print(f"[red]refusing to overwrite[/red] {seal_path}")
+        raise typer.Exit(1)
+    load_log(log_path, observer)
+    digest = seal(log_path, seal_path)
+    console.print(f"[green]sealed[/green] {log_path}: {digest} in {seal_path}")

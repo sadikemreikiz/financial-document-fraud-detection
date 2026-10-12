@@ -15,17 +15,20 @@ from docfraud.cli import app
 from docfraud.cli import baseline as cli_baseline
 from docfraud.cli import common as cli_common
 from docfraud.cli import data as cli_data
+from docfraud.cli import observation as cli_observation
 from docfraud.cli import reading as cli_reading
 from docfraud.cli import rules as cli_rules
 from docfraud.data.download import SOURCES, DatasetSource
 from docfraud.data.gold import GoldManifest, load_manifest
 from docfraud.data.models import Label, Split
+from docfraud.data.observation import ASSISTANT, ObservationLog, ReceiptObservation, save_log
 from docfraud.data.splits import TestSetLockedError
 from docfraud.evaluation.folds import assign_folds, load_folds, save_folds
 from docfraud.evaluation.runs import CodeVersion, JsonRunStore
 from docfraud.reading.fields import ReceiptFields
 from docfraud.reading.ocr import OcrResult
 from tests.baselines.test_bow import corpus
+from tests.data.test_observation import observation_documents, receipt_answers
 from tests.evaluation.test_folds import documents as fold_documents
 from tests.fixtures.findit import load_toy
 
@@ -510,3 +513,74 @@ def test_rules_breakdown_groups_recorded_decisions(
         "Training, cross-validated: forged receipts found, by editing software"
         in report.read_text(encoding="utf-8")
     )
+
+
+@pytest.fixture
+def observation_cli(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
+    documents = observation_documents(tmp_path / "d")
+    monkeypatch.setattr(cli_observation, "findit_documents", lambda *_, **__: documents)
+    monkeypatch.setattr(cli_observation, "require_clean_commit", lambda: None)
+    monkeypatch.setattr(
+        cli_observation, "code_version", lambda: CodeVersion(commit="abc1234", dirty=False)
+    )
+    return tmp_path
+
+
+def test_observation_page_serves_until_interrupted(
+    observation_cli: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    opened: list[str] = []
+
+    class FakeServer:
+        server_port = 9999
+        closed = False
+
+        def serve_forever(self) -> None:
+            raise KeyboardInterrupt
+
+        def server_close(self) -> None:
+            FakeServer.closed = True
+
+    monkeypatch.setattr(cli_observation, "make_server", lambda *_: FakeServer())
+    monkeypatch.setattr("webbrowser.open", opened.append)
+    logs = observation_cli / "logs"
+    result = runner.invoke(app, ["observation", "page", "--observer", "emre", "--logs", str(logs)])
+    assert result.exit_code == 0, result.output
+    assert opened == ["http://127.0.0.1:9999/"]
+    assert "run the same command to continue" in result.output
+    assert FakeServer.closed
+
+
+def test_observation_crops_are_written_for_the_assistant(observation_cli: Path) -> None:
+    output = observation_cli / "crops"
+    result = runner.invoke(app, ["observation", "crops", "--output", str(output)])
+    assert result.exit_code == 0, result.output
+    assert len(list(output.glob("*-close-up-*.png"))) == 3
+
+
+def test_observation_check_reports_progress_and_strays(observation_cli: Path) -> None:
+    logs = observation_cli / "logs"
+    result = runner.invoke(app, ["observation", "check", "--observer", "emre", "--logs", str(logs)])
+    assert result.exit_code == 0, result.output
+    assert "0 of 3 regions, 0 of 2 receipts" in result.output
+    stray = ObservationLog(
+        observer="emre",
+        receipts={"X51005268472": ReceiptObservation.model_validate(receipt_answers())},
+    )
+    save_log(stray, logs / "emre.json")
+    result = runner.invoke(app, ["observation", "check", "--observer", "emre", "--logs", str(logs)])
+    assert result.exit_code == 1
+    assert "X51005268472" in result.output
+
+
+def test_observation_seal_is_written_once_and_verified(observation_cli: Path) -> None:
+    logs, records = observation_cli / "logs", observation_cli / "records"
+    save_log(ObservationLog(observer=ASSISTANT), logs / "claude.json")
+    options = ["--logs", str(logs), "--records", str(records)]
+    assert runner.invoke(app, ["observation", "seal", *options]).exit_code == 0
+    assert runner.invoke(app, ["observation", "seal", *options]).exit_code == 1
+    assert runner.invoke(app, ["observation", "seal", *options, "--verify"]).exit_code == 0
+    (logs / "claude.json").write_text("{}", encoding="utf-8")
+    result = runner.invoke(app, ["observation", "seal", *options, "--verify"])
+    assert result.exit_code == 1
+    assert "changed since it was sealed" in result.output
