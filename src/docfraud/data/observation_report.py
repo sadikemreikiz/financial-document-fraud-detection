@@ -1,20 +1,18 @@
-"""The analysis of the forgery observations, as the guide fixed it before they were made.
+"""The analysis of the forgery observations, as the guide fixes it.
 
-``docs/forgery-observation-guide.md`` (section "Analysis, fixed now") prescribes what is
-reported: every answer counted per region and with each receipt weighted equally, the agreement
-of the two observers on the agreement sample with Cohen's kappa, the disagreements and how they
-were resolved, and the answers set against the technique labels. Labels are joined here for the
-first time; the observers never saw them.
+``docs/forgery-observation-guide.md`` (section "Analysis") prescribes what is reported: every
+answer counted per region and with each receipt weighted equally, the agreement of the two
+observers on the agreement sample with Cohen's kappa and their disagreements, the owner's answers
+on whole receipts, and the answers set against the technique labels. Labels are joined here for
+the first time; the observers never saw them.
 
-Fields 1 to 9 and 11 take the assistant's answers, except on the agreement sample, where a
-disagreement takes the value resolved by discussion (``resolutions.json``) once it exists.
+Fields 1 to 9 and 11 are the assistant's answers for every region, so that one observer answers
+them throughout; on the agreement sample the owner's answers measure how far they can be trusted
+and change no value (change of procedure of 2026-10-12, recorded in the guide).
 """
 
 from collections import Counter
 from collections.abc import Iterable, Mapping, Sequence
-from pathlib import Path
-
-from pydantic import BaseModel, ConfigDict, TypeAdapter
 
 from docfraud.data.models import Document
 from docfraud.data.observation import (
@@ -28,27 +26,6 @@ from docfraud.data.observation import (
 from docfraud.markdown import Cell, Table, render_table
 
 _FIELDS = {f.name: f for f in FORM}
-
-
-class Resolution(BaseModel):
-    """The value two observers agreed on for one field of one region, and why."""
-
-    model_config = ConfigDict(frozen=True, extra="forbid")
-
-    value: str
-    reason: str
-
-
-type Resolutions = Mapping[str, Mapping[str, Resolution]]
-"""Region key -> field name -> resolution."""
-
-
-def load_resolutions(path: Path) -> dict[str, dict[str, Resolution]]:
-    """Read the resolved disagreements, or none if they have not been resolved yet."""
-    if not path.exists():
-        return {}
-    adapter = TypeAdapter(dict[str, dict[str, Resolution]])
-    return adapter.validate_json(path.read_text(encoding="utf-8"))
 
 
 def cohen_kappa(first: Sequence[str], second: Sequence[str]) -> float | None:
@@ -75,49 +52,6 @@ def cohen_kappa(first: Sequence[str], second: Sequence[str]) -> float | None:
 def _answer(region: RegionObservation, field: str) -> str:
     value = getattr(region, field)
     return str(value)
-
-
-def final_answers(
-    plan: ObservationPlan,
-    assistant: ObservationLog,
-    owner: ObservationLog,
-    resolutions: Resolutions,
-) -> tuple[dict[str, dict[str, str]], list[tuple[str, str]]]:
-    """Fields 1 to 9 and 11 of every region, and the disagreements still open.
-
-    Returns:
-        The final answer per region and field, and the (region, field) pairs on which the
-        observers disagree and no resolution exists yet; those keep the assistant's answer.
-
-    Raises:
-        ValueError: If a resolution names a region outside the sample, or a value the form does
-            not offer, or resolves a field on which the observers agree.
-    """
-    final: dict[str, dict[str, str]] = {}
-    open_disagreements: list[tuple[str, str]] = []
-    for item in plan.regions:
-        answers = {f: _answer(assistant.regions[item.key], f) for f in DETAIL_FIELDS}
-        if item.key in plan.full_form:
-            for field in DETAIL_FIELDS:
-                theirs = _answer(owner.regions[item.key], field)
-                resolution = resolutions.get(item.key, {}).get(field)
-                if theirs == answers[field]:
-                    if resolution:
-                        msg = f"{item.key} {field}: the observers agree, nothing to resolve"
-                        raise ValueError(msg)
-                elif resolution:
-                    if resolution.value not in _FIELDS[field].choices:
-                        msg = f"{item.key} {field}: {resolution.value!r} is not a choice"
-                        raise ValueError(msg)
-                    answers[field] = resolution.value
-                else:
-                    open_disagreements.append((item.key, field))
-        final[item.key] = answers
-    stray = set(resolutions) - plan.full_form
-    if stray:
-        msg = f"resolutions outside the agreement sample: {sorted(stray)}"
-        raise ValueError(msg)
-    return final, open_disagreements
 
 
 def _receipt_weights(plan: ObservationPlan) -> dict[str, float]:
@@ -153,13 +87,15 @@ def build_report(
     plan: ObservationPlan,
     assistant: ObservationLog,
     owner: ObservationLog,
-    resolutions: Resolutions,
 ) -> list[Table]:
     """Every table the guide prescribes, in the order of the report."""
     by_id = {d.doc_id: d for d in documents}
     weights = _receipt_weights(plan)
     n_receipts = len(plan.receipts)
-    final, still_open = final_answers(plan, assistant, owner, resolutions)
+    final = {
+        item.key: {f: _answer(assistant.regions[item.key], f) for f in DETAIL_FIELDS}
+        for item in plan.regions
+    }
     columns = ["Field", "Answer", "Regions", "Share of regions", "Share, receipts weighted"]
 
     visibility = {item.key: _answer(owner.regions[item.key], "visibility") for item in plan.regions}
@@ -194,15 +130,9 @@ def build_report(
         "Region fields (fields 1 to 9 and 11)",
         columns,
         detail_rows,
-        f"The assistant's answers on {len(plan.regions) - len(plan.full_form)} regions; on the "
-        f"{len(plan.full_form)} regions of the agreement sample the answers on which both "
-        "observers agree or that were resolved by discussion. "
-        + (
-            f"{len(still_open)} disagreements are not resolved yet and count with the "
-            "assistant's answer."
-            if still_open
-            else "Every disagreement is resolved."
-        ),
+        f"The assistant's answers for all {len(plan.regions)} regions. The owner's answers on "
+        f"the {len(plan.full_form)} regions of the agreement sample measure their reliability "
+        "(next table) and change no value.",
     )
     sample = sorted(plan.full_form)
     agreement_rows: list[list[Cell]] = []
@@ -215,17 +145,7 @@ def build_report(
         agreement_rows.append([f"{_FIELDS[field].number}. {field}", same, len(sample), kappa])
         for key, mine, yours in zip(sample, ours, theirs, strict=True):
             if mine != yours:
-                resolution = resolutions.get(key, {}).get(field)
-                disagreement_rows.append(
-                    [
-                        key,
-                        f"{_FIELDS[field].number}. {field}",
-                        yours,
-                        mine,
-                        resolution.value if resolution else "open",
-                        resolution.reason if resolution else "",
-                    ]
-                )
+                disagreement_rows.append([key, f"{_FIELDS[field].number}. {field}", yours, mine])
     agreement = Table(
         "Agreement on the agreement sample",
         ["Field", "Same answer", "Regions", "Cohen's kappa"],
@@ -237,8 +157,9 @@ def build_report(
     )
     disagreements = Table(
         "Disagreements",
-        ["Region", "Field", "Owner", "Assistant", "Resolved to", "Reason"],
+        ["Region", "Field", "Owner", "Assistant"],
         disagreement_rows,
+        "Kept as they are: no disagreement is resolved into a new value.",
     )
     receipt_rows: list[list[Cell]] = []
     description_rows: list[list[Cell]] = []
@@ -281,7 +202,7 @@ def build_report(
         )
     labels = Table(
         "Observations against the technique labels",
-        ["Technique (label)", "Regions", "Visibility (owner)", "Source of pasted content (final)"],
+        ["Technique (label)", "Regions", "Visibility (owner)", "Source of pasted content"],
         label_rows,
         "A region with several techniques counts under each. Labels are compared, not changed.",
     )

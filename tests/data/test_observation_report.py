@@ -11,14 +11,7 @@ from docfraud.data.observation import (
     RegionObservation,
     observation_plan,
 )
-from docfraud.data.observation_report import (
-    Resolution,
-    build_report,
-    cohen_kappa,
-    final_answers,
-    load_resolutions,
-    render_report,
-)
+from docfraud.data.observation_report import build_report, cohen_kappa, render_report
 from docfraud.markdown import Table
 from tests.data.test_observation import observation_documents, receipt_answers, region_answers
 
@@ -76,45 +69,9 @@ def observed(
     return documents, plan, assistant, owner
 
 
-def test_open_disagreements_keep_the_assistants_answer(tmp_path: Path) -> None:
-    _, plan, assistant, owner = observed(tmp_path)
-    key = sorted(plan.full_form)[0]
-    final, still_open = final_answers(plan, assistant, owner, {})
-    assert still_open == [(key, "tone")]
-    assert final[key]["tone"] == "darker"
-    resolved = {key: {"tone": Resolution(value="lighter", reason="looked again together")}}
-    final, still_open = final_answers(plan, assistant, owner, resolved)
-    assert (still_open, final[key]["tone"]) == ([], "lighter")
-
-
-@pytest.mark.parametrize(
-    ("field", "value", "message"),
-    [
-        ("change", "whole_value", "nothing to resolve"),
-        ("tone", "purple", "not a choice"),
-    ],
-)
-def test_invalid_resolutions_are_refused(
-    tmp_path: Path, field: str, value: str, message: str
-) -> None:
-    _, plan, assistant, owner = observed(tmp_path)
-    key = sorted(plan.full_form)[0]
-    resolutions = {key: {field: Resolution(value=value, reason="")}}
-    with pytest.raises(ValueError, match=message):
-        final_answers(plan, assistant, owner, resolutions)
-
-
-def test_resolutions_outside_the_sample_are_refused(tmp_path: Path) -> None:
-    _, plan, assistant, owner = observed(tmp_path)
-    outside = next(item.key for item in plan.regions if item.key not in plan.full_form)
-    resolutions = {outside: {"tone": Resolution(value="lighter", reason="")}}
-    with pytest.raises(ValueError, match="outside the agreement sample"):
-        final_answers(plan, assistant, owner, resolutions)
-
-
 def test_the_report_has_every_table_of_the_fixed_analysis(tmp_path: Path) -> None:
     documents, plan, assistant, owner = observed(tmp_path)
-    tables = {t.title: t for t in build_report(documents, plan, assistant, owner, {})}
+    tables = {t.title: t for t in build_report(documents, plan, assistant, owner)}
     assert list(tables) == [
         "Observers and coverage",
         "Visibility at 100 % (field 10, owner)",
@@ -135,20 +92,13 @@ def test_the_report_has_every_table_of_the_fixed_analysis(tmp_path: Path) -> Non
     assert len(tables["Descriptions of the answers 'yes' on whole receipts"].rows) == 2
     labels = rows_by(tables["Observations against the technique labels"], 0)
     assert labels["cpi"][1:3] == [3, "at_100 2, not_found 1"]  # every toy region is CPI
-    assert (
-        "1 disagreements are not resolved yet"
-        in tables["Region fields (fields 1 to 9 and 11)"].note
-    )
+    details = rows_by(tables["Region fields (fields 1 to 9 and 11)"], 1)
+    assert details["Darker"][2] == 3  # the assistant's answer, also where the owner differs
+    disagreement = [sorted(plan.full_form)[0], "7. tone", "lighter", "darker"]
+    assert tables["Disagreements"].rows == [disagreement]
     report = render_report(list(tables.values()))
     assert report.startswith("# Forgery observations: design fold")
 
 
 def rows_by(table: Table, column: int) -> dict[str, list[object]]:
     return {str(row[column]): list(row) for row in table.rows}
-
-
-def test_resolutions_are_read_from_json(tmp_path: Path) -> None:
-    path = tmp_path / "resolutions.json"
-    assert load_resolutions(path) == {}
-    path.write_text('{"k": {"tone": {"value": "lighter", "reason": "r"}}}', encoding="utf-8")
-    assert load_resolutions(path)["k"]["tone"] == Resolution(value="lighter", reason="r")

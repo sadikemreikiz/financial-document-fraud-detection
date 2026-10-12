@@ -135,9 +135,17 @@ the grid).
   therefore also reported with each receipt weighted equally.
 - **Agreement** of the two observers on fields 1 to 9 and 11, on the 12 regions of the agreement
   sample: percent agreement and Cohen's kappa per field, with "unclear" as a category of its own.
-  With 12 regions these are rough estimates and are reported with that caveat. Disagreements are
-  resolved by discussion into one final value per region; both raw logs and the resolutions are
-  kept. On the other 33 regions, fields 1 to 9 and 11 are the assistant's answers alone.
+  With 12 regions these are rough estimates and are reported with that caveat.
+- **One observer per field.** On all 45 regions, fields 1 to 9 and 11 are the assistant's
+  answers, so that one observer answers them throughout; the owner's answers on the sample
+  measure how far they can be trusted and change no value. A field with low agreement is treated
+  as unreliable when the engine is designed. Both raw logs are kept.
+- **Change of analysis, 2026-10-12.** This guide first said that disagreements would be resolved
+  by discussion into final values. After both logs were complete it was changed, before any
+  disagreement was discussed: the owner had found these distinctions hard, so a discussion would
+  have leaned on the assistant's answers rather than resolve them independently, and values
+  changed on the 12 sampled regions only would have set those regions apart from the other 33.
+  The disagreements are reported, not resolved.
 - **Labels.** The answers are compared with the technique labels (for example a region labelled
   copy-paste whose source is "not applicable"). Differences are reported; labels are not changed.
 - The results go to `reports/forensics/observations.md`.

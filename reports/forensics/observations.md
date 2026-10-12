@@ -74,7 +74,7 @@ Receipts weighted: each receipt counts once, shared equally among its regions.
 | 11. box_fit | Misses part of the edit | 0 | 0.0 % | 0.0 % |
 | 11. box_fit | Unclear | 7 | 15.6 % | 10.5 % |
 
-The assistant's answers on 33 regions; on the 12 regions of the agreement sample the answers on which both observers agree or that were resolved by discussion. 37 disagreements are not resolved yet and count with the assistant's answer.
+The assistant's answers for all 45 regions. The owner's answers on the 12 regions of the agreement sample measure their reliability (next table) and change no value.
 
 ### Agreement on the agreement sample
 
@@ -95,45 +95,47 @@ The assistant's answers on 33 regions; on the 12 regions of the agreement sample
 
 ### Disagreements
 
-| Region | Field | Owner | Assistant | Resolved to | Reason |
-|---|---|---|---|---|---|
-| X51005587254-0 | 1. change | single_characters | unclear | open |  |
-| X51006913018-7 | 1. change | single_characters | unclear | open |  |
-| X51007231331-3 | 1. change | single_characters | whole_value | open |  |
-| X51007339150-1 | 1. change | deleted | unclear | open |  |
-| X51005568881-0 | 2. source | other_line | unclear | open |  |
-| X51005663274-0 | 2. source | same_line | unclear | open |  |
-| X51006620181-0 | 2. source | same_line | unclear | open |  |
-| X51007103692-1 | 2. source | other_receipt | unclear | open |  |
-| X51007262315-0 | 2. source | other_receipt | not_applicable | open |  |
-| X51007339150-1 | 2. source | not_applicable | unclear | open |  |
-| X51005587254-0 | 3. background | matches | white | open |  |
-| X51007103692-1 | 3. background | darker | matches | open |  |
-| X51007262315-0 | 3. background | matches | white | open |  |
-| X51005587254-0 | 4. edge | not_visible | soft | open |  |
-| X51007262315-0 | 4. edge | not_visible | sharp_rectangle | open |  |
-| X51007846303-1 | 4. edge | soft | unclear | open |  |
-| X51005587254-0 | 5. alignment | aligned | unclear | open |  |
-| X51007262315-0 | 5. alignment | aligned | shifted | open |  |
-| X51007846303-1 | 5. alignment | unclear | aligned | open |  |
-| X51005587254-0 | 6. font | same | unclear | open |  |
-| X51006557193-0 | 6. font | same | other_font | open |  |
-| X51007103692-1 | 6. font | other_weight | other_font | open |  |
-| X51007339150-1 | 6. font | not_applicable | unclear | open |  |
-| X51005587254-0 | 7. tone | same | unclear | open |  |
-| X51007339150-1 | 7. tone | not_applicable | unclear | open |  |
-| X51005587254-0 | 8. sharpness | same | blurrier | open |  |
-| X51006557193-0 | 8. sharpness | sharper | same | open |  |
-| X51007339150-1 | 8. sharpness | same | unclear | open |  |
-| X51007846303-1 | 8. sharpness | unclear | same | open |  |
-| X51005587254-0 | 9. scaled_or_rotated | no | unclear | open |  |
-| X51007103692-1 | 9. scaled_or_rotated | no | unclear | open |  |
-| X51007262315-0 | 9. scaled_or_rotated | unclear | no | open |  |
-| X51007339150-1 | 9. scaled_or_rotated | no | unclear | open |  |
-| X51007846303-1 | 9. scaled_or_rotated | unclear | no | open |  |
-| X51005587254-0 | 11. box_fit | tight | unclear | open |  |
-| X51006913018-7 | 11. box_fit | tight | unclear | open |  |
-| X51007339150-1 | 11. box_fit | tight | unclear | open |  |
+| Region | Field | Owner | Assistant |
+|---|---|---|---|
+| X51005587254-0 | 1. change | single_characters | unclear |
+| X51006913018-7 | 1. change | single_characters | unclear |
+| X51007231331-3 | 1. change | single_characters | whole_value |
+| X51007339150-1 | 1. change | deleted | unclear |
+| X51005568881-0 | 2. source | other_line | unclear |
+| X51005663274-0 | 2. source | same_line | unclear |
+| X51006620181-0 | 2. source | same_line | unclear |
+| X51007103692-1 | 2. source | other_receipt | unclear |
+| X51007262315-0 | 2. source | other_receipt | not_applicable |
+| X51007339150-1 | 2. source | not_applicable | unclear |
+| X51005587254-0 | 3. background | matches | white |
+| X51007103692-1 | 3. background | darker | matches |
+| X51007262315-0 | 3. background | matches | white |
+| X51005587254-0 | 4. edge | not_visible | soft |
+| X51007262315-0 | 4. edge | not_visible | sharp_rectangle |
+| X51007846303-1 | 4. edge | soft | unclear |
+| X51005587254-0 | 5. alignment | aligned | unclear |
+| X51007262315-0 | 5. alignment | aligned | shifted |
+| X51007846303-1 | 5. alignment | unclear | aligned |
+| X51005587254-0 | 6. font | same | unclear |
+| X51006557193-0 | 6. font | same | other_font |
+| X51007103692-1 | 6. font | other_weight | other_font |
+| X51007339150-1 | 6. font | not_applicable | unclear |
+| X51005587254-0 | 7. tone | same | unclear |
+| X51007339150-1 | 7. tone | not_applicable | unclear |
+| X51005587254-0 | 8. sharpness | same | blurrier |
+| X51006557193-0 | 8. sharpness | sharper | same |
+| X51007339150-1 | 8. sharpness | same | unclear |
+| X51007846303-1 | 8. sharpness | unclear | same |
+| X51005587254-0 | 9. scaled_or_rotated | no | unclear |
+| X51007103692-1 | 9. scaled_or_rotated | no | unclear |
+| X51007262315-0 | 9. scaled_or_rotated | unclear | no |
+| X51007339150-1 | 9. scaled_or_rotated | no | unclear |
+| X51007846303-1 | 9. scaled_or_rotated | unclear | no |
+| X51005587254-0 | 11. box_fit | tight | unclear |
+| X51006913018-7 | 11. box_fit | tight | unclear |
+| X51007339150-1 | 11. box_fit | tight | unclear |
+
+Kept as they are: no disagreement is resolved into a new value.
 
 ### Whole receipts (fields 12 and 13, owner)
 
@@ -155,7 +157,7 @@ The assistant's answers on 33 regions; on the 12 regions of the agreement sample
 
 ### Observations against the technique labels
 
-| Technique (label) | Regions | Visibility (owner) | Source of pasted content (final) |
+| Technique (label) | Regions | Visibility (owner) | Source of pasted content |
 |---|---|---|---|
 | cpi | 35 | not_found 31, unclear 4 | other_line 15, same_line 2, unclear 18 |
 | cpo | 2 | not_found 2 | unclear 2 |

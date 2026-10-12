@@ -15,7 +15,7 @@ from docfraud.data.observation import (
     seal,
     seal_matches,
 )
-from docfraud.data.observation_report import build_report, load_resolutions, render_report
+from docfraud.data.observation_report import build_report, render_report
 from docfraud.data.observation_server import HOST, ObservationApp, make_server
 from docfraud.data.observation_text import PageLanguage
 from docfraud.evaluation.runs import code_version
@@ -150,10 +150,9 @@ def observation_report(
     ),
     output: Annotated[Path, typer.Option(help="Where to write the report.")] = OBSERVATION_REPORT,
 ) -> None:
-    """Analyse both finished logs as the guide fixed it and write the Markdown report.
+    """Analyse both finished logs as the guide fixes it and write the Markdown report.
 
-    The assistant's log must still match its seal; disagreements resolved by discussion are read
-    from ``resolutions.json`` next to the logs.
+    The assistant's log must still match its seal.
     """
     if not seal_matches(records / f"{ASSISTANT}.json", records / f"{ASSISTANT}.sha256"):
         console.print("[red]the assistant's log no longer matches its seal[/red]")
@@ -164,7 +163,6 @@ def observation_report(
         observation_plan(documents),
         load_log(records / f"{ASSISTANT}.json", ASSISTANT),
         load_log(records / f"{owner}.json", owner),
-        load_resolutions(records / "resolutions.json"),
     )
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(render_report(tables), encoding="utf-8")
