@@ -40,3 +40,21 @@ def test_the_map_depends_on_the_page_only() -> None:
     page = jpeg(scattered_text(7))[0]
     first, second = lattice_evidence(page), lattice_evidence(page.copy())
     np.testing.assert_array_equal(first.pixel_map(), second.pixel_map())
+
+
+def test_the_document_score_rises_with_a_patch_and_is_zero_without_evidence() -> None:
+    clean = jpeg(scattered_text(3))[0]
+    patched = clean.copy()
+    patched[240:280, 160:240] = clean[103:143, 61:141]
+    assert lattice_evidence(patched).document_score() > lattice_evidence(clean).document_score()
+    assert lattice_evidence(scattered_text(2)).document_score() == 0.0
+
+
+def test_only_measured_blocks_enter_the_document_score() -> None:
+    page = jpeg(scattered_text(6))[0].copy()
+    page[96:160, 96:160] = 255  # 64 blocks clipped to white: no evidence, not a perfect fit
+    evidence = lattice_evidence(page)
+    assert not evidence.measured[12:20, 12:20].any()
+    values = evidence.suspicion[evidence.measured]
+    expected = values.max() - np.percentile(values, 99)
+    assert evidence.document_score() == expected

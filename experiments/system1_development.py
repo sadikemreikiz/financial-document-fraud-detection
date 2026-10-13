@@ -20,7 +20,9 @@ from scipy import ndimage
 from docfraud.data.findit import load_findit2
 from docfraud.data.models import BBox, Document, Label
 from docfraud.data.normalize import load_grayscale
+from docfraud.evaluation.bootstrap import Estimate as Interval
 from docfraud.evaluation.design_fold import DESIGN_FOLD_IDS, require_design_fold
+from docfraud.evaluation.detection import average_precision
 from docfraud.evaluation.localisation import (
     BASELINE_SEED,
     annotated_rectangles,
@@ -28,6 +30,7 @@ from docfraud.evaluation.localisation import (
     hits,
     receipt_key,
     receipt_rng,
+    size_dependence,
     top_region,
 )
 from docfraud.forensics.lattice_map import LatticeEvidence, lattice_evidence
@@ -40,6 +43,7 @@ OUTPUT = ROOT / "reports" / "forensics" / "system-1-development.md"
 DATA = ROOT / "data" / "raw" / "findit2"
 OCR_CACHE = ROOT / "artifacts" / "ocr"
 ALIGNMENT_STREAM = 3  # as in experiments/jpeg_trace_comparison.py
+LARGE_SIDE = 6000
 CHOSEN, SMOOTHED = "per block (chosen)", "mean over 3 x 3 blocks"
 VARIANTS = (CHOSEN, SMOOTHED)
 
@@ -79,16 +83,60 @@ def smoothed(evidence: LatticeEvidence, page: npt.NDArray[np.uint8]) -> LatticeE
     counts = ndimage.convolve(known.astype(float), np.ones((3, 3)), mode="constant")
     with np.errstate(invalid="ignore", divide="ignore"):
         means = totals / counts
-    suspicion = np.where(counts >= MIN_BLOCKS, 1 - means, 0.0)
-    return LatticeEvidence(evidence.lattice, suspicion, evidence.shape)
+    measured = counts >= MIN_BLOCKS
+    suspicion = np.where(measured, 1 - means, 0.0)
+    return LatticeEvidence(evidence.lattice, suspicion, measured, evidence.shape)
+
+
+def _highest(evidence: LatticeEvidence) -> float:
+    values = evidence.suspicion[evidence.measured]
+    return float(values.max()) if values.size else 0.0
+
+
+def _minus_median(evidence: LatticeEvidence) -> float:
+    values = evidence.suspicion[evidence.measured]
+    return float(values.max() - np.median(values)) if values.size else 0.0
+
+
+def _ratio(evidence: LatticeEvidence) -> float:
+    values = evidence.suspicion[evidence.measured]
+    if not values.size:
+        return 0.0
+    median, top = np.median(values), np.percentile(values, 99)
+    return float((values.max() - median) / (top - median)) if top > median else 0.0
+
+
+CHOSEN_SCORE = "highest block minus the receipt's 99th percentile (chosen)"
+COVERAGE_ONLY = "1 with evidence, 0 without (no information on edits)"
+SCORES: dict[str, Callable[[LatticeEvidence, npt.NDArray[np.uint8]], float]] = {
+    "highest block suspicion": lambda e, _: _highest(e),
+    "highest mean over 3 x 3 blocks": lambda e, page: _highest(smoothed(e, page)),
+    "highest block minus the receipt's median": lambda e, _: _minus_median(e),
+    CHOSEN_SCORE: lambda e, _: e.document_score(),
+    "(highest - median) / (99th percentile - median)": lambda e, _: _ratio(e),
+    COVERAGE_ONLY: lambda e, _: float(e.measured.any()),
+}
+"""Every document score tried for system 1, in the order they were considered."""
+
+
+@dataclass(frozen=True, slots=True)
+class Scored:
+    """The candidate document scores of one receipt."""
+
+    label: Label
+    large: bool
+    pixels: int
+    evidence: bool  # whether the map of system 1 is not constant
+    scores: dict[str, float]
 
 
 def measure(
     documents: Sequence[Document], ocr: CachedOcr
-) -> tuple[list[Estimate], dict[str, list[Localisation]]]:
-    """Both checks on every receipt, in identifier order."""
+) -> tuple[list[Estimate], dict[str, list[Localisation]], list[Scored]]:
+    """Every check on every receipt, in identifier order."""
     estimates: list[Estimate] = []
     localisations: dict[str, list[Localisation]] = {v: [] for v in VARIANTS}
+    scored: list[Scored] = []
     for document in sorted(documents, key=lambda d: d.doc_id):
         require_design_fold(document.doc_id)
         page = load_grayscale(document.image_path)
@@ -115,9 +163,18 @@ def measure(
                 agreement,
             )
         )
+        height, width = page.shape
+        scored.append(
+            Scored(
+                label,
+                max(height, width) > LARGE_SIDE,
+                height * width,
+                bool(evidence.measured.any()),
+                {name: score(evidence, page) for name, score in SCORES.items()},
+            )
+        )
         if label is not Label.FORGED or not modified or not system.detectable:
             continue
-        height, width = page.shape
         whole = BBox(x=0, y=0, width=width, height=height)
         words = [token.box for token in ocr.recognize(page).tokens]
         for variant, made in ((CHOSEN, evidence), (SMOOTHED, smoothed(evidence, page))):
@@ -133,7 +190,7 @@ def measure(
                     region.width * region.height / (width * height),
                 )
             )
-    return estimates, localisations
+    return estimates, localisations, scored
 
 
 def estimate_table(estimates: Sequence[Estimate]) -> Table:
@@ -222,14 +279,80 @@ def receipt_table(localisations: dict[str, list[Localisation]]) -> Table:
     )
 
 
+def evidence_table(scored: Sequence[Scored]) -> Table:
+    """Receipts on which system 1 has evidence, by label and size."""
+    rows: list[list[Cell]] = []
+    for label in (Label.AUTHENTIC, Label.FORGED):
+        for size, large in (("longer side above 6000 px", True), ("smaller", False)):
+            chosen = [s for s in scored if s.label is label and s.large is large]
+            rows.append([f"{label.value}, {size}", len(chosen), sum(s.evidence for s in chosen)])
+    rows.append(["all", len(scored), sum(s.evidence for s in scored)])
+    return Table(
+        "Receipts with evidence",
+        ["Receipts", "Count", "With evidence"],
+        rows,
+        "Evidence: the map of system 1 is not constant, that is, the receipt has a detectable "
+        "lattice and at least one measurable block (ADR-0017).",
+    )
+
+
+def _interval(estimate: Interval) -> str:
+    return f"{estimate.value:+.2f} ({estimate.low:+.2f} to {estimate.high:+.2f})"
+
+
+def score_table(scored: Sequence[Scored]) -> Table:
+    """Every document score tried, with its average precision and both size checks."""
+    labels = np.array([s.label is Label.FORGED for s in scored])
+    authentic = [s for s in scored if s.label is Label.AUTHENTIC]
+    with_evidence = [s for s in authentic if s.evidence]
+    rows: list[list[Cell]] = []
+    for name in SCORES:
+        values = np.array([s.scores[name] for s in scored])
+        everywhere = size_dependence(
+            [s.scores[name] for s in authentic], [s.pixels for s in authentic]
+        )
+        rows.append(
+            [
+                name,
+                average_precision(labels, values),
+                _interval(everywhere),
+                _interval(
+                    size_dependence(
+                        [s.scores[name] for s in with_evidence], [s.pixels for s in with_evidence]
+                    )
+                )
+                if name != COVERAGE_ONLY
+                else None,
+            ]
+        )
+    return Table(
+        "Document scores tried",
+        [
+            "Document score",
+            f"Average precision (chance {labels.mean():.3f})",
+            f"Size check, {len(authentic)} authentic",
+            f"Size check, {len(with_evidence)} authentic with evidence",
+        ],
+        rows,
+        "Size check: the Spearman rank correlation of document score and pixel count with its 95 % "
+        "interval (bootstrap over receipts, 10,000 resamples, seed 0), as ADR-0015 (section 6) "
+        "fixes it; ADR-0017 runs it on the receipts with evidence. Receipts without evidence "
+        "score 0. The last row carries no information on edits and is constant on the receipts "
+        "with evidence. Design fold: optimistic, and every row was tried on the same 19 forged "
+        "receipts.",
+    )
+
+
 def main() -> None:
     """Measure the design fold and write the report."""
     documents = [d for d in load_findit2(DATA) if d.doc_id in DESIGN_FOLD_IDS]
-    estimates, localisations = measure(documents, CachedOcr(RapidOcrEngine(), OCR_CACHE))
+    estimates, localisations, scored = measure(documents, CachedOcr(RapidOcrEngine(), OCR_CACHE))
     tables = [
         estimate_table(estimates),
         localisation_table(localisations),
         receipt_table(localisations),
+        evidence_table(scored),
+        score_table(scored),
     ]
     header = (
         "# System 1 development: design fold\n\n"
