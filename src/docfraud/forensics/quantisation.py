@@ -40,7 +40,7 @@ ALIGNMENT_COEFFICIENTS = ((0, 1), (1, 0), (1, 1), (0, 2), (2, 0), (1, 2), (2, 1)
 """Low-frequency coefficients that locate the block grid; text gives them large values."""
 
 ALIGNMENT_SAMPLE = 4_000
-"""Block positions sampled to score each of the 64 alignments."""
+"""Block positions sampled to score each of the 64 alignments when a generator is given."""
 
 LATTICE_MARGIN = 0.25
 """How far the best alignment's score must exceed the next best for a detectable lattice."""
@@ -151,21 +151,26 @@ class Lattice:
 
 
 def receipt_lattice(
-    page: npt.NDArray[np.uint8], rectangles: Iterable[BBox], rng: np.random.Generator
+    page: npt.NDArray[np.uint8],
+    rectangles: Iterable[BBox],
+    rng: np.random.Generator | None = None,
 ) -> Lattice:
     """Locate the block grid among the 64 alignments, then estimate a step per coefficient.
 
-    The alignment is scored on up to ``ALIGNMENT_SAMPLE`` sampled block positions; the steps are
-    estimated on every measurable block of the best alignment. Blocks sharing a pixel with an
-    annotated rectangle are left out of both.
+    The alignment is scored on every block position, or on ``ALIGNMENT_SAMPLE`` positions drawn
+    with ``rng`` when one is given (as the JPEG trace comparison did); the steps are estimated on
+    every measurable block of the best alignment. Blocks sharing a pixel with an annotated
+    rectangle are left out of both.
     """
     rectangles = list(rectangles)
     rows, columns = (page.shape[0] - BLOCK) // BLOCK, (page.shape[1] - BLOCK) // BLOCK
     unused = np.zeros((BLOCK, BLOCK), dtype=int)
     if rows <= 0 or columns <= 0:
         return Lattice((0, 0), float("nan"), float("nan"), unused)
-    count = min(ALIGNMENT_SAMPLE, rows * columns)
-    flat = rng.choice(rows * columns, size=count, replace=False)
+    if rng is None:
+        flat = np.arange(rows * columns)
+    else:
+        flat = rng.choice(rows * columns, size=min(ALIGNMENT_SAMPLE, rows * columns), replace=False)
     positions = np.stack([flat // columns, flat % columns], axis=1)
     scores = np.array(
         [
