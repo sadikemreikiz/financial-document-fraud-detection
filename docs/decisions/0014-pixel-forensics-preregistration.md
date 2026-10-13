@@ -1,6 +1,7 @@
 # 0014. How pixel forensics is developed and measured
 
-- **Status**: Accepted
+- **Status**: Accepted; system 1 of decision 6 superseded by
+  [0016](0016-system-1-jpeg-trace.md)
 - **Date**: 2026-10-07 (before any pixel-forensics code exists and before any receipt has been
   viewed for Phase 4; earlier contact with training receipts is listed under Disclosures)
 

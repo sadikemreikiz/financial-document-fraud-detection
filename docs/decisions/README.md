@@ -19,7 +19,8 @@ change of mind is a new record that supersedes the old one.
 | [0011](0011-baseline-reproduction.md) | Reproducing the published BoW + LR baseline: configuration and success criterion | Accepted |
 | [0012](0012-accounting-rules-evaluation.md) | How the accounting rules are developed and measured | Accepted |
 | [0013](0013-success-criterion-and-floors.md) | Success against published work must beat the floor, not only the published number | Accepted |
-| [0014](0014-pixel-forensics-preregistration.md) | How pixel forensics is developed and measured | Accepted |
+| [0014](0014-pixel-forensics-preregistration.md) | How pixel forensics is developed and measured | Accepted; system 1 superseded by 0016 |
 | [0015](0015-pixel-measurement-rules.md) | How maps of pixel-forensics systems are measured | Accepted |
+| [0016](0016-system-1-jpeg-trace.md) | System 1 measures the JPEG trace instead of noise | Accepted |
 
 New records copy [template.md](template.md).
