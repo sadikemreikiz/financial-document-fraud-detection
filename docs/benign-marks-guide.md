@@ -96,6 +96,15 @@ design-fold receipts without a flag are not searched.
    accepted is reported as *disputed*, with its latest marks.
 5. The analysis below is done by code.
 
+**Procedure as carried out, 2026-10-13.** The assistant found the marks on the overviews, as
+fixed above, but read the boxes from close-ups rather than from the 100-pixel tiles: crops of the
+normalised page around each mark, at native resolution or enlarged without smoothing (never
+reduced), with a grid every 10 to 25 page pixels. It checked its boxes on a close-up of every box
+with the box drawn, and on the marked views of one receipt, rather than on all marked views; nine
+boxes were corrected before the commit of round 1. The close-ups came from a helper script
+outside the repository; the boxes, not the helper, are the record. The owner accepted all 58
+receipts in round 1, in 8.5 minutes.
+
 ## Analysis, fixed now
 
 The final marks of a receipt are those of the last round in which it was boxed. Every table
