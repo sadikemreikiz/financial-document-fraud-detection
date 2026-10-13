@@ -244,6 +244,7 @@ class Comparison:
     value: float
     percentile: float  # share of controls below the value, ties counting half, in percent
     stands_out: str | None  # "below", "above" or None
+    uninformative: bool = False  # the region and every control share one value
 
 
 def compare(value: float, controls: Sequence[float]) -> Comparison:
@@ -259,4 +260,5 @@ def compare(value: float, controls: Sequence[float]) -> Comparison:
     below = float((values < value).sum() + 0.5 * (values == value).sum())
     low, high = np.percentile(values, OUTSIDE)
     side = "below" if value < low else "above" if value > high else None
-    return Comparison(value=value, percentile=100 * below / values.size, stands_out=side)
+    tied = bool((values == value).all())
+    return Comparison(value, 100 * below / values.size, side, uninformative=tied)

@@ -114,6 +114,9 @@ def test_comparisons_place_a_value_among_its_controls() -> None:
     assert compare(-1.0, controls).stands_out == "below"
     assert compare(99.5, controls).stands_out == "above"
     assert compare(50.0, controls).stands_out is None
+    assert not compare(50.0, controls).uninformative
+    flat = compare(0.0, [0.0] * 10)  # e.g. paper clipped to white: no noise anywhere
+    assert (flat.percentile, flat.stands_out, flat.uninformative) == (50.0, None, True)
     with pytest.raises(ValueError, match="finite"):
         compare(float("nan"), controls)
     with pytest.raises(ValueError, match="finite"):

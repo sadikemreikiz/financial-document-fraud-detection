@@ -87,6 +87,12 @@ Generated in `reports/forensics/invisible-traces.md`:
 - **Per region**: identifier, technique labels, and the percentile of its value among its
   controls for each measurement.
 
+**Added after the first run, 2026-10-13.** On many receipts the paper is clipped to pure white
+(gray value 255), so the residual on paper is zero and the noise level of a region and of all
+its controls is zero. Such a comparison counts as compared but carries no information. The
+report now also counts these "uninformative" comparisons and marks them per region; nothing
+else in the analysis changed.
+
 ## Limits, stated in advance
 
 - 45 regions on 19 receipts, and 18 of the regions come from two receipts: regions of one

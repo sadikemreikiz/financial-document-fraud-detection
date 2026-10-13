@@ -206,6 +206,7 @@ def summary_table(regions: Sequence[RegionRow]) -> Table:
                 measured,
                 sides["below"],
                 sides["above"],
+                sum(c.uninformative for c in comparisons),
                 f"{CHANCE * measured:.1f}",
                 p,
                 f"{len(receipts_out)} of {len(receipts)}",
@@ -220,6 +221,7 @@ def summary_table(regions: Sequence[RegionRow]) -> Table:
             "Compared",
             "Below the controls",
             "Above the controls",
+            "Uninformative (added)",
             "Expected by chance",
             "P(at least as many by chance)",
             "Receipts with a region standing out",
@@ -229,7 +231,10 @@ def summary_table(regions: Sequence[RegionRow]) -> Table:
         "A region stands out when its value lies below the 2.5th or above the 97.5th percentile "
         "of its 200 controls, which happens to 5 % of regions by chance. The probability is a "
         "one-sided exact binomial test; regions of one receipt are not independent, so it is a "
-        "guide, not a test.",
+        "guide, not a test. Uninformative: compared regions whose value equals that of every "
+        "control, for example a noise level of zero on paper clipped to pure white; they count "
+        "as compared and cannot stand out. This column was added after the first run, which "
+        "showed such cases; the plan had not foreseen them.",
     )
 
 
@@ -259,6 +264,8 @@ def region_table(regions: Sequence[RegionRow]) -> Table:
     def cell(result: Comparison | str) -> str:
         if isinstance(result, str):
             return "\N{EM DASH}"
+        if result.uninformative:
+            return "all equal"
         side = f" ({result.stands_out})" if result.stands_out else ""
         return f"{result.percentile:.1f}{side}"
 
@@ -270,7 +277,8 @@ def region_table(regions: Sequence[RegionRow]) -> Table:
         ["Region", "Techniques", *(f"{m}, percentile" for m in MEASUREMENTS)],
         rows,
         "Percentile: the share of the region's controls with a lower value, ties counting half. "
-        "\N{EM DASH}: not compared (see the summary).",
+        "All equal: the region and all its controls share one value. \N{EM DASH}: not compared "
+        "(see the summary).",
     )
 
 
