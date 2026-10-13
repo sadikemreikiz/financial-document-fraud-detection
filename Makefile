@@ -42,6 +42,7 @@ reports:  ## Regenerate every report that the current code produces
 	uv run python experiments/parser_development.py
 	uv run python experiments/rules_development.py
 	uv run python experiments/forensics_preregistration.py
+	uv run python experiments/invisible_traces.py
 	uv run docfraud observation report
 	uv run docfraud marks report
 	uv run docfraud reading score-review annotations/findit2/gold-review.json

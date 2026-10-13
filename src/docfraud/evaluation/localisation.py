@@ -98,23 +98,23 @@ def hits(region: BBox, rectangles: Iterable[BBox]) -> bool:
     return any(region.overlaps(rectangle) for rectangle in rectangles)
 
 
+def receipt_key(doc_id: str) -> int:
+    """A stable integer for a receipt identifier, part of the seed of its generators."""
+    return int.from_bytes(hashlib.sha256(doc_id.encode()).digest()[:8], "big")
+
+
 def receipt_rng(doc_id: str, stream: int = _BASELINE) -> np.random.Generator:
     """A receipt's own random generator, seeded with the baseline seed and its identifier.
 
     Its draws do not depend on which other receipts are measured or in which order.
     """
-    key = int.from_bytes(hashlib.sha256(doc_id.encode()).digest()[:8], "big")
-    return np.random.default_rng([BASELINE_SEED, key, stream])
+    return np.random.default_rng([BASELINE_SEED, receipt_key(doc_id), stream])
 
 
-def baseline_hit_rate(
-    region: BBox,
-    page: BBox,
-    word_boxes: Iterable[BBox],
-    rectangles: Sequence[BBox],
-    rng: np.random.Generator,
-) -> float:
-    """The share of random boxes of the region's size that hit a rectangle (ADR-0014).
+def random_boxes(
+    region: BBox, page: BBox, word_boxes: Iterable[BBox], rng: np.random.Generator, draws: int
+) -> tuple[npt.NDArray[np.intp], npt.NDArray[np.intp]]:
+    """Top-left corners of boxes of the region's size placed at random on the receipt's text.
 
     Each box is centred on a pixel drawn uniformly from the union of the OCR word boxes and
     shifted into the page where it would cross an edge.
@@ -132,14 +132,39 @@ def baseline_hit_rate(
     if pixels.size == 0:
         msg = "a receipt without OCR word boxes has no random baseline"
         raise ValueError(msg)
-    centres = pixels[rng.integers(0, pixels.size, size=BASELINE_DRAWS)]
+    centres = pixels[rng.integers(0, pixels.size, size=draws)]
     rows, columns = np.divmod(centres, page.width)
     x = np.clip(columns - region.width // 2, 0, page.width - region.width)
     y = np.clip(rows - region.height // 2, 0, page.height - region.height)
-    hit = np.zeros(BASELINE_DRAWS, dtype=bool)
+    return x, y
+
+
+def baseline_hit_rate(
+    region: BBox,
+    page: BBox,
+    word_boxes: Iterable[BBox],
+    rectangles: Sequence[BBox],
+    rng: np.random.Generator,
+) -> float:
+    """The share of random boxes of the region's size that hit a rectangle (ADR-0014).
+
+    The boxes are placed by :func:`random_boxes`, :data:`BASELINE_DRAWS` of them.
+
+    Raises:
+        ValueError: If the region does not fit on the page or there is no word box.
+    """
+    x, y = random_boxes(region, page, word_boxes, rng, BASELINE_DRAWS)
+    return float(overlapping(x, y, region, rectangles).mean())
+
+
+def overlapping(
+    x: npt.NDArray[np.intp], y: npt.NDArray[np.intp], size: BBox, rectangles: Iterable[BBox]
+) -> npt.NDArray[np.bool_]:
+    """For boxes of ``size`` at the corners ``x``, ``y``: whether each overlaps a rectangle."""
+    hit = np.zeros(x.shape, dtype=bool)
     for r in rectangles:
-        hit |= (x < r.x2) & (r.x < x + region.width) & (y < r.y2) & (r.y < y + region.height)
-    return float(hit.mean())
+        hit |= (x < r.x2) & (r.x < x + size.width) & (y < r.y2) & (r.y < y + size.height)
+    return hit
 
 
 @dataclass(frozen=True, slots=True)
