@@ -77,3 +77,10 @@ per-receipt outputs has been viewed.
   and 75) measures how much of system 1's result survives; its report states that this trace is
   the most exposed to re-encoding.
 - ADR-0014 keeps its text; its status names this record as superseding system 1 of decision 6.
+
+**Note, 2026-10-13, after acceptance.** The coverage above is that of the comparison study,
+which scored the block alignments on a random sample of blocks. System 1 scores every block,
+because on one receipt two samples gave different answers; it finds a lattice on 73 of the 113
+design-fold receipts (15 of the 19 forged), including the two forged receipts behind the
+question of a grid fallback, which is therefore not taken up. Both choices are recorded in
+[system-1-development.md](../system-1-development.md); nothing else in this record changes.
