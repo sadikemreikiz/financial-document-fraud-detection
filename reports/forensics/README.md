@@ -56,7 +56,7 @@ the next section.
 - **New text mostly matches the print.** Font and weight match in 35 regions (4 a different
   font, 2 a different weight); the tone matches in 33, is darker in 6 and lighter in 2.
 - **No trace of the whole receipt was reported.** The two answers "yes" on field 13 describe
-  local things ("51.30 sayisi cok buyuk", the number 51.30 is very large; "kirmizi kutunun ici
+  local things ("51.30 sayisi cok buyuk", the number 51.30 is very big; "kirmizi kutunun ici
   22", inside the red box: 22), so field 13 was misread on these receipts. The answers are kept
   as recorded. Traces that a person cannot see (noise level, the JPEG block grid, re-saving) are
   measured by code in step 4.3.
@@ -124,8 +124,9 @@ For the synthetic forgery engine (step 4.4):
 
 - Its mix of techniques follows the annotations of each round's training folds (ADR-0014), in
   which copy-paste within the receipt dominates (35 of the 45 design-fold regions).
-- A copy takes single characters or a whole value, from the same line or from another line of
-  the same receipt. Where pasted content lands, the engine varies the fill (the paper itself,
+- A copy takes single characters or a whole value, from the same line, from another line of the
+  same receipt or from another receipt (the annotations hold copies from another document, CPO,
+  although no observer identified one). Where pasted content lands, the engine varies the fill (the paper itself,
   white, a flat tone), the blending at the edge and the position, and may scale or rotate it
   slightly: most answers described matching paper, no visible edge, no shift and no scaling, but
   these fields fall below the convention and do not narrow the options.
