@@ -42,3 +42,28 @@ Top region, hit and random baseline as ADR-0015 fixes them: the hit counts a mod
 | X51007339150 | hit, 0.014 | miss, 0.035 |
 | X51007339158 | hit, 0.062 | hit, 0.079 |
 | X51008099071 | hit, 0.021 | hit, 0.024 |
+
+### Receipts with evidence
+
+| Receipts | Count | With evidence |
+|---|---|---|
+| authentic, longer side above 6000 px | 20 | 0 |
+| authentic, smaller | 74 | 58 |
+| forged, longer side above 6000 px | 3 | 0 |
+| forged, smaller | 16 | 15 |
+| all | 113 | 73 |
+
+Evidence: the map of system 1 is not constant, that is, the receipt has a detectable lattice and at least one measurable block (ADR-0017).
+
+### Document scores tried
+
+| Document score | Average precision (chance 0.168) | Size check, 94 authentic | Size check, 58 authentic with evidence |
+|---|---|---|---|
+| highest block suspicion | 0.608 | -0.46 (-0.64 to -0.26) | -0.54 (-0.70 to -0.34) |
+| highest mean over 3 x 3 blocks | 0.479 | -0.49 (-0.67 to -0.30) | -0.65 (-0.78 to -0.48) |
+| highest block minus the receipt's median | 0.608 | -0.45 (-0.63 to -0.25) | -0.49 (-0.66 to -0.28) |
+| highest block minus the receipt's 99th percentile (chosen) | 0.500 | -0.33 (-0.53 to -0.12) | -0.12 (-0.37 to +0.15) |
+| (highest - median) / (99th percentile - median) | 0.425 | -0.13 (-0.35 to +0.10) | +0.55 (+0.34 to +0.71) |
+| 1 with evidence, 0 without (no information on edits) | 0.198 | -0.34 (-0.55 to -0.12) | — |
+
+Size check: the Spearman rank correlation of document score and pixel count with its 95 % interval (bootstrap over receipts, 10,000 resamples, seed 0), as ADR-0015 (section 6) fixes it; ADR-0017 runs it on the receipts with evidence. Receipts without evidence score 0. The last row carries no information on edits and is constant on the receipts with evidence. Design fold: optimistic, and every row was tried on the same 19 forged receipts.

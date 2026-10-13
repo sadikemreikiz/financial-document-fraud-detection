@@ -47,6 +47,30 @@ depends on a random draw is not acceptable, so system 1 scores every block.
 - The comparison study and its report keep the sampled scoring with which they were measured
   (`receipt_lattice` samples when it is given a generator).
 
-## 2. The document score
+## 2. The document score (2026-10-13)
 
-To be decided.
+- The document score is the **highest suspicion of a measured block minus the receipt's own
+  99th percentile** of measured block suspicions; a receipt without evidence scores 0
+  (`LatticeEvidence.document_score`). Subtracting the receipt's own level removes what JPEG
+  quality adds to every block: a receipt compressed with finer steps fits slightly worse
+  everywhere, and in the design fold the smaller receipts were compressed more finely.
+- **Evidence.** Six scores were tried on the design fold; all of them are in the
+  [development report](../reports/forensics/system-1-development.md), with their average
+  precision and the size check of ADR-0015 over all 94 authentic receipts and over the 58 with
+  evidence. The chosen score is the only one whose interval includes zero on the receipts with
+  evidence (−0.12, from −0.37 to +0.15); its average precision on the design fold is 0.500
+  (chance 0.168). Over all 94 receipts it fails (−0.33), as does a score that only says
+  whether a receipt has evidence (−0.34): the abstention alone moves this check.
+- **Rule changed after the results.** That the check over all 94 receipts cannot tell
+  abstention from the effect it exists to catch was found while measuring these scores.
+  [ADR-0017](decisions/0017-size-check-on-evidence.md) runs the check on the receipts with
+  evidence, says that it was written after the results, shows them, and adds five safeguards.
+  The highest block suspicion, which has the highest average precision (0.608), fails the check
+  under both definitions and is not chosen.
+
+## System 1 is frozen
+
+With the map and the document score chosen, system 1 is frozen (ADR-0017): no further variant
+is tried on the design fold, and later changes are limited to defects (ADR-0014, decision 3),
+each reported with both results. Its single measurement on the clean folds follows the timing
+decided in step 4.3.

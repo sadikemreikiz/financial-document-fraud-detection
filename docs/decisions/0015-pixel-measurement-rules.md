@@ -1,6 +1,6 @@
 # 0015. How maps of pixel-forensics systems are measured
 
-- **Status**: Accepted
+- **Status**: Accepted; section 6 amended by [0017](0017-size-check-on-evidence.md)
 - **Date**: 2026-10-13 (before any pixel-forensics system has produced an output)
 
 ## Context
