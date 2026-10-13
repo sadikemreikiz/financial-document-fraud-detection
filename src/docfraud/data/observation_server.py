@@ -8,7 +8,7 @@ rectangle; the rectangle appears once the visibility question (field 10) is answ
 written to the log at once, so a session can stop at any point.
 
 :class:`ObservationApp` holds the logic and answers requests as plain values, so that it is
-tested without a network; :func:`make_server` puts it behind :mod:`http.server`. The page
+tested without a network; :func:`~docfraud.data.local_page.make_server` serves it. The page
 never receives the technique, entity or software labels, and every image passes the viewing
 lock of ADR-0014.
 """
@@ -16,9 +16,7 @@ lock of ADR-0014.
 import json
 from collections import OrderedDict
 from collections.abc import Iterable
-from dataclasses import dataclass
 from datetime import UTC, datetime
-from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
 from typing import Any
 from urllib.parse import parse_qs, urlsplit
@@ -27,6 +25,7 @@ import numpy as np
 import numpy.typing as npt
 from pydantic import ValidationError
 
+from docfraud.data.local_page import Response, error_response, is_json, json_response
 from docfraud.data.models import Document
 from docfraud.data.observation import (
     ASSISTANT,
@@ -48,25 +47,7 @@ from docfraud.evaluation.design_fold import (
     require_design_fold,
 )
 
-HOST = "127.0.0.1"
 _PAGE_CACHE = 3
-
-
-@dataclass(frozen=True, slots=True)
-class Response:
-    """What the server sends back for one request."""
-
-    status: int
-    content_type: str
-    body: bytes
-
-
-def _json(payload: Any, status: int = 200) -> Response:
-    return Response(status, "application/json", json.dumps(payload).encode())
-
-
-def _error(status: int, message: str) -> Response:
-    return _json({"error": message}, status)
 
 
 class ObservationApp:
@@ -113,32 +94,32 @@ class ObservationApp:
             if method == "GET":
                 return self._get(parts, parse_qs(url.query))
             if method == "POST":
-                if content_type.split(";", maxsplit=1)[0].strip() != "application/json":
-                    return _error(415, "answers must be sent as application/json")
+                if not is_json(content_type):
+                    return error_response(415, "answers must be sent as application/json")
                 return self._post(parts, json.loads(body or b"{}"))
         except NotInDesignFoldError as error:
-            return _error(403, str(error))
+            return error_response(403, str(error))
         except (ValueError, ValidationError) as error:
-            return _error(400, str(error))
-        return _error(405, f"method {method} not allowed")
+            return error_response(400, str(error))
+        return error_response(405, f"method {method} not allowed")
 
     def _get(self, parts: list[str], query: dict[str, list[str]]) -> Response:
         match parts:
             case []:
                 return Response(200, "text/html; charset=utf-8", _PAGE.encode())
             case ["api", "state"]:
-                return _json(self._state())
+                return json_response(self._state())
             case ["api", "region", key] if key in self._regions:
-                return _json(self._region(key))
+                return json_response(self._region(key))
             case ["api", "receipt", doc_id] if doc_id in self._plan.receipts:
-                return _json(self._receipt(doc_id))
+                return json_response(self._receipt(doc_id))
             case ["image", name] if name.endswith(".png"):
                 return self._image(name.removesuffix(".png"), query)
-        return _error(404, "not found")
+        return error_response(404, "not found")
 
     def _post(self, parts: list[str], payload: Any) -> Response:
         if not isinstance(payload, dict):
-            return _error(400, "expected a JSON object")
+            return error_response(400, "expected a JSON object")
         stamp = {
             "observed_at": datetime.now(UTC),
             "commit": self._commit,
@@ -149,17 +130,17 @@ class ObservationApp:
                 region = RegionObservation.model_validate(payload | stamp)
                 if region.detailed != (key in self._plan.full_form):
                     asked = "the full form" if key in self._plan.full_form else "visibility only"
-                    return _error(400, f"region {key} asks {asked}")
+                    return error_response(400, f"region {key} asks {asked}")
                 log = self._log.model_copy(update={"regions": self._log.regions | {key: region}})
             case ["api", "receipt", doc_id] if doc_id in self._plan.receipts:
                 receipt = ReceiptObservation.model_validate(payload | stamp)
                 receipts = self._log.receipts | {doc_id: receipt}
                 log = self._log.model_copy(update={"receipts": receipts})
             case _:
-                return _error(404, "not found")
+                return error_response(404, "not found")
         self._log = ObservationLog.model_validate(log.model_dump())
         save_log(self._log, self._log_path)
-        return _json({"saved": parts[-1]})
+        return json_response({"saved": parts[-1]})
 
     def _state(self) -> dict[str, Any]:
         turkish = self._language is PageLanguage.TURKISH
@@ -217,12 +198,12 @@ class ObservationApp:
     def _image(self, doc_id: str, query: dict[str, list[str]]) -> Response:
         require_design_fold(doc_id)
         if doc_id not in self._plan.receipts:  # only the forged receipts being observed
-            return _error(404, "not found")
+            return error_response(404, "not found")
         page = self._page(doc_id)
         top = int(query.get("top", ["0"])[0])
         bottom = int(query.get("bottom", [str(page.shape[0])])[0])
         if not 0 <= top < bottom <= page.shape[0]:
-            return _error(400, "rows outside the image")
+            return error_response(400, "rows outside the image")
         return Response(200, "image/png", png_bytes(np.ascontiguousarray(page[top:bottom])))
 
     def _page(self, doc_id: str) -> npt.NDArray[np.uint8]:
@@ -234,41 +215,6 @@ class ObservationApp:
         if len(self._pages) > _PAGE_CACHE:
             self._pages.popitem(last=False)
         return page
-
-
-def make_server(app: ObservationApp, port: int) -> HTTPServer:
-    """An HTTP server for the app on 127.0.0.1; port 0 picks a free port.
-
-    Requests whose Host header names another machine are refused, so that a web page cannot
-    reach the server through a rebound domain name.
-    """
-
-    class Handler(BaseHTTPRequestHandler):
-        def do_GET(self) -> None:
-            self._reply("GET", b"")
-
-        def do_POST(self) -> None:
-            length = int(self.headers.get("Content-Length") or 0)
-            self._reply("POST", self.rfile.read(length))
-
-        def _reply(self, method: str, body: bytes) -> None:
-            host = (self.headers.get("Host") or "").rsplit(":", 1)[0]
-            if host not in {HOST, "localhost"}:
-                response = _error(403, "only local requests are served")
-            else:
-                content_type = self.headers.get("Content-Type") or ""
-                response = app.handle(method, self.path, body, content_type)
-            self.send_response(response.status)
-            self.send_header("Content-Type", response.content_type)
-            self.send_header("Content-Length", str(len(response.body)))
-            self.send_header("Cache-Control", "no-store")
-            self.end_headers()
-            self.wfile.write(response.body)
-
-        def log_message(self, format: str, *args: Any) -> None:
-            del format, args
-
-    return HTTPServer((HOST, port), Handler)
 
 
 _PAGE = """<!doctype html>

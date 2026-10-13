@@ -10,9 +10,10 @@ import numpy as np
 import pytest
 from PIL import Image
 
+from docfraud.data.local_page import Response, make_server
 from docfraud.data.normalize import load_grayscale
 from docfraud.data.observation import ASSISTANT, FORM, load_log
-from docfraud.data.observation_server import ObservationApp, Response, make_server
+from docfraud.data.observation_server import ObservationApp
 from docfraud.data.observation_text import PAGE_TEXT, TURKISH_FORM, PageLanguage
 from tests.data.test_observation import CLEAN, FOLD, observation_documents, region_answers
 

@@ -477,8 +477,8 @@ def load_log(path: Path, observer: str) -> ObservationLog:
     return log
 
 
-def save_log(log: ObservationLog, path: Path) -> None:
-    """Write a log so that an interruption never leaves a half-written file."""
+def save_log(log: BaseModel, path: Path) -> None:
+    """Write a log as JSON so that an interruption never leaves a half-written file."""
     path.parent.mkdir(parents=True, exist_ok=True)
     partial = path.with_name(path.name + ".partial")
     partial.write_text(log.model_dump_json(indent=2) + "\n", encoding="utf-8")

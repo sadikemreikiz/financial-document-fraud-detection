@@ -7,6 +7,7 @@ from typing import Annotated
 import typer
 
 from docfraud.cli.common import DataDir, console, findit_documents, require_clean_commit
+from docfraud.data.local_page import HOST, make_server
 from docfraud.data.observation import (
     ASSISTANT,
     export_crops,
@@ -16,7 +17,7 @@ from docfraud.data.observation import (
     seal_matches,
 )
 from docfraud.data.observation_report import build_report, render_report
-from docfraud.data.observation_server import HOST, ObservationApp, make_server
+from docfraud.data.observation_server import ObservationApp
 from docfraud.data.observation_text import PageLanguage
 from docfraud.evaluation.runs import code_version
 
