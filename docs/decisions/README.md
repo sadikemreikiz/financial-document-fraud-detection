@@ -25,5 +25,6 @@ change of mind is a new record that supersedes the old one.
 | [0017](0017-size-check-on-evidence.md) | The size check runs on the receipts where a system has evidence | Accepted |
 | [0018](0018-global-trace-probe.md) | The global-trace probe: what it sees, its model and when it finds a trace | Accepted |
 | [0019](0019-system-6-trufor.md) | System 6 is TruFor | Accepted |
+| [0020](0020-clean-folds-measured-together.md) | The clean folds are measured once, for all Phase 4 systems together | Accepted |
 
 New records copy [template.md](template.md).
