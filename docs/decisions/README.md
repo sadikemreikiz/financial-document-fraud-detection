@@ -23,5 +23,6 @@ change of mind is a new record that supersedes the old one.
 | [0015](0015-pixel-measurement-rules.md) | How maps of pixel-forensics systems are measured | Accepted; section 6 amended by 0017 |
 | [0016](0016-system-1-jpeg-trace.md) | System 1 measures the JPEG trace instead of noise | Accepted |
 | [0017](0017-size-check-on-evidence.md) | The size check runs on the receipts where a system has evidence | Accepted |
+| [0018](0018-global-trace-probe.md) | The global-trace probe: what it sees, its model and when it finds a trace | Accepted |
 
 New records copy [template.md](template.md).
