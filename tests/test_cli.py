@@ -15,9 +15,11 @@ from docfraud.cli import app
 from docfraud.cli import baseline as cli_baseline
 from docfraud.cli import common as cli_common
 from docfraud.cli import data as cli_data
+from docfraud.cli import marks as cli_marks
 from docfraud.cli import observation as cli_observation
 from docfraud.cli import reading as cli_reading
 from docfraud.cli import rules as cli_rules
+from docfraud.data.benign_marks import ReceiptMarks, marks_plan, round_path
 from docfraud.data.download import SOURCES, DatasetSource
 from docfraud.data.gold import GoldManifest, load_manifest
 from docfraud.data.models import Label, Split
@@ -34,6 +36,7 @@ from docfraud.evaluation.runs import CodeVersion, JsonRunStore
 from docfraud.reading.fields import ReceiptFields
 from docfraud.reading.ocr import OcrResult
 from tests.baselines.test_bow import corpus
+from tests.data.test_benign_marks import HAND, PLAIN, check_log, mark, mark_log, marks_documents
 from tests.data.test_observation import observation_documents, receipt_answers
 from tests.evaluation.test_folds import documents as fold_documents
 from tests.fixtures.findit import load_toy
@@ -608,3 +611,81 @@ def test_observation_report_needs_an_intact_seal(observation_cli: Path) -> None:
     result = runner.invoke(app, ["observation", "report", *options])
     assert result.exit_code == 1
     assert "no longer matches its seal" in result.output
+
+
+@pytest.fixture
+def marks_cli(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
+    documents = marks_documents(tmp_path / "d")
+    monkeypatch.setattr(cli_marks, "findit_documents", lambda *_, **__: documents)
+    monkeypatch.setattr(cli_marks, "require_clean_commit", lambda: None)
+    monkeypatch.setattr(
+        cli_marks, "code_version", lambda: CodeVersion(commit="abc1234", dirty=False)
+    )
+    plan = marks_plan(documents)
+    receipts = {doc_id: ReceiptMarks() for doc_id in plan}
+    receipts[HAND] = ReceiptMarks(marks=(mark(),))
+    save_log(mark_log(receipts), round_path(tmp_path / "work", ASSISTANT, 1))
+    return tmp_path
+
+
+def marks_options(root: Path, *extra: str) -> list[str]:
+    return ["--work", str(root / "work"), "--records", str(root / "records"), *extra]
+
+
+def test_marks_views_are_written_plain_and_marked(marks_cli: Path) -> None:
+    result = runner.invoke(app, ["marks", "views", *marks_options(marks_cli)])
+    assert result.exit_code == 0, result.output
+    assert len(list((marks_cli / "work" / "views-1").glob("*-overview.png"))) == 3
+    result = runner.invoke(app, ["marks", "views", "--marked", *marks_options(marks_cli)])
+    assert result.exit_code == 0, result.output
+    assert len(list((marks_cli / "work" / "views-1-marked").glob("*-marked.png"))) == 6
+
+
+def test_marks_check_validates_a_round_and_shows_progress(marks_cli: Path) -> None:
+    options = ["--directory", str(marks_cli / "work"), "--records", str(marks_cli / "records")]
+    result = runner.invoke(app, ["marks", "check", *options])
+    assert result.exit_code == 0, result.output
+    assert "marks for 3 of 3 receipts, 1 boxes" in result.output
+    save_log(check_log({PLAIN: "correct"}), round_path(marks_cli / "work", "emre", 1))
+    result = runner.invoke(app, ["marks", "check", *options])
+    assert result.exit_code == 1
+    assert f"{PLAIN}: not a receipt of this round" in result.output
+    result = runner.invoke(app, ["marks", "check", "--round", "2", *options])
+    assert result.exit_code == 1
+    assert "round 1 is not checked yet" in result.output
+    empty = ["--directory", str(marks_cli / "nothing"), "--records", str(marks_cli / "records")]
+    result = runner.invoke(app, ["marks", "check", *empty])
+    assert result.exit_code == 1
+    assert "no log of round 1" in result.output
+
+
+def test_marks_page_serves_the_committed_marks_until_interrupted(
+    marks_cli: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    opened: list[str] = []
+
+    class FakeServer:
+        server_port = 9998
+        closed = False
+
+        def serve_forever(self) -> None:
+            raise KeyboardInterrupt
+
+        def server_close(self) -> None:
+            FakeServer.closed = True
+
+    monkeypatch.setattr(cli_marks, "make_server", lambda *_: FakeServer())
+    monkeypatch.setattr("webbrowser.open", opened.append)
+    records = marks_cli / "records"
+    command = ["marks", "page", "--checker", "emre", *marks_options(marks_cli)]
+    records.mkdir()
+    shutil.copy(round_path(marks_cli / "work", ASSISTANT, 1), round_path(records, ASSISTANT, 1))
+    result = runner.invoke(app, command)
+    assert result.exit_code == 0, result.output
+    assert opened == ["http://127.0.0.1:9998/"]
+    assert FakeServer.closed
+    broken = mark_log({HAND: ReceiptMarks()})  # misses the other receipts of the round
+    save_log(broken, round_path(records, ASSISTANT, 1))
+    result = runner.invoke(app, command)
+    assert result.exit_code == 1
+    assert "the marks are not as planned" in result.output

@@ -6,6 +6,7 @@ from pathlib import Path
 import pytest
 
 from docfraud.data.audit import build_audit, inspect_files, render_audit
+from docfraud.data.benign_marks import marks_plan
 from docfraud.data.download import FINDIT2
 from docfraud.data.duplicates import find_candidates, resolve_duplicates, undocumented
 from docfraud.data.findit import (
@@ -123,3 +124,20 @@ def test_stored_folds_match_the_training_split(documents: tuple[Document, ...]) 
     stored = load_folds(CV_FOLDS)
     check_folds(stored, documents)
     assert stored == assign_folds(documents, n_folds=stored.n_folds, seed=stored.seed)
+
+
+def test_the_benign_marks_plan_has_the_receipts_of_the_guide(
+    documents: tuple[Document, ...],
+) -> None:
+    by_id = {d.doc_id: d for d in documents}
+    plan = marks_plan(documents)
+    groups = Counter(
+        (by_id[d].label, by_id[d].handwritten_annotation, by_id[d].digital_annotation) for d in plan
+    )
+    assert len(plan) == len(set(plan)) == 58  # docs/benign-marks-guide.md, "Receipts"
+    assert groups == {
+        (Label.AUTHENTIC, True, False): 45,
+        (Label.AUTHENTIC, True, True): 4,
+        (Label.AUTHENTIC, False, True): 1,
+        (Label.FORGED, True, False): 8,
+    }
