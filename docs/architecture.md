@@ -13,7 +13,7 @@ and [ADR-0006](decisions/0006-llm-placement.md).
 | Reading (Phase 2) | Done: RapidOCR behind `OcrEngine`, rule-based parser (v2), gold-set evaluation ([results](../reports/reading/README.md)). `ReceiptFields` does not yet keep references to source tokens; that comes with linking in Phase 5 |
 | Evaluation and baselines (Phase 3) | Done: run records, stored folds, pre-registered metrics with floors, BoW + LR reproduced ([results](../reports/rules/README.md)) |
 | Detection: accounting rules (Phase 3) | Done: six rules with worded verdicts, scored by logistic regression. Verdicts are not yet `Finding` objects; that contract is introduced with fusion in Phase 5 |
-| Pixel forensics (Phase 4) | In progress: pre-registration ([ADR-0014](decisions/0014-pixel-forensics-preregistration.md)), viewing lock of the design fold, [observation form and page](forgery-observation-guide.md), [benign mark boxes and check page](benign-marks-guide.md) |
+| Pixel forensics (Phase 4) | In progress: pre-registration ([ADR-0014](decisions/0014-pixel-forensics-preregistration.md)), viewing lock of the design fold, [observation form and page](forgery-observation-guide.md), [benign mark boxes and check page](benign-marks-guide.md); [results so far](../reports/forensics/README.md) |
 | Copy-move, linking, fusion, decision, reporting, LLM | Not started (Phases 5 and 6) |
 
 ## Overview

@@ -2,7 +2,7 @@
 
 Phase 4, step 4.2, decision 4: where the benign marks of the design fold are, and how they are
 boxed and checked. Format version 1, fixed on 2026-10-13 before any authentic receipt of the
-design fold was viewed. Code: [`docfraud.data.benign_marks`](../src/docfraud/data/benign_marks.py)
+design fold was viewed for this step. Code: [`docfraud.data.benign_marks`](../src/docfraud/data/benign_marks.py)
 and [`docfraud.data.benign_marks_server`](../src/docfraud/data/benign_marks_server.py).
 
 ## Purpose
