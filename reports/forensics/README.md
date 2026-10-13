@@ -1,6 +1,6 @@
 # Phase 4 so far: pixel forensics
 
-This page summarises Phase 4 up to the end of step 4.2 and links the generated reports behind
+This page summarises Phase 4 up to the end of step 4.3 and links the generated reports behind
 every number. It is written by hand; when a number here and a generated report disagree, the
 generated report is right.
 
@@ -164,12 +164,83 @@ For the reference methods (step 4.3) and the evaluation:
   overlap of 0.71 with `X51008030565`, in a duplicate check). The exclusion list is fixed by
   ADR-0014 and stays unchanged: text scores reveal nothing about pixel traces.
 
+## 4.3 Reference methods without training
+
+Step 4.3 settled how pixel-forensics maps are measured, studied which traces the real edits
+leave, and fixed the systems that need no training of their own. It took six decisions; every
+one is recorded, and every number below comes from the design fold, which makes it optimistic.
+No clean-fold receipt was viewed, and nothing was predicted on a clean fold.
+
+| Decision | Record |
+|---|---|
+| 1. How maps are measured: top region, random baseline, pixel metrics, size check | [ADR-0015](../../docs/decisions/0015-pixel-measurement-rules.md) |
+| 2. Which traces code can measure in the real edits | [plan](../../docs/invisible-traces-study.md), [report](invisible-traces.md) |
+| 3. System 1, the classical map | [ADR-0016](../../docs/decisions/0016-system-1-jpeg-trace.md), [ADR-0017](../../docs/decisions/0017-size-check-on-evidence.md), [record](../../docs/system-1-development.md) |
+| 4. System 5, the global-trace probe | [ADR-0018](../../docs/decisions/0018-global-trace-probe.md), [development round](global-trace-probe-development.md) |
+| 5. System 6, a pretrained forensic model | [ADR-0019](../../docs/decisions/0019-system-6-trufor.md) |
+| 6. When the clean folds are measured | [ADR-0020](../../docs/decisions/0020-clean-folds-measured-together.md) |
+
+### Findings
+
+- **Noise carries no information on these receipts.** The paper of most receipts is clipped to
+  pure white, so its noise level is zero; 25 of 33 compared regions shared their value with every
+  control, and none of the other 8 stood out ([invisible traces](invisible-traces.md)).
+- **The earlier JPEG compression does.** SROIE stored the receipts as JPEG before Find-it-again
+  stored them as PNG. The agreement with the 8 x 8 block grid singled out 7 of 21 compared
+  regions where 1.1 were expected; the fit to the quantisation lattice of each block put all 8
+  regions it could measure below every control it could measure, and the rule fixed in advance
+  chose it
+  ([comparison](jpeg-trace-comparison.md)).
+- **System 1 is a JPEG-lattice map, now frozen.** It marks the blocks that no longer fit the
+  receipt's lattice and scores a receipt by how far its worst block stands out from the
+  receipt's own blocks. It has evidence on 73 of the 113 design-fold receipts (15 of the 19
+  forged) and on none of the 23 page scans, which carry no lattice. On the forged receipts with
+  evidence its top region hits an edit on 11 of 15, where a random box of the same size hits 2.0 %
+  of the time; its average precision is 0.500 against a chance level of 0.168
+  ([development report](system-1-development.md)).
+- **The probe finds no global trace on the design fold.** A random forest over 28 global
+  properties, trained on the other folds, reaches an average precision of 0.153 (chance 0.168);
+  alone, each property separates the classes with a ROC-AUC between 0.415 and 0.586
+  ([development round](global-trace-probe-development.md)).
+- **System 6 is TruFor.** Of one model per kind, only TruFor meets the licence, training-data and
+  resolution conditions of ADR-0014; on synthetic pages it runs on the reference machine at
+  native resolution up to about 3 MP, so page scans will be tiled.
+
+### Changed after looking, and disclosed
+
+- The fit of the lattice and its detectability rule were changed after checks on synthetic pages
+  and on authentic design-fold receipts, before any forged region was measured
+  ([plan](../../docs/jpeg-trace-comparison.md)).
+- System 1 scores the block alignments on every block instead of a random sample, after two
+  samples gave different answers on one receipt; this also found a lattice on 13 more receipts.
+- The size check of ADR-0015 ran over all 94 authentic receipts, which receipts without evidence
+  bias on their own. ADR-0017 moved it to the receipts with evidence **after** the candidate
+  document scores had been measured, says so, shows every candidate, and adds safeguards: the
+  candidate with the highest average precision (0.608) fails under both definitions and was not
+  chosen, while the chosen one (0.500) would have lost to a ratio (0.425) under the letter of the
+  old rule.
+- Several variants were tried on the same 19 forged receipts (three traces, two maps, six document
+  scores); every one is in the generated reports, and the design-fold numbers above are
+  optimistic for that reason too.
+
+### What comes next
+
+- **System 6's development round** chooses its tiling, map and document score on the design fold,
+  under the safeguards of ADR-0017.
+- **Steps 4.4 and 4.5** build the synthetic forgery engine and the learned models (systems 2 to 4).
+- **One clean measurement** follows when every system is frozen (ADR-0020); until then no
+  clean-fold number exists.
+
 ## Reproducing
 
 ```bash
 uv run python experiments/forensics_preregistration.py   # data behind ADR-0014
 uv run docfraud observation report                       # observations.md (checks the seal)
 uv run docfraud marks report                             # benign-marks.md
+uv run python experiments/invisible_traces.py            # invisible-traces.md
+uv run python experiments/jpeg_trace_comparison.py       # jpeg-trace-comparison.md
+uv run python experiments/system1_development.py         # system-1-development.md
+uv run python experiments/global_trace_probe.py          # global-trace-probe-development.md
 ```
 
 The observation logs are in `annotations/findit2/forgery-observations/` and the mark boxes and
