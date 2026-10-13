@@ -228,3 +228,9 @@ def box_fit(fits: npt.NDArray[np.float64], lattice: Lattice, box: BBox) -> float
     if chosen.size < MIN_BLOCKS:
         return None
     return float(chosen.mean())
+
+
+def measurable_share(page: npt.NDArray[np.uint8], lattice: Lattice) -> float:
+    """The share of the blocks of the receipt's grid that are measurable (0 without blocks)."""
+    blocks, _, _ = _blocks(page, lattice.offset)
+    return float(measurable(blocks).mean()) if blocks.size else 0.0
