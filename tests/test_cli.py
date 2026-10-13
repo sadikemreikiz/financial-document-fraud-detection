@@ -19,7 +19,7 @@ from docfraud.cli import marks as cli_marks
 from docfraud.cli import observation as cli_observation
 from docfraud.cli import reading as cli_reading
 from docfraud.cli import rules as cli_rules
-from docfraud.data.benign_marks import ReceiptMarks, marks_plan, round_path
+from docfraud.data.benign_marks import ReceiptMarks, load_mark_log, marks_plan, round_path
 from docfraud.data.download import SOURCES, DatasetSource
 from docfraud.data.gold import GoldManifest, load_manifest
 from docfraud.data.models import Label, Split
@@ -689,3 +689,18 @@ def test_marks_page_serves_the_committed_marks_until_interrupted(
     result = runner.invoke(app, command)
     assert result.exit_code == 1
     assert "the marks are not as planned" in result.output
+
+
+def test_marks_report_needs_finished_rounds(marks_cli: Path) -> None:
+    records, output = marks_cli / "records", marks_cli / "report.md"
+    records.mkdir()
+    shutil.copy(round_path(marks_cli / "work", ASSISTANT, 1), round_path(records, ASSISTANT, 1))
+    options = ["--records", str(records), "--output", str(output)]
+    result = runner.invoke(app, ["marks", "report", *options])
+    assert result.exit_code == 1
+    assert "the rounds are not finished" in result.output
+    plan = load_mark_log(round_path(records, ASSISTANT, 1)).receipts
+    save_log(check_log(dict.fromkeys(plan, "correct")), round_path(records, "emre", 1))
+    result = runner.invoke(app, ["marks", "report", *options])
+    assert result.exit_code == 0, result.output
+    assert output.read_text(encoding="utf-8").startswith("# Benign marks: design fold")

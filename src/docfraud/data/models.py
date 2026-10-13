@@ -85,6 +85,10 @@ class BBox(_Frozen):
         """Return whether the box lies entirely inside an image of the given size."""
         return self.x2 <= width and self.y2 <= height
 
+    def overlaps(self, other: BBox) -> bool:
+        """Return whether the two boxes share at least one pixel."""
+        return self.x < other.x2 and other.x < self.x2 and self.y < other.y2 and other.y < self.y2
+
 
 class Region(_Frozen):
     """An annotated region of a forged document."""

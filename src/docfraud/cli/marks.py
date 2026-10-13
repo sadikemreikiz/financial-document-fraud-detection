@@ -12,6 +12,7 @@ from docfraud.data.benign_marks import (
     ReceiptMarks,
     check_problems,
     export_views,
+    final_marks,
     image_sizes,
     load_check_log,
     load_mark_log,
@@ -21,6 +22,7 @@ from docfraud.data.benign_marks import (
     round_path,
     round_receipts,
 )
+from docfraud.data.benign_marks_report import build_report, render_report
 from docfraud.data.benign_marks_server import MarkCheckApp
 from docfraud.data.local_page import HOST, make_server
 from docfraud.data.models import Document
@@ -33,6 +35,8 @@ MARK_WORK = Path("artifacts/benign-marks")
 
 MARK_RECORDS = Path("annotations/findit2/benign-marks")
 """Finished marks and checks of every round, under version control."""
+
+MARK_REPORT = Path("reports/forensics/benign-marks.md")
 
 app = typer.Typer(
     help="Box the benign marks of the design fold (docs/benign-marks-guide.md).",
@@ -164,3 +168,29 @@ def marks_page(  # noqa: PLR0913, PLR0917 - one option per setting
         console.print("stopped; run the same command to continue")
     finally:
         server.server_close()
+
+
+@app.command("report")
+def marks_report(
+    data_dir: DataDir = Path("data"),
+    records: Records = MARK_RECORDS,
+    checker: Checker = "emre",
+    output: Annotated[Path, typer.Option(help="Where to write the report.")] = MARK_REPORT,
+) -> None:
+    """Analyse the finished rounds as the guide fixes it and write the Markdown report.
+
+    Every round must be boxed and checked, and the procedure finished: every receipt accepted,
+    or the last round held.
+    """
+    documents = findit_documents(data_dir)
+    plan = marks_plan(documents)
+    mark_logs, check_logs = load_rounds(records, ASSISTANT, checker)
+    try:
+        final = final_marks(plan, mark_logs, check_logs)
+    except ValueError as error:
+        console.print(f"[red]the rounds are not finished[/red]: {error}")
+        raise typer.Exit(1) from error
+    tables = build_report(documents, plan, final, check_logs, image_sizes(documents, plan))
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text(render_report(tables), encoding="utf-8")
+    console.print(f"[green]written[/green] {output}")
