@@ -1,0 +1,1288 @@
+{
+  "version": 1,
+  "annotator": "claude",
+  "round": 1,
+  "commit": "49ff9a6b030b50160e8ebddcb422d1afd1e83fbc",
+  "marked_at": "2026-10-13T07:58:48.600550Z",
+  "receipts": {
+    "X00016469670": {
+      "marks": [
+        {
+          "box": {
+            "x": 100,
+            "y": 24,
+            "width": 212,
+            "height": 41
+          },
+          "kind": "digital_note",
+          "touches_print": "no",
+          "note": ""
+        },
+        {
+          "box": {
+            "x": 278,
+            "y": 733,
+            "width": 128,
+            "height": 104
+          },
+          "kind": "pen_mark",
+          "touches_print": "yes",
+          "note": "circle around the handwritten amount"
+        },
+        {
+          "box": {
+            "x": 290,
+            "y": 768,
+            "width": 94,
+            "height": 47
+          },
+          "kind": "handwriting",
+          "touches_print": "no",
+          "note": ""
+        }
+      ],
+      "note": ""
+    },
+    "X00016469671": {
+      "marks": [
+        {
+          "box": {
+            "x": 114,
+            "y": 52,
+            "width": 214,
+            "height": 40
+          },
+          "kind": "digital_note",
+          "touches_print": "no",
+          "note": ""
+        },
+        {
+          "box": {
+            "x": 277,
+            "y": 618,
+            "width": 132,
+            "height": 101
+          },
+          "kind": "pen_mark",
+          "touches_print": "yes",
+          "note": "a circle around the handwritten amount; its top crosses the printed amount"
+        },
+        {
+          "box": {
+            "x": 309,
+            "y": 663,
+            "width": 84,
+            "height": 50
+          },
+          "kind": "handwriting",
+          "touches_print": "no",
+          "note": ""
+        }
+      ],
+      "note": ""
+    },
+    "X51005230617": {
+      "marks": [
+        {
+          "box": {
+            "x": 396,
+            "y": 18,
+            "width": 192,
+            "height": 170
+          },
+          "kind": "handwriting",
+          "touches_print": "no",
+          "note": "three lines written together; the last digit's tail runs to the top corner"
+        }
+      ],
+      "note": ""
+    },
+    "X51005337867": {
+      "marks": [
+        {
+          "box": {
+            "x": 289,
+            "y": 255,
+            "width": 180,
+            "height": 62
+          },
+          "kind": "handwriting",
+          "touches_print": "no",
+          "note": "a name above the header"
+        },
+        {
+          "box": {
+            "x": 440,
+            "y": 1876,
+            "width": 70,
+            "height": 47
+          },
+          "kind": "handwriting",
+          "touches_print": "no",
+          "note": "initials"
+        }
+      ],
+      "note": ""
+    },
+    "X51005442327": {
+      "marks": [
+        {
+          "box": {
+            "x": 570,
+            "y": 297,
+            "width": 101,
+            "height": 44
+          },
+          "kind": "handwriting",
+          "touches_print": "no",
+          "note": "a code above the header"
+        }
+      ],
+      "note": "A small dark speck of about 15 px at x 785-800, y 1043-1060, outside the receipt, may be dust or a tiny pen mark; not boxed."
+    },
+    "X51005442333": {
+      "marks": [
+        {
+          "box": {
+            "x": 593,
+            "y": 347,
+            "width": 85,
+            "height": 51
+          },
+          "kind": "handwriting",
+          "touches_print": "no",
+          "note": "a code above the header"
+        }
+      ],
+      "note": ""
+    },
+    "X51005442388": {
+      "marks": [
+        {
+          "box": {
+            "x": 537,
+            "y": 281,
+            "width": 86,
+            "height": 32
+          },
+          "kind": "handwriting",
+          "touches_print": "no",
+          "note": "a code just above the printed company number"
+        },
+        {
+          "box": {
+            "x": 444,
+            "y": 424,
+            "width": 54,
+            "height": 26
+          },
+          "kind": "handwriting",
+          "touches_print": "no",
+          "note": "a word in parentheses beside an item"
+        },
+        {
+          "box": {
+            "x": 439,
+            "y": 506,
+            "width": 67,
+            "height": 25
+          },
+          "kind": "handwriting",
+          "touches_print": "no",
+          "note": "a word in parentheses beside an item"
+        }
+      ],
+      "note": ""
+    },
+    "X51005453804": {
+      "marks": [
+        {
+          "box": {
+            "x": 18,
+            "y": 14,
+            "width": 115,
+            "height": 29
+          },
+          "kind": "digital_note",
+          "touches_print": "no",
+          "note": "a typed number at the top"
+        },
+        {
+          "box": {
+            "x": 514,
+            "y": 449,
+            "width": 36,
+            "height": 56
+          },
+          "kind": "pen_mark",
+          "touches_print": "yes",
+          "note": "a tick; its top touches the printed dashed line"
+        },
+        {
+          "box": {
+            "x": 518,
+            "y": 516,
+            "width": 39,
+            "height": 34
+          },
+          "kind": "pen_mark",
+          "touches_print": "no",
+          "note": "a tick"
+        }
+      ],
+      "note": ""
+    },
+    "X51005587254": {
+      "marks": [],
+      "note": "No mark found. Print of another document shows through the paper (large faint letters behind the header and the totals), and dark specks lie around 'RECEIPT'; neither is a mark."
+    },
+    "X51005663273": {
+      "marks": [
+        {
+          "box": {
+            "x": 41,
+            "y": 75,
+            "width": 280,
+            "height": 40
+          },
+          "kind": "handwriting",
+          "touches_print": "no",
+          "note": "a number above the header"
+        },
+        {
+          "box": {
+            "x": 534,
+            "y": 1012,
+            "width": 139,
+            "height": 71
+          },
+          "kind": "pen_mark",
+          "touches_print": "no",
+          "note": "a circle around the printed total"
+        },
+        {
+          "box": {
+            "x": 673,
+            "y": 1334,
+            "width": 38,
+            "height": 40
+          },
+          "kind": "pen_mark",
+          "touches_print": "yes",
+          "note": "a tick across the last digit and the printed frame"
+        }
+      ],
+      "note": ""
+    },
+    "X51005663274": {
+      "marks": [
+        {
+          "box": {
+            "x": 105,
+            "y": 5,
+            "width": 333,
+            "height": 53
+          },
+          "kind": "handwriting",
+          "touches_print": "no",
+          "note": "a number at the top edge"
+        },
+        {
+          "box": {
+            "x": 642,
+            "y": 1324,
+            "width": 129,
+            "height": 87
+          },
+          "kind": "highlight",
+          "touches_print": "yes",
+          "note": "a light tilted band over the printed tax amount, probably highlighter, with a curved stroke at its right end"
+        }
+      ],
+      "note": ""
+    },
+    "X51005663279": {
+      "marks": [
+        {
+          "box": {
+            "x": 210,
+            "y": 9,
+            "width": 333,
+            "height": 52
+          },
+          "kind": "handwriting",
+          "touches_print": "no",
+          "note": "a number at the top edge"
+        },
+        {
+          "box": {
+            "x": 749,
+            "y": 1752,
+            "width": 88,
+            "height": 44
+          },
+          "kind": "handwriting",
+          "touches_print": "no",
+          "note": "the tax amount written below the printed summary"
+        }
+      ],
+      "note": "Very faint curved lines at x 100-260, y 60-180 and a dark smudge at x 105-135, y 65-90 may be traces of an earlier mark or dirt; not boxed."
+    },
+    "X51005676542": {
+      "marks": [
+        {
+          "box": {
+            "x": 87,
+            "y": 31,
+            "width": 326,
+            "height": 66
+          },
+          "kind": "handwriting",
+          "touches_print": "no",
+          "note": "a number at the top edge"
+        },
+        {
+          "box": {
+            "x": 835,
+            "y": 1689,
+            "width": 41,
+            "height": 62
+          },
+          "kind": "pen_mark",
+          "touches_print": "no",
+          "note": "a tick beside the printed summary"
+        }
+      ],
+      "note": ""
+    },
+    "X51005677336": {
+      "marks": [
+        {
+          "box": {
+            "x": 47,
+            "y": 20,
+            "width": 321,
+            "height": 58
+          },
+          "kind": "handwriting",
+          "touches_print": "no",
+          "note": "a number at the top edge"
+        },
+        {
+          "box": {
+            "x": 813,
+            "y": 1685,
+            "width": 63,
+            "height": 62
+          },
+          "kind": "pen_mark",
+          "touches_print": "yes",
+          "note": "a tick across the printed frame"
+        }
+      ],
+      "note": "A black disc at the left edge, near y 1200, is a punched hole, not a mark."
+    },
+    "X51005715451": {
+      "marks": [
+        {
+          "box": {
+            "x": 224,
+            "y": 26,
+            "width": 251,
+            "height": 45
+          },
+          "kind": "digital_note",
+          "touches_print": "no",
+          "note": "a typed number above the header"
+        }
+      ],
+      "note": "A thin broken line runs across the whole width from y 1081 at the left to y 1117 at the right, through 'Total Savings'; it looks like a fold, not a pen line, and is not boxed."
+    },
+    "X51005745249": {
+      "marks": [
+        {
+          "box": {
+            "x": 333,
+            "y": 115,
+            "width": 182,
+            "height": 116
+          },
+          "kind": "handwriting",
+          "touches_print": "unclear",
+          "note": "characters above the header; they cross a faint dotted line that may be print"
+        },
+        {
+          "box": {
+            "x": 674,
+            "y": 1138,
+            "width": 37,
+            "height": 41
+          },
+          "kind": "pen_mark",
+          "touches_print": "no",
+          "note": "a short mark beside the printed total, a tick or a letter"
+        },
+        {
+          "box": {
+            "x": 313,
+            "y": 1351,
+            "width": 200,
+            "height": 159
+          },
+          "kind": "handwriting",
+          "touches_print": "no",
+          "note": "characters and a long vertical stroke written together"
+        },
+        {
+          "box": {
+            "x": 676,
+            "y": 1388,
+            "width": 45,
+            "height": 60
+          },
+          "kind": "pen_mark",
+          "touches_print": "no",
+          "note": "a tick"
+        }
+      ],
+      "note": "Many dark specks around the top marks are dust."
+    },
+    "X51005746203": {
+      "marks": [
+        {
+          "box": {
+            "x": 286,
+            "y": 27,
+            "width": 112,
+            "height": 139
+          },
+          "kind": "handwriting",
+          "touches_print": "yes",
+          "note": "a number in parentheses; the closing stroke crosses the printed header"
+        },
+        {
+          "box": {
+            "x": 618,
+            "y": 1698,
+            "width": 36,
+            "height": 43
+          },
+          "kind": "pen_mark",
+          "touches_print": "no",
+          "note": "a short mark beside the printed net total, a tick or a letter"
+        },
+        {
+          "box": {
+            "x": 617,
+            "y": 1879,
+            "width": 69,
+            "height": 64
+          },
+          "kind": "pen_mark",
+          "touches_print": "no",
+          "note": "a tick"
+        },
+        {
+          "box": {
+            "x": 454,
+            "y": 1957,
+            "width": 262,
+            "height": 82
+          },
+          "kind": "handwriting",
+          "touches_print": "no",
+          "note": "the total written at the bottom"
+        }
+      ],
+      "note": "Dark specks around the top mark are dust."
+    },
+    "X51005749904": {
+      "marks": [
+        {
+          "box": {
+            "x": 604,
+            "y": 1247,
+            "width": 103,
+            "height": 86
+          },
+          "kind": "pen_mark",
+          "touches_print": "no",
+          "note": "a tick beside the printed total"
+        },
+        {
+          "box": {
+            "x": 76,
+            "y": 1535,
+            "width": 295,
+            "height": 153
+          },
+          "kind": "handwriting",
+          "touches_print": "no",
+          "note": "two words at the bottom left"
+        }
+      ],
+      "note": "Dark blobs near the top corners are dust or holes, not marks."
+    },
+    "X51005749905": {
+      "marks": [
+        {
+          "box": {
+            "x": 638,
+            "y": 1530,
+            "width": 96,
+            "height": 95
+          },
+          "kind": "pen_mark",
+          "touches_print": "no",
+          "note": "a tick with a long stroke"
+        },
+        {
+          "box": {
+            "x": 163,
+            "y": 1785,
+            "width": 385,
+            "height": 178
+          },
+          "kind": "handwriting",
+          "touches_print": "no",
+          "note": "two words at the bottom"
+        }
+      ],
+      "note": "A dark smear with faint streaks at x 740-830, y 60-170, above the header, looks like dirt rather than a pen mark; not boxed."
+    },
+    "X51005757286": {
+      "marks": [
+        {
+          "box": {
+            "x": 9,
+            "y": 0,
+            "width": 194,
+            "height": 59
+          },
+          "kind": "handwriting",
+          "touches_print": "no",
+          "note": "a number at the top edge"
+        }
+      ],
+      "note": "Dark specks below it are dust; faint print of another sheet shows through."
+    },
+    "X51005806679": {
+      "marks": [
+        {
+          "box": {
+            "x": 636,
+            "y": 1556,
+            "width": 148,
+            "height": 66
+          },
+          "kind": "pen_mark",
+          "touches_print": "yes",
+          "note": "a circle around a printed amount, across the printed dashed line"
+        }
+      ],
+      "note": ""
+    },
+    "X51005806716": {
+      "marks": [
+        {
+          "box": {
+            "x": 442,
+            "y": 977,
+            "width": 223,
+            "height": 121
+          },
+          "kind": "pen_mark",
+          "touches_print": "yes",
+          "note": "an oval around the printed tax and total amounts, across print"
+        }
+      ],
+      "note": "Faint print of another sheet shows through the paper."
+    },
+    "X51005806718": {
+      "marks": [
+        {
+          "box": {
+            "x": 572,
+            "y": 960,
+            "width": 144,
+            "height": 95
+          },
+          "kind": "pen_mark",
+          "touches_print": "no",
+          "note": "a circle around a printed amount"
+        }
+      ],
+      "note": "A black hole with faint creases around it at x 50-100, y 360-425 is damage, not a mark; part of another receipt shows at the right edge."
+    },
+    "X51006334766": {
+      "marks": [
+        {
+          "box": {
+            "x": 661,
+            "y": 1396,
+            "width": 56,
+            "height": 53
+          },
+          "kind": "pen_mark",
+          "touches_print": "yes",
+          "note": "a tick across the last printed digit"
+        },
+        {
+          "box": {
+            "x": 410,
+            "y": 1500,
+            "width": 225,
+            "height": 106
+          },
+          "kind": "handwriting",
+          "touches_print": "no",
+          "note": "the total written at the bottom, with a stroke after it"
+        }
+      ],
+      "note": "Dark specks at the top left are dust."
+    },
+    "X51006334927": {
+      "marks": [
+        {
+          "box": {
+            "x": 162,
+            "y": 574,
+            "width": 303,
+            "height": 97
+          },
+          "kind": "handwriting",
+          "touches_print": "no",
+          "note": "two words below the header"
+        },
+        {
+          "box": {
+            "x": 625,
+            "y": 888,
+            "width": 61,
+            "height": 63
+          },
+          "kind": "pen_mark",
+          "touches_print": "no",
+          "note": "a tick beside the printed tax"
+        },
+        {
+          "box": {
+            "x": 586,
+            "y": 1126,
+            "width": 135,
+            "height": 103
+          },
+          "kind": "signature",
+          "touches_print": "no",
+          "note": ""
+        }
+      ],
+      "note": "Two black discs at the left edge (near y 355 and y 1110) are punched holes; dark specks at the top are dust."
+    },
+    "X51006387740": {
+      "marks": [
+        {
+          "box": {
+            "x": 499,
+            "y": 383,
+            "width": 232,
+            "height": 74
+          },
+          "kind": "stamp",
+          "touches_print": "yes",
+          "note": "a 'POSTED' stamp over the printed GST number"
+        },
+        {
+          "box": {
+            "x": 661,
+            "y": 913,
+            "width": 65,
+            "height": 78
+          },
+          "kind": "pen_mark",
+          "touches_print": "no",
+          "note": "a tick beside the printed GST"
+        }
+      ],
+      "note": "Very faint thin strokes at x 505-565, y 885-940, left of the printed sales total, may be traces of an erased mark; not boxed. Dark specks and a short dark stroke at the top are dust."
+    },
+    "X51006387931": {
+      "marks": [
+        {
+          "box": {
+            "x": 363,
+            "y": 421,
+            "width": 77,
+            "height": 55
+          },
+          "kind": "handwriting",
+          "touches_print": "no",
+          "note": "a faint 'OK'"
+        },
+        {
+          "box": {
+            "x": 170,
+            "y": 713,
+            "width": 240,
+            "height": 68
+          },
+          "kind": "stamp",
+          "touches_print": "yes",
+          "note": "a 'POSTED' stamp over printed text"
+        },
+        {
+          "box": {
+            "x": 462,
+            "y": 800,
+            "width": 60,
+            "height": 60
+          },
+          "kind": "pen_mark",
+          "touches_print": "yes",
+          "note": "a tick across the printed double line"
+        }
+      ],
+      "note": "A black disc at the left near y 400 is a punched hole; a faint diagonal line with dark specks at x 55-115, y 55-140 looks like a scratch, not a mark."
+    },
+    "X51006414425": {
+      "marks": [
+        {
+          "box": {
+            "x": 2820,
+            "y": 1224,
+            "width": 512,
+            "height": 173
+          },
+          "kind": "handwriting",
+          "touches_print": "no",
+          "note": "a code above the header"
+        }
+      ],
+      "note": ""
+    },
+    "X51006414593": {
+      "marks": [
+        {
+          "box": {
+            "x": 2620,
+            "y": 1014,
+            "width": 403,
+            "height": 192
+          },
+          "kind": "handwriting",
+          "touches_print": "no",
+          "note": "a code above the header"
+        }
+      ],
+      "note": ""
+    },
+    "X51006414677": {
+      "marks": [
+        {
+          "box": {
+            "x": 2814,
+            "y": 680,
+            "width": 494,
+            "height": 176
+          },
+          "kind": "handwriting",
+          "touches_print": "no",
+          "note": "a code above the header"
+        }
+      ],
+      "note": ""
+    },
+    "X51006414714": {
+      "marks": [
+        {
+          "box": {
+            "x": 2519,
+            "y": 955,
+            "width": 454,
+            "height": 228
+          },
+          "kind": "handwriting",
+          "touches_print": "no",
+          "note": "a code above the header"
+        }
+      ],
+      "note": ""
+    },
+    "X51006414718": {
+      "marks": [
+        {
+          "box": {
+            "x": 2577,
+            "y": 864,
+            "width": 469,
+            "height": 166
+          },
+          "kind": "handwriting",
+          "touches_print": "no",
+          "note": "a code above the header"
+        }
+      ],
+      "note": ""
+    },
+    "X51006912959": {
+      "marks": [
+        {
+          "box": {
+            "x": 2657,
+            "y": 210,
+            "width": 476,
+            "height": 198
+          },
+          "kind": "handwriting",
+          "touches_print": "no",
+          "note": "a faint code above the header"
+        }
+      ],
+      "note": ""
+    },
+    "X51006912998": {
+      "marks": [
+        {
+          "box": {
+            "x": 3004,
+            "y": 989,
+            "width": 392,
+            "height": 164
+          },
+          "kind": "handwriting",
+          "touches_print": "no",
+          "note": "a code above the header"
+        }
+      ],
+      "note": ""
+    },
+    "X51006913018": {
+      "marks": [
+        {
+          "box": {
+            "x": 2822,
+            "y": 335,
+            "width": 418,
+            "height": 128
+          },
+          "kind": "handwriting",
+          "touches_print": "no",
+          "note": "a code above the header"
+        },
+        {
+          "box": {
+            "x": 2487,
+            "y": 1545,
+            "width": 301,
+            "height": 171
+          },
+          "kind": "handwriting",
+          "touches_print": "no",
+          "note": "Chinese characters beside an item"
+        },
+        {
+          "box": {
+            "x": 2474,
+            "y": 1760,
+            "width": 304,
+            "height": 164
+          },
+          "kind": "handwriting",
+          "touches_print": "no",
+          "note": "Chinese characters beside an item"
+        }
+      ],
+      "note": ""
+    },
+    "X51006913054": {
+      "marks": [
+        {
+          "box": {
+            "x": 2472,
+            "y": 252,
+            "width": 426,
+            "height": 134
+          },
+          "kind": "handwriting",
+          "touches_print": "no",
+          "note": "a faint code above the header"
+        }
+      ],
+      "note": ""
+    },
+    "X51006913067": {
+      "marks": [
+        {
+          "box": {
+            "x": 2622,
+            "y": 1357,
+            "width": 421,
+            "height": 151
+          },
+          "kind": "handwriting",
+          "touches_print": "no",
+          "note": "a code above the header"
+        }
+      ],
+      "note": ""
+    },
+    "X51007103610": {
+      "marks": [
+        {
+          "box": {
+            "x": 78,
+            "y": 80,
+            "width": 161,
+            "height": 72
+          },
+          "kind": "handwriting",
+          "touches_print": "no",
+          "note": "a number above the header"
+        }
+      ],
+      "note": "Print from the back of the paper shows through."
+    },
+    "X51007103681": {
+      "marks": [
+        {
+          "box": {
+            "x": 75,
+            "y": 52,
+            "width": 181,
+            "height": 61
+          },
+          "kind": "handwriting",
+          "touches_print": "no",
+          "note": "a number above the header"
+        }
+      ],
+      "note": "Another printed sheet lies over the top right corner; print shows through from the back."
+    },
+    "X51007103692": {
+      "marks": [
+        {
+          "box": {
+            "x": 49,
+            "y": 46,
+            "width": 167,
+            "height": 62
+          },
+          "kind": "handwriting",
+          "touches_print": "no",
+          "note": "a number above the header"
+        }
+      ],
+      "note": "Thin irregular lines with specks at x 490-595, y 150-220 look like creases, not a mark; print shows through from the back."
+    },
+    "X51007225406": {
+      "marks": [
+        {
+          "box": {
+            "x": 16,
+            "y": 882,
+            "width": 219,
+            "height": 118
+          },
+          "kind": "handwriting",
+          "touches_print": "yes",
+          "note": "words at the bottom left; the last letter touches the printed 'Thank'"
+        }
+      ],
+      "note": ""
+    },
+    "X51007231331": {
+      "marks": [
+        {
+          "box": {
+            "x": 2565,
+            "y": 1059,
+            "width": 481,
+            "height": 181
+          },
+          "kind": "handwriting",
+          "touches_print": "no",
+          "note": "a code above the header"
+        }
+      ],
+      "note": ""
+    },
+    "X51007231343": {
+      "marks": [
+        {
+          "box": {
+            "x": 2652,
+            "y": 1107,
+            "width": 411,
+            "height": 154
+          },
+          "kind": "handwriting",
+          "touches_print": "no",
+          "note": "a code above the header"
+        }
+      ],
+      "note": ""
+    },
+    "X51007231372": {
+      "marks": [
+        {
+          "box": {
+            "x": 2647,
+            "y": 1147,
+            "width": 466,
+            "height": 183
+          },
+          "kind": "handwriting",
+          "touches_print": "no",
+          "note": "a code above the header"
+        }
+      ],
+      "note": ""
+    },
+    "X51007339162": {
+      "marks": [
+        {
+          "box": {
+            "x": 8,
+            "y": 601,
+            "width": 61,
+            "height": 96
+          },
+          "kind": "pen_mark",
+          "touches_print": "no",
+          "note": "a looped pen line at the left margin"
+        }
+      ],
+      "note": "Print from the back of the paper shows through."
+    },
+    "X51007339658": {
+      "marks": [
+        {
+          "box": {
+            "x": 68,
+            "y": 22,
+            "width": 470,
+            "height": 162
+          },
+          "kind": "handwriting",
+          "touches_print": "no",
+          "note": "two lines of words above the header"
+        }
+      ],
+      "note": ""
+    },
+    "X51007391390": {
+      "marks": [
+        {
+          "box": {
+            "x": 10,
+            "y": 32,
+            "width": 114,
+            "height": 27
+          },
+          "kind": "digital_note",
+          "touches_print": "no",
+          "note": "a typed number at the top"
+        },
+        {
+          "box": {
+            "x": 548,
+            "y": 737,
+            "width": 34,
+            "height": 37
+          },
+          "kind": "pen_mark",
+          "touches_print": "no",
+          "note": "a short stroke beside the printed cash amount"
+        },
+        {
+          "box": {
+            "x": 262,
+            "y": 902,
+            "width": 253,
+            "height": 73
+          },
+          "kind": "stamp",
+          "touches_print": "no",
+          "note": "a 'CHECKED' stamp"
+        }
+      ],
+      "note": ""
+    },
+    "X51007846266": {
+      "marks": [
+        {
+          "box": {
+            "x": 2489,
+            "y": 1079,
+            "width": 499,
+            "height": 157
+          },
+          "kind": "handwriting",
+          "touches_print": "no",
+          "note": "a code above the header"
+        }
+      ],
+      "note": ""
+    },
+    "X51007846269": {
+      "marks": [
+        {
+          "box": {
+            "x": 2590,
+            "y": 1947,
+            "width": 461,
+            "height": 196
+          },
+          "kind": "handwriting",
+          "touches_print": "no",
+          "note": "a code above the header"
+        }
+      ],
+      "note": ""
+    },
+    "X51007846288": {
+      "marks": [
+        {
+          "box": {
+            "x": 2800,
+            "y": 1260,
+            "width": 452,
+            "height": 182
+          },
+          "kind": "handwriting",
+          "touches_print": "no",
+          "note": "a code above the header"
+        }
+      ],
+      "note": "A broken thin vertical line at x 3405-3420, y 2130-3000, right of the receipt, looks like a scanner or paper-edge line, not a mark."
+    },
+    "X51007846302": {
+      "marks": [
+        {
+          "box": {
+            "x": 2698,
+            "y": 755,
+            "width": 392,
+            "height": 177
+          },
+          "kind": "handwriting",
+          "touches_print": "no",
+          "note": "a code above the header"
+        }
+      ],
+      "note": ""
+    },
+    "X51007846303": {
+      "marks": [
+        {
+          "box": {
+            "x": 2629,
+            "y": 1350,
+            "width": 485,
+            "height": 152
+          },
+          "kind": "handwriting",
+          "touches_print": "no",
+          "note": "a code above the header"
+        }
+      ],
+      "note": "Fine dot noise covers the receipt area."
+    },
+    "X51007846307": {
+      "marks": [
+        {
+          "box": {
+            "x": 2713,
+            "y": 1511,
+            "width": 395,
+            "height": 152
+          },
+          "kind": "handwriting",
+          "touches_print": "no",
+          "note": "a code above the header"
+        }
+      ],
+      "note": ""
+    },
+    "X51007846350": {
+      "marks": [
+        {
+          "box": {
+            "x": 2643,
+            "y": 1266,
+            "width": 424,
+            "height": 162
+          },
+          "kind": "handwriting",
+          "touches_print": "no",
+          "note": "a code above the header"
+        }
+      ],
+      "note": ""
+    },
+    "X51007846388": {
+      "marks": [
+        {
+          "box": {
+            "x": 2645,
+            "y": 1510,
+            "width": 406,
+            "height": 157
+          },
+          "kind": "handwriting",
+          "touches_print": "no",
+          "note": "a code above the header"
+        }
+      ],
+      "note": ""
+    },
+    "X51007846397": {
+      "marks": [
+        {
+          "box": {
+            "x": 2802,
+            "y": 1883,
+            "width": 420,
+            "height": 136
+          },
+          "kind": "handwriting",
+          "touches_print": "no",
+          "note": "a code above the header"
+        }
+      ],
+      "note": "A thin vertical line at about x 3420 from y 1650 to y 2950, right of the receipt, looks like a paper edge or scanner line, not a mark."
+    },
+    "X51007846451": {
+      "marks": [
+        {
+          "box": {
+            "x": 2595,
+            "y": 1604,
+            "width": 362,
+            "height": 117
+          },
+          "kind": "handwriting",
+          "touches_print": "no",
+          "note": "a code above the header"
+        }
+      ],
+      "note": ""
+    },
+    "X51008123604": {
+      "marks": [
+        {
+          "box": {
+            "x": 42,
+            "y": 144,
+            "width": 252,
+            "height": 128
+          },
+          "kind": "handwriting",
+          "touches_print": "no",
+          "note": "two words above the header"
+        }
+      ],
+      "note": "Dark specks at the top right are dust."
+    }
+  }
+}
