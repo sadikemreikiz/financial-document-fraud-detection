@@ -20,5 +20,6 @@ change of mind is a new record that supersedes the old one.
 | [0012](0012-accounting-rules-evaluation.md) | How the accounting rules are developed and measured | Accepted |
 | [0013](0013-success-criterion-and-floors.md) | Success against published work must beat the floor, not only the published number | Accepted |
 | [0014](0014-pixel-forensics-preregistration.md) | How pixel forensics is developed and measured | Accepted |
+| [0015](0015-pixel-measurement-rules.md) | How maps of pixel-forensics systems are measured | Accepted |
 
 New records copy [template.md](template.md).

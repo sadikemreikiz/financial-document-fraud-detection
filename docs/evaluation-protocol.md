@@ -110,6 +110,9 @@ T1 and T2 are both headline results and are always reported side by side.
 - Region level: hit rate, the fraction of forged documents whose highest-scoring predicted region
   overlaps an annotated modified rectangle.
 - Copy-move source localisation: hit rate against annotated original areas, where available.
+  *(Clarified on 2026-10-13 by [ADR-0015](decisions/0015-pixel-measurement-rules.md): the
+  highest-scoring region is derived from each map by one rule, and pixel metrics are computed
+  per document and averaged, with copy-source pixels ignored.)*
 
 **Explanations**
 

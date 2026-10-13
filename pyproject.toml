@@ -22,6 +22,7 @@ dependencies = [
     "pydantic>=2.13.5",
     "rapidocr>=3.9.2",
     "scikit-learn>=1.9.1",
+    "scipy>=1.18.1",
     "typer>=0.27.2",
 ]
 
@@ -121,7 +122,7 @@ exclude_also = [
 ]
 
 [[tool.mypy.overrides]]
-module = ["doctr.*"]
+module = ["doctr.*", "scipy.*"]  # neither ships type information
 ignore_missing_imports = true
 
 [tool.pydantic-mypy]
