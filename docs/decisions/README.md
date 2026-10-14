@@ -19,7 +19,7 @@ change of mind is a new record that supersedes the old one.
 | [0011](0011-baseline-reproduction.md) | Reproducing the published BoW + LR baseline: configuration and success criterion | Accepted |
 | [0012](0012-accounting-rules-evaluation.md) | How the accounting rules are developed and measured | Accepted |
 | [0013](0013-success-criterion-and-floors.md) | Success against published work must beat the floor, not only the published number | Accepted |
-| [0014](0014-pixel-forensics-preregistration.md) | How pixel forensics is developed and measured | Accepted; system 1 superseded by 0016 |
+| [0014](0014-pixel-forensics-preregistration.md) | How pixel forensics is developed and measured | Accepted; system 1 superseded by 0016; tile size and mixing ratio fixed earlier by 0022 |
 | [0015](0015-pixel-measurement-rules.md) | How maps of pixel-forensics systems are measured | Accepted; section 6 amended by 0017 |
 | [0016](0016-system-1-jpeg-trace.md) | System 1 measures the JPEG trace instead of noise | Accepted |
 | [0017](0017-size-check-on-evidence.md) | The size check runs on the receipts where a system has evidence | Accepted |
@@ -27,5 +27,6 @@ change of mind is a new record that supersedes the old one.
 | [0019](0019-system-6-trufor.md) | System 6 is TruFor | Accepted |
 | [0020](0020-clean-folds-measured-together.md) | The clean folds are measured once, for all Phase 4 systems together | Accepted |
 | [0021](0021-synthetic-forgery-engine.md) | The synthetic forgery engine: techniques, targets, variants, output, realism review | Accepted |
+| [0022](0022-learned-models.md) | The learned models: architecture, targets, data, training and development round | Accepted |
 
 New records copy [template.md](template.md).

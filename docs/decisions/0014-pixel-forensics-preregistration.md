@@ -1,7 +1,8 @@
 # 0014. How pixel forensics is developed and measured
 
 - **Status**: Accepted; system 1 of decision 6 superseded by
-  [0016](0016-system-1-jpeg-trace.md)
+  [0016](0016-system-1-jpeg-trace.md); the mixing ratio of decision 6 and the tile size and overlap
+  of decision 7 fixed before the development round by [0022](0022-learned-models.md)
 - **Date**: 2026-10-07 (before any pixel-forensics code exists and before any receipt has been
   viewed for Phase 4; earlier contact with training receipts is listed under Disclosures)
 
