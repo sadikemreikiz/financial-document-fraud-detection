@@ -1,10 +1,11 @@
 """Development round of system 6, TruFor (ADR-0019), on the design fold.
 
 Writes reports/forensics/system-6-development.md, the evidence behind the choices recorded in
-docs/system-6-development.md: how the receipts were tiled, which document score passes the size
-check of ADR-0015 and ADR-0017 in the order fixed before the run, how often the top region of
-TruFor's map hits an edit against its random baseline, and whether it falls on a benign mark.
-Only the design fold is read; every measurement is computed by code.
+docs/system-6-development.md: how the receipts were tiled, which tiles the highest tile score
+comes from, which document score passes the size check of ADR-0015 and ADR-0017 under the rules
+of the record, how often the top region of TruFor's map hits an edit against its random
+baseline, and whether it falls on a benign mark. Only the design fold is read; every
+measurement is computed by code.
 
 TruFor runs on the Apple GPU, whose results differ slightly from the CPU's, so this report is
 not part of ``make reports``. The outputs are cached (``CachedTruFor``) and the report
@@ -20,6 +21,7 @@ from importlib.metadata import version
 from pathlib import Path
 
 import numpy as np
+import numpy.typing as npt
 
 from docfraud.data.benign_marks import Mark, final_marks, load_rounds, marks_plan
 from docfraud.data.findit import load_findit2
@@ -48,6 +50,9 @@ from docfraud.forensics.trufor import (
     TruForModel,
     TruForOutput,
     analyse,
+    axis_windows,
+    owners,
+    sigmoid,
 )
 from docfraud.markdown import Cell, Table, render_table
 from docfraud.reading.ocr import CachedOcr, RapidOcrEngine
@@ -60,16 +65,26 @@ TRUFOR = ROOT / "artifacts" / "trufor"
 TRUFOR_CACHE = TRUFOR / "outputs"
 MARK_RECORDS = ROOT / "annotations" / "findit2" / "benign-marks"
 LARGE_SIDE = 6000
+INK, BLANK_SHARE = 128, 0.001  # a tile is blank if fewer than 0.1 % of its pixels are below 128
+NEAR_CUT = 8  # pixels, one JPEG block
 VERSIONED = ("torch", "torchvision", "timm", "yacs", "numpy")
 
-INTEGRITY = "TruFor's integrity score, highest over tiles"
+HIGHEST_TILE = "TruFor's integrity score, highest over tiles"
 CONTRAST = "highest map value minus the receipt's 99th percentile"
+WHOLE = "TruFor's integrity score of the whole receipt"
 SCORES: dict[str, Callable[[TruForOutput], float]] = {
-    INTEGRITY: lambda o: o.integrity_score(),
+    HIGHEST_TILE: lambda o: o.highest_tile_score(),
     CONTRAST: lambda o: float(o.localisation.max() - np.percentile(o.localisation, 99)),
+    WHOLE: lambda o: o.integrity_score(),
 }
-"""The document scores of system 6, in the order fixed before the run (ADR-0019): the first
-whose size check passes is chosen; if none passes, the development round stops."""
+"""Every document score tried for system 6, in the order they were considered."""
+
+FIXED_ORDER = (HIGHEST_TILE, CONTRAST)
+"""The order fixed before the run (record, section 1): the first whose size check passes."""
+
+AFTER_RESULTS = WHOLE
+"""Added after the results of the fixed order (record, section 3): chosen if its size check
+passes, whatever its average precision; otherwise the outcome of the fixed order stands."""
 
 
 @dataclass(frozen=True, slots=True)
@@ -87,6 +102,32 @@ class Measured:
     hit: bool | None  # forged receipts with a modified rectangle only
     baseline: float | None
     share: float  # area of the top region over the area of the page
+    tiles: tuple[tuple[bool, float], ...]  # tiled receipts: whether each tile is blank, its score
+    pooling_error: float  # one window: pooled logit minus TruFor's own logit; NaN if tiled
+    cuts: tuple[float, float] | None  # tiled receipts: see cut_check
+
+
+def cut_check(values: npt.NDArray[np.float32]) -> tuple[float, float]:
+    """Where the map's peak lies against the cuts between tiles, and how the map jumps there.
+
+    Returns:
+        The distance in pixels from the peak to the nearest cut, and the 99th percentile of the
+        jumps between neighbouring pixels across the cuts over that of the jumps inside tiles.
+    """
+    height, width = values.shape
+    rows = np.flatnonzero(np.diff(owners(axis_windows(height), height)))  # last row before a cut
+    columns = np.flatnonzero(np.diff(owners(axis_windows(width), width)))
+    peak_y, peak_x = np.unravel_index(int(np.argmax(values)), values.shape)
+    distance = min(
+        [abs(peak_y - (r + 0.5)) for r in rows] + [abs(peak_x - (c + 0.5)) for c in columns]
+    )
+    vertical = np.abs(np.diff(values, axis=0))
+    horizontal = np.abs(np.diff(values, axis=1))
+    across = np.concatenate([vertical[rows].ravel(), horizontal[:, columns].ravel()])
+    inside = np.concatenate(
+        [np.delete(vertical, rows, axis=0).ravel(), np.delete(horizontal, columns, axis=1).ravel()]
+    )
+    return float(distance), float(np.percentile(across, 99) / np.percentile(inside, 99))
 
 
 def size_class(height: int, width: int, windows: int) -> str:
@@ -118,6 +159,9 @@ def measure(
         region = top_region(output.localisation)
         evidence = bool(np.ptp(output.localisation) > 0)
         scores = {name: score(output) for name, score in SCORES.items()}
+        blank = [
+            float((page[w.y : w.y2, w.x : w.x2] < INK).mean()) < BLANK_SHARE for w in output.windows
+        ]
         label = document.label or Label.AUTHENTIC  # every training receipt has a label
         modified, sources = annotated_rectangles(document)
         words = [token.box for token in ocr.recognize(page).tokens]
@@ -140,6 +184,11 @@ def measure(
                 hit,
                 baseline,
                 region.width * region.height / (width * height),
+                tuple(zip(blank, map(sigmoid, output.logits), strict=True))
+                if len(output.windows) > 1
+                else (),
+                output.pooled_logit - output.logits[0] if len(output.windows) == 1 else np.nan,
+                cut_check(output.localisation) if len(output.windows) > 1 else None,
             )
         )
         if document.doc_id in marks:
@@ -152,10 +201,10 @@ def measure(
                     words,
                     marks[document.doc_id],
                     evidence=evidence,
-                    score=scores[INTEGRITY],  # replaced by the chosen score once it is known
+                    score=scores[WHOLE],  # replaced by the chosen score once it is known
                 )
             )
-        print(f"{count}/{len(ordered)} {document.doc_id}: {len(output.windows)} windows")  # noqa: T201
+        print(f"{count}/{len(ordered)} {document.doc_id}", flush=True)  # noqa: T201
     return measured, mark_checks
 
 
@@ -210,6 +259,93 @@ def run_table(measured: Sequence[Measured]) -> Table:
     )
 
 
+def tile_table(measured: Sequence[Measured]) -> Table:
+    """Whether the highest tile score of a tiled receipt comes from a tile without print."""
+    rows: list[list[Cell]] = []
+    for size in SIZES[1:]:
+        chosen = [m for m in measured if m.size == size]
+        if not chosen:
+            continue
+        blank = [[s for b, s in m.tiles if b] for m in chosen]
+        inked = [[s for b, s in m.tiles if not b] for m in chosen]
+        rows.append(
+            [
+                size,
+                len(chosen),
+                sum(len(m.tiles) for m in chosen),
+                sum(map(len, blank)),
+                sum(max(m.tiles, key=lambda tile: tile[1])[0] for m in chosen),
+                float(np.median([max(s) for s in blank if s])) if any(blank) else None,
+                float(np.median([max(s) for s in inked if s])),
+            ]
+        )
+    return Table(
+        "Where the highest tile score comes from",
+        [
+            "Tiled receipts",
+            "Count",
+            "Tiles",
+            "Blank tiles",
+            "Receipts whose highest tile is blank",
+            "Median highest score of a blank tile",
+            "Median highest score of a tile with print",
+        ],
+        rows,
+        f"Blank: fewer than {100 * BLANK_SHARE:.1f} % of the tile's pixels are darker than "
+        f"{INK}. Descriptive, found after the results of the fixed order; it is why the record "
+        "adds the integrity score of the whole receipt (section 3).",
+    )
+
+
+def cut_table(measured: Sequence[Measured]) -> Table:
+    """The map of tiled receipts at the cuts between tiles."""
+    rows: list[list[Cell]] = []
+    for size in SIZES[1:]:
+        cuts = [m.cuts for m in measured if m.size == size and m.cuts is not None]
+        if cuts:
+            rows.append(
+                [
+                    size,
+                    len(cuts),
+                    sum(distance <= NEAR_CUT for distance, _ in cuts),
+                    sum(ratio > 1 for _, ratio in cuts),
+                    float(np.median([ratio for _, ratio in cuts])),
+                    max(ratio for _, ratio in cuts),
+                ]
+            )
+    return Table(
+        "The cuts between tiles",
+        [
+            "Tiled receipts",
+            "Count",
+            f"Peak of the map within {NEAR_CUT} px of a cut",
+            "Jumps larger across cuts than inside tiles",
+            "Median ratio",
+            "Largest ratio",
+        ],
+        rows,
+        "A cut lies between two pixels that come from different tiles. Jumps: absolute "
+        "differences of the map between neighbouring pixels; the ratio compares their 99th "
+        "percentiles across the cuts and inside the tiles. Each tile sees another context, so "
+        "some jump at the cuts is expected; values put in the wrong place, a defect of the "
+        "stitching, are excluded by the tests. Descriptive, added after the results of the fixed "
+        "order.",
+    )
+
+
+def pooling_table(measured: Sequence[Measured]) -> Table:
+    """How closely the pooled logit reproduces TruFor's own on receipts of one window."""
+    errors = [abs(m.pooling_error) for m in measured if np.isfinite(m.pooling_error)]
+    return Table(
+        "The whole-receipt score against TruFor's own",
+        ["Receipts of one window", "Largest difference of the logits"],
+        [[len(errors), f"{max(errors):.1e}"]],
+        "For a receipt of one window, the logit of TruFor's last layers for the statistics "
+        "pooled from its maps, against the logit TruFor computes itself: the same computation, "
+        "in double instead of single precision. The score of such a receipt uses TruFor's own.",
+    )
+
+
 def _interval(estimate: Estimate) -> str:
     return f"{estimate.value:+.2f} ({estimate.low:+.2f} to {estimate.high:+.2f})"
 
@@ -233,21 +369,26 @@ def size_checks(measured: Sequence[Measured]) -> dict[str, tuple[Estimate, Estim
     }
 
 
+def fixed_order_score(checks: Mapping[str, tuple[Estimate, Estimate]]) -> str | None:
+    """The first score of the fixed order whose size check passes on receipts with evidence."""
+    return next((name for name in FIXED_ORDER if _passes(checks[name][0])), None)
+
+
 def chosen_score(checks: Mapping[str, tuple[Estimate, Estimate]]) -> str | None:
-    """The first score in the fixed order whose size check passes on receipts with evidence."""
-    return next((name for name in SCORES if _passes(checks[name][0])), None)
+    """The score added after the results if its size check passes, else the fixed order's."""
+    return AFTER_RESULTS if _passes(checks[AFTER_RESULTS][0]) else fixed_order_score(checks)
 
 
 def score_table(
     measured: Sequence[Measured], checks: Mapping[str, tuple[Estimate, Estimate]]
 ) -> Table:
-    """Both document scores with their average precision and size checks."""
+    """Every document score with its average precision and size checks."""
     labels = np.array([m.label is Label.FORGED for m in measured])
     authentic = [m for m in measured if m.label is Label.AUTHENTIC]
     with_evidence = sum(m.evidence for m in authentic)
     rows: list[list[Cell]] = [
         [
-            f"{position}. {name}",
+            f"{position}. {name}" + (" (added after 1 and 2)" if name == AFTER_RESULTS else ""),
             average_precision(labels, np.array([m.scores[name] for m in measured])),
             _interval(checks[name][0]),
             _interval(checks[name][1]),
@@ -256,7 +397,7 @@ def score_table(
         for position, name in enumerate(SCORES, start=1)
     ]
     return Table(
-        "Document scores, in the order fixed before the run",
+        "Document scores",
         [
             "Document score",
             f"Average precision (chance {labels.mean():.3f})",
@@ -268,8 +409,9 @@ def score_table(
         "Size check: the Spearman rank correlation of document score and pixel count with its "
         "95 % interval (bootstrap over receipts, 10,000 resamples, seed 0), as ADR-0015 "
         "(section 6) fixes it; it passes if the interval includes zero on the receipts with "
-        "evidence (ADR-0017). The first score that passes is chosen, whatever its average "
-        "precision. Design fold: optimistic.",
+        "evidence (ADR-0017). Scores 1 and 2 are the order fixed before the run; score 3 was "
+        "added after their results and replaces the outcome of that order if it passes "
+        "(record, section 3). No choice depends on average precision. Design fold: optimistic.",
     )
 
 
@@ -322,7 +464,7 @@ def localisation_table(measured: Sequence[Measured]) -> Table:
 
 
 def receipt_table(measured: Sequence[Measured]) -> Table:
-    """Each forged receipt: its top region and both scores, ranked among all receipts."""
+    """Each forged receipt: its top region and every score, ranked among all receipts."""
     ranks = {
         name: {
             m.doc_id: 1 + sum(o.scores[name] > m.scores[name] for o in measured) for m in measured
@@ -348,17 +490,22 @@ def receipt_table(measured: Sequence[Measured]) -> Table:
     )
 
 
-def header(model: TruForModel, chosen: str | None) -> str:
-    """Title, provenance and the outcome of the fixed order."""
+def header(model: TruForModel, checks: Mapping[str, tuple[Estimate, Estimate]]) -> str:
+    """Title, provenance and the outcome of the rules of the record."""
     commit = code_version()
     state = "with uncommitted changes" if commit.dirty is not False else "clean"
     versions = ", ".join(f"{name} {version(name)}" for name in VERSIONED)
+    fixed, chosen = fixed_order_score(checks), chosen_score(checks)
     outcome = (
         f"In the order fixed before the run, the first document score whose size check passes "
-        f"is **{chosen}**."
-        if chosen
-        else "**No document score passes the size check**: the development round stops here, "
-        "as fixed before the run, and the next step is discussed."
+        f"is {fixed}. "
+        if fixed
+        else "In the order fixed before the run, no score passes. "
+    ) + (
+        f"The score added after those results passes its size check and is chosen: **{chosen}**."
+        if chosen == AFTER_RESULTS
+        else f"The score added after those results fails its size check, so the outcome of the "
+        f"fixed order stands: **{chosen or 'none; the development round stops'}**."
     )
     return (
         "# System 6 development: design fold\n\n"
@@ -391,8 +538,7 @@ def main() -> None:
     )
     print(f"measured in {time.perf_counter() - start:.0f} s")  # noqa: T201
     checks = size_checks(measured)
-    chosen = chosen_score(checks)
-    name = chosen or INTEGRITY  # the mark tables rank by the chosen score
+    name = chosen_score(checks) or WHOLE  # the mark tables rank by the chosen score
     by_id = {m.doc_id: m for m in measured}
     authentic_scores = [m.scores[name] for m in measured if m.label is Label.AUTHENTIC]
     ranked = [replace(c, score=by_id[c.doc_id].scores[name]) for c in mark_checks]
@@ -400,6 +546,9 @@ def main() -> None:
     tables = [
         run_table(measured),
         repeatability(model, first),
+        tile_table(measured),
+        cut_table(measured),
+        pooling_table(measured),
         score_table(measured, checks),
         by_size_table(measured),
         localisation_table(measured),
@@ -407,7 +556,7 @@ def main() -> None:
         *mark_tables(ranked, authentic_scores),
     ]
     body = "\n".join(render_table(t) for t in tables)
-    OUTPUT.write_text(header(model, chosen) + body, encoding="utf-8")
+    OUTPUT.write_text(header(model, checks) + body, encoding="utf-8")
     print(f"written: {OUTPUT.relative_to(ROOT)}")  # noqa: T201
 
 

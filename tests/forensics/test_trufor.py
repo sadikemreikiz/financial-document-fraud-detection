@@ -12,9 +12,11 @@ from docfraud.forensics.trufor import (
     OVERLAP,
     TILE,
     CachedTruFor,
+    WindowOutput,
     analyse,
     axis_windows,
     owners,
+    pooled_statistics,
     sigmoid,
     stitch,
     tiles,
@@ -22,16 +24,30 @@ from docfraud.forensics.trufor import (
 
 
 class FakeModel:
-    """Returns the window itself as its map, and the window's mean as its logit."""
+    """Derives its maps from the window's pixels, and the logits from simple sums."""
 
     identifier = "fake-1"
 
     def __init__(self) -> None:
         self.windows: list[tuple[int, int]] = []
 
-    def predict(self, window: npt.NDArray[np.uint8]) -> tuple[npt.NDArray[np.float32], float]:
+    def predict(self, window: npt.NDArray[np.uint8]) -> WindowOutput:
         self.windows.append(window.shape)
-        return (window / 255).astype(np.float32), float(window.mean())
+        return WindowOutput(*page_maps(window), float(window.mean()))
+
+    def detect(self, statistics: npt.NDArray[np.float64]) -> float:
+        return float(statistics.sum())
+
+
+def page_maps(
+    page: npt.NDArray[np.uint8],
+) -> tuple[npt.NDArray[np.float32], npt.NDArray[np.float32], npt.NDArray[np.float32]]:
+    """The fake model's localisation, confidence and difference maps of a whole page."""
+    return (
+        (page / 255).astype(np.float32),
+        (page / 100 - 1).astype(np.float32),
+        (page / 50 - 2).astype(np.float32),
+    )
 
 
 def noise(height: int, width: int, seed: int = 0) -> npt.NDArray[np.uint8]:
@@ -138,12 +154,43 @@ def test_the_stitched_map_puts_every_value_where_its_pixel_is() -> None:
 
 
 @pytest.mark.usefixtures("small_tiles")
-def test_the_integrity_score_is_the_highest_over_tiles() -> None:
+def test_the_highest_tile_score_is_the_highest_over_tiles() -> None:
     page = np.zeros((130, 101), dtype=np.uint8)
     page[120:, 90:] = 200  # only the last tile sees the bright corner
     output = analyse(page, FakeModel())
     assert output.logits[-1] == max(output.logits) > 0
-    assert output.integrity_score() == sigmoid(max(output.logits))
+    assert output.highest_tile_score() == sigmoid(max(output.logits))
+
+
+@pytest.mark.usefixtures("small_tiles")
+def test_a_tiled_receipt_is_scored_from_the_statistics_of_its_stitched_maps() -> None:
+    page = noise(130, 101)
+    output = analyse(page, FakeModel())
+    _, confidence, difference = page_maps(page)  # what the stitched maps must equal
+    expected = float(pooled_statistics(confidence, difference).sum())
+    assert output.pooled_logit == expected
+    assert output.receipt_logit() == expected
+    assert output.integrity_score() == sigmoid(expected)
+
+
+def test_a_receipt_of_one_window_keeps_trufors_own_logit() -> None:
+    page = noise(300, 200)
+    output = analyse(page, FakeModel())
+    assert output.receipt_logit() == output.logits[0] == float(page.mean())
+    assert output.integrity_score() == output.highest_tile_score()
+    assert output.pooled_logit == float(pooled_statistics(*page_maps(page)[1:]).sum())
+
+
+def test_the_statistics_are_those_of_trufors_confidence_pooling() -> None:
+    confidence = np.zeros(2, dtype=np.float32)  # sigmoid 0.5 everywhere: equal weights
+    difference = np.array([1.0, 3.0], dtype=np.float32)
+    statistics = pooled_statistics(confidence, difference)
+    soft_max, soft_min = np.log((np.e + np.e**3) / 2), -np.log((np.e**-1 + np.e**-3) / 2)
+    np.testing.assert_allclose(statistics, [0, 0, 0, 0, soft_min, soft_max, 2, 5])
+    weighted = pooled_statistics(np.array([30.0, -30.0], dtype=np.float32), difference)
+    np.testing.assert_allclose(weighted[4:], [1, 1, 1, 1], atol=1e-12)  # the reliable pixel
+    with pytest.raises(ValueError, match="differ"):
+        pooled_statistics(confidence, difference[:1])
 
 
 def test_a_small_page_is_analysed_whole() -> None:
@@ -163,8 +210,9 @@ def test_only_grayscale_pages_are_analysed() -> None:
 
 def test_a_map_of_the_wrong_size_is_refused() -> None:
     class Shrinking(FakeModel):
-        def predict(self, window: npt.NDArray[np.uint8]) -> tuple[npt.NDArray[np.float32], float]:
-            return np.zeros((window.shape[0] // 2, window.shape[1]), dtype=np.float32), 0.0
+        def predict(self, window: npt.NDArray[np.uint8]) -> WindowOutput:
+            half = np.zeros((window.shape[0] // 2, window.shape[1]), dtype=np.float32)
+            return WindowOutput(half, half, half, 0.0)
 
     with pytest.raises(ValueError, match="map of"):
         analyse(noise(30, 20), Shrinking())
@@ -191,7 +239,10 @@ def test_the_cache_returns_the_stored_output_without_running_the_model(tmp_path:
     np.testing.assert_array_equal(again.localisation, first.localisation)
     assert again.windows == first.windows
     assert again.logits == first.logits
+    assert again.pooled_logit == first.pooled_logit
     assert again.seconds == first.seconds
     CachedTruFor(model, tmp_path).analyse(noise(130, 101, seed=1))  # another page: a miss
     assert len(model.windows) == 2 * calls
-    assert [p.parent.name for p in tmp_path.rglob("*.npz")] == ["fake-1-tile48-overlap16"] * 2
+    assert [p.parent.name for p in tmp_path.rglob("*.npz")] == [
+        "fake-1-tile48-overlap16-format2"
+    ] * 2
