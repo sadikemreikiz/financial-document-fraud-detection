@@ -136,3 +136,14 @@ the development round starts.
   the loss of the best constant prediction for that batch while the learning rate was still
   warming up. Losses of single steps are therefore read against that baseline, as the failure
   rule reads them.
+- **Inference** ([`inference.py`](../src/docfraud/forensics/learned/inference.py)). As decision 1
+  of ADR-0022 describes: system 6's windows, joined so that each pixel comes from the window in
+  which it lies farthest from an inner edge; the map is the sigmoid of the logits. Both document
+  scores are computed from the logits in double precision, which keeps probabilities near 1
+  distinct up to logits of about 36, where single precision rounds them to 1 from about 17. A
+  test shows that a network whose view reaches less than half the overlap gives the same map in
+  windows as in one pass; the network's view is wider, so the development round measures the
+  jumps across the cuts. With the smoke run's weights, on 23 receipts of round 2's training folds
+  (none of the design fold): ordinary receipts took a median of 0.20 s (1 to 6 windows, at most
+  1.8 s), page scans 6.3 s (24 windows); the maps on the processor and on the GPU differed by at
+  most 1.4e-5. The design fold thus takes about 3 minutes per run.
