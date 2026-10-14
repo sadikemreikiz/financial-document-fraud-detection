@@ -1,5 +1,5 @@
 .DEFAULT_GOAL := help
-.PHONY: help install lint format typecheck test test-data check data audit reports check-reports bench-ocr clean
+.PHONY: help install lint format typecheck test test-data check data audit reports check-reports bench-ocr trufor clean
 
 help:  ## Show available targets
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*## "}; {printf "  %-12s %s\n", $$1, $$2}'
@@ -36,7 +36,8 @@ audit:  ## Regenerate the data audit report
 
 # Reports that need the dataset and the OCR cache. Not included: the gold evaluations of
 # reports/reading, which depend on the parser version that produced them (see their headers),
-# and the OCR benchmark (make bench-ocr).
+# the OCR benchmark (make bench-ocr) and the development round of system 6 (make trufor), whose
+# model runs on the Apple GPU.
 reports:  ## Regenerate every report that the current code produces
 	uv run docfraud data audit
 	uv run python experiments/parser_development.py
@@ -63,6 +64,11 @@ check-reports: reports  ## Fail if a committed report differs from its regenerat
 bench-ocr:  ## Compare OCR engines on training receipts (downloads docTR and PyTorch)
 	uv run --with "python-doctr[torch]>=1.1.0" --with "torch>=2.14.1" --with "torchvision>=0.29.1" \
 		python experiments/ocr_benchmark.py
+
+trufor:  ## System 6 development round on the design fold (downloads TruFor and PyTorch)
+	uv run docfraud forensics download-trufor
+	uv run --with torch==2.14.1 --with torchvision==0.29.1 --with timm==1.0.30 --with yacs==0.1.8 \
+		python -I experiments/system6_development.py
 
 clean:  ## Remove caches and build outputs (never touches data/ or artifacts/)
 	rm -rf .mypy_cache .ruff_cache .pytest_cache .coverage htmlcov dist build
