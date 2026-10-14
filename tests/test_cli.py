@@ -20,29 +20,41 @@ from docfraud.cli import marks as cli_marks
 from docfraud.cli import observation as cli_observation
 from docfraud.cli import reading as cli_reading
 from docfraud.cli import rules as cli_rules
+from docfraud.cli import synthesis as cli_synthesis
 from docfraud.data.benign_marks import ReceiptMarks, load_mark_log, marks_plan, round_path
 from docfraud.data.download import SOURCES, PinnedFile
 from docfraud.data.gold import GoldManifest, load_manifest
-from docfraud.data.models import Label, Split
+from docfraud.data.models import Entity, Label, Split, Technique
 from docfraud.data.observation import (
     ASSISTANT,
     ObservationLog,
     ReceiptObservation,
+    Visibility,
     save_log,
     seal,
 )
 from docfraud.data.splits import TestSetLockedError
+from docfraud.evaluation.design_fold import DESIGN_FOLD
 from docfraud.evaluation.folds import assign_folds, load_folds, save_folds
 from docfraud.evaluation.runs import CodeVersion, JsonRunStore
 from docfraud.forensics.trufor import TRUFOR_CODE, TRUFOR_WEIGHTS
 from docfraud.reading.fields import ReceiptFields
 from docfraud.reading.ocr import OcrResult
+from docfraud.synthesis.engine import Engine
 from docfraud.synthesis.fonts import font_files
+from docfraud.synthesis.review import ReviewLog, review_sample
+from docfraud.synthesis.review import log_path as review_path
+from docfraud.synthesis.review import save_log as save_review
+from docfraud.synthesis.rounds import development_set
+from docfraud.synthesis.statistics import RoundStatistics, Template
 from tests.baselines.test_bow import corpus
 from tests.data.test_benign_marks import HAND, PLAIN, check_log, mark, mark_log, marks_documents
 from tests.data.test_observation import observation_documents, receipt_answers
 from tests.evaluation.test_folds import documents as fold_documents
 from tests.fixtures.findit import load_toy
+from tests.synthesis.pages import documents as synthesis_documents
+from tests.synthesis.pages import font as synthesis_font
+from tests.synthesis.pages import receipt as synthesis_receipt
 
 runner = CliRunner()
 
@@ -746,3 +758,90 @@ def test_marks_report_needs_finished_rounds(marks_cli: Path) -> None:
     result = runner.invoke(app, ["marks", "report", *options])
     assert result.exit_code == 0, result.output
     assert output.read_text(encoding="utf-8").startswith("# Benign marks: design fold")
+
+
+@pytest.fixture
+def synthesis_cli(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> tuple[Path, Engine]:
+    """The review commands on drawn receipts: an engine of the design-fold round."""
+    (tmp_path / "d").mkdir()
+    documents, folds = synthesis_documents(tmp_path / "d", per_fold=12)
+    statistics = RoundStatistics(
+        DESIGN_FOLD,
+        tuple(Template((Technique.CPI,), e, 1) for e in (Entity.PRODUCT, Entity.TOTAL_PAYMENT)),
+        (4,),
+        {},
+        {},
+    )
+    engine = Engine(statistics, documents, folds, synthesis_receipt, synthesis_font)
+    monkeypatch.setattr(cli_synthesis, "findit_documents", lambda *_, **__: documents)
+    monkeypatch.setattr(cli_synthesis, "load_folds", lambda _: folds)
+    monkeypatch.setattr(cli_synthesis, "cached_ocr", lambda _: None)
+    monkeypatch.setattr(cli_synthesis, "round_engine", lambda *_: engine)
+    monkeypatch.setattr(cli_synthesis, "require_clean_commit", lambda: None)
+    monkeypatch.setattr(
+        cli_synthesis, "code_version", lambda: CodeVersion(commit="abc1234", dirty=False)
+    )
+    return tmp_path, engine
+
+
+def test_review_page_serves_until_interrupted(
+    synthesis_cli: tuple[Path, Engine], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    opened: list[str] = []
+
+    class FakeServer:
+        server_port = 9997
+        closed = False
+
+        def serve_forever(self) -> None:
+            raise KeyboardInterrupt
+
+        def server_close(self) -> None:
+            FakeServer.closed = True
+
+    monkeypatch.setattr(cli_synthesis, "make_server", lambda *_: FakeServer())
+    monkeypatch.setattr("webbrowser.open", opened.append)
+    records = synthesis_cli[0] / "review"
+    result = runner.invoke(app, ["synthesis", "review", "--records", str(records)])
+    assert result.exit_code == 0, result.output
+    assert opened == ["http://127.0.0.1:9997/"]
+    assert FakeServer.closed
+
+
+def test_review_report_counts_a_finished_round(
+    synthesis_cli: tuple[Path, Engine], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    directory, engine = synthesis_cli
+    records = directory / "review"
+    output = directory / "report.md"
+    arguments = ["synthesis", "review-report", "--records", str(records), "--output", str(output)]
+    unfinished = runner.invoke(app, arguments)
+    assert unfinished.exit_code == 1
+    assert "not finished" in unfinished.output
+    items = review_sample([f.record for f in development_set(engine)], 1)
+    answers = {
+        item.key: {
+            "visibility": "not_found",
+            "plausible": "yes",
+            "display": {
+                "device_pixel_ratio": 2.0,
+                "screen_width": 1470,
+                "screen_height": 956,
+                "window_width": 1400,
+                "window_height": 900,
+            },
+            "answered_at": "2026-10-15T10:00:00Z",
+            "commit": "abc1234",
+            "language": "tr",
+        }
+        for item in items
+    }
+    save_review(
+        ReviewLog.model_validate({"reviewer": "emre", "round": 1, "answers": answers}),
+        review_path(records, "emre", 1),
+    )
+    observed = SimpleNamespace(regions={"r": SimpleNamespace(visibility=Visibility.AT_100)})
+    monkeypatch.setattr(cli_synthesis, "load_observations", lambda *_: observed)
+    result = runner.invoke(app, arguments)
+    assert result.exit_code == 0, result.output
+    assert "Found at 100 %: 0 of 40; the criterion is **not exceeded**" in output.read_text()

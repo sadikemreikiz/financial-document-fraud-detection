@@ -77,3 +77,29 @@ The close-ups also showed variants that are easy to see, as equal probabilities 
 frequent: pure-white covering on grey paper, lighter ink, and rectangles pasted from another
 receipt with its paper. The realism review measures whether this makes the synthetic edits
 clearly more visible than the real ones (ADR-0021, decision 5).
+
+## 4. The realism review, fixed before it is held (2026-10-14)
+
+Everything in this section was committed before the owner saw any synthetic forgery.
+
+- **Items.** `docfraud synthesis review --round 1` builds the engine of the round that holds out
+  the design fold from a clean commit, makes its development set (one forgery of each of the 94
+  authentic design-fold receipts, index 0) and draws 40 of its regions, each equally likely, with
+  the seed 20261014 and the round number ([`review.py`](../src/docfraud/synthesis/review.py)).
+  The page receives no technique; the assistant checked by code that the sample and every strip
+  load, without viewing them.
+- **Page** ([`review_server.py`](../src/docfraud/synthesis/review_server.py)), in Turkish and
+  built like the observation page of step 4.2: a strip of the receipt's width and 200 px above
+  and below the edit, at 100 % (one image pixel per CSS pixel), centred on the middle of the strip,
+  with zoom to 200 % and 400 % without smoothing. First question, without a box: is the edit
+  visible at 100 %? (yes / only when zoomed in / not found / unclear). Then the box appears and
+  the second question: does it look like an edit a forger could make? (yes / no / unclear, with an
+  optional note). Every answer records the screen it was given on and is saved at once to
+  `annotations/findit2/realism-review/emre-1.json`.
+- **Criterion** (ADR-0021, decision 5): 5 or more of the 40 found at 100 % means the synthetic
+  edits are clearly more visible than the real ones (2 of 45). `docfraud synthesis review-report`
+  writes the counts, the comparison with the real edits, the counts by technique, the second
+  question and the notes to `reports/synthesis/realism-review.md`.
+- **If the criterion is exceeded**, only the variants of the edits found at 100 % are changed,
+  each change recorded here, and round 2 of the review draws a new sample of 40 from the remade
+  development set. After round 2, or after round 1 if the criterion holds, the engine is frozen.
