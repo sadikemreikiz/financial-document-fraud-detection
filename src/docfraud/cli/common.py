@@ -12,7 +12,7 @@ import typer
 from rich.console import Console
 from rich.progress import BarColumn, DownloadColumn, Progress, TransferSpeedColumn
 
-from docfraud.data.download import SOURCES, PinnedArchive, download
+from docfraud.data.download import SOURCES, PinnedFile, download
 from docfraud.data.findit import load_findit2
 from docfraud.data.models import Document
 from docfraud.evaluation.runs import code_version
@@ -44,7 +44,7 @@ def findit_documents(data_dir: Path, **options: Any) -> tuple[Document, ...]:
     return load_findit2(data_dir / "raw" / SOURCES[DatasetName.FINDIT2.value].name, **options)
 
 
-def download_with_progress(source: PinnedArchive, directory: Path) -> Path:
+def download_with_progress(source: PinnedFile, directory: Path) -> Path:
     """Download and verify an archive into ``directory``, showing a progress bar."""
     columns = (BarColumn(), DownloadColumn(), TransferSpeedColumn())
     with Progress(*columns, console=console, transient=True) as progress:

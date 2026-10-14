@@ -9,7 +9,7 @@ import pytest
 from docfraud.data.download import (
     ChecksumMismatchError,
     Fetch,
-    PinnedArchive,
+    PinnedFile,
     UnsafeArchiveError,
     _fetch_https,
     download,
@@ -21,8 +21,8 @@ from docfraud.data.download import (
 PAYLOAD = b"receipt-bytes" * 1000
 
 
-def source(payload: bytes = PAYLOAD) -> PinnedArchive:
-    return PinnedArchive(
+def source(payload: bytes = PAYLOAD) -> PinnedFile:
+    return PinnedFile(
         name="toy",
         url="https://example.org/toy.zip",
         filename="toy.zip",

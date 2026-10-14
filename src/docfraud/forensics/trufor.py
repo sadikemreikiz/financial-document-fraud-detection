@@ -32,7 +32,7 @@ from typing import Any, Protocol
 import numpy as np
 import numpy.typing as npt
 
-from docfraud.data.download import PinnedArchive
+from docfraud.data.download import PinnedFile
 from docfraud.data.models import BBox
 
 CITATION = (
@@ -43,7 +43,7 @@ CITATION = (
 TRUFOR_COMMIT = "ae54475df6f41a491d7615100feb19263dec13f7"
 """The commit of TruFor's repository whose code is run."""
 
-TRUFOR_CODE = PinnedArchive(
+TRUFOR_CODE = PinnedFile(
     name="trufor-code",
     url=f"https://github.com/grip-unina/TruFor/archive/{TRUFOR_COMMIT}.zip",
     filename=f"TruFor-{TRUFOR_COMMIT}.zip",
@@ -53,7 +53,7 @@ TRUFOR_CODE = PinnedArchive(
     citation=CITATION,
 )
 
-TRUFOR_WEIGHTS = PinnedArchive(
+TRUFOR_WEIGHTS = PinnedFile(
     name="trufor-weights",
     url="https://www.grip.unina.it/download/prog/TruFor/TruFor_weights.zip",
     filename="TruFor_weights.zip",

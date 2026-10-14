@@ -5,7 +5,7 @@ from typing import Annotated
 import typer
 
 from docfraud import __version__
-from docfraud.cli import baseline, data, forensics, marks, observation, reading, rules
+from docfraud.cli import baseline, data, forensics, marks, observation, reading, rules, synthesis
 
 app = typer.Typer(
     name="docfraud",
@@ -20,6 +20,7 @@ app.add_typer(rules.app, name="rules")
 app.add_typer(observation.app, name="observation")
 app.add_typer(marks.app, name="marks")
 app.add_typer(forensics.app, name="forensics")
+app.add_typer(synthesis.app, name="synthesis")
 
 
 def _print_version(value: bool) -> None:

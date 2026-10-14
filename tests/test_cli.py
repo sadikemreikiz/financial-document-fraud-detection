@@ -21,7 +21,7 @@ from docfraud.cli import observation as cli_observation
 from docfraud.cli import reading as cli_reading
 from docfraud.cli import rules as cli_rules
 from docfraud.data.benign_marks import ReceiptMarks, load_mark_log, marks_plan, round_path
-from docfraud.data.download import SOURCES, PinnedArchive
+from docfraud.data.download import SOURCES, PinnedFile
 from docfraud.data.gold import GoldManifest, load_manifest
 from docfraud.data.models import Label, Split
 from docfraud.data.observation import (
@@ -37,6 +37,7 @@ from docfraud.evaluation.runs import CodeVersion, JsonRunStore
 from docfraud.forensics.trufor import TRUFOR_CODE, TRUFOR_WEIGHTS
 from docfraud.reading.fields import ReceiptFields
 from docfraud.reading.ocr import OcrResult
+from docfraud.synthesis.fonts import font_files
 from tests.baselines.test_bow import corpus
 from tests.data.test_benign_marks import HAND, PLAIN, check_log, mark, mark_log, marks_documents
 from tests.data.test_observation import observation_documents, receipt_answers
@@ -65,7 +66,7 @@ def toy_source(findit_root: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatc
     archive = Path(shutil.make_archive(str(raw / "findit2"), "zip", findit_root.parent, "findit2"))
     payload = archive.read_bytes()
     shutil.rmtree(findit_root)
-    source = PinnedArchive(
+    source = PinnedFile(
         name="findit2",
         url="https://example.org/findit2.zip",
         filename=archive.name,
@@ -85,7 +86,7 @@ def test_data_download_uses_the_pinned_source(
 ) -> None:
     calls: list[tuple[str, Path]] = []
 
-    def fake_download(source: PinnedArchive, directory: Path, **_: object) -> Path:
+    def fake_download(source: PinnedFile, directory: Path, **_: object) -> Path:
         calls.append((source.url, directory))
         return directory / source.filename
 
@@ -103,12 +104,28 @@ def test_data_prepare_extracts_and_validates(toy_source: Path) -> None:
     assert (toy_source / "raw" / "findit2" / "train.txt").is_file()
 
 
+def test_download_fonts_fetches_every_pinned_font(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    calls: list[str] = []
+
+    def fake_download(source: PinnedFile, directory: Path, **_: object) -> Path:
+        calls.append(source.filename)
+        return directory / source.filename
+
+    monkeypatch.setattr(cli_common, "download", fake_download)
+    result = runner.invoke(app, ["synthesis", "download-fonts", "--directory", str(tmp_path)])
+    assert result.exit_code == 0, result.output
+    assert calls == [font.filename for font in font_files()]
+    assert len(calls) == 6
+
+
 def test_download_trufor_verifies_and_unpacks_code_and_weights(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     calls: list[tuple[str, Path]] = []
 
-    def fake_download(source: PinnedArchive, directory: Path, **_: object) -> Path:
+    def fake_download(source: PinnedFile, directory: Path, **_: object) -> Path:
         calls.append((source.url, directory))
         directory.mkdir(parents=True, exist_ok=True)
         archive = directory / source.filename
