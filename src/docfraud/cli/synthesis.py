@@ -1,7 +1,9 @@
 """`docfraud synthesis`: what the synthetic forgery engine of ADR-0021 needs, and its review."""
 
+import itertools
 import webbrowser
 from collections import Counter
+from collections.abc import Iterable
 from pathlib import Path
 from typing import Annotated
 
@@ -18,6 +20,7 @@ from docfraud.cli.common import (
     require_clean_commit,
 )
 from docfraud.data.local_page import HOST, make_server
+from docfraud.data.observation import RegionObservation
 from docfraud.data.observation import load_log as load_observations
 from docfraud.data.observation_text import PageLanguage
 from docfraud.evaluation.design_fold import DESIGN_FOLD
@@ -27,6 +30,7 @@ from docfraud.markdown import render_table
 from docfraud.synthesis.engine import Stream
 from docfraud.synthesis.fonts import font_files
 from docfraud.synthesis.review import (
+    BREAK,
     MAX_ROUNDS,
     load_log,
     log_path,
@@ -108,6 +112,19 @@ def review_page(  # noqa: PLR0913, PLR0917 - one option per setting
         server.server_close()
 
 
+def _visibility_seconds(observed: Iterable[RegionObservation]) -> list[float]:
+    """Seconds spent on each real edit that asked visibility alone (step 4.2).
+
+    The time of an answer is measured from the answer before it, whatever that asked.
+    """
+    ordered = sorted(observed, key=lambda a: a.observed_at)
+    return [
+        (later.observed_at - earlier.observed_at).total_seconds()
+        for earlier, later in itertools.pairwise(ordered)
+        if not later.detailed and (later.observed_at - earlier.observed_at).total_seconds() <= BREAK
+    ]
+
+
 @app.command("review-report")
 def review_report(
     reviewer: Reviewer = "emre",
@@ -129,11 +146,9 @@ def review_report(
     except ValueError as error:
         console.print(f"[red]{error}[/red]")
         raise typer.Exit(1) from error
-    real = Counter(
-        answer.visibility
-        for answer in load_observations(OBSERVATIONS, reviewer).regions.values()
-        if answer.visibility is not None
-    )
+    observed = load_observations(OBSERVATIONS, reviewer).regions
+    real = Counter(a.visibility for a in observed.values() if a.visibility is not None)
+    real_seconds = _visibility_seconds(observed.values())
     verdict = (
         "**exceeded**: the synthetic edits are clearly more visible than the real ones"
         if result.exceeded
@@ -148,6 +163,6 @@ def review_report(
         f"Found at 100 %: {result.found} of {len(items)}; the criterion is {verdict}.\n\n"
     )
     output.parent.mkdir(parents=True, exist_ok=True)
-    tables = review_tables(result, real, items, log, recorded)
+    tables = review_tables(result, real, items, log, recorded, real_seconds=real_seconds)
     output.write_text(header + "\n".join(render_table(t) for t in tables), encoding="utf-8")
     console.print(f"[green]written[/green] {output}")

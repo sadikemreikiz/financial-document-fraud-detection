@@ -103,3 +103,28 @@ Everything in this section was committed before the owner saw any synthetic forg
 - **If the criterion is exceeded**, only the variants of the edits found at 100 % are changed,
   each change recorded here, and round 2 of the review draws a new sample of 40 from the remade
   development set. After round 2, or after round 1 if the criterion holds, the engine is frozen.
+
+## 5. The review, and the engine frozen (2026-10-14)
+
+- The owner reviewed the 40 edits of round 1 from commit `ed2ed1d`, in about six minutes
+  ([report](../reports/synthesis/realism-review.md); answers in
+  `annotations/findit2/realism-review/emre-1.json`).
+- **Found at 100 %: 2 of 40**, both copies inside the receipt; not found 35, unclear 3. On the
+  real edits the owner had answered 2 of 45, 38 and 5. The criterion (5 or more) is not exceeded:
+  the synthetic edits are not clearly more visible than the real ones, and no revision follows.
+- The owner judged 32 of the 40 as edits a forger could make, 1 not, and 7 unclear, and wrote no
+  note.
+- The answers took about as long as on the real edits: a median of 7.9 s per synthetic edit,
+  which asked two questions, against 7.0 s per real edit that asked visibility alone.
+- **Limits.** One reviewer, who also judged the real edits. The 40 edits follow the engine's mix
+  (32 copies inside the receipt, 4 imitations, 2 deletions, 2 free-hand edits, no copy from
+  another receipt), so the rare techniques were seen only a few times, and the variants that
+  looked easy to see in the close-ups of section 3 were not singled out: the review measures the
+  forgeries as the models will see them, not each variant.
+
+## The engine is frozen
+
+With the review passed, the engine of [`docfraud.synthesis`](../src/docfraud/synthesis/) at
+engine version 1 is frozen (ADR-0021): it makes the training data of systems 2 and 4 in every
+round and the development set of step 4.5. Later changes are limited to defects, each recorded
+here with the forgeries before and after.

@@ -111,9 +111,10 @@ def test_the_report_compares_with_the_real_edits_and_lists_the_notes() -> None:
     items = review_sample(RECORDS, 1)
     log = _log(2, items)
     real = Counter({Visibility.AT_100: 2, Visibility.NOT_FOUND: 38, Visibility.UNCLEAR: 5})
-    visible, by_technique, plausible, notes = review_tables(
-        outcome(log, items, RECORDS), real, items, log, RECORDS
+    visible, by_technique, plausible, timing, notes = review_tables(
+        outcome(log, items, RECORDS), real, items, log, RECORDS, real_seconds=[7.0, 9.0]
     )
+    assert timing.rows[0][:3] == ["real, step 4.2, visibility only", 2, 8.0]
     assert visible.rows[0][1:3] == [45, 2]
     assert visible.rows[1][1:3] == [REVIEW_ITEMS, 2]
     assert len(notes.rows) == 1

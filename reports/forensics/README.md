@@ -236,9 +236,33 @@ No clean-fold receipt was viewed, and nothing was predicted on a clean fold.
 
 ### What comes next
 
-- **Steps 4.4 and 4.5** build the synthetic forgery engine and the learned models (systems 2 to 4).
+- **Step 4.4** built the synthetic forgery engine (below); **step 4.5** builds the learned models
+  (systems 2 to 4).
 - **One clean measurement** follows when every system is frozen (ADR-0020); until then no
   clean-fold number exists.
+
+## 4.4 The synthetic forgery engine
+
+Step 4.4 built the engine that makes training forgeries for the learned models: six decisions,
+taken one at a time before any code existed, are recorded in
+[ADR-0021](../../docs/decisions/0021-synthetic-forgery-engine.md); how the engine was built,
+checked and reviewed is in its [record](../../docs/synthetic-engine-development.md).
+
+- **What it makes.** Edits of printed characters on authentic receipts with all five named
+  techniques, never blur or quality loss. In each round, techniques, entities, widths and the
+  number of regions follow the modified regions of that round's training folds; every variant of
+  how an edit looks (cover, edge, position, scale, source, font, ink, pen) is equally likely.
+  Each forgery has a mask of changed pixels, a mask of the written area and a record, and can be
+  made again from its seed; a person views only forgeries on design-fold receipts.
+- **How close to the real regions.** Techniques within a few points of the real shares in every
+  round; totals and payments 6 or 7 points short in four of five rounds; the real median widths
+  ([engine report](../synthesis/engine.md)). About 0.003 s per forgery.
+- **Realism.** The owner found 2 of 40 synthetic edits at 100 %, as he had found 2 of 45 real
+  ones, in about the same time per edit; the criterion fixed in advance (5 or more) was not
+  reached, and the engine is frozen ([review](../synthesis/realism-review.md)).
+- **Found while building.** Close-ups the assistant viewed (design-fold bases, never the review's
+  forgeries) and the report's counts found five defects before the engine was committed, among
+  them source boxes that would have inflated localisation hits; all are listed in the record.
 
 ## Reproducing
 
@@ -251,6 +275,8 @@ uv run python experiments/jpeg_trace_comparison.py       # jpeg-trace-comparison
 uv run python experiments/system1_development.py         # system-1-development.md
 uv run python experiments/global_trace_probe.py          # global-trace-probe-development.md
 make trufor                                              # system-6-development.md (Apple GPU)
+uv run python experiments/synthetic_engine.py            # ../synthesis/engine.md
+uv run docfraud synthesis review-report --round 1        # ../synthesis/realism-review.md
 ```
 
 The observation logs are in `annotations/findit2/forgery-observations/` and the mark boxes and

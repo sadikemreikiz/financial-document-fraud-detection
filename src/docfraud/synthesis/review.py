@@ -14,6 +14,7 @@ from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
 from datetime import datetime
 from enum import StrEnum
+from itertools import pairwise
 from pathlib import Path
 from typing import Self
 
@@ -44,6 +45,9 @@ MAX_ROUNDS = 2
 
 REAL_FOUND, REAL_REGIONS = 2, 45
 """The owner's result on the real edits of the design fold (step 4.2)."""
+
+BREAK = 600.0
+"""Seconds between two answers above which the reviewer is taken to have paused."""
 
 
 class Plausibility(StrEnum):
@@ -197,16 +201,26 @@ def outcome(
     return Outcome(dict(visibility), dict(plausible), {t: dict(c) for t, c in by_technique.items()})
 
 
-def review_tables(
+def seconds_between(times: Iterable[datetime]) -> list[float]:
+    """Seconds between consecutive answers, leaving out pauses longer than ``BREAK``."""
+    ordered = sorted(times)
+    gaps = [(b - a).total_seconds() for a, b in pairwise(ordered)]
+    return [gap for gap in gaps if gap <= BREAK]
+
+
+def review_tables(  # noqa: PLR0913 - the outcome, its comparison and its sources
     result: Outcome,
     real: Counter[Visibility],
     items: Sequence[ReviewItem],
     log: ReviewLog,
     records: Iterable[ForgeryRecord],
+    *,
+    real_seconds: Sequence[float],
 ) -> list[Table]:
     """The tables of the review report.
 
-    Visibility against the real edits, visibility by technique, plausibility, and the notes.
+    Visibility against the real edits, visibility by technique, plausibility, the time taken
+    per answer, and the notes.
     """
     choices = list(Visibility)
     visible = Table(
@@ -238,6 +252,22 @@ def review_tables(
         ["Answer", "Edits"],
         [[p.value, result.plausible.get(p, 0)] for p in Plausibility],
     )
+    synthetic_seconds = seconds_between(a.answered_at for a in log.answers.values())
+    timing = Table(
+        "Time per answer",
+        ["Edits", "Answers timed", "Median seconds", "25th percentile", "75th percentile"],
+        [
+            [name, len(gaps), *(float(np.percentile(gaps, q)) for q in (50, 25, 75))]
+            for name, gaps in (
+                ("real, step 4.2, visibility only", real_seconds),
+                (f"synthetic, round {log.round}, both questions", synthetic_seconds),
+            )
+            if gaps
+        ],
+        f"Seconds between consecutive answers, pauses of more than {BREAK:.0f} s left out. "
+        "For the real edits, only answers that asked visibility alone, not the full form. "
+        "Similar times suggest that both sets of edits were looked at with similar care.",
+    )
     by_base = {record.base: record for record in records}
     notes = Table(
         "Notes",
@@ -254,4 +284,4 @@ def review_tables(
         ],
         "Free notes of the owner, in the order the edits were shown.",
     )
-    return [visible, technique, plausible, notes]
+    return [visible, technique, plausible, timing, notes]

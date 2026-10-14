@@ -2,6 +2,7 @@ import hashlib
 import json
 import shutil
 import zipfile
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
@@ -840,8 +841,20 @@ def test_review_report_counts_a_finished_round(
         ReviewLog.model_validate({"reviewer": "emre", "round": 1, "answers": answers}),
         review_path(records, "emre", 1),
     )
-    observed = SimpleNamespace(regions={"r": SimpleNamespace(visibility=Visibility.AT_100)})
+    start = datetime(2026, 10, 12, 20, 0, tzinfo=UTC)
+    observed = SimpleNamespace(
+        regions={
+            str(n): SimpleNamespace(
+                visibility=Visibility.AT_100,
+                observed_at=start + timedelta(seconds=8 * n),
+                detailed=False,
+            )
+            for n in range(3)
+        }
+    )
     monkeypatch.setattr(cli_synthesis, "load_observations", lambda *_: observed)
     result = runner.invoke(app, arguments)
     assert result.exit_code == 0, result.output
-    assert "Found at 100 %: 0 of 40; the criterion is **not exceeded**" in output.read_text()
+    report = output.read_text()
+    assert "Found at 100 %: 0 of 40; the criterion is **not exceeded**" in report
+    assert "| real, step 4.2, visibility only | 2 | 8.000 |" in report
