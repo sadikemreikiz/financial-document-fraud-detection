@@ -14,9 +14,9 @@ maps comes from the tile in which it lies farthest from a tile edge inside the p
 pixel of its maps (:func:`pooled_statistics`); for a tiled receipt they are pooled over the
 stitched maps, so that the score describes the whole receipt as one pass would.
 
-Only :class:`TruForModel` needs PyTorch, which is not a project dependency (ADR-0019); tiling,
-stitching and caching run without it. The choices are recorded in
-``docs/system-6-development.md``.
+Only :class:`TruForModel` needs PyTorch, which it imports when it is built; tiling, stitching
+and caching run without it. TruFor's other libraries are not project dependencies (ADR-0019).
+The choices are recorded in ``docs/system-6-development.md``.
 """
 
 import hashlib
@@ -352,7 +352,7 @@ class CachedTruFor:
         return output
 
 
-class TruForModel:  # pragma: no cover - needs PyTorch and the weights, which CI does not install
+class TruForModel:  # pragma: no cover - needs TruFor's code and weights, which CI does not fetch
     """TruFor's network with its published weights, on the Apple GPU when there is one.
 
     Args:
@@ -362,7 +362,7 @@ class TruForModel:  # pragma: no cover - needs PyTorch and the weights, which CI
 
     def __init__(self, directory: Path, device: str | None = None) -> None:
         """Load TruFor's code and weights; fails if either is missing."""
-        import torch  # noqa: PLC0415 - PyTorch is not a project dependency
+        import torch  # noqa: PLC0415 - slow to import, needed only once a model is built
 
         self._torch = torch
         source = (directory / SOURCE_DIRECTORY).resolve()
@@ -419,7 +419,7 @@ class TruForModel:  # pragma: no cover - needs PyTorch and the weights, which CI
             return float(self._model.detection(features).item())
 
 
-def _import_trufor(source: Path) -> tuple[Any, Any]:  # pragma: no cover - needs PyTorch
+def _import_trufor(source: Path) -> tuple[Any, Any]:  # pragma: no cover - needs TruFor's code
     """TruFor's configuration, merged with its inference settings, and its network class.
 
     TruFor's code imports its own top-level modules ``config`` and ``models``, so its directory
@@ -445,7 +445,7 @@ def _import_trufor(source: Path) -> tuple[Any, Any]:  # pragma: no cover - needs
     return config, builder.myEncoderDecoder
 
 
-def _load_weights(torch: Any, path: Path) -> Any:  # pragma: no cover - needs PyTorch
+def _load_weights(torch: Any, path: Path) -> Any:  # pragma: no cover - needs TruFor's weights
     """The checkpoint, loaded so that unpickling cannot execute code (ADR-0019, decision 4).
 
     Next to the weights the checkpoint stores numpy scalars, such as its best loss value, which

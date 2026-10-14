@@ -73,7 +73,7 @@ bench-synthesis:  ## Time the synthetic forgery engine (reports/synthesis/engine
 	uv run docfraud synthesis download-fonts
 	uv run python experiments/synthetic_engine.py --timing
 
-trufor:  ## System 6 development round on the design fold (downloads TruFor and PyTorch)
+trufor:  ## System 6 development round on the design fold (downloads TruFor and its libraries)
 	uv run docfraud forensics download-trufor
 	uv run --with torch==2.14.1 --with torchvision==0.29.1 --with timm==1.0.30 --with yacs==0.1.8 \
 		python -I experiments/system6_development.py
