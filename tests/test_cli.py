@@ -38,6 +38,7 @@ from docfraud.data.splits import TestSetLockedError
 from docfraud.evaluation.design_fold import DESIGN_FOLD
 from docfraud.evaluation.folds import assign_folds, load_folds, save_folds
 from docfraud.evaluation.runs import CodeVersion, JsonRunStore
+from docfraud.forensics.learned.pretrained import IMAGENET_WEIGHTS
 from docfraud.forensics.trufor import TRUFOR_CODE, TRUFOR_WEIGHTS
 from docfraud.reading.fields import ReceiptFields
 from docfraud.reading.ocr import OcrResult
@@ -154,6 +155,22 @@ def test_download_trufor_verifies_and_unpacks_code_and_weights(
     assert (tmp_path / "trufor-code" / "file.txt").read_text() == "trufor-code"
     assert (tmp_path / "trufor-weights" / "file.txt").is_file()
     assert "Guillaro" in result.output
+
+
+def test_download_resnet_fetches_the_pinned_weights(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    calls: list[tuple[PinnedFile, Path]] = []
+
+    def fake_download(source: PinnedFile, directory: Path, **_: object) -> Path:
+        calls.append((source, directory))
+        return directory / source.filename
+
+    monkeypatch.setattr(cli_common, "download", fake_download)
+    result = runner.invoke(app, ["forensics", "download-resnet", "--directory", str(tmp_path)])
+    assert result.exit_code == 0, result.output
+    assert calls == [(IMAGENET_WEIGHTS, tmp_path)]
+    assert "He" in result.output
 
 
 def test_data_audit_writes_report(toy_source: Path, tmp_path: Path) -> None:

@@ -137,6 +137,10 @@ exclude_also = [
 module = ["doctr.*", "scipy.*"]  # neither ships type information
 ignore_missing_imports = true
 
+[[tool.mypy.overrides]]
+module = ["torchvision", "torchvision.*"]  # not a dependency; `uv run --with` supplies it to checks
+ignore_missing_imports = true
+
 [tool.pydantic-mypy]
 init_forbid_extra = true
 init_typed = true

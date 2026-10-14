@@ -1,5 +1,5 @@
 .DEFAULT_GOAL := help
-.PHONY: help install lint format typecheck test test-data check data audit reports check-reports bench-ocr bench-synthesis trufor clean
+.PHONY: help install lint format typecheck test test-data check data audit reports check-reports bench-ocr bench-synthesis trufor encoder-check clean
 
 help:  ## Show available targets
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*## "}; {printf "  %-16s %s\n", $$1, $$2}'
@@ -77,6 +77,10 @@ trufor:  ## System 6 development round on the design fold (downloads TruFor and 
 	uv run docfraud forensics download-trufor
 	uv run --with torch==2.14.1 --with torchvision==0.29.1 --with timm==1.0.30 --with yacs==0.1.8 \
 		python -I experiments/system6_development.py
+
+encoder-check:  ## One-time check that the learned models' encoder is torchvision's ResNet-18
+	uv run docfraud forensics download-resnet
+	uv run --with torchvision==0.29.1 python -I experiments/encoder_equivalence.py
 
 clean:  ## Remove caches and build outputs (never touches data/ or artifacts/)
 	rm -rf .mypy_cache .ruff_cache .pytest_cache .coverage htmlcov dist build
