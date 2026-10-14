@@ -10,8 +10,9 @@ from typing import Annotated, Any
 
 import typer
 from rich.console import Console
+from rich.progress import BarColumn, DownloadColumn, Progress, TransferSpeedColumn
 
-from docfraud.data.download import SOURCES
+from docfraud.data.download import SOURCES, PinnedArchive, download
 from docfraud.data.findit import load_findit2
 from docfraud.data.models import Document
 from docfraud.evaluation.runs import code_version
@@ -41,6 +42,20 @@ DatasetArg = Annotated[DatasetName, typer.Argument(help="Dataset to operate on."
 def findit_documents(data_dir: Path, **options: Any) -> tuple[Document, ...]:
     """The prepared Find-it-again documents (options go to ``load_findit2``)."""
     return load_findit2(data_dir / "raw" / SOURCES[DatasetName.FINDIT2.value].name, **options)
+
+
+def download_with_progress(source: PinnedArchive, directory: Path) -> Path:
+    """Download and verify an archive into ``directory``, showing a progress bar."""
+    columns = (BarColumn(), DownloadColumn(), TransferSpeedColumn())
+    with Progress(*columns, console=console, transient=True) as progress:
+        task = progress.add_task(source.name, total=source.size_bytes)
+        path = download(
+            source,
+            directory,
+            on_progress=lambda done, total: progress.update(task, completed=done, total=total),
+        )
+    console.print(f"[green]verified[/green] {path} ({source.size_bytes:,} bytes)")
+    return path
 
 
 def cached_ocr(cache: Path) -> CachedOcr:

@@ -4,8 +4,8 @@ from pathlib import Path
 from typing import Annotated
 
 import typer
-from rich.progress import BarColumn, DownloadColumn, Progress, TransferSpeedColumn
 
+from docfraud.cli import common
 from docfraud.cli.common import (
     CV_FOLDS_PATH,
     GOLD_MANIFEST,
@@ -16,7 +16,7 @@ from docfraud.cli.common import (
     findit_documents,
 )
 from docfraud.data.audit import audit_dataset
-from docfraud.data.download import SOURCES, download, safe_extract, verify
+from docfraud.data.download import SOURCES, safe_extract, verify
 from docfraud.data.duplicates import resolve_duplicates
 from docfraud.data.findit import DUPLICATE_GROUPS
 from docfraud.data.gold import (
@@ -44,16 +44,7 @@ def data_download(
     dataset: DatasetArg = DatasetName.FINDIT2, data_dir: DataDir = Path("data")
 ) -> None:
     """Download a dataset archive and verify its SHA-256 checksum."""
-    source = SOURCES[dataset.value]
-    columns = (BarColumn(), DownloadColumn(), TransferSpeedColumn())
-    with Progress(*columns, console=console, transient=True) as progress:
-        task = progress.add_task(source.name, total=source.size_bytes)
-        path = download(
-            source,
-            data_dir / "raw",
-            on_progress=lambda done, total: progress.update(task, completed=done, total=total),
-        )
-    console.print(f"[green]verified[/green] {path} ({source.size_bytes:,} bytes)")
+    common.download_with_progress(SOURCES[dataset.value], data_dir / "raw")
 
 
 @app.command("prepare")
