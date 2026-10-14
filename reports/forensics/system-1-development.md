@@ -67,3 +67,22 @@ Evidence: the map of system 1 is not constant, that is, the receipt has a detect
 | 1 with evidence, 0 without (no information on edits) | 0.198 | -0.34 (-0.55 to -0.12) | — |
 
 Size check: the Spearman rank correlation of document score and pixel count with its 95 % interval (bootstrap over receipts, 10,000 resamples, seed 0), as ADR-0015 (section 6) fixes it; ADR-0017 runs it on the receipts with evidence. Receipts without evidence score 0. The last row carries no information on edits and is constant on the receipts with evidence. Design fold: optimistic, and every row was tried on the same 19 forged receipts.
+
+### Top region on a benign mark
+
+| Flagged receipts | Count | With evidence | Top region on a mark | Mean random baseline |
+|---|---|---|---|---|
+| authentic | 50 | 18 | 3 | 0.063 |
+| forged | 8 | 4 | 1 | 0.048 |
+
+Flagged: the dataset marks a handwritten or digital annotation. On a mark: the top region of ADR-0015 shares a pixel with a final box of the benign marks guide. Receipts without evidence have the whole page as top region and are left out. Baseline: the share of 1,000 boxes of the same size, centred on OCR text, that overlap a mark. Design fold: optimistic.
+
+### Authentic receipts whose top region is on a mark
+
+| Receipt | Marks overlapped | Document score | Rank among 94 authentic |
+|---|---|---|---|
+| X51007391390 | digital_note | 0.664 | 5 |
+| X51007339658 | handwriting | 0.299 | 20 |
+| X51005806679 | pen_mark | 0.296 | 21 |
+
+Rank 1 is the highest document score among the authentic receipts of the design fold, that is, the first false alarm at any threshold.

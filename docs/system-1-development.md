@@ -74,3 +74,14 @@ With the map and the document score chosen, system 1 is frozen (ADR-0017): no fu
 is tried on the design fold, and later changes are limited to defects (ADR-0014, decision 3),
 each reported with both results. Its single measurement on the clean folds follows the timing
 decided in step 4.3.
+
+### Added after freezing: top region on benign marks (2026-10-14)
+
+The [benign marks guide](benign-marks-guide.md) fixes that, during development, a system's top
+region on a flagged receipt is checked against the mark boxes, and the summary of step 4.2
+promised this check for every system. The development report lacked it when system 1 was
+frozen; it now shows it, generated like the rest. On the 18 flagged authentic receipts on which
+system 1 has evidence, the top region falls on a mark on 3, where a random box of the same size
+on the text overlaps a mark 6.3 % of the time on average; the highest of the three, on a digital
+note, ranks 5th among the 94 authentic receipts. Nothing in system 1 changed, and no choice
+depends on this table.

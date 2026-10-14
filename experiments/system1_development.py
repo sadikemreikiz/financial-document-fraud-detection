@@ -2,14 +2,15 @@
 
 Writes reports/forensics/system-1-development.md, the evidence behind the choices recorded in
 docs/system-1-development.md: whether system 1, which sees no annotation, finds the lattice that
-the comparison study estimated outside the annotated rectangles, and how often the top region
-of two map variants hits an edit (ADR-0015) against its random baseline. Only the design fold is
-read; every measurement is computed by code.
+the comparison study estimated outside the annotated rectangles, how often the top region of two
+map variants hits an edit (ADR-0015) against its random baseline, the document scores tried, and
+whether the top region of the frozen map falls on a benign mark. Only the design fold is read;
+every measurement is computed by code.
 
 Usage: ``uv run python experiments/system1_development.py``
 """
 
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -17,9 +18,11 @@ import numpy as np
 import numpy.typing as npt
 from scipy import ndimage
 
+from docfraud.data.benign_marks import Mark, final_marks, load_rounds, marks_plan
 from docfraud.data.findit import load_findit2
 from docfraud.data.models import BBox, Document, Label
 from docfraud.data.normalize import load_grayscale
+from docfraud.data.observation import ASSISTANT
 from docfraud.evaluation.bootstrap import Estimate as Interval
 from docfraud.evaluation.design_fold import DESIGN_FOLD_IDS, require_design_fold
 from docfraud.evaluation.detection import average_precision
@@ -33,6 +36,7 @@ from docfraud.evaluation.localisation import (
     size_dependence,
     top_region,
 )
+from docfraud.evaluation.mark_alarms import MarkCheck, check_marks, mark_tables
 from docfraud.forensics.lattice_map import LatticeEvidence, lattice_evidence
 from docfraud.forensics.quantisation import MIN_BLOCKS, block_fits, receipt_lattice
 from docfraud.markdown import Cell, Table, render_table
@@ -42,6 +46,7 @@ ROOT = Path(__file__).resolve().parents[1]
 OUTPUT = ROOT / "reports" / "forensics" / "system-1-development.md"
 DATA = ROOT / "data" / "raw" / "findit2"
 OCR_CACHE = ROOT / "artifacts" / "ocr"
+MARK_RECORDS = ROOT / "annotations" / "findit2" / "benign-marks"
 ALIGNMENT_STREAM = 3  # as in experiments/jpeg_trace_comparison.py
 LARGE_SIDE = 6000
 CHOSEN, SMOOTHED = "per block (chosen)", "mean over 3 x 3 blocks"
@@ -131,12 +136,13 @@ class Scored:
 
 
 def measure(
-    documents: Sequence[Document], ocr: CachedOcr
-) -> tuple[list[Estimate], dict[str, list[Localisation]], list[Scored]]:
-    """Every check on every receipt, in identifier order."""
+    documents: Sequence[Document], ocr: CachedOcr, marks: Mapping[str, Sequence[Mark]]
+) -> tuple[list[Estimate], dict[str, list[Localisation]], list[Scored], list[MarkCheck]]:
+    """Every check on every receipt, in identifier order; ``marks`` holds the flagged ones."""
     estimates: list[Estimate] = []
     localisations: dict[str, list[Localisation]] = {v: [] for v in VARIANTS}
     scored: list[Scored] = []
+    mark_checks: list[MarkCheck] = []
     for document in sorted(documents, key=lambda d: d.doc_id):
         require_design_fold(document.doc_id)
         page = load_grayscale(document.image_path)
@@ -173,9 +179,22 @@ def measure(
                 {name: score(evidence, page) for name, score in SCORES.items()},
             )
         )
+        whole = BBox(x=0, y=0, width=width, height=height)
+        if document.doc_id in marks:
+            mark_checks.append(
+                check_marks(
+                    document.doc_id,
+                    label,
+                    top_region(evidence.pixel_map()),
+                    whole,
+                    [token.box for token in ocr.recognize(page).tokens],
+                    marks[document.doc_id],
+                    evidence=bool(evidence.measured.any()),
+                    score=evidence.document_score(),
+                )
+            )
         if label is not Label.FORGED or not modified or not system.detectable:
             continue
-        whole = BBox(x=0, y=0, width=width, height=height)
         words = [token.box for token in ocr.recognize(page).tokens]
         for variant, made in ((CHOSEN, evidence), (SMOOTHED, smoothed(evidence, page))):
             region = top_region(made.pixel_map())
@@ -190,7 +209,7 @@ def measure(
                     region.width * region.height / (width * height),
                 )
             )
-    return estimates, localisations, scored
+    return estimates, localisations, scored, mark_checks
 
 
 def estimate_table(estimates: Sequence[Estimate]) -> Table:
@@ -346,13 +365,19 @@ def score_table(scored: Sequence[Scored]) -> Table:
 def main() -> None:
     """Measure the design fold and write the report."""
     documents = [d for d in load_findit2(DATA) if d.doc_id in DESIGN_FOLD_IDS]
-    estimates, localisations, scored = measure(documents, CachedOcr(RapidOcrEngine(), OCR_CACHE))
+    final = final_marks(marks_plan(documents), *load_rounds(MARK_RECORDS, ASSISTANT, "emre"))
+    marks = {doc_id: receipt.marks for doc_id, receipt in final.marks.items()}
+    estimates, localisations, scored, mark_checks = measure(
+        documents, CachedOcr(RapidOcrEngine(), OCR_CACHE), marks
+    )
+    authentic_scores = [s.scores[CHOSEN_SCORE] for s in scored if s.label is Label.AUTHENTIC]
     tables = [
         estimate_table(estimates),
         localisation_table(localisations),
         receipt_table(localisations),
         evidence_table(scored),
         score_table(scored),
+        *mark_tables(mark_checks, authentic_scores),
     ]
     header = (
         "# System 1 development: design fold\n\n"
