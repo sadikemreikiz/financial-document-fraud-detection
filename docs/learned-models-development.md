@@ -69,3 +69,13 @@ the development round starts.
   prepared as the network prepares every page: scaled to 0 to 1, copied into three channels and
   normalised with ImageNet's statistics. It needs repeating only if the encoder's code or the
   pinned file changes.
+- **Page cache** ([`pages.py`](../src/docfraud/forensics/learned/pages.py)). The 562 receipts
+  of the training split, all of them in the cross-validation folds, are decoded once by
+  `load_grayscale`, as every system decodes them, into uncompressed files under
+  `artifacts/learned/pages`: 3.38 GiB, of which 2.75 GiB are the 85 page scans, written in 11 s
+  on 2026-10-14. A one-time comparison of every stored page with a fresh decoding found all 562
+  identical. Training reads the pages through memory maps: a 384 px tile at a random aligned
+  position took a median of 0.15 ms (99th percentile 2.5 ms; on page scans 0.17 ms and 4.5 ms,
+  at most 17 ms), measured right after the build, when the pages were probably still in the
+  operating system's file cache. A step of 8 tiles therefore waits a few milliseconds for its
+  pixels, against 0.48 s for the step itself. Only pages of the training split are accepted.
