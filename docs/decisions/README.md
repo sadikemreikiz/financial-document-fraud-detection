@@ -26,5 +26,6 @@ change of mind is a new record that supersedes the old one.
 | [0018](0018-global-trace-probe.md) | The global-trace probe: what it sees, its model and when it finds a trace | Accepted |
 | [0019](0019-system-6-trufor.md) | System 6 is TruFor | Accepted |
 | [0020](0020-clean-folds-measured-together.md) | The clean folds are measured once, for all Phase 4 systems together | Accepted |
+| [0021](0021-synthetic-forgery-engine.md) | The synthetic forgery engine: techniques, targets, variants, output, realism review | Accepted |
 
 New records copy [template.md](template.md).
