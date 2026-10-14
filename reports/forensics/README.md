@@ -177,7 +177,7 @@ No clean-fold receipt was viewed, and nothing was predicted on a clean fold.
 | 2. Which traces code can measure in the real edits | [plan](../../docs/invisible-traces-study.md), [report](invisible-traces.md) |
 | 3. System 1, the classical map | [ADR-0016](../../docs/decisions/0016-system-1-jpeg-trace.md), [ADR-0017](../../docs/decisions/0017-size-check-on-evidence.md), [record](../../docs/system-1-development.md) |
 | 4. System 5, the global-trace probe | [ADR-0018](../../docs/decisions/0018-global-trace-probe.md), [development round](global-trace-probe-development.md) |
-| 5. System 6, a pretrained forensic model | [ADR-0019](../../docs/decisions/0019-system-6-trufor.md) |
+| 5. System 6, a pretrained forensic model | [ADR-0019](../../docs/decisions/0019-system-6-trufor.md), [record](../../docs/system-6-development.md) |
 | 6. When the clean folds are measured | [ADR-0020](../../docs/decisions/0020-clean-folds-measured-together.md) |
 
 ### Findings
@@ -202,9 +202,14 @@ No clean-fold receipt was viewed, and nothing was predicted on a clean fold.
   properties, trained on the other folds, reaches an average precision of 0.153 (chance 0.168);
   alone, each property separates the classes with a ROC-AUC between 0.415 and 0.586
   ([development round](global-trace-probe-development.md)).
-- **System 6 is TruFor.** Of one model per kind, only TruFor meets the licence, training-data and
-  resolution conditions of ADR-0014; on synthetic pages it runs on the reference machine at
-  native resolution up to about 3 MP, so page scans will be tiled.
+- **System 6 is TruFor, now frozen.** Of one model per kind, only TruFor meets the licence,
+  training-data and resolution conditions of ADR-0014. It analyses receipts up to 2.1 MP in one
+  pass and larger ones in tiles at native resolution, and scores a receipt as TruFor scores a
+  whole image, from statistics pooled over all of its maps. On the design fold its average
+  precision is 0.270 (chance 0.168); its top region hits an edit on 6 of 19 forged receipts,
+  where a random box hits 8.5 % of the time on average, and falls on a benign mark on 9 of 50
+  flagged authentic receipts; receipts with digital notes are among its highest false alarms
+  ([development report](system-6-development.md)).
 
 ### Changed after looking, and disclosed
 
@@ -219,14 +224,18 @@ No clean-fold receipt was viewed, and nothing was predicted on a clean fold.
   candidate with the highest average precision (0.608) fails under both definitions and was not
   chosen, while the chosen one (0.500) would have lost to a ratio (0.425) under the letter of the
   old rule.
+- System 6 first scored a tiled receipt by its highest tile, as fixed before the run. On all 23
+  page scans that tile held no print, so the score described blank paper. Its record says, in a
+  section written after those results and committed before the next run, that a tiled receipt is
+  now scored from statistics pooled over its stitched maps, as TruFor scores a whole image, if
+  that score passes the size check, whatever its average precision; it did (0.270, against
+  0.278 for the score it replaced). The maps of tiled receipts jump visibly where tiles meet.
 - Several variants were tried on the same 19 forged receipts (three traces, two maps, six document
-  scores); every one is in the generated reports, and the design-fold numbers above are
-  optimistic for that reason too.
+  scores for system 1; three document scores for system 6); every one is in the generated
+  reports, and the design-fold numbers above are optimistic for that reason too.
 
 ### What comes next
 
-- **System 6's development round** chooses its tiling, map and document score on the design fold,
-  under the safeguards of ADR-0017.
 - **Steps 4.4 and 4.5** build the synthetic forgery engine and the learned models (systems 2 to 4).
 - **One clean measurement** follows when every system is frozen (ADR-0020); until then no
   clean-fold number exists.
@@ -241,6 +250,7 @@ uv run python experiments/invisible_traces.py            # invisible-traces.md
 uv run python experiments/jpeg_trace_comparison.py       # jpeg-trace-comparison.md
 uv run python experiments/system1_development.py         # system-1-development.md
 uv run python experiments/global_trace_probe.py          # global-trace-probe-development.md
+make trufor                                              # system-6-development.md (Apple GPU)
 ```
 
 The observation logs are in `annotations/findit2/forgery-observations/` and the mark boxes and

@@ -103,3 +103,35 @@ The top region of the map hit an edit on 6 of the 19 forged receipts.
   that it was written after the results; every score tried stays in the report; numbers on the
   design fold are optimistic and are not presented as results; once its score is chosen,
   system 6 is frozen.
+
+## 4. The score chosen (2026-10-14)
+
+- **Chosen.** The run of section 3, made from commit `6d52fb5`, is in the
+  [development report](../reports/forensics/system-6-development.md). The integrity score of
+  the whole receipt passes the size check (−0.02, from −0.24 to +0.19) and is chosen. Its
+  average precision on the design fold is 0.270 (chance 0.168), against 0.278 for the highest
+  tile score it replaces: the change brought no higher number, and was not made for one.
+- **Checks.** On the 86 receipts of one window, the pooled logit reproduces TruFor's own within
+  1.4e-5. The maps and the tile logits of all 113 receipts are identical to those of the run of
+  section 2 (compared on the cached outputs), so the map, its top regions and the mark checks did not change: the top region hits
+  an edit on 6 of 19 forged receipts (mean random baseline 0.085) and falls on a benign mark on
+  9 of 50 flagged authentic receipts (baseline 0.076); two authentic receipts with a digital
+  note score 2nd and 10th highest among the 94.
+- **Page scans.** The highest tile score came from a blank tile on all 23 page scans, 380 of
+  whose 548 tiles are blank. With the whole-receipt score, the median of the authentic page scans
+  falls from 0.598 to 0.471 (receipts of one pass: 0.379), and that of the 3 forged ones is 0.393:
+  on the design fold, TruFor's score does not single out the forged page scans.
+- **Cuts between tiles.** The maps of tiled receipts jump where tiles meet: across the cuts, the
+  99th percentile of the differences between neighbouring pixels is 12 times that inside the
+  tiles (median over the 23 page scans; at most 37), because each tile is seen in its own context
+  and TruFor's map is smooth within a tile. The peak of the map lies within 8 px of a cut on 1 of
+  the 27 tiled receipts. The map stays as section 1 fixed it; no blending of the overlaps was
+  tried.
+
+## System 6 is frozen
+
+With its tiling, map and document score chosen, system 6 is frozen
+([ADR-0017](decisions/0017-size-check-on-evidence.md)): no further variant is tried on the
+design fold, and later changes are limited to defects (ADR-0014, decision 3), each reported with
+both results. It is measured once on the clean folds, together with the other systems
+([ADR-0020](decisions/0020-clean-folds-measured-together.md)).
