@@ -79,3 +79,33 @@ the development round starts.
   at most 17 ms), measured right after the build, when the pages were probably still in the
   operating system's file cache. A step of 8 tiles therefore waits a few milliseconds for its
   pixels, against 0.48 s for the step itself. Only pages of the training split are accepted.
+- **Tiles** ([`tiles.py`](../src/docfraud/forensics/learned/tiles.py),
+  [`sampler.py`](../src/docfraud/forensics/learned/sampler.py)). Every batch is drawn as
+  decision 3 of ADR-0022 describes. The details it left open are fixed here:
+  - *System 4 shares its tiles with an edit.* At every step its two tiles of real forgeries are
+    the first two tiles of system 3, and its two tiles of synthetic forgeries the first two of
+    system 2, as all three already share their tiles without an edit. Decided with the owner on
+    2026-10-14, before any training: with these common random numbers a difference between the
+    systems comes from their training data rather than from which tiles each happened to draw.
+    Each slot of a batch therefore has its own generator, seeded by the round, the seed, the
+    purpose of the draw, the step and the slot.
+  - *Margins.* Where the alignment to multiples of 8 leaves no position with the margin of
+    32 px, the margin shrinks to nothing before the tile merely overlaps the box. Boxes that no
+    aligned tile reaches, in the last 7 px of a page, are left out.
+  - *Synthetic forgeries.* The engine's index of each forgery encodes the seed, the step, the
+    slot and the attempt, so no forgery is used twice. A forgery without an edit, or whose drawn
+    edit no tile reaches, is skipped for the next attempt; after 16 attempts the run stops.
+  - *Initial output bias.* The share of forged pixels, among those the loss counts, in the tiles
+    of the run's first 100 steps, a convention.
+
+  A check on round 2, which printed counts and timings and showed no image: the round has 74
+  forged receipts with 227 modified regions and 89 copy sources, and 374 authentic receipts with
+  42,910 OCR words, as ADR-0022 counts; X51008114260 is left out for want of regions; no box is
+  out of reach. Over 500 steps of system 3, 97.9 % of the tiles of real forgeries hold a whole
+  modified region and 97.5 % hold one with the full margin. Tiles without an edit drawn anywhere
+  touch an OCR word in 20 % of those on page scans and 98 % of the others, as ADR-0022's
+  measurement on the training split (21 % and 98 %) leads one to expect. Preparing a batch in one
+  process takes a median of 41 ms for system 2 (90th percentile 95 ms, at most 218 ms), 13 ms for
+  system 4 and 3 ms for system 3, against 0.48 s for a step on the graphics processor. With seed
+  0, forged pixels make up 0.59 % of the counted pixels of the first 100 steps for system 2,
+  2.16 % for system 3 and 1.38 % for system 4.
