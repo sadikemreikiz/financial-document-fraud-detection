@@ -6,9 +6,9 @@ Explainable multimodal detection of forged receipts and invoices: pixel forensic
 verification and LLM-assisted review, evaluated on real human forgeries.
 
 This repository is **v2** of my M.Sc. thesis (University of Europe for Applied Sciences, Berlin,
-2026). It is a rebuild from scratch: a review of the thesis implementation found that its
-headline results were not valid, and v2 is designed to answer the same research questions
-properly. See [From thesis to v2](docs/thesis-review.md).
+2026). It is a rebuild from scratch: when I reviewed the thesis implementation after
+submission, I found that its headline results were not valid, and v2 is designed to answer the
+same research questions properly. See [From thesis to v2](docs/thesis-review.md).
 
 > **Status: under active development (Phases 0 to 3 of 8 complete: foundations, data, reading,
 > accounting rules).** First detection results, on the validation split, are in the

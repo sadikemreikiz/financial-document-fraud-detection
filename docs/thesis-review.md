@@ -1,8 +1,9 @@
 # From thesis (v1) to v2: review of the original implementation
 
-This document records what was wrong with the thesis implementation, how each issue was
-verified, and how v2 addresses it. It exists because the most useful thing a rebuild can do is
-be explicit about why the first version's numbers should not be trusted.
+After submitting my thesis, I reviewed its implementation line by line before rebuilding it.
+This document records what I found, how each issue was verified, and how v2 addresses it. A
+rebuild is only worth something if it says plainly why the first version's headline numbers
+cannot be relied on.
 
 ## Method
 
@@ -33,7 +34,6 @@ again, the measurement and its limitations are stated.
 | F11 | **No accounting consistency checks.** The rule set checks the format of four fields only. | `text/strong_text/scorer.py:45-74` (total, date, company, address). | The strongest content evidence in receipts, arithmetic that no longer adds up, was never used. | A rule engine for line items, subtotals, tax, rounding, tendered amount and change. |
 | F12 | **Explainability was claimed but not evaluated.** | Grad-CAM code exists (`image/strong_image/gradcam_batch_split_v1.py`) and overlays were generated (`results/strongImageResults/gradcam/`), but the thesis contains no Grad-CAM figure or measurement (RQ4). | RQ4 is unanswered. | Localisation measured against annotated forgery regions; reports checked for grounding. |
 | F13 | **Metrics promised but not reported.** | Thesis §2.3 and §5.8 announce MCC and precision-recall analysis; no confidence intervals are given anywhere. | Small test sets (18–44 fraud cases) make point estimates unreliable. | Full metric set with bootstrap confidence intervals. |
-| F14 | **Minor text issues.** | References to non-existent sections 6.4.1 and 6.4.2; empty pages 72–74. | Presentation only. | Not applicable to code. |
 
 ### Note on the F1 measurement
 
@@ -42,7 +42,7 @@ the original run may differ slightly from the re-run. The conclusion does not de
 independent random 70 % training partition overlaps any fixed test set by about 70 % in
 expectation.
 
-## What is worth keeping
+## What I kept from v1
 
 - **The question.** Whether text and image evidence complement each other for document fraud is
   the right question; v1 could not answer it because of F1 and F4.
@@ -50,7 +50,7 @@ expectation.
   instinct. v2 turns them into structured, testable evidence.
 - **Simplicity of score-level fusion.** It remains a baseline in v2.
 
-## Lessons applied in v2
+## What I learned, and how v2 applies it
 
 1. A single source of truth for splits, enforced by tests rather than convention.
 2. Synthetic data must imitate the real threat. If it is easier than reality, the model learns
