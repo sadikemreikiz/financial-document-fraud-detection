@@ -1,8 +1,8 @@
 .DEFAULT_GOAL := help
-.PHONY: help install lint format typecheck test test-data check data audit reports check-reports bench-ocr trufor clean
+.PHONY: help install lint format typecheck test test-data check data audit reports check-reports bench-ocr bench-synthesis trufor clean
 
 help:  ## Show available targets
-	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*## "}; {printf "  %-12s %s\n", $$1, $$2}'
+	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*## "}; {printf "  %-16s %s\n", $$1, $$2}'
 
 install:  ## Create the environment and install git hooks
 	uv sync
@@ -36,8 +36,9 @@ audit:  ## Regenerate the data audit report
 
 # Reports that need the dataset and the OCR cache. Not included: the gold evaluations of
 # reports/reading, which depend on the parser version that produced them (see their headers),
-# the OCR benchmark (make bench-ocr) and the development round of system 6 (make trufor), whose
-# model runs on the Apple GPU.
+# the OCR benchmark (make bench-ocr), the timing of the synthetic forgery engine (make
+# bench-synthesis) and the development round of system 6 (make trufor), whose model runs on the
+# Apple GPU.
 reports:  ## Regenerate every report that the current code produces
 	uv run docfraud data audit
 	uv run python experiments/parser_development.py
@@ -47,6 +48,8 @@ reports:  ## Regenerate every report that the current code produces
 	uv run python experiments/jpeg_trace_comparison.py
 	uv run python experiments/system1_development.py
 	uv run python experiments/global_trace_probe.py
+	uv run docfraud synthesis download-fonts
+	uv run python experiments/synthetic_engine.py
 	uv run docfraud observation report
 	uv run docfraud marks report
 	uv run docfraud reading score-review annotations/findit2/gold-review.json
@@ -64,6 +67,10 @@ check-reports: reports  ## Fail if a committed report differs from its regenerat
 bench-ocr:  ## Compare OCR engines on training receipts (downloads docTR and PyTorch)
 	uv run --with "python-doctr[torch]>=1.1.0" --with "torch>=2.14.1" --with "torchvision>=0.29.1" \
 		python experiments/ocr_benchmark.py
+
+bench-synthesis:  ## Time the synthetic forgery engine (reports/synthesis/engine-timing.md)
+	uv run docfraud synthesis download-fonts
+	uv run python experiments/synthetic_engine.py --timing
 
 trufor:  ## System 6 development round on the design fold (downloads TruFor and PyTorch)
 	uv run docfraud forensics download-trufor
