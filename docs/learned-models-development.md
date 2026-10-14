@@ -109,3 +109,30 @@ the development round starts.
   system 4 and 3 ms for system 3, against 0.48 s for a step on the graphics processor. With seed
   0, forged pixels make up 0.59 % of the counted pixels of the first 100 steps for system 2,
   2.16 % for system 3 and 1.38 % for system 4.
+- **Training loop** ([`training.py`](../src/docfraud/forensics/learned/training.py)). As decision
+  4 of ADR-0022 describes. The details it left open are fixed here:
+  - The learning rate of step *s*, counted from 0, is the peak times (*s* + 1) / 300 during the
+    warm-up, then the peak times (1 + cos(π (*s* − 300) / 5,700)) / 2. It is set on the optimiser
+    at every step, so a resumed run needs no state of a scheduler.
+  - Weight decay applies to every parameter, as PyTorch's AdamW does when given all of them; a
+    convention.
+  - The three systems of one seed start from the same weights except the output bias, which
+    ADR-0022 sets from each run's own tiles.
+  - A checkpoint holds the weights, the optimiser and the record so far. A finished run keeps
+    its final weights and drops its checkpoint; a run stops as diverged at its first loss that is
+    not finite. The time recorded for a step includes waiting for its batch.
+  - The failure rule compares the mean loss of the last 500 steps with the loss of the best
+    constant prediction on their tiles: since each step's loss averages over its own pixels, that
+    constant is the mean share of forged pixels of those steps, and its loss is the binary
+    entropy of that share.
+
+  A test on the processor checks that a run interrupted and resumed ends with the same weights
+  and losses as one that ran without interruption. A smoke run on the Apple GPU (2026-10-14,
+  commit `3597896`; round 2, system 4, seed 0; 80 of the 6,000 steps, interrupted after 40 and
+  resumed; two background processes; kept in a scratch directory, not among the runs) took a
+  median of 0.50 s per step. The first step after each start took about 9 s while the
+  background processes started, and the GPU driver held 3.1 GiB at the end. The loss of a step
+  followed the share of forged pixels in its batch (correlation 0.99) and stayed about 1.1 times
+  the loss of the best constant prediction for that batch while the learning rate was still
+  warming up. Losses of single steps are therefore read against that baseline, as the failure
+  rule reads them.
