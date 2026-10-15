@@ -1,7 +1,8 @@
-"""Download, verify and unpack datasets from their original sources.
+"""Download, verify and unpack files from their original sources.
 
-Datasets are never committed (ADR-0002). Instead each source is pinned by URL, size and SHA-256,
-so that anyone reproducing the project provably works on identical bytes.
+Datasets are never committed (ADR-0002), nor are external code, weights or fonts whose licences
+differ from the project's (ADR-0019, ADR-0021). Instead each file is pinned by URL, size and
+SHA-256, so that anyone reproducing the project provably works on identical bytes.
 """
 
 import hashlib
@@ -20,8 +21,8 @@ type Progress = Callable[[int, int], None]
 
 
 @dataclass(frozen=True, slots=True)
-class DatasetSource:
-    """A dataset archive pinned to exact bytes."""
+class PinnedFile:
+    """A downloadable file, such as a dataset archive, pinned to exact bytes."""
 
     name: str
     url: str
@@ -32,7 +33,7 @@ class DatasetSource:
     citation: str
 
 
-FINDIT2 = DatasetSource(
+FINDIT2 = PinnedFile(
     name="findit2",
     url="https://l3i-share.univ-lr.fr/2023Finditagain/findit2.zip",
     filename="findit2.zip",
@@ -45,7 +46,7 @@ FINDIT2 = DatasetSource(
     ),
 )
 
-SOURCES: dict[str, DatasetSource] = {FINDIT2.name: FINDIT2}
+SOURCES: dict[str, PinnedFile] = {FINDIT2.name: FINDIT2}
 
 
 class ChecksumMismatchError(RuntimeError):
@@ -74,7 +75,7 @@ def _fetch_https(url: str) -> BinaryIO:
 
 
 def download(
-    source: DatasetSource,
+    source: PinnedFile,
     directory: Path,
     *,
     fetch: Fetch = _fetch_https,
@@ -87,7 +88,7 @@ def download(
     looks complete.
 
     Args:
-        source: The pinned dataset archive.
+        source: The pinned file.
         directory: Where to store the archive.
         fetch: Opens a URL and returns a binary stream; injectable for testing.
         on_progress: Called with ``(bytes_done, bytes_total)`` after each chunk.
@@ -127,7 +128,7 @@ def download(
     return target
 
 
-def verify(source: DatasetSource, path: Path) -> None:
+def verify(source: PinnedFile, path: Path) -> None:
     """Check an existing archive against the pinned size and checksum.
 
     Raises:

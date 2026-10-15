@@ -1,6 +1,8 @@
 import hashlib
 import json
 import shutil
+import zipfile
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
@@ -15,19 +17,46 @@ from docfraud.cli import app
 from docfraud.cli import baseline as cli_baseline
 from docfraud.cli import common as cli_common
 from docfraud.cli import data as cli_data
+from docfraud.cli import marks as cli_marks
+from docfraud.cli import observation as cli_observation
 from docfraud.cli import reading as cli_reading
 from docfraud.cli import rules as cli_rules
-from docfraud.data.download import SOURCES, DatasetSource
+from docfraud.cli import synthesis as cli_synthesis
+from docfraud.data.benign_marks import ReceiptMarks, load_mark_log, marks_plan, round_path
+from docfraud.data.download import SOURCES, PinnedFile
 from docfraud.data.gold import GoldManifest, load_manifest
-from docfraud.data.models import Label, Split
+from docfraud.data.models import Entity, Label, Split, Technique
+from docfraud.data.observation import (
+    ASSISTANT,
+    ObservationLog,
+    ReceiptObservation,
+    Visibility,
+    save_log,
+    seal,
+)
 from docfraud.data.splits import TestSetLockedError
+from docfraud.evaluation.design_fold import DESIGN_FOLD
 from docfraud.evaluation.folds import assign_folds, load_folds, save_folds
 from docfraud.evaluation.runs import CodeVersion, JsonRunStore
+from docfraud.forensics.learned.pretrained import IMAGENET_WEIGHTS
+from docfraud.forensics.trufor import TRUFOR_CODE, TRUFOR_WEIGHTS
 from docfraud.reading.fields import ReceiptFields
 from docfraud.reading.ocr import OcrResult
+from docfraud.synthesis.engine import Engine
+from docfraud.synthesis.fonts import font_files
+from docfraud.synthesis.review import ReviewLog, review_sample
+from docfraud.synthesis.review import log_path as review_path
+from docfraud.synthesis.review import save_log as save_review
+from docfraud.synthesis.rounds import development_set
+from docfraud.synthesis.statistics import RoundStatistics, Template
 from tests.baselines.test_bow import corpus
+from tests.data.test_benign_marks import HAND, PLAIN, check_log, mark, mark_log, marks_documents
+from tests.data.test_observation import observation_documents, receipt_answers
 from tests.evaluation.test_folds import documents as fold_documents
 from tests.fixtures.findit import load_toy
+from tests.synthesis.pages import documents as synthesis_documents
+from tests.synthesis.pages import font as synthesis_font
+from tests.synthesis.pages import receipt as synthesis_receipt
 
 runner = CliRunner()
 
@@ -51,7 +80,7 @@ def toy_source(findit_root: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatc
     archive = Path(shutil.make_archive(str(raw / "findit2"), "zip", findit_root.parent, "findit2"))
     payload = archive.read_bytes()
     shutil.rmtree(findit_root)
-    source = DatasetSource(
+    source = PinnedFile(
         name="findit2",
         url="https://example.org/findit2.zip",
         filename=archive.name,
@@ -71,11 +100,11 @@ def test_data_download_uses_the_pinned_source(
 ) -> None:
     calls: list[tuple[str, Path]] = []
 
-    def fake_download(source: DatasetSource, directory: Path, **_: object) -> Path:
+    def fake_download(source: PinnedFile, directory: Path, **_: object) -> Path:
         calls.append((source.url, directory))
         return directory / source.filename
 
-    monkeypatch.setattr(cli_data, "download", fake_download)
+    monkeypatch.setattr(cli_common, "download", fake_download)
     result = runner.invoke(app, ["data", "download", "--data-dir", str(toy_source)])
     assert result.exit_code == 0, result.output
     assert calls == [("https://example.org/findit2.zip", toy_source / "raw")]
@@ -87,6 +116,61 @@ def test_data_prepare_extracts_and_validates(toy_source: Path) -> None:
     assert result.exit_code == 0, result.output
     assert "6 documents (3 forged)" in result.output
     assert (toy_source / "raw" / "findit2" / "train.txt").is_file()
+
+
+def test_download_fonts_fetches_every_pinned_font(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    calls: list[str] = []
+
+    def fake_download(source: PinnedFile, directory: Path, **_: object) -> Path:
+        calls.append(source.filename)
+        return directory / source.filename
+
+    monkeypatch.setattr(cli_common, "download", fake_download)
+    result = runner.invoke(app, ["synthesis", "download-fonts", "--directory", str(tmp_path)])
+    assert result.exit_code == 0, result.output
+    assert calls == [font.filename for font in font_files()]
+    assert len(calls) == 6
+
+
+def test_download_trufor_verifies_and_unpacks_code_and_weights(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    calls: list[tuple[str, Path]] = []
+
+    def fake_download(source: PinnedFile, directory: Path, **_: object) -> Path:
+        calls.append((source.url, directory))
+        directory.mkdir(parents=True, exist_ok=True)
+        archive = directory / source.filename
+        with zipfile.ZipFile(archive, "w") as zf:
+            zf.writestr(f"{source.name}/file.txt", source.name)
+        return archive
+
+    monkeypatch.setattr(cli_common, "download", fake_download)
+    result = runner.invoke(app, ["forensics", "download-trufor", "--directory", str(tmp_path)])
+    assert result.exit_code == 0, result.output
+    assert [url for url, _ in calls] == [TRUFOR_CODE.url, TRUFOR_WEIGHTS.url]
+    assert {directory for _, directory in calls} == {tmp_path / "downloads"}
+    assert (tmp_path / "trufor-code" / "file.txt").read_text() == "trufor-code"
+    assert (tmp_path / "trufor-weights" / "file.txt").is_file()
+    assert "Guillaro" in result.output
+
+
+def test_download_resnet_fetches_the_pinned_weights(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    calls: list[tuple[PinnedFile, Path]] = []
+
+    def fake_download(source: PinnedFile, directory: Path, **_: object) -> Path:
+        calls.append((source, directory))
+        return directory / source.filename
+
+    monkeypatch.setattr(cli_common, "download", fake_download)
+    result = runner.invoke(app, ["forensics", "download-resnet", "--directory", str(tmp_path)])
+    assert result.exit_code == 0, result.output
+    assert calls == [(IMAGENET_WEIGHTS, tmp_path)]
+    assert "He" in result.output
 
 
 def test_data_audit_writes_report(toy_source: Path, tmp_path: Path) -> None:
@@ -510,3 +594,284 @@ def test_rules_breakdown_groups_recorded_decisions(
         "Training, cross-validated: forged receipts found, by editing software"
         in report.read_text(encoding="utf-8")
     )
+
+
+@pytest.fixture
+def observation_cli(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
+    documents = observation_documents(tmp_path / "d")
+    monkeypatch.setattr(cli_observation, "findit_documents", lambda *_, **__: documents)
+    monkeypatch.setattr(cli_observation, "require_clean_commit", lambda: None)
+    monkeypatch.setattr(
+        cli_observation, "code_version", lambda: CodeVersion(commit="abc1234", dirty=False)
+    )
+    return tmp_path
+
+
+def test_observation_page_serves_until_interrupted(
+    observation_cli: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    opened: list[str] = []
+
+    class FakeServer:
+        server_port = 9999
+        closed = False
+
+        def serve_forever(self) -> None:
+            raise KeyboardInterrupt
+
+        def server_close(self) -> None:
+            FakeServer.closed = True
+
+    monkeypatch.setattr(cli_observation, "make_server", lambda *_: FakeServer())
+    monkeypatch.setattr("webbrowser.open", opened.append)
+    logs = observation_cli / "logs"
+    result = runner.invoke(app, ["observation", "page", "--observer", "emre", "--logs", str(logs)])
+    assert result.exit_code == 0, result.output
+    assert opened == ["http://127.0.0.1:9999/"]
+    assert "run the same command to continue" in result.output
+    assert FakeServer.closed
+
+
+def test_observation_crops_are_written_for_the_assistant(observation_cli: Path) -> None:
+    output = observation_cli / "crops"
+    result = runner.invoke(app, ["observation", "crops", "--output", str(output)])
+    assert result.exit_code == 0, result.output
+    assert len(list(output.glob("*-close-up-*.png"))) == 3
+
+
+def test_observation_check_reports_progress_and_strays(observation_cli: Path) -> None:
+    logs = observation_cli / "logs"
+    result = runner.invoke(app, ["observation", "check", "--observer", "emre", "--logs", str(logs)])
+    assert result.exit_code == 0, result.output
+    assert "0 of 3 regions (0 of 2 full forms), 0 of 2 receipts" in result.output
+    stray = ObservationLog(
+        observer="emre",
+        receipts={"X51005268472": ReceiptObservation.model_validate(receipt_answers())},
+    )
+    save_log(stray, logs / "emre.json")
+    result = runner.invoke(app, ["observation", "check", "--observer", "emre", "--logs", str(logs)])
+    assert result.exit_code == 1
+    assert "X51005268472" in result.output
+
+
+def test_observation_seal_is_written_once_and_verified(observation_cli: Path) -> None:
+    logs, records = observation_cli / "logs", observation_cli / "records"
+    save_log(ObservationLog(observer=ASSISTANT), logs / "claude.json")
+    options = ["--logs", str(logs), "--records", str(records)]
+    assert runner.invoke(app, ["observation", "seal", *options]).exit_code == 0
+    assert runner.invoke(app, ["observation", "seal", *options]).exit_code == 1
+    assert runner.invoke(app, ["observation", "seal", *options, "--verify"]).exit_code == 0
+    (logs / "claude.json").write_text("{}", encoding="utf-8")
+    result = runner.invoke(app, ["observation", "seal", *options, "--verify"])
+    assert result.exit_code == 1
+    assert "changed since it was sealed" in result.output
+
+
+def test_observation_report_needs_an_intact_seal(observation_cli: Path) -> None:
+    from tests.data.test_observation_report import observed  # noqa: PLC0415
+
+    _, _, assistant, owner = observed(observation_cli / "o")
+    records, output = observation_cli / "records", observation_cli / "report.md"
+    save_log(assistant, records / "claude.json")
+    save_log(owner, records / "emre.json")
+    seal(records / "claude.json", records / "claude.sha256")
+    options = ["--records", str(records), "--output", str(output)]
+    result = runner.invoke(app, ["observation", "report", *options])
+    assert result.exit_code == 0, result.output
+    assert output.read_text(encoding="utf-8").startswith("# Forgery observations")
+    (records / "claude.json").write_text("{}", encoding="utf-8")
+    result = runner.invoke(app, ["observation", "report", *options])
+    assert result.exit_code == 1
+    assert "no longer matches its seal" in result.output
+
+
+@pytest.fixture
+def marks_cli(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
+    documents = marks_documents(tmp_path / "d")
+    monkeypatch.setattr(cli_marks, "findit_documents", lambda *_, **__: documents)
+    monkeypatch.setattr(cli_marks, "require_clean_commit", lambda: None)
+    monkeypatch.setattr(
+        cli_marks, "code_version", lambda: CodeVersion(commit="abc1234", dirty=False)
+    )
+    plan = marks_plan(documents)
+    receipts = {doc_id: ReceiptMarks() for doc_id in plan}
+    receipts[HAND] = ReceiptMarks(marks=(mark(),))
+    save_log(mark_log(receipts), round_path(tmp_path / "work", ASSISTANT, 1))
+    return tmp_path
+
+
+def marks_options(root: Path, *extra: str) -> list[str]:
+    return ["--work", str(root / "work"), "--records", str(root / "records"), *extra]
+
+
+def test_marks_views_are_written_plain_and_marked(marks_cli: Path) -> None:
+    result = runner.invoke(app, ["marks", "views", *marks_options(marks_cli)])
+    assert result.exit_code == 0, result.output
+    assert len(list((marks_cli / "work" / "views-1").glob("*-overview.png"))) == 3
+    result = runner.invoke(app, ["marks", "views", "--marked", *marks_options(marks_cli)])
+    assert result.exit_code == 0, result.output
+    assert len(list((marks_cli / "work" / "views-1-marked").glob("*-marked.png"))) == 6
+
+
+def test_marks_check_validates_a_round_and_shows_progress(marks_cli: Path) -> None:
+    options = ["--directory", str(marks_cli / "work"), "--records", str(marks_cli / "records")]
+    result = runner.invoke(app, ["marks", "check", *options])
+    assert result.exit_code == 0, result.output
+    assert "marks for 3 of 3 receipts, 1 boxes" in result.output
+    save_log(check_log({PLAIN: "correct"}), round_path(marks_cli / "work", "emre", 1))
+    result = runner.invoke(app, ["marks", "check", *options])
+    assert result.exit_code == 1
+    assert f"{PLAIN}: not a receipt of this round" in result.output
+    result = runner.invoke(app, ["marks", "check", "--round", "2", *options])
+    assert result.exit_code == 1
+    assert "round 1 is not checked yet" in result.output
+    empty = ["--directory", str(marks_cli / "nothing"), "--records", str(marks_cli / "records")]
+    result = runner.invoke(app, ["marks", "check", *empty])
+    assert result.exit_code == 1
+    assert "no log of round 1" in result.output
+
+
+def test_marks_page_serves_the_committed_marks_until_interrupted(
+    marks_cli: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    opened: list[str] = []
+
+    class FakeServer:
+        server_port = 9998
+        closed = False
+
+        def serve_forever(self) -> None:
+            raise KeyboardInterrupt
+
+        def server_close(self) -> None:
+            FakeServer.closed = True
+
+    monkeypatch.setattr(cli_marks, "make_server", lambda *_: FakeServer())
+    monkeypatch.setattr("webbrowser.open", opened.append)
+    records = marks_cli / "records"
+    command = ["marks", "page", "--checker", "emre", *marks_options(marks_cli)]
+    records.mkdir()
+    shutil.copy(round_path(marks_cli / "work", ASSISTANT, 1), round_path(records, ASSISTANT, 1))
+    result = runner.invoke(app, command)
+    assert result.exit_code == 0, result.output
+    assert opened == ["http://127.0.0.1:9998/"]
+    assert FakeServer.closed
+    broken = mark_log({HAND: ReceiptMarks()})  # misses the other receipts of the round
+    save_log(broken, round_path(records, ASSISTANT, 1))
+    result = runner.invoke(app, command)
+    assert result.exit_code == 1
+    assert "the marks are not as planned" in result.output
+
+
+def test_marks_report_needs_finished_rounds(marks_cli: Path) -> None:
+    records, output = marks_cli / "records", marks_cli / "report.md"
+    records.mkdir()
+    shutil.copy(round_path(marks_cli / "work", ASSISTANT, 1), round_path(records, ASSISTANT, 1))
+    options = ["--records", str(records), "--output", str(output)]
+    result = runner.invoke(app, ["marks", "report", *options])
+    assert result.exit_code == 1
+    assert "the rounds are not finished" in result.output
+    plan = load_mark_log(round_path(records, ASSISTANT, 1)).receipts
+    save_log(check_log(dict.fromkeys(plan, "correct")), round_path(records, "emre", 1))
+    result = runner.invoke(app, ["marks", "report", *options])
+    assert result.exit_code == 0, result.output
+    assert output.read_text(encoding="utf-8").startswith("# Benign marks: design fold")
+
+
+@pytest.fixture
+def synthesis_cli(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> tuple[Path, Engine]:
+    """The review commands on drawn receipts: an engine of the design-fold round."""
+    (tmp_path / "d").mkdir()
+    documents, folds = synthesis_documents(tmp_path / "d", per_fold=12)
+    statistics = RoundStatistics(
+        DESIGN_FOLD,
+        tuple(Template((Technique.CPI,), e, 1) for e in (Entity.PRODUCT, Entity.TOTAL_PAYMENT)),
+        (4,),
+        {},
+        {},
+    )
+    engine = Engine(statistics, documents, folds, synthesis_receipt, synthesis_font)
+    monkeypatch.setattr(cli_synthesis, "findit_documents", lambda *_, **__: documents)
+    monkeypatch.setattr(cli_synthesis, "load_folds", lambda _: folds)
+    monkeypatch.setattr(cli_synthesis, "cached_ocr", lambda _: None)
+    monkeypatch.setattr(cli_synthesis, "round_engine", lambda *_: engine)
+    monkeypatch.setattr(cli_synthesis, "require_clean_commit", lambda: None)
+    monkeypatch.setattr(
+        cli_synthesis, "code_version", lambda: CodeVersion(commit="abc1234", dirty=False)
+    )
+    return tmp_path, engine
+
+
+def test_review_page_serves_until_interrupted(
+    synthesis_cli: tuple[Path, Engine], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    opened: list[str] = []
+
+    class FakeServer:
+        server_port = 9997
+        closed = False
+
+        def serve_forever(self) -> None:
+            raise KeyboardInterrupt
+
+        def server_close(self) -> None:
+            FakeServer.closed = True
+
+    monkeypatch.setattr(cli_synthesis, "make_server", lambda *_: FakeServer())
+    monkeypatch.setattr("webbrowser.open", opened.append)
+    records = synthesis_cli[0] / "review"
+    result = runner.invoke(app, ["synthesis", "review", "--records", str(records)])
+    assert result.exit_code == 0, result.output
+    assert opened == ["http://127.0.0.1:9997/"]
+    assert FakeServer.closed
+
+
+def test_review_report_counts_a_finished_round(
+    synthesis_cli: tuple[Path, Engine], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    directory, engine = synthesis_cli
+    records = directory / "review"
+    output = directory / "report.md"
+    arguments = ["synthesis", "review-report", "--records", str(records), "--output", str(output)]
+    unfinished = runner.invoke(app, arguments)
+    assert unfinished.exit_code == 1
+    assert "not finished" in unfinished.output
+    items = review_sample([f.record for f in development_set(engine)], 1)
+    answers = {
+        item.key: {
+            "visibility": "not_found",
+            "plausible": "yes",
+            "display": {
+                "device_pixel_ratio": 2.0,
+                "screen_width": 1470,
+                "screen_height": 956,
+                "window_width": 1400,
+                "window_height": 900,
+            },
+            "answered_at": "2026-10-15T10:00:00Z",
+            "commit": "abc1234",
+            "language": "tr",
+        }
+        for item in items
+    }
+    save_review(
+        ReviewLog.model_validate({"reviewer": "emre", "round": 1, "answers": answers}),
+        review_path(records, "emre", 1),
+    )
+    start = datetime(2026, 10, 12, 20, 0, tzinfo=UTC)
+    observed = SimpleNamespace(
+        regions={
+            str(n): SimpleNamespace(
+                visibility=Visibility.AT_100,
+                observed_at=start + timedelta(seconds=8 * n),
+                detailed=False,
+            )
+            for n in range(3)
+        }
+    )
+    monkeypatch.setattr(cli_synthesis, "load_observations", lambda *_: observed)
+    result = runner.invoke(app, arguments)
+    assert result.exit_code == 0, result.output
+    report = output.read_text()
+    assert "Found at 100 %: 0 of 40; the criterion is **not exceeded**" in report
+    assert "| real, step 4.2, visibility only | 2 | 8.000 |" in report

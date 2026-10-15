@@ -24,6 +24,9 @@ from docfraud.data.normalize import (
         ("\n \n", ""),
         ("café", "café\n"),
         ("TOTAL 5.00 €", "TOTAL 5.00 €\n"),
+        ("1,2,3,4,5,6,7,8,NO.2, JALAN\r\n\n1,2,3,4,5,6,7,8,RM 1,50\n", "NO.2, JALAN\n\nRM 1,50\n"),
+        ("1,2,3,4,5,6,7,TOTAL\n12,50,RM\n", "1,2,3,4,5,6,7,TOTAL\n12,50,RM\n"),
+        ("1,2,3,4,5,6,7,8,TOTAL\n1,2,3,4,5,6,7,8,\n", "TOTAL\n"),
     ],
     ids=[
         "crlf",
@@ -35,6 +38,9 @@ from docfraud.data.normalize import (
         "only-space",
         "nfc",
         "euro-kept",
+        "box-coordinates",
+        "numbers-kept",
+        "box-empty-tail",
     ],
 )
 def test_normalize_transcript(raw: str, expected: str) -> None:
@@ -43,6 +49,11 @@ def test_normalize_transcript(raw: str, expected: str) -> None:
 
 def test_normalize_transcript_keeps_interior_blank_lines() -> None:
     assert normalize_transcript("A\n\nB") == "A\n\nB\n"
+
+
+def test_normalize_transcript_refuses_partial_box_coordinates() -> None:
+    with pytest.raises(ValueError, match="1 of 2 lines carry SROIE box coordinates"):
+        normalize_transcript("1,2,3,4,5,6,7,8,TOTAL\nRM 1.50\n")
 
 
 def test_read_transcript_is_strict(tmp_path: Path) -> None:

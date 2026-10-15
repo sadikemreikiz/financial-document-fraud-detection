@@ -37,6 +37,12 @@ step has seen.
 
 Value [95 % bootstrap interval over receipts]. Source: [gold-evaluation-b.md](gold-evaluation-b.md).
 
+These values were measured before a transcript fix: until commit `35d1e82` (2026-10-12) the
+transcript of the forged receipt `X51008030565` in gold set B kept SROIE box coordinates before
+every line ([data card](../../docs/data-card.md#shortcuts)), and parser v2 read none of its five
+amounts on T1 (T2 was not affected). Phase 6 measures parser v2 again on the corrected
+transcripts, next to LLM extraction.
+
 **Improvement from v1 to v2** (paired, same receipts of gold set B,
 [parser-comparison-b.md](parser-comparison-b.md)): items recall +0.41 [0.23, 0.59] on both text
 sources and merchant accuracy +0.23 [0.07, 0.40] on transcripts; amounts did not change. Item

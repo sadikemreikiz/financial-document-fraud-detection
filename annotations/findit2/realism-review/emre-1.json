@@ -1,0 +1,607 @@
+{
+  "version": 1,
+  "reviewer": "emre",
+  "round": 1,
+  "answers": {
+    "X51006008074-0": {
+      "visibility": "unclear",
+      "plausible": "yes",
+      "note": "",
+      "display": {
+        "device_pixel_ratio": 2.0,
+        "screen_width": 1470,
+        "screen_height": 956,
+        "window_width": 1470,
+        "window_height": 776
+      },
+      "answered_at": "2026-10-14T15:08:32.965935Z",
+      "commit": "ed2ed1d67237df7e2c1799938484a65c760b8cc1",
+      "language": "tr"
+    },
+    "X51007103610-2": {
+      "visibility": "not_found",
+      "plausible": "yes",
+      "note": "",
+      "display": {
+        "device_pixel_ratio": 2.0,
+        "screen_width": 1470,
+        "screen_height": 956,
+        "window_width": 1470,
+        "window_height": 776
+      },
+      "answered_at": "2026-10-14T15:02:51.469344Z",
+      "commit": "ed2ed1d67237df7e2c1799938484a65c760b8cc1",
+      "language": "tr"
+    },
+    "X51008128052-0": {
+      "visibility": "not_found",
+      "plausible": "yes",
+      "note": "",
+      "display": {
+        "device_pixel_ratio": 2.0,
+        "screen_width": 1470,
+        "screen_height": 956,
+        "window_width": 1470,
+        "window_height": 776
+      },
+      "answered_at": "2026-10-14T15:03:05.052489Z",
+      "commit": "ed2ed1d67237df7e2c1799938484a65c760b8cc1",
+      "language": "tr"
+    },
+    "X51005663279-0": {
+      "visibility": "not_found",
+      "plausible": "yes",
+      "note": "",
+      "display": {
+        "device_pixel_ratio": 2.0,
+        "screen_width": 1470,
+        "screen_height": 956,
+        "window_width": 1470,
+        "window_height": 776
+      },
+      "answered_at": "2026-10-14T15:03:14.769213Z",
+      "commit": "ed2ed1d67237df7e2c1799938484a65c760b8cc1",
+      "language": "tr"
+    },
+    "X51006334927-1": {
+      "visibility": "not_found",
+      "plausible": "yes",
+      "note": "",
+      "display": {
+        "device_pixel_ratio": 2.0,
+        "screen_width": 1470,
+        "screen_height": 956,
+        "window_width": 1470,
+        "window_height": 776
+      },
+      "answered_at": "2026-10-14T15:03:26.851757Z",
+      "commit": "ed2ed1d67237df7e2c1799938484a65c760b8cc1",
+      "language": "tr"
+    },
+    "X51005568898-1": {
+      "visibility": "not_found",
+      "plausible": "yes",
+      "note": "",
+      "display": {
+        "device_pixel_ratio": 2.0,
+        "screen_width": 1470,
+        "screen_height": 956,
+        "window_width": 1470,
+        "window_height": 776
+      },
+      "answered_at": "2026-10-14T15:03:42.552402Z",
+      "commit": "ed2ed1d67237df7e2c1799938484a65c760b8cc1",
+      "language": "tr"
+    },
+    "X00016469670-1": {
+      "visibility": "not_found",
+      "plausible": "yes",
+      "note": "",
+      "display": {
+        "device_pixel_ratio": 2.0,
+        "screen_width": 1470,
+        "screen_height": 956,
+        "window_width": 1470,
+        "window_height": 776
+      },
+      "answered_at": "2026-10-14T15:04:03.051739Z",
+      "commit": "ed2ed1d67237df7e2c1799938484a65c760b8cc1",
+      "language": "tr"
+    },
+    "X51007103610-1": {
+      "visibility": "not_found",
+      "plausible": "yes",
+      "note": "",
+      "display": {
+        "device_pixel_ratio": 2.0,
+        "screen_width": 1470,
+        "screen_height": 956,
+        "window_width": 1470,
+        "window_height": 776
+      },
+      "answered_at": "2026-10-14T15:04:12.051588Z",
+      "commit": "ed2ed1d67237df7e2c1799938484a65c760b8cc1",
+      "language": "tr"
+    },
+    "X51006620187-1": {
+      "visibility": "not_found",
+      "plausible": "yes",
+      "note": "",
+      "display": {
+        "device_pixel_ratio": 2.0,
+        "screen_width": 1470,
+        "screen_height": 956,
+        "window_width": 1470,
+        "window_height": 776
+      },
+      "answered_at": "2026-10-14T15:04:18.134586Z",
+      "commit": "ed2ed1d67237df7e2c1799938484a65c760b8cc1",
+      "language": "tr"
+    },
+    "X51006882603-4": {
+      "visibility": "not_found",
+      "plausible": "yes",
+      "note": "",
+      "display": {
+        "device_pixel_ratio": 2.0,
+        "screen_width": 1470,
+        "screen_height": 956,
+        "window_width": 1470,
+        "window_height": 776
+      },
+      "answered_at": "2026-10-14T15:04:32.301416Z",
+      "commit": "ed2ed1d67237df7e2c1799938484a65c760b8cc1",
+      "language": "tr"
+    },
+    "X51005717526-0": {
+      "visibility": "not_found",
+      "plausible": "yes",
+      "note": "",
+      "display": {
+        "device_pixel_ratio": 2.0,
+        "screen_width": 1470,
+        "screen_height": 956,
+        "window_width": 1470,
+        "window_height": 776
+      },
+      "answered_at": "2026-10-14T15:04:43.101122Z",
+      "commit": "ed2ed1d67237df7e2c1799938484a65c760b8cc1",
+      "language": "tr"
+    },
+    "X51005230621-0": {
+      "visibility": "unclear",
+      "plausible": "unclear",
+      "note": "",
+      "display": {
+        "device_pixel_ratio": 2.0,
+        "screen_width": 1470,
+        "screen_height": 956,
+        "window_width": 1470,
+        "window_height": 776
+      },
+      "answered_at": "2026-10-14T15:04:53.101314Z",
+      "commit": "ed2ed1d67237df7e2c1799938484a65c760b8cc1",
+      "language": "tr"
+    },
+    "X51005711451-2": {
+      "visibility": "not_found",
+      "plausible": "yes",
+      "note": "",
+      "display": {
+        "device_pixel_ratio": 2.0,
+        "screen_width": 1470,
+        "screen_height": 956,
+        "window_width": 1470,
+        "window_height": 776
+      },
+      "answered_at": "2026-10-14T15:04:58.417733Z",
+      "commit": "ed2ed1d67237df7e2c1799938484a65c760b8cc1",
+      "language": "tr"
+    },
+    "X51008042781-1": {
+      "visibility": "not_found",
+      "plausible": "yes",
+      "note": "",
+      "display": {
+        "device_pixel_ratio": 2.0,
+        "screen_width": 1470,
+        "screen_height": 956,
+        "window_width": 1470,
+        "window_height": 776
+      },
+      "answered_at": "2026-10-14T15:05:03.200872Z",
+      "commit": "ed2ed1d67237df7e2c1799938484a65c760b8cc1",
+      "language": "tr"
+    },
+    "X51005746203-5": {
+      "visibility": "not_found",
+      "plausible": "yes",
+      "note": "",
+      "display": {
+        "device_pixel_ratio": 2.0,
+        "screen_width": 1470,
+        "screen_height": 956,
+        "window_width": 1470,
+        "window_height": 776
+      },
+      "answered_at": "2026-10-14T15:05:09.934164Z",
+      "commit": "ed2ed1d67237df7e2c1799938484a65c760b8cc1",
+      "language": "tr"
+    },
+    "X51006387931-0": {
+      "visibility": "not_found",
+      "plausible": "yes",
+      "note": "",
+      "display": {
+        "device_pixel_ratio": 2.0,
+        "screen_width": 1470,
+        "screen_height": 956,
+        "window_width": 1470,
+        "window_height": 776
+      },
+      "answered_at": "2026-10-14T15:05:15.584140Z",
+      "commit": "ed2ed1d67237df7e2c1799938484a65c760b8cc1",
+      "language": "tr"
+    },
+    "X51008122920-1": {
+      "visibility": "not_found",
+      "plausible": "yes",
+      "note": "",
+      "display": {
+        "device_pixel_ratio": 2.0,
+        "screen_width": 1470,
+        "screen_height": 956,
+        "window_width": 1470,
+        "window_height": 776
+      },
+      "answered_at": "2026-10-14T15:05:20.417307Z",
+      "commit": "ed2ed1d67237df7e2c1799938484a65c760b8cc1",
+      "language": "tr"
+    },
+    "X51005568895-13": {
+      "visibility": "not_found",
+      "plausible": "yes",
+      "note": "",
+      "display": {
+        "device_pixel_ratio": 2.0,
+        "screen_width": 1470,
+        "screen_height": 956,
+        "window_width": 1470,
+        "window_height": 776
+      },
+      "answered_at": "2026-10-14T15:05:28.800431Z",
+      "commit": "ed2ed1d67237df7e2c1799938484a65c760b8cc1",
+      "language": "tr"
+    },
+    "X51007846350-13": {
+      "visibility": "not_found",
+      "plausible": "yes",
+      "note": "",
+      "display": {
+        "device_pixel_ratio": 2.0,
+        "screen_width": 1470,
+        "screen_height": 956,
+        "window_width": 1470,
+        "window_height": 776
+      },
+      "answered_at": "2026-10-14T15:05:34.334367Z",
+      "commit": "ed2ed1d67237df7e2c1799938484a65c760b8cc1",
+      "language": "tr"
+    },
+    "X51005568895-0": {
+      "visibility": "not_found",
+      "plausible": "yes",
+      "note": "",
+      "display": {
+        "device_pixel_ratio": 2.0,
+        "screen_width": 1470,
+        "screen_height": 956,
+        "window_width": 1470,
+        "window_height": 776
+      },
+      "answered_at": "2026-10-14T15:05:42.400318Z",
+      "commit": "ed2ed1d67237df7e2c1799938484a65c760b8cc1",
+      "language": "tr"
+    },
+    "X51006502535-2": {
+      "visibility": "not_found",
+      "plausible": "yes",
+      "note": "",
+      "display": {
+        "device_pixel_ratio": 2.0,
+        "screen_width": 1470,
+        "screen_height": 956,
+        "window_width": 1470,
+        "window_height": 776
+      },
+      "answered_at": "2026-10-14T15:05:50.498778Z",
+      "commit": "ed2ed1d67237df7e2c1799938484a65c760b8cc1",
+      "language": "tr"
+    },
+    "X51006502535-1": {
+      "visibility": "not_found",
+      "plausible": "yes",
+      "note": "",
+      "display": {
+        "device_pixel_ratio": 2.0,
+        "screen_width": 1470,
+        "screen_height": 956,
+        "window_width": 1470,
+        "window_height": 776
+      },
+      "answered_at": "2026-10-14T15:05:58.233410Z",
+      "commit": "ed2ed1d67237df7e2c1799938484a65c760b8cc1",
+      "language": "tr"
+    },
+    "X51005746203-1": {
+      "visibility": "not_found",
+      "plausible": "yes",
+      "note": "",
+      "display": {
+        "device_pixel_ratio": 2.0,
+        "screen_width": 1470,
+        "screen_height": 956,
+        "window_width": 1470,
+        "window_height": 776
+      },
+      "answered_at": "2026-10-14T15:06:14.166572Z",
+      "commit": "ed2ed1d67237df7e2c1799938484a65c760b8cc1",
+      "language": "tr"
+    },
+    "X51005568898-5": {
+      "visibility": "at_100",
+      "plausible": "yes",
+      "note": "",
+      "display": {
+        "device_pixel_ratio": 2.0,
+        "screen_width": 1470,
+        "screen_height": 956,
+        "window_width": 1470,
+        "window_height": 776
+      },
+      "answered_at": "2026-10-14T15:06:20.350040Z",
+      "commit": "ed2ed1d67237df7e2c1799938484a65c760b8cc1",
+      "language": "tr"
+    },
+    "X51006913067-0": {
+      "visibility": "not_found",
+      "plausible": "yes",
+      "note": "",
+      "display": {
+        "device_pixel_ratio": 2.0,
+        "screen_width": 1470,
+        "screen_height": 956,
+        "window_width": 1470,
+        "window_height": 776
+      },
+      "answered_at": "2026-10-14T15:06:26.616420Z",
+      "commit": "ed2ed1d67237df7e2c1799938484a65c760b8cc1",
+      "language": "tr"
+    },
+    "X51005568898-3": {
+      "visibility": "unclear",
+      "plausible": "yes",
+      "note": "",
+      "display": {
+        "device_pixel_ratio": 2.0,
+        "screen_width": 1470,
+        "screen_height": 956,
+        "window_width": 1470,
+        "window_height": 776
+      },
+      "answered_at": "2026-10-14T15:06:36.533588Z",
+      "commit": "ed2ed1d67237df7e2c1799938484a65c760b8cc1",
+      "language": "tr"
+    },
+    "X51005806718-1": {
+      "visibility": "at_100",
+      "plausible": "unclear",
+      "note": "",
+      "display": {
+        "device_pixel_ratio": 2.0,
+        "screen_width": 1470,
+        "screen_height": 956,
+        "window_width": 1470,
+        "window_height": 776
+      },
+      "answered_at": "2026-10-14T15:06:51.465681Z",
+      "commit": "ed2ed1d67237df7e2c1799938484a65c760b8cc1",
+      "language": "tr"
+    },
+    "X51007103610-3": {
+      "visibility": "not_found",
+      "plausible": "unclear",
+      "note": "",
+      "display": {
+        "device_pixel_ratio": 2.0,
+        "screen_width": 1470,
+        "screen_height": 956,
+        "window_width": 1470,
+        "window_height": 776
+      },
+      "answered_at": "2026-10-14T15:07:01.933654Z",
+      "commit": "ed2ed1d67237df7e2c1799938484a65c760b8cc1",
+      "language": "tr"
+    },
+    "X51006387740-2": {
+      "visibility": "not_found",
+      "plausible": "yes",
+      "note": "",
+      "display": {
+        "device_pixel_ratio": 2.0,
+        "screen_width": 1470,
+        "screen_height": 956,
+        "window_width": 1470,
+        "window_height": 776
+      },
+      "answered_at": "2026-10-14T15:07:08.333150Z",
+      "commit": "ed2ed1d67237df7e2c1799938484a65c760b8cc1",
+      "language": "tr"
+    },
+    "X51006334927-6": {
+      "visibility": "not_found",
+      "plausible": "unclear",
+      "note": "",
+      "display": {
+        "device_pixel_ratio": 2.0,
+        "screen_width": 1470,
+        "screen_height": 956,
+        "window_width": 1470,
+        "window_height": 776
+      },
+      "answered_at": "2026-10-14T15:07:14.649869Z",
+      "commit": "ed2ed1d67237df7e2c1799938484a65c760b8cc1",
+      "language": "tr"
+    },
+    "X51007339159-4": {
+      "visibility": "not_found",
+      "plausible": "yes",
+      "note": "",
+      "display": {
+        "device_pixel_ratio": 2.0,
+        "screen_width": 1470,
+        "screen_height": 956,
+        "window_width": 1470,
+        "window_height": 776
+      },
+      "answered_at": "2026-10-14T15:07:20.599462Z",
+      "commit": "ed2ed1d67237df7e2c1799938484a65c760b8cc1",
+      "language": "tr"
+    },
+    "X51006882603-1": {
+      "visibility": "not_found",
+      "plausible": "unclear",
+      "note": "",
+      "display": {
+        "device_pixel_ratio": 2.0,
+        "screen_width": 1470,
+        "screen_height": 956,
+        "window_width": 1470,
+        "window_height": 776
+      },
+      "answered_at": "2026-10-14T15:07:27.398904Z",
+      "commit": "ed2ed1d67237df7e2c1799938484a65c760b8cc1",
+      "language": "tr"
+    },
+    "X51006557115-0": {
+      "visibility": "not_found",
+      "plausible": "yes",
+      "note": "",
+      "display": {
+        "device_pixel_ratio": 2.0,
+        "screen_width": 1470,
+        "screen_height": 956,
+        "window_width": 1470,
+        "window_height": 776
+      },
+      "answered_at": "2026-10-14T15:07:32.215892Z",
+      "commit": "ed2ed1d67237df7e2c1799938484a65c760b8cc1",
+      "language": "tr"
+    },
+    "X51005442333-0": {
+      "visibility": "not_found",
+      "plausible": "yes",
+      "note": "",
+      "display": {
+        "device_pixel_ratio": 2.0,
+        "screen_width": 1470,
+        "screen_height": 956,
+        "window_width": 1470,
+        "window_height": 776
+      },
+      "answered_at": "2026-10-14T15:07:37.315854Z",
+      "commit": "ed2ed1d67237df7e2c1799938484a65c760b8cc1",
+      "language": "tr"
+    },
+    "X51008128052-3": {
+      "visibility": "not_found",
+      "plausible": "no",
+      "note": "",
+      "display": {
+        "device_pixel_ratio": 2.0,
+        "screen_width": 1470,
+        "screen_height": 956,
+        "window_width": 1470,
+        "window_height": 776
+      },
+      "answered_at": "2026-10-14T15:07:42.182597Z",
+      "commit": "ed2ed1d67237df7e2c1799938484a65c760b8cc1",
+      "language": "tr"
+    },
+    "X51005719814-1": {
+      "visibility": "not_found",
+      "plausible": "yes",
+      "note": "",
+      "display": {
+        "device_pixel_ratio": 2.0,
+        "screen_width": 1470,
+        "screen_height": 956,
+        "window_width": 1470,
+        "window_height": 776
+      },
+      "answered_at": "2026-10-14T15:07:46.316539Z",
+      "commit": "ed2ed1d67237df7e2c1799938484a65c760b8cc1",
+      "language": "tr"
+    },
+    "X51007391372-1": {
+      "visibility": "not_found",
+      "plausible": "unclear",
+      "note": "",
+      "display": {
+        "device_pixel_ratio": 2.0,
+        "screen_width": 1470,
+        "screen_height": 956,
+        "window_width": 1470,
+        "window_height": 776
+      },
+      "answered_at": "2026-10-14T15:07:54.266114Z",
+      "commit": "ed2ed1d67237df7e2c1799938484a65c760b8cc1",
+      "language": "tr"
+    },
+    "X51007846350-7": {
+      "visibility": "not_found",
+      "plausible": "yes",
+      "note": "",
+      "display": {
+        "device_pixel_ratio": 2.0,
+        "screen_width": 1470,
+        "screen_height": 956,
+        "window_width": 1470,
+        "window_height": 776
+      },
+      "answered_at": "2026-10-14T15:08:03.065854Z",
+      "commit": "ed2ed1d67237df7e2c1799938484a65c760b8cc1",
+      "language": "tr"
+    },
+    "X51008099086-1": {
+      "visibility": "not_found",
+      "plausible": "yes",
+      "note": "",
+      "display": {
+        "device_pixel_ratio": 2.0,
+        "screen_width": 1470,
+        "screen_height": 956,
+        "window_width": 1470,
+        "window_height": 776
+      },
+      "answered_at": "2026-10-14T15:08:15.615533Z",
+      "commit": "ed2ed1d67237df7e2c1799938484a65c760b8cc1",
+      "language": "tr"
+    },
+    "X51007846266-0": {
+      "visibility": "not_found",
+      "plausible": "unclear",
+      "note": "",
+      "display": {
+        "device_pixel_ratio": 2.0,
+        "screen_width": 1470,
+        "screen_height": 956,
+        "window_width": 1470,
+        "window_height": 776
+      },
+      "answered_at": "2026-10-14T15:08:25.332064Z",
+      "commit": "ed2ed1d67237df7e2c1799938484a65c760b8cc1",
+      "language": "tr"
+    }
+  }
+}

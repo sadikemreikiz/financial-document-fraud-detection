@@ -31,7 +31,8 @@ the transcript, with annotated forgery regions and published baselines.
   the dataset distributes PNG files.
 - **Document label**: authentic or forged.
 - **Transcripts**: one plain-text file per receipt, one recognised text line per line, without
-  coordinates. Table columns appear as separate lines.
+  coordinates (one exception, see [Shortcuts](#shortcuts)). Table columns appear as separate
+  lines.
 - **Region annotations** for forged receipts, exported from the VGG Image Annotator:
   rectangles marking each *modified* area, and for copy-paste forgeries inside the document,
   the *original* area that was copied (not always annotated).
@@ -63,6 +64,7 @@ and corrected the annotations.
 | Copy sources are only partly annotated (the authors removed uncertain ones) | Copy-source localisation is evaluated only where annotated |
 | Region rectangles are larger than the edited pixels | Pixel-level localisation scores are lower bounds; region-level hit rate is reported as well |
 | The same receipt appears under several identifiers: 15 groups of copies and 5 authentic/forged twins, 10 of the 20 groups spanning splits | Resolved by [ADR-0009](decisions/0009-duplicate-receipts.md): the test split stays whole, copies leave training and validation, twins in one split stay together; a data test re-runs the detection |
+| The transcript of `X51008030565` keeps SROIE box coordinates (see [Shortcuts](#shortcuts)) | Removed by normalisation since commit `35d1e82` (2026-10-12). Results measured before are marked in the [Phase 2](../reports/reading/README.md) and [Phase 3](../reports/rules/README.md) summaries; with the coordinates removed, duplicate detection finds no new candidate |
 
 The adapter (`docfraud.data.findit`) applies only the documented corrections. Any other
 inconsistency stops loading with an error, and a correction that is no longer needed raises as
@@ -80,6 +82,10 @@ evidence of forgery ([ADR-0003](decisions/0003-content-only-headline.md)):
   and their files are larger, because they were re-saved.
 - **Transcript formatting**: a few forged transcripts contain Windows line endings or trailing
   whitespace introduced by the editor.
+- **Box coordinates**: the transcript of one forged training receipt, `X51008030565`, is in the
+  SROIE format, with the eight corner coordinates of its text box before every line. No other
+  of the 987 transcripts has them (audit, integrity checks; a data test also covers the copies
+  that the audit leaves out).
 
 Treatment in this project:
 
@@ -87,6 +93,9 @@ Treatment in this project:
   colour stored underneath) and converted to 8-bit grayscale. After this, whether the original
   scan was in colour is balanced between classes, so no trace of the storage format survives.
 - **Transcripts** are normalised to LF line endings, without trailing whitespace, in Unicode NFC.
+  Box coordinates are removed when every line of a transcript carries them; a transcript in
+  which only some lines do stops processing with an error, because removing them there could
+  delete content.
 - **Content is kept.** Two forged transcripts contain a euro sign on ringgit receipts. That is a
   mistake a real forger can make and is legitimate evidence, so it is not normalised away.
 

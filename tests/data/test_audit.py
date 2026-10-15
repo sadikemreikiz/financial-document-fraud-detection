@@ -85,6 +85,19 @@ def test_audit_handles_forgeries_without_regions(tmp_path: Path) -> None:
     assert integrity["Forged documents without region annotations"] == ["U"]
 
 
+def test_audit_lists_transcripts_with_box_coordinates(findit_root: Path, tmp_path: Path) -> None:
+    plain = by_first_column(tables(findit_root)["Integrity checks"])
+    assert plain["Transcripts with SROIE box coordinates"] == ["none"]
+
+    box = Entry("B1", transcript=b"1,2,3,2,3,4,1,4,SHOP\n10,20,90,20,90,40,10,40,TOTAL 10.00\n")
+    audit = tables(write_dataset(tmp_path / "d", [*standard_entries(), box]))
+    integrity = by_first_column(audit["Integrity checks"])
+    assert integrity["Transcripts with SROIE box coordinates"] == ["B1 (train, authentic)"]
+    binary = by_first_column(audit["Shortcut audit: binary traits"])
+    assert binary["Transcript has SROIE box coordinates"][:2] == ["0.0 %", "25.0 %"]
+    assert binary["After normalisation: SROIE box coordinates"][:2] == ["0.0 %", "0.0 %"]
+
+
 def test_audit_dataset_writes_markdown(findit_root: Path, tmp_path: Path) -> None:
     output = tmp_path / "reports" / "audit.md"
     audit_dataset(documents(findit_root), output, source="Toy source")

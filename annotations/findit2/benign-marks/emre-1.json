@@ -1,0 +1,877 @@
+{
+  "version": 1,
+  "checker": "emre",
+  "round": 1,
+  "receipts": {
+    "X51005746203": {
+      "verdict": "correct",
+      "points": [],
+      "note": "",
+      "checked_at": "2026-10-13T08:55:39.380822Z",
+      "commit": "72a1a60f54b9476a22c22e3babb027b4ce590273",
+      "display": {
+        "device_pixel_ratio": 2.0,
+        "screen_width": 1470,
+        "screen_height": 956,
+        "window_width": 1470,
+        "window_height": 776
+      },
+      "language": "tr"
+    },
+    "X51007846397": {
+      "verdict": "correct",
+      "points": [],
+      "note": "",
+      "checked_at": "2026-10-13T08:47:11.313513Z",
+      "commit": "72a1a60f54b9476a22c22e3babb027b4ce590273",
+      "display": {
+        "device_pixel_ratio": 2.0,
+        "screen_width": 1470,
+        "screen_height": 956,
+        "window_width": 1470,
+        "window_height": 776
+      },
+      "language": "tr"
+    },
+    "X51006414593": {
+      "verdict": "correct",
+      "points": [],
+      "note": "",
+      "checked_at": "2026-10-13T08:47:18.429442Z",
+      "commit": "72a1a60f54b9476a22c22e3babb027b4ce590273",
+      "display": {
+        "device_pixel_ratio": 2.0,
+        "screen_width": 1470,
+        "screen_height": 956,
+        "window_width": 1470,
+        "window_height": 776
+      },
+      "language": "tr"
+    },
+    "X51005587254": {
+      "verdict": "correct",
+      "points": [],
+      "note": "",
+      "checked_at": "2026-10-13T08:47:30.363206Z",
+      "commit": "72a1a60f54b9476a22c22e3babb027b4ce590273",
+      "display": {
+        "device_pixel_ratio": 2.0,
+        "screen_width": 1470,
+        "screen_height": 956,
+        "window_width": 1470,
+        "window_height": 776
+      },
+      "language": "tr"
+    },
+    "X51007846388": {
+      "verdict": "correct",
+      "points": [],
+      "note": "",
+      "checked_at": "2026-10-13T08:47:35.046088Z",
+      "commit": "72a1a60f54b9476a22c22e3babb027b4ce590273",
+      "display": {
+        "device_pixel_ratio": 2.0,
+        "screen_width": 1470,
+        "screen_height": 956,
+        "window_width": 1470,
+        "window_height": 776
+      },
+      "language": "tr"
+    },
+    "X51006414714": {
+      "verdict": "correct",
+      "points": [],
+      "note": "",
+      "checked_at": "2026-10-13T08:47:40.329466Z",
+      "commit": "72a1a60f54b9476a22c22e3babb027b4ce590273",
+      "display": {
+        "device_pixel_ratio": 2.0,
+        "screen_width": 1470,
+        "screen_height": 956,
+        "window_width": 1470,
+        "window_height": 776
+      },
+      "language": "tr"
+    },
+    "X51007846302": {
+      "verdict": "correct",
+      "points": [],
+      "note": "",
+      "checked_at": "2026-10-13T08:47:43.762028Z",
+      "commit": "72a1a60f54b9476a22c22e3babb027b4ce590273",
+      "display": {
+        "device_pixel_ratio": 2.0,
+        "screen_width": 1470,
+        "screen_height": 956,
+        "window_width": 1470,
+        "window_height": 776
+      },
+      "language": "tr"
+    },
+    "X51005442327": {
+      "verdict": "correct",
+      "points": [],
+      "note": "",
+      "checked_at": "2026-10-13T08:47:46.513300Z",
+      "commit": "72a1a60f54b9476a22c22e3babb027b4ce590273",
+      "display": {
+        "device_pixel_ratio": 2.0,
+        "screen_width": 1470,
+        "screen_height": 956,
+        "window_width": 1470,
+        "window_height": 776
+      },
+      "language": "tr"
+    },
+    "X51007231372": {
+      "verdict": "correct",
+      "points": [],
+      "note": "",
+      "checked_at": "2026-10-13T08:47:50.513658Z",
+      "commit": "72a1a60f54b9476a22c22e3babb027b4ce590273",
+      "display": {
+        "device_pixel_ratio": 2.0,
+        "screen_width": 1470,
+        "screen_height": 956,
+        "window_width": 1470,
+        "window_height": 776
+      },
+      "language": "tr"
+    },
+    "X51007103610": {
+      "verdict": "correct",
+      "points": [],
+      "note": "",
+      "checked_at": "2026-10-13T08:47:55.679961Z",
+      "commit": "72a1a60f54b9476a22c22e3babb027b4ce590273",
+      "display": {
+        "device_pixel_ratio": 2.0,
+        "screen_width": 1470,
+        "screen_height": 956,
+        "window_width": 1470,
+        "window_height": 776
+      },
+      "language": "tr"
+    },
+    "X51005663274": {
+      "verdict": "correct",
+      "points": [],
+      "note": "",
+      "checked_at": "2026-10-13T08:48:07.313475Z",
+      "commit": "72a1a60f54b9476a22c22e3babb027b4ce590273",
+      "display": {
+        "device_pixel_ratio": 2.0,
+        "screen_width": 1470,
+        "screen_height": 956,
+        "window_width": 1470,
+        "window_height": 776
+      },
+      "language": "tr"
+    },
+    "X51005230617": {
+      "verdict": "correct",
+      "points": [],
+      "note": "",
+      "checked_at": "2026-10-13T08:48:11.012418Z",
+      "commit": "72a1a60f54b9476a22c22e3babb027b4ce590273",
+      "display": {
+        "device_pixel_ratio": 2.0,
+        "screen_width": 1470,
+        "screen_height": 956,
+        "window_width": 1470,
+        "window_height": 776
+      },
+      "language": "tr"
+    },
+    "X51007846269": {
+      "verdict": "correct",
+      "points": [],
+      "note": "",
+      "checked_at": "2026-10-13T08:48:14.412597Z",
+      "commit": "72a1a60f54b9476a22c22e3babb027b4ce590273",
+      "display": {
+        "device_pixel_ratio": 2.0,
+        "screen_width": 1470,
+        "screen_height": 956,
+        "window_width": 1470,
+        "window_height": 776
+      },
+      "language": "tr"
+    },
+    "X51005806679": {
+      "verdict": "correct",
+      "points": [],
+      "note": "",
+      "checked_at": "2026-10-13T08:48:23.046808Z",
+      "commit": "72a1a60f54b9476a22c22e3babb027b4ce590273",
+      "display": {
+        "device_pixel_ratio": 2.0,
+        "screen_width": 1470,
+        "screen_height": 956,
+        "window_width": 1470,
+        "window_height": 776
+      },
+      "language": "tr"
+    },
+    "X51006334766": {
+      "verdict": "correct",
+      "points": [],
+      "note": "",
+      "checked_at": "2026-10-13T08:48:32.211944Z",
+      "commit": "72a1a60f54b9476a22c22e3babb027b4ce590273",
+      "display": {
+        "device_pixel_ratio": 2.0,
+        "screen_width": 1470,
+        "screen_height": 956,
+        "window_width": 1470,
+        "window_height": 776
+      },
+      "language": "tr"
+    },
+    "X51007231343": {
+      "verdict": "correct",
+      "points": [],
+      "note": "",
+      "checked_at": "2026-10-13T08:48:35.344793Z",
+      "commit": "72a1a60f54b9476a22c22e3babb027b4ce590273",
+      "display": {
+        "device_pixel_ratio": 2.0,
+        "screen_width": 1470,
+        "screen_height": 956,
+        "window_width": 1470,
+        "window_height": 776
+      },
+      "language": "tr"
+    },
+    "X51005663279": {
+      "verdict": "correct",
+      "points": [],
+      "note": "",
+      "checked_at": "2026-10-13T08:48:41.729056Z",
+      "commit": "72a1a60f54b9476a22c22e3babb027b4ce590273",
+      "display": {
+        "device_pixel_ratio": 2.0,
+        "screen_width": 1470,
+        "screen_height": 956,
+        "window_width": 1470,
+        "window_height": 776
+      },
+      "language": "tr"
+    },
+    "X51006913018": {
+      "verdict": "correct",
+      "points": [],
+      "note": "",
+      "checked_at": "2026-10-13T08:48:47.278709Z",
+      "commit": "72a1a60f54b9476a22c22e3babb027b4ce590273",
+      "display": {
+        "device_pixel_ratio": 2.0,
+        "screen_width": 1470,
+        "screen_height": 956,
+        "window_width": 1470,
+        "window_height": 776
+      },
+      "language": "tr"
+    },
+    "X51005749905": {
+      "verdict": "correct",
+      "points": [],
+      "note": "",
+      "checked_at": "2026-10-13T08:48:57.669882Z",
+      "commit": "72a1a60f54b9476a22c22e3babb027b4ce590273",
+      "display": {
+        "device_pixel_ratio": 2.0,
+        "screen_width": 1470,
+        "screen_height": 956,
+        "window_width": 1470,
+        "window_height": 776
+      },
+      "language": "tr"
+    },
+    "X51006414425": {
+      "verdict": "correct",
+      "points": [],
+      "note": "",
+      "checked_at": "2026-10-13T08:49:01.149610Z",
+      "commit": "72a1a60f54b9476a22c22e3babb027b4ce590273",
+      "display": {
+        "device_pixel_ratio": 2.0,
+        "screen_width": 1470,
+        "screen_height": 956,
+        "window_width": 1470,
+        "window_height": 776
+      },
+      "language": "tr"
+    },
+    "X51005337867": {
+      "verdict": "correct",
+      "points": [],
+      "note": "",
+      "checked_at": "2026-10-13T08:49:07.026079Z",
+      "commit": "72a1a60f54b9476a22c22e3babb027b4ce590273",
+      "display": {
+        "device_pixel_ratio": 2.0,
+        "screen_width": 1470,
+        "screen_height": 956,
+        "window_width": 1470,
+        "window_height": 776
+      },
+      "language": "tr"
+    },
+    "X00016469671": {
+      "verdict": "correct",
+      "points": [],
+      "note": "",
+      "checked_at": "2026-10-13T08:49:18.390911Z",
+      "commit": "72a1a60f54b9476a22c22e3babb027b4ce590273",
+      "display": {
+        "device_pixel_ratio": 2.0,
+        "screen_width": 1470,
+        "screen_height": 956,
+        "window_width": 1470,
+        "window_height": 776
+      },
+      "language": "tr"
+    },
+    "X51006334927": {
+      "verdict": "correct",
+      "points": [],
+      "note": "",
+      "checked_at": "2026-10-13T08:49:31.102955Z",
+      "commit": "72a1a60f54b9476a22c22e3babb027b4ce590273",
+      "display": {
+        "device_pixel_ratio": 2.0,
+        "screen_width": 1470,
+        "screen_height": 956,
+        "window_width": 1470,
+        "window_height": 776
+      },
+      "language": "tr"
+    },
+    "X51005749904": {
+      "verdict": "correct",
+      "points": [],
+      "note": "",
+      "checked_at": "2026-10-13T08:49:42.202581Z",
+      "commit": "72a1a60f54b9476a22c22e3babb027b4ce590273",
+      "display": {
+        "device_pixel_ratio": 2.0,
+        "screen_width": 1470,
+        "screen_height": 956,
+        "window_width": 1470,
+        "window_height": 776
+      },
+      "language": "tr"
+    },
+    "X51005806716": {
+      "verdict": "correct",
+      "points": [],
+      "note": "",
+      "checked_at": "2026-10-13T08:49:47.301719Z",
+      "commit": "72a1a60f54b9476a22c22e3babb027b4ce590273",
+      "display": {
+        "device_pixel_ratio": 2.0,
+        "screen_width": 1470,
+        "screen_height": 956,
+        "window_width": 1470,
+        "window_height": 776
+      },
+      "language": "tr"
+    },
+    "X51006913054": {
+      "verdict": "correct",
+      "points": [],
+      "note": "",
+      "checked_at": "2026-10-13T08:49:50.035174Z",
+      "commit": "72a1a60f54b9476a22c22e3babb027b4ce590273",
+      "display": {
+        "device_pixel_ratio": 2.0,
+        "screen_width": 1470,
+        "screen_height": 956,
+        "window_width": 1470,
+        "window_height": 776
+      },
+      "language": "tr"
+    },
+    "X00016469670": {
+      "verdict": "correct",
+      "points": [],
+      "note": "",
+      "checked_at": "2026-10-13T08:50:35.037013Z",
+      "commit": "72a1a60f54b9476a22c22e3babb027b4ce590273",
+      "display": {
+        "device_pixel_ratio": 2.0,
+        "screen_width": 1470,
+        "screen_height": 956,
+        "window_width": 1470,
+        "window_height": 776
+      },
+      "language": "tr"
+    },
+    "X51005442388": {
+      "verdict": "correct",
+      "points": [],
+      "note": "",
+      "checked_at": "2026-10-13T08:50:38.651286Z",
+      "commit": "72a1a60f54b9476a22c22e3babb027b4ce590273",
+      "display": {
+        "device_pixel_ratio": 2.0,
+        "screen_width": 1470,
+        "screen_height": 956,
+        "window_width": 1470,
+        "window_height": 776
+      },
+      "language": "tr"
+    },
+    "X51005757286": {
+      "verdict": "correct",
+      "points": [],
+      "note": "",
+      "checked_at": "2026-10-13T08:50:45.584224Z",
+      "commit": "72a1a60f54b9476a22c22e3babb027b4ce590273",
+      "display": {
+        "device_pixel_ratio": 2.0,
+        "screen_width": 1470,
+        "screen_height": 956,
+        "window_width": 1470,
+        "window_height": 776
+      },
+      "language": "tr"
+    },
+    "X51007339162": {
+      "verdict": "correct",
+      "points": [],
+      "note": "",
+      "checked_at": "2026-10-13T08:52:05.600019Z",
+      "commit": "72a1a60f54b9476a22c22e3babb027b4ce590273",
+      "display": {
+        "device_pixel_ratio": 2.0,
+        "screen_width": 1470,
+        "screen_height": 956,
+        "window_width": 1470,
+        "window_height": 776
+      },
+      "language": "tr"
+    },
+    "X51005806718": {
+      "verdict": "correct",
+      "points": [],
+      "note": "",
+      "checked_at": "2026-10-13T08:52:15.100042Z",
+      "commit": "72a1a60f54b9476a22c22e3babb027b4ce590273",
+      "display": {
+        "device_pixel_ratio": 2.0,
+        "screen_width": 1470,
+        "screen_height": 956,
+        "window_width": 1470,
+        "window_height": 776
+      },
+      "language": "tr"
+    },
+    "X51007846350": {
+      "verdict": "correct",
+      "points": [],
+      "note": "",
+      "checked_at": "2026-10-13T08:52:20.050003Z",
+      "commit": "72a1a60f54b9476a22c22e3babb027b4ce590273",
+      "display": {
+        "device_pixel_ratio": 2.0,
+        "screen_width": 1470,
+        "screen_height": 956,
+        "window_width": 1470,
+        "window_height": 776
+      },
+      "language": "tr"
+    },
+    "X51006387931": {
+      "verdict": "correct",
+      "points": [],
+      "note": "",
+      "checked_at": "2026-10-13T08:52:30.850349Z",
+      "commit": "72a1a60f54b9476a22c22e3babb027b4ce590273",
+      "display": {
+        "device_pixel_ratio": 2.0,
+        "screen_width": 1470,
+        "screen_height": 956,
+        "window_width": 1470,
+        "window_height": 776
+      },
+      "language": "tr"
+    },
+    "X51006913067": {
+      "verdict": "correct",
+      "points": [],
+      "note": "",
+      "checked_at": "2026-10-13T08:52:35.199587Z",
+      "commit": "72a1a60f54b9476a22c22e3babb027b4ce590273",
+      "display": {
+        "device_pixel_ratio": 2.0,
+        "screen_width": 1470,
+        "screen_height": 956,
+        "window_width": 1470,
+        "window_height": 776
+      },
+      "language": "tr"
+    },
+    "X51007846266": {
+      "verdict": "correct",
+      "points": [],
+      "note": "",
+      "checked_at": "2026-10-13T08:52:37.966535Z",
+      "commit": "72a1a60f54b9476a22c22e3babb027b4ce590273",
+      "display": {
+        "device_pixel_ratio": 2.0,
+        "screen_width": 1470,
+        "screen_height": 956,
+        "window_width": 1470,
+        "window_height": 776
+      },
+      "language": "tr"
+    },
+    "X51007846451": {
+      "verdict": "correct",
+      "points": [],
+      "note": "",
+      "checked_at": "2026-10-13T08:52:41.332327Z",
+      "commit": "72a1a60f54b9476a22c22e3babb027b4ce590273",
+      "display": {
+        "device_pixel_ratio": 2.0,
+        "screen_width": 1470,
+        "screen_height": 956,
+        "window_width": 1470,
+        "window_height": 776
+      },
+      "language": "tr"
+    },
+    "X51006912959": {
+      "verdict": "correct",
+      "points": [],
+      "note": "",
+      "checked_at": "2026-10-13T08:52:45.167157Z",
+      "commit": "72a1a60f54b9476a22c22e3babb027b4ce590273",
+      "display": {
+        "device_pixel_ratio": 2.0,
+        "screen_width": 1470,
+        "screen_height": 956,
+        "window_width": 1470,
+        "window_height": 776
+      },
+      "language": "tr"
+    },
+    "X51006387740": {
+      "verdict": "correct",
+      "points": [],
+      "note": "",
+      "checked_at": "2026-10-13T08:52:50.315984Z",
+      "commit": "72a1a60f54b9476a22c22e3babb027b4ce590273",
+      "display": {
+        "device_pixel_ratio": 2.0,
+        "screen_width": 1470,
+        "screen_height": 956,
+        "window_width": 1470,
+        "window_height": 776
+      },
+      "language": "tr"
+    },
+    "X51007846307": {
+      "verdict": "correct",
+      "points": [],
+      "note": "",
+      "checked_at": "2026-10-13T08:52:55.333088Z",
+      "commit": "72a1a60f54b9476a22c22e3babb027b4ce590273",
+      "display": {
+        "device_pixel_ratio": 2.0,
+        "screen_width": 1470,
+        "screen_height": 956,
+        "window_width": 1470,
+        "window_height": 776
+      },
+      "language": "tr"
+    },
+    "X51005663273": {
+      "verdict": "correct",
+      "points": [],
+      "note": "",
+      "checked_at": "2026-10-13T08:53:06.449837Z",
+      "commit": "72a1a60f54b9476a22c22e3babb027b4ce590273",
+      "display": {
+        "device_pixel_ratio": 2.0,
+        "screen_width": 1470,
+        "screen_height": 956,
+        "window_width": 1470,
+        "window_height": 776
+      },
+      "language": "tr"
+    },
+    "X51007103681": {
+      "verdict": "correct",
+      "points": [],
+      "note": "",
+      "checked_at": "2026-10-13T08:53:10.649272Z",
+      "commit": "72a1a60f54b9476a22c22e3babb027b4ce590273",
+      "display": {
+        "device_pixel_ratio": 2.0,
+        "screen_width": 1470,
+        "screen_height": 956,
+        "window_width": 1470,
+        "window_height": 776
+      },
+      "language": "tr"
+    },
+    "X51007391390": {
+      "verdict": "correct",
+      "points": [],
+      "note": "",
+      "checked_at": "2026-10-13T08:53:17.216046Z",
+      "commit": "72a1a60f54b9476a22c22e3babb027b4ce590273",
+      "display": {
+        "device_pixel_ratio": 2.0,
+        "screen_width": 1470,
+        "screen_height": 956,
+        "window_width": 1470,
+        "window_height": 776
+      },
+      "language": "tr"
+    },
+    "X51007846303": {
+      "verdict": "correct",
+      "points": [],
+      "note": "",
+      "checked_at": "2026-10-13T08:53:19.883179Z",
+      "commit": "72a1a60f54b9476a22c22e3babb027b4ce590273",
+      "display": {
+        "device_pixel_ratio": 2.0,
+        "screen_width": 1470,
+        "screen_height": 956,
+        "window_width": 1470,
+        "window_height": 776
+      },
+      "language": "tr"
+    },
+    "X51007225406": {
+      "verdict": "correct",
+      "points": [],
+      "note": "",
+      "checked_at": "2026-10-13T08:53:24.616267Z",
+      "commit": "72a1a60f54b9476a22c22e3babb027b4ce590273",
+      "display": {
+        "device_pixel_ratio": 2.0,
+        "screen_width": 1470,
+        "screen_height": 956,
+        "window_width": 1470,
+        "window_height": 776
+      },
+      "language": "tr"
+    },
+    "X51005677336": {
+      "verdict": "correct",
+      "points": [],
+      "note": "",
+      "checked_at": "2026-10-13T08:53:30.132688Z",
+      "commit": "72a1a60f54b9476a22c22e3babb027b4ce590273",
+      "display": {
+        "device_pixel_ratio": 2.0,
+        "screen_width": 1470,
+        "screen_height": 956,
+        "window_width": 1470,
+        "window_height": 776
+      },
+      "language": "tr"
+    },
+    "X51005676542": {
+      "verdict": "correct",
+      "points": [],
+      "note": "",
+      "checked_at": "2026-10-13T08:53:39.832813Z",
+      "commit": "72a1a60f54b9476a22c22e3babb027b4ce590273",
+      "display": {
+        "device_pixel_ratio": 2.0,
+        "screen_width": 1470,
+        "screen_height": 956,
+        "window_width": 1470,
+        "window_height": 776
+      },
+      "language": "tr"
+    },
+    "X51005453804": {
+      "verdict": "correct",
+      "points": [],
+      "note": "",
+      "checked_at": "2026-10-13T08:54:00.200344Z",
+      "commit": "72a1a60f54b9476a22c22e3babb027b4ce590273",
+      "display": {
+        "device_pixel_ratio": 2.0,
+        "screen_width": 1470,
+        "screen_height": 956,
+        "window_width": 1470,
+        "window_height": 776
+      },
+      "language": "tr"
+    },
+    "X51007339658": {
+      "verdict": "correct",
+      "points": [],
+      "note": "",
+      "checked_at": "2026-10-13T08:54:04.866014Z",
+      "commit": "72a1a60f54b9476a22c22e3babb027b4ce590273",
+      "display": {
+        "device_pixel_ratio": 2.0,
+        "screen_width": 1470,
+        "screen_height": 956,
+        "window_width": 1470,
+        "window_height": 776
+      },
+      "language": "tr"
+    },
+    "X51007103692": {
+      "verdict": "correct",
+      "points": [],
+      "note": "",
+      "checked_at": "2026-10-13T08:54:11.015509Z",
+      "commit": "72a1a60f54b9476a22c22e3babb027b4ce590273",
+      "display": {
+        "device_pixel_ratio": 2.0,
+        "screen_width": 1470,
+        "screen_height": 956,
+        "window_width": 1470,
+        "window_height": 776
+      },
+      "language": "tr"
+    },
+    "X51008123604": {
+      "verdict": "correct",
+      "points": [],
+      "note": "",
+      "checked_at": "2026-10-13T08:54:16.819302Z",
+      "commit": "72a1a60f54b9476a22c22e3babb027b4ce590273",
+      "display": {
+        "device_pixel_ratio": 2.0,
+        "screen_width": 1470,
+        "screen_height": 956,
+        "window_width": 1470,
+        "window_height": 776
+      },
+      "language": "tr"
+    },
+    "X51005442333": {
+      "verdict": "correct",
+      "points": [],
+      "note": "",
+      "checked_at": "2026-10-13T08:54:20.215065Z",
+      "commit": "72a1a60f54b9476a22c22e3babb027b4ce590273",
+      "display": {
+        "device_pixel_ratio": 2.0,
+        "screen_width": 1470,
+        "screen_height": 956,
+        "window_width": 1470,
+        "window_height": 776
+      },
+      "language": "tr"
+    },
+    "X51007846288": {
+      "verdict": "correct",
+      "points": [],
+      "note": "",
+      "checked_at": "2026-10-13T08:54:24.282569Z",
+      "commit": "72a1a60f54b9476a22c22e3babb027b4ce590273",
+      "display": {
+        "device_pixel_ratio": 2.0,
+        "screen_width": 1470,
+        "screen_height": 956,
+        "window_width": 1470,
+        "window_height": 776
+      },
+      "language": "tr"
+    },
+    "X51005715451": {
+      "verdict": "correct",
+      "points": [],
+      "note": "",
+      "checked_at": "2026-10-13T08:54:29.481991Z",
+      "commit": "72a1a60f54b9476a22c22e3babb027b4ce590273",
+      "display": {
+        "device_pixel_ratio": 2.0,
+        "screen_width": 1470,
+        "screen_height": 956,
+        "window_width": 1470,
+        "window_height": 776
+      },
+      "language": "tr"
+    },
+    "X51006414677": {
+      "verdict": "correct",
+      "points": [],
+      "note": "",
+      "checked_at": "2026-10-13T08:54:35.482027Z",
+      "commit": "72a1a60f54b9476a22c22e3babb027b4ce590273",
+      "display": {
+        "device_pixel_ratio": 2.0,
+        "screen_width": 1470,
+        "screen_height": 956,
+        "window_width": 1470,
+        "window_height": 776
+      },
+      "language": "tr"
+    },
+    "X51007231331": {
+      "verdict": "correct",
+      "points": [],
+      "note": "",
+      "checked_at": "2026-10-13T08:54:38.899044Z",
+      "commit": "72a1a60f54b9476a22c22e3babb027b4ce590273",
+      "display": {
+        "device_pixel_ratio": 2.0,
+        "screen_width": 1470,
+        "screen_height": 956,
+        "window_width": 1470,
+        "window_height": 776
+      },
+      "language": "tr"
+    },
+    "X51006912998": {
+      "verdict": "correct",
+      "points": [],
+      "note": "",
+      "checked_at": "2026-10-13T08:54:42.099245Z",
+      "commit": "72a1a60f54b9476a22c22e3babb027b4ce590273",
+      "display": {
+        "device_pixel_ratio": 2.0,
+        "screen_width": 1470,
+        "screen_height": 956,
+        "window_width": 1470,
+        "window_height": 776
+      },
+      "language": "tr"
+    },
+    "X51005745249": {
+      "verdict": "correct",
+      "points": [],
+      "note": "",
+      "checked_at": "2026-10-13T08:54:52.015632Z",
+      "commit": "72a1a60f54b9476a22c22e3babb027b4ce590273",
+      "display": {
+        "device_pixel_ratio": 2.0,
+        "screen_width": 1470,
+        "screen_height": 956,
+        "window_width": 1470,
+        "window_height": 776
+      },
+      "language": "tr"
+    },
+    "X51006414718": {
+      "verdict": "correct",
+      "points": [],
+      "note": "",
+      "checked_at": "2026-10-13T08:54:55.231785Z",
+      "commit": "72a1a60f54b9476a22c22e3babb027b4ce590273",
+      "display": {
+        "device_pixel_ratio": 2.0,
+        "screen_width": 1470,
+        "screen_height": 956,
+        "window_width": 1470,
+        "window_height": 776
+      },
+      "language": "tr"
+    }
+  }
+}
