@@ -28,7 +28,7 @@ from docfraud.evaluation.localisation import (
 )
 from docfraud.evaluation.runs import CodeVersion, Environment
 from docfraud.forensics import trufor
-from docfraud.forensics.learned.inference import LearnedOutput
+from docfraud.forensics.learned.inference import HIGHEST, LearnedOutput
 from docfraud.forensics.learned.results import (
     Edit,
     Group,
@@ -199,6 +199,9 @@ def test_a_forged_receipt_is_measured_by_the_rules_of_adr_0015() -> None:
     result = measure_receipt(receipt, output, threshold=0.9)
     assert result.scores == output.scores()
     assert result.top_region == top_region(values)
+    assert result.lowest == values.min()
+    assert values[result.peak] == values.max() == result.scores[HIGHEST]
+    assert result.peak == divmod(int(np.argmax(values)), 100)  # the first in row-major order
     assert result.cuts is None
     assert (result.height, result.width, result.windows, result.seconds) == (60, 100, 1, 0.5)
     assert result.pixels is not None

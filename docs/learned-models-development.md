@@ -163,7 +163,8 @@ the development round starts.
     show none of its results. The development round thus runs the threshold step of the clean
     measurement once before it.
   - *The held-out fold and the synthetic development set* keep for every receipt both document
-    scores, the top region of ADR-0015, the cuts between windows (the check of system 6, now in
+    scores, the lowest map value (a map without evidence would hold one value, ADR-0017) and the
+    place of the highest, the top region of ADR-0015, the cuts between windows (the check of system 6, now in
     [`trufor.py`](../src/docfraud/forensics/trufor.py); system 6's report regenerated from its
     cache with the moved code is unchanged but for its commit line), and for forged receipts the
     pixel average precision with its chance level and F1 and IoU at the run's threshold. A

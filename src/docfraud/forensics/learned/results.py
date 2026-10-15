@@ -10,9 +10,9 @@ A run's receipts come in three groups (:class:`Group`). The validation split ser
 only (ADR-0022, decision 3): its document scores are kept for the threshold of document F1, and
 the maps of its forged receipts choose the threshold of pixel F1 and IoU (ADR-0015, section 5);
 nothing else is measured on it. The held-out fold and the synthetic development set are measured
-in full: document scores, the top region, the cuts between windows, and on forged receipts the
-pixel metrics; on synthetic forgeries also each edit, by its highest map value and its average
-precision against the clean pixels of the receipt.
+in full: document scores, the lowest value and the peak of the map, the top region, the cuts
+between windows, and on forged receipts the pixel metrics; on synthetic forgeries also each edit,
+by its highest map value and its average precision against the clean pixels of the receipt.
 """
 
 from collections.abc import Callable, Iterable, Iterator, Sequence
@@ -143,6 +143,8 @@ class EditResult(_Frozen):
 class MeasuredReceipt(ScoredReceipt):
     """Everything measured on a receipt of the held-out fold or the synthetic set."""
 
+    lowest: float  # the lowest map value; a map whose values are all equal has no evidence
+    peak: tuple[int, int]  # row and column of the first highest map value, in row-major order
     top_region: BBox
     cuts: tuple[float, float] | None  # receipts in several windows: see ``trufor.cut_check``
     modified: tuple[BBox, ...]
@@ -314,6 +316,8 @@ def measure_receipt(item: Item, output: LearnedOutput, threshold: float) -> Meas
         )
     return MeasuredReceipt(
         **_scored(item, output).model_dump(),
+        lowest=float(values.min()),
+        peak=_first_maximum(values),
         top_region=top_region(values),
         cuts=cut_check(values) if len(output.windows) > 1 else None,
         modified=item.modified,
@@ -321,6 +325,11 @@ def measure_receipt(item: Item, output: LearnedOutput, threshold: float) -> Meas
         pixels=pixels,
         edits=edits,
     )
+
+
+def _first_maximum(values: npt.NDArray[np.float64]) -> tuple[int, int]:
+    row, column = np.unravel_index(int(np.argmax(values)), values.shape)
+    return int(row), int(column)
 
 
 def _scored(item: Item, output: LearnedOutput) -> ScoredReceipt:
