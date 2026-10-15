@@ -87,6 +87,7 @@ learned:  ## Development round of systems 2 to 4 on the design fold, about 11 ho
 	$(KEEP_AWAKE) uv run docfraud forensics repeat-check
 	$(KEEP_AWAKE) uv run docfraud forensics train-round
 	$(KEEP_AWAKE) uv run docfraud forensics measure-round
+	uv run python -I experiments/learned_development.py
 
 encoder-check:  ## One-time check that the learned models' encoder is torchvision's ResNet-18
 	uv run docfraud forensics download-resnet

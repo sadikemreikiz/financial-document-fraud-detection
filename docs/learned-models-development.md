@@ -212,3 +212,29 @@ the development round starts.
   in its own directory, and the two checkpoints are compared tensor by tensor: which tensors
   differ, by how much at most, and how far the losses of a step drift apart. The result is kept
   in `round-2/repeat/repeatability.json` for the report.
+- **Report** ([`report.py`](../src/docfraud/forensics/learned/report.py),
+  [`experiments/learned_development.py`](../experiments/learned_development.py), the last step
+  of `make learned`). Generated from the kept records, results and repeat check, with the design
+  fold's pages, cached OCR words and final benign marks; no network runs. Its tables are those of
+  ADR-0022 (decision 5), in that order: the runs and the failure rule; learning curves, the mean
+  loss of every 500 steps over that of the best constant prediction on the same tiles; the repeat
+  check; both document scores with average precision and the size check, the seed-0 runs deciding
+  by the fixed order; the top region against the random baseline on the 19 forged receipts, with
+  and without large rectangles; pixel metrics; on the synthetic development set the chosen score
+  against the 94 authentic receipts that are its bases, the top region, and the edits by
+  technique (seen, and edit average precision, pooled over each system's seeds); top regions on
+  benign marks; the cuts between windows; times. Conventions of presentation, chosen without
+  data: a row per run, then the mean of each system's seeds where a mean means something; a
+  synthetic forgery's random baseline uses its base's OCR words. One table was added to the list
+  **before the round ran**, with the owner's approval on 2026-10-15: whether the top region of an
+  authentic receipt lies on blank paper (fewer than 0.1 % of its pixels darker than 128, the rule
+  of system 6's report), since TruFor's highest-scoring tile was blank on every page scan and the
+  uniform tiles of decision 3 exist for that reason. It is descriptive and decides nothing. A
+  smoke run of the whole chain on the real round, seed 0 of each system with 20 steps, ran the
+  repeat check (10 steps: identical bit for bit), trained the three runs, measured each on its
+  397 receipts in 12 to 13 minutes and wrote the report in 11 s; its numbers, from networks of 20
+  steps, mean nothing and were not kept. It showed that the report did not say whether the code
+  had uncommitted changes, which it now does.
+
+With the report, this section is complete. The development round runs from one clean commit at
+or after the one that completes it; the report and every run's record name that commit.
