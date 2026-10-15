@@ -5,7 +5,7 @@ and the training and measurement of their development round (ADR-0022).
 """
 
 from pathlib import Path
-from typing import Annotated
+from typing import TYPE_CHECKING, Annotated
 
 import typer
 from rich.progress import BarColumn, MofNCompleteColumn, Progress, TimeRemainingColumn
@@ -45,6 +45,9 @@ app = typer.Typer(
     no_args_is_help=True,
 )
 
+if TYPE_CHECKING:
+    from docfraud.forensics.learned.rounds import RoundSetup
+
 RoundsDir = Annotated[Path, typer.Option(help="Where the runs of the rounds are kept.")]
 
 
@@ -79,24 +82,10 @@ def download_resnet(
     console.print(f"ResNet-18 with ImageNet weights; credit: {IMAGENET_WEIGHTS.citation}")
 
 
-@app.command("train-round")
-def train_round_command(  # pragma: no cover - needs the dataset, fonts and pretrained weights
-    data_dir: DataDir = Path("data"), directory: RoundsDir = ROUNDS_DIR
-) -> None:
-    """Train the nine runs of the development round of systems 2 to 4 (ADR-0022, decision 5).
-
-    Round 2 holds out the design fold. Seed 0 of every system comes first. Runs resume from their
-    last checkpoint and finished runs are skipped; the round stops at the first run that fails,
-    and continues only at the commit it started from. About an hour per run on the reference
-    machine, which must stay awake, on power and with its lid open.
-    """
-    require_clean_commit()
-    from docfraud.forensics.learned.rounds import (  # noqa: PLC0415 - imports PyTorch
-        RoundSetup,
-        stored_record,
-        train_round,
-    )
-    from docfraud.forensics.learned.training import Settings, initial_network  # noqa: PLC0415
+def _development_setup(data_dir: Path) -> RoundSetup:  # pragma: no cover - needs the dataset
+    """What every run of the development round is trained from, with the page cache built."""
+    from docfraud.forensics.learned.rounds import RoundSetup  # noqa: PLC0415 - imports PyTorch
+    from docfraud.forensics.learned.training import initial_network  # noqa: PLC0415
 
     documents = findit_documents(data_dir)
     folds = load_folds(CV_FOLDS_PATH)
@@ -113,12 +102,76 @@ def train_round_command(  # pragma: no cover - needs the dataset, fonts and pret
         FONTS_DIR,
     )
     encoder = read_weights(PRETRAINED_DIR / IMAGENET_WEIGHTS.filename)
-    setup = RoundSetup(
+    return RoundSetup(
         material,
         pages,
         forger,
         lambda held_out, seed, prior: initial_network(encoder, held_out, seed, prior),
     )
+
+
+@app.command("repeat-check")
+def repeat_check_command(  # pragma: no cover - needs the dataset, fonts and pretrained weights
+    data_dir: DataDir = Path("data"), directory: RoundsDir = ROUNDS_DIR
+) -> None:
+    """Train the first 500 steps of system 4, seed 0, twice and compare the weights.
+
+    ADR-0022 (decision 4) asks for this check before the development round, because PyTorch
+    cannot make training bit for bit repeatable on the Apple GPU. About ten minutes; an
+    interrupted check resumes, and a finished one is only compared again.
+    """
+    require_clean_commit()
+    from docfraud.forensics.learned.rounds import (  # noqa: PLC0415 - imports PyTorch
+        REPEAT_RUN,
+        REPEAT_STEPS,
+        repeat_check,
+        repeat_directory,
+    )
+
+    setup = _development_setup(data_dir)
+    system, seed = REPEAT_RUN
+    columns = (BarColumn(), MofNCompleteColumn(), TimeRemainingColumn())
+    with Progress("{task.description}", *columns, console=console) as progress:
+        task = progress.add_task(
+            f"system {int(system)}, seed {seed}, twice", total=2 * REPEAT_STEPS
+        )
+        result = repeat_check(
+            setup,
+            directory,
+            code=code_version(),
+            environment=environment(),
+            on_step=lambda _done, _loss: progress.advance(task),
+        )
+    if result.identical:
+        console.print(f"[green]identical[/green]: all {result.tensors} tensors bit for bit")
+    else:
+        console.print(
+            f"[yellow]{len(result.differing)} of {result.tensors} tensors differ[/yellow], by up "
+            f"to {result.largest_difference:.2e}; losses by up to "
+            f"{result.largest_loss_difference:.2e}"
+        )
+    console.print(f"written: {repeat_directory(directory, DESIGN_FOLD)}")
+
+
+@app.command("train-round")
+def train_round_command(  # pragma: no cover - needs the dataset, fonts and pretrained weights
+    data_dir: DataDir = Path("data"), directory: RoundsDir = ROUNDS_DIR
+) -> None:
+    """Train the nine runs of the development round of systems 2 to 4 (ADR-0022, decision 5).
+
+    Round 2 holds out the design fold. Seed 0 of every system comes first. Runs resume from their
+    last checkpoint and finished runs are skipped; the round stops at the first run that fails,
+    and continues only at the commit it started from. About an hour per run on the reference
+    machine, which must stay awake, on power and with its lid open.
+    """
+    require_clean_commit()
+    from docfraud.forensics.learned.rounds import (  # noqa: PLC0415 - imports PyTorch
+        stored_record,
+        train_round,
+    )
+    from docfraud.forensics.learned.training import Settings  # noqa: PLC0415
+
+    setup = _development_setup(data_dir)
     steps = Settings().steps
     columns = (BarColumn(), MofNCompleteColumn(), TimeRemainingColumn())
     with Progress("{task.description}", *columns, console=console) as progress:

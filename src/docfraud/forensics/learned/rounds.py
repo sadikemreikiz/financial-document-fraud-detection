@@ -7,7 +7,9 @@ the first run that fails by the rule of decision 5, since a failure repeats all 
 all of a round's runs are trained by one version of the code: a round started at one commit is
 continued only at that commit.
 
-No network runs on a receipt before every run of the round has finished. Each run is then
+Before the runs, the first steps of one of them are trained twice and compared
+(:func:`repeat_check`), since PyTorch cannot make training bit for bit repeatable on the Apple
+GPU. No network runs on a receipt before every run of the round has finished. Each run is then
 measured (:mod:`~docfraud.forensics.learned.results`) on the receipts its round assigns: for the
 development round, the validation split for thresholds, the design fold and the synthetic
 development set (:func:`development_items`). A run measured by the same weights before is skipped.
@@ -18,6 +20,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 import torch
+from pydantic import BaseModel, ConfigDict, ValidationError
 from torch import nn
 
 from docfraud.data.models import Document, Split
@@ -48,6 +51,7 @@ from docfraud.forensics.learned.sampler import (
     forged_share,
 )
 from docfraud.forensics.learned.training import (
+    CHECKPOINT,
     MODEL,
     RECORD,
     Run,
@@ -114,10 +118,7 @@ def train_round(  # noqa: PLR0913 - the round, where it goes and what its record
     for system, seed in runs:
         if on_run is not None:
             on_run(system, seed)
-        uses_forger = any(purpose is Purpose.SYNTHETIC for purpose, _ in PLANS[system])
-        sampler = TileSampler(
-            setup.material, setup.pages, system, seed, setup.forger if uses_forger else None
-        )
+        sampler = _sampler(setup, system, seed)
         prior = forged_share(sampler)
         record = train(
             Run(held_out, int(system), seed, prior, code, environment),
@@ -132,6 +133,14 @@ def train_round(  # noqa: PLR0913 - the round, where it goes and what its record
         if (reason := failure(record)) is not None:
             return RoundOutcome(tuple(records), (system, seed, reason))
     return RoundOutcome(tuple(records), None)
+
+
+def _sampler(setup: RoundSetup, system: System, seed: int) -> TileSampler:
+    """A run's tiles; only systems that train on synthetic forgeries get the forger."""
+    uses_forger = any(purpose is Purpose.SYNTHETIC for purpose, _ in PLANS[system])
+    return TileSampler(
+        setup.material, setup.pages, system, seed, setup.forger if uses_forger else None
+    )
 
 
 def stored_record(root: Path, held_out: int, system: System, seed: int) -> RunRecord | None:
@@ -176,6 +185,116 @@ def finished_records(
     return records
 
 
+REPEAT_RUN = (System.BOTH, 0)
+"""The run whose first steps are trained twice: the system that draws every kind of tile."""
+
+REPEAT_STEPS = 500
+"""Steps of the repeat check (ADR-0022, decision 4)."""
+
+REPEATABILITY = "repeatability.json"
+"""The file of the repeat check's result."""
+
+
+class Repeatability(BaseModel):
+    """Whether the first steps of one run, trained twice, gave the same weights and losses."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid", ser_json_inf_nan="constants")
+
+    held_out: int
+    system: int
+    seed: int
+    steps: int
+    device: str
+    code: CodeVersion
+    tensors: int
+    differing: tuple[str, ...]  # the tensors that are not the same bit for bit
+    largest_difference: float  # the largest absolute difference between two weights
+    largest_loss_difference: float  # the largest difference between the losses of a step
+
+    @property
+    def identical(self) -> bool:
+        """Whether every tensor agrees bit for bit."""
+        return not self.differing
+
+
+def repeat_directory(root: Path, held_out: int) -> Path:
+    """Where the repeat check keeps its two trainings and its result."""
+    return root / f"round-{held_out}" / "repeat"
+
+
+def repeat_check(  # noqa: PLR0913 - the round, where it goes and what its records state
+    setup: RoundSetup,
+    root: Path,
+    *,
+    code: CodeVersion,
+    environment: Environment,
+    run: tuple[System, int] = REPEAT_RUN,
+    steps: int = REPEAT_STEPS,
+    settings: Settings | None = None,
+    device: torch.device | None = None,
+    on_step: Callable[[int, float], None] | None = None,
+) -> Repeatability:
+    """Train the first steps of a run twice from scratch and compare the two (ADR-0022, 4).
+
+    Each training keeps its checkpoint, so that an interrupted check resumes and a finished one
+    is only compared again.
+
+    Raises:
+        ValueError: If the steps are not fewer than a run's, so that no checkpoint would be kept.
+    """
+    settings = settings or Settings()
+    if not 0 < steps < settings.steps:
+        msg = f"the repeat check takes fewer steps than a run's {settings.steps}, not {steps}"
+        raise ValueError(msg)
+    held_out = setup.material.held_out
+    directory = repeat_directory(root, held_out)
+    system, seed = run
+    states: list[dict[str, torch.Tensor]] = []
+    records: list[RunRecord] = []
+    for name in ("first", "second"):
+        sampler = _sampler(setup, system, seed)
+        prior = forged_share(sampler)
+        records.append(
+            train(
+                Run(held_out, int(system), seed, prior, code, environment),
+                setup.network(held_out, seed, prior),
+                sampler,
+                directory / name,
+                settings=settings,
+                device=device,
+                until=steps,
+                on_step=on_step,
+            )
+        )
+        checkpoint = torch.load(
+            directory / name / CHECKPOINT, map_location="cpu", weights_only=True
+        )
+        states.append(checkpoint["model"])
+    first, second = states
+    differing = tuple(name for name in first if not torch.equal(first[name], second[name]))
+    result = Repeatability(
+        held_out=held_out,
+        system=int(system),
+        seed=seed,
+        steps=steps,
+        device=records[0].device,
+        code=code,
+        tensors=len(first),
+        differing=differing,
+        largest_difference=max(
+            (float((first[n].double() - second[n].double()).abs().max()) for n in differing),
+            default=0.0,
+        ),
+        largest_loss_difference=max(
+            abs(a - b) for a, b in zip(records[0].losses, records[1].losses, strict=True)
+        ),
+    )
+    (directory / REPEATABILITY).write_text(
+        result.model_dump_json(indent=1) + "\n", encoding="utf-8"
+    )
+    return result
+
+
 @dataclass(frozen=True, slots=True)
 class RoundItems:
     """The receipts a round's networks are measured on, each made when it is needed."""
@@ -206,11 +325,10 @@ def measure_round(  # noqa: PLR0913 - the round, its receipts and what the resul
     for system, seed in runs:
         directory = run_directory(root, held_out, system, seed)
         network = model(directory / MODEL)
-        if (directory / RESULTS).exists():
-            stored = read_results(directory)
-            if stored.model == network.identifier:
-                measured.append(stored)
-                continue
+        stored = _stored_results(directory)
+        if stored is not None and stored.model == network.identifier:
+            measured.append(stored)
+            continue
         if on_run is not None:
             on_run(system, seed)
         results = measure_run(
@@ -227,6 +345,20 @@ def measure_round(  # noqa: PLR0913 - the round, its receipts and what the resul
         write_results(directory, results)
         measured.append(results)
     return measured
+
+
+def _stored_results(directory: Path) -> RunResults | None:
+    """A run's kept results, unless there are none or they are in a form this code does not read.
+
+    Results are made again from the weights, so results of an earlier form are measured again
+    rather than read.
+    """
+    if not (directory / RESULTS).exists():
+        return None
+    try:
+        return read_results(directory)
+    except ValidationError:
+        return None
 
 
 def validation_items(documents: Iterable[Document]) -> Iterator[Item]:

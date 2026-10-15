@@ -181,8 +181,9 @@ the development round starts.
     by technique are per edit: 192 CPI, 29 PIX, 28 CUT, 23 IMI and 3 CPO.
   - *Time.* On a page of 35 MP, with a network of random weights, inference took 6.9 s (24
     windows) and the measurement of a forgery with four edits 8.5 s, at a peak of 2.8 GiB. From
-    these times and those above, a run takes about 13 minutes to measure (8 of them inference) and
-    the 9 runs about 2 hours, an estimate.
+    these times and those above, a run would take about 13 minutes to measure; the smoke run below
+    took 12 minutes (706 s, 499 s of them inference) for the 397 receipts of one run, at a peak of
+    2.9 GiB, so the nine runs take about 1.8 hours.
 - **The round** ([`rounds.py`](../src/docfraud/forensics/learned/rounds.py);
   `docfraud forensics train-round` and `measure-round`, together `make learned`). The nine runs
   of round 2 are trained in the order of ADR-0022: seed 0 of systems 2, 3 and 4, then seed 1, then
@@ -195,5 +196,19 @@ the development round starts.
   share of forged pixels in its first 100 steps. `measure-round` then measures each run on the
   190 validation receipts, the 113 of the design fold and the 94 synthetic forgeries, made one at
   a time by the round's engine, and skips a run that the same weights have already measured.
-  `make learned` verifies the weights and the fonts, keeps the Mac awake with `caffeinate`, trains
-  and measures; interrupted, it resumes where it stopped.
+  `make learned` verifies the weights and the fonts, keeps the Mac awake with `caffeinate`, runs
+  the repeat check, trains and measures; interrupted, it resumes where it stopped. A smoke run of
+  the commands' code on the real round, with 20 steps per run, trained the nine runs in 285 s
+  (median step 0.47 to 0.49 s); the initial biases of seed 0 were 0.59 %, 2.16 % and 1.38 %, as
+  the tile sampler's check found. It then measured one of them on all 397 receipts: 190 of
+  validation (the threshold from 33 forged ones and 99 candidates), 113 of the design fold and 94
+  synthetic forgeries with 275 edits. The smoke run found two defects before any real run: the
+  record of a diverged run could not be read back, and pages read from disk made PyTorch warn;
+  both are fixed. Other programs held about 8 GB of the 16 GB during the smoke run and the
+  machine swapped, so they are closed for the round. Results of an earlier form are measured
+  again rather than read.
+- **Repeat check** (`docfraud forensics repeat-check`). Before the round, the first 500 steps of
+  system 4, seed 0, the system that draws every kind of tile, are trained twice from scratch, each
+  in its own directory, and the two checkpoints are compared tensor by tensor: which tensors
+  differ, by how much at most, and how far the losses of a step drift apart. The result is kept
+  in `round-2/repeat/repeatability.json` for the report.

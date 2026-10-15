@@ -84,6 +84,7 @@ KEEP_AWAKE := $(shell command -v caffeinate >/dev/null 2>&1 && echo caffeinate -
 learned:  ## Development round of systems 2 to 4 on the design fold, about 11 hours (resumes)
 	uv run docfraud forensics download-resnet
 	uv run docfraud synthesis download-fonts
+	$(KEEP_AWAKE) uv run docfraud forensics repeat-check
 	$(KEEP_AWAKE) uv run docfraud forensics train-round
 	$(KEEP_AWAKE) uv run docfraud forensics measure-round
 

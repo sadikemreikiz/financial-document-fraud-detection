@@ -19,12 +19,16 @@ from docfraud.forensics.learned.inference import LearnedOutput
 from docfraud.forensics.learned.pages import PageCache
 from docfraud.forensics.learned.results import RESULTS, Group, read_results
 from docfraud.forensics.learned.rounds import (
+    REPEATABILITY,
     RUNS,
+    Repeatability,
     RoundOutcome,
     RoundSetup,
     development_items,
     finished_records,
     measure_round,
+    repeat_check,
+    repeat_directory,
     run_directory,
     stored_record,
     train_round,
@@ -37,7 +41,7 @@ from docfraud.forensics.learned.sampler import (
     forged_share,
     round_material,
 )
-from docfraud.forensics.learned.training import MODEL, RECORD, Settings
+from docfraud.forensics.learned.training import MODEL, RECORD, RunRecord, Settings
 from docfraud.synthesis.engine import Engine, Forgery, Stream
 from docfraud.synthesis.statistics import RoundStatistics, Template
 from tests.forensics.learned.test_training import ENVIRONMENT
@@ -342,6 +346,18 @@ def test_a_finished_round_is_measured_once_per_weights(toy: Toy, tmp_path: Path)
         runs=TWO_RUNS,
     )
     assert WeightsDigest.analysed == analysed + len(expected)  # only the changed run again
+    (directory / RESULTS).write_text('{"written by": "earlier code"}', encoding="utf-8")
+    measure_round(
+        tmp_path,
+        DESIGN_FOLD,
+        items,
+        model=WeightsDigest,
+        code=CODE,
+        environment=ENVIRONMENT,
+        runs=TWO_RUNS,
+    )
+    assert WeightsDigest.analysed == analysed + 2 * len(expected)  # an earlier form, measured again
+    assert read_results(directory).model == WeightsDigest(directory / MODEL).identifier
     assert (directory / RESULTS).is_file()
     assert (directory / RECORD).is_file()
 
@@ -356,3 +372,78 @@ def test_only_the_round_holding_out_the_design_fold_has_development_items(toy: T
     )
     with pytest.raises(ValueError, match="holds out fold 2"):
         development_items(toy.documents, toy.pages, other)
+
+
+def test_the_repeat_check_trains_one_run_twice_and_compares_the_weights(
+    toy: Toy, tmp_path: Path
+) -> None:
+    result = repeat_check(
+        toy.setup,
+        tmp_path,
+        code=CODE,
+        environment=ENVIRONMENT,
+        steps=3,
+        settings=SETTINGS,
+        device=CPU,
+    )
+    directory = repeat_directory(tmp_path, DESIGN_FOLD)
+    assert (result.system, result.seed, result.steps, result.device) == (4, 0, 3, "cpu")
+    assert result.identical  # on the processor, the same seed gives the same weights
+    assert result.differing == ()
+    assert (result.largest_difference, result.largest_loss_difference) == (0.0, 0.0)
+    assert result.tensors == len(Tiny(0, 0.5).state_dict())
+    stored = Repeatability.model_validate_json(
+        (directory / REPEATABILITY).read_text(encoding="utf-8")
+    )
+    assert stored == result
+    for name in ("first", "second"):
+        record = RunRecord.model_validate_json(
+            (directory / name / RECORD).read_text(encoding="utf-8")
+        )
+        assert (record.status, record.steps_done) == ("running", 3)
+    again = repeat_check(
+        toy.setup,
+        tmp_path,
+        code=CODE,
+        environment=ENVIRONMENT,
+        steps=3,
+        settings=SETTINGS,
+        device=CPU,
+    )
+    assert again == result  # compared again, not trained again
+
+
+def test_the_repeat_check_reports_weights_that_differ(toy: Toy, tmp_path: Path) -> None:
+    calls = 0
+
+    def drifting(_held_out: int, seed: int, prior: float) -> nn.Module:
+        nonlocal calls
+        calls += 1
+        network = Tiny(seed, prior)
+        if calls == 2:  # the second training starts from other weights
+            with torch.no_grad():
+                network.conv.weight.add_(0.5)
+        return network
+
+    setup = RoundSetup(toy.setup.material, toy.pages, toy.forger, drifting)
+    result = repeat_check(
+        setup, tmp_path, code=CODE, environment=ENVIRONMENT, steps=3, settings=SETTINGS, device=CPU
+    )
+    assert not result.identical
+    assert "conv.weight" in result.differing
+    assert result.largest_difference > 0.4
+    assert result.largest_loss_difference > 0
+
+
+def test_the_repeat_check_needs_fewer_steps_than_a_run(toy: Toy, tmp_path: Path) -> None:
+    for steps in (0, SETTINGS.steps):
+        with pytest.raises(ValueError, match="fewer steps"):
+            repeat_check(
+                toy.setup,
+                tmp_path,
+                code=CODE,
+                environment=ENVIRONMENT,
+                steps=steps,
+                settings=SETTINGS,
+                device=CPU,
+            )
