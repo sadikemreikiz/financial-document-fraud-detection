@@ -366,6 +366,8 @@ class Engine:
         layers = plan.layers if technique is Technique.PIX else [*cover[0], *plan.layers]
         variants = plan.variants if technique is Technique.PIX else cover[1] | plan.variants
         region = canvas.apply(layers)
+        if not region.any():  # a free-hand stroke too short to cover any pixel; nothing changed
+            return "wrote no pixel"
         box = _mask_box(region)
         canvas.keep_clear(box)
         if plan.source_document is None:

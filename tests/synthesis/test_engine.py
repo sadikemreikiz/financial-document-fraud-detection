@@ -198,6 +198,22 @@ def test_free_hand_strokes_stay_inside_their_characters(
                 assert any(b.x <= x < b.x2 and b.y <= y < b.y2 for b in boxes)
 
 
+def test_a_free_hand_stroke_that_covers_no_pixel_is_not_placed(
+    setup: tuple[list[Document], FoldAssignment], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # a stroke whose ends almost meet covers no pixel enough for a hard pen; it once crashed
+    monkeypatch.setattr(
+        "docfraud.synthesis.engine._pen",
+        lambda box, *_arguments, **_options: np.zeros((box.height, box.width)),
+    )
+    made = engine(setup, Technique.PIX)
+    forgery = made.forge(made.pools[Stream.TRAINING][0], 0)
+    assert forgery.record.regions == ()
+    assert forgery.record.failures["wrote no pixel"] > 0
+    assert not forgery.written.any()
+    assert not forgery.changed.any()
+
+
 def test_regions_do_not_overlap(setup: tuple[list[Document], FoldAssignment]) -> None:
     for forgery in forgeries(engine(setup, Technique.CPI, regions=4)):
         boxes = [r.box for r in forgery.record.regions]

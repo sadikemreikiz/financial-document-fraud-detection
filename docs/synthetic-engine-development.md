@@ -128,3 +128,23 @@ With the review passed, the engine of [`docfraud.synthesis`](../src/docfraud/syn
 engine version 1 is frozen (ADR-0021): it makes the training data of systems 2 and 4 in every
 round and the development set of step 4.5. Later changes are limited to defects, each recorded
 here with the forgeries before and after.
+
+## Defects fixed after the freeze
+
+### A free-hand edit that wrote no pixel (2026-10-15)
+
+- **Found** by a trial of `docfraud forensics train-round` on the real development round of the
+  learned models, before that round ran (commit `b506ae6`). The run of system 2, seed 0, stopped
+  at step 609, in forgery 39024 of base X51006556723. A free-hand edit (PIX) drew, with a hard pen
+  of 1 px, a stroke whose ends almost met on the digit 4 of `-4.80`; no pixel reached the share
+  that a hard pen needs, so the edit wrote nothing, and the box of its empty mask could not be
+  computed (`IndexError`). No forgery made so far had met this case.
+- **Fix.** An edit that writes no pixel is not placed. As for any edit that cannot be placed on a
+  word, the engine then tries the next word of the template's entity. Nothing on the page has
+  changed when the test is made. A test forces a stroke that covers nothing.
+- **Forgeries before and after.** Every forgery made before is unchanged, byte for byte, in its
+  page, both masks and its record: the 300 of the engine report (60 per round) and the 94 of the
+  development set, from which the realism review drew its 40 edits. Only forgeries that crashed
+  before are made now. The engine version stays 1, since no forgery of version 1 changes. With
+  the fix, every tile of the nine runs of the development round, 6,000 steps each, was drawn
+  once without an error, step 609 of system 2, seed 0, included.

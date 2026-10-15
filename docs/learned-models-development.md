@@ -212,6 +212,14 @@ the development round starts.
   in its own directory, and the two checkpoints are compared tensor by tensor: which tensors
   differ, by how much at most, and how far the losses of a step drift apart. The result is kept
   in `round-2/repeat/repeatability.json` for the report.
+- **A trial of the commands before the round** (2026-10-15, at `b506ae6`, in a scratch directory
+  whose outputs were then deleted). `repeat-check` ran to its end: after 500 steps the two
+  trainings agreed in all 158 tensors, bit for bit. `train-round` stopped at step 609 of system
+  2, seed 0, on a defect of the synthetic engine: a free-hand edit that wrote no pixel. It is
+  fixed and recorded in the [engine's record](synthetic-engine-development.md#defects-fixed-after-the-freeze);
+  no forgery made before changes. With the fix, every tile of the nine runs, 6,000 steps each,
+  was drawn once without an error. `measure-round` refused a round with an unfinished run and
+  code with uncommitted changes, as it should.
 - **Report** ([`report.py`](../src/docfraud/forensics/learned/report.py),
   [`experiments/learned_development.py`](../experiments/learned_development.py), the last step
   of `make learned`). Generated from the kept records, results and repeat check, with the design
