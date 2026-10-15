@@ -4,8 +4,9 @@ Every system that produces a map is measured by the same rules. Its highest-scor
 derived from the map by one rule without parameters (:func:`top_region`); the region is compared
 with the annotated rectangles and with a random box of the same size on the receipt's text, the
 localisation guard of ADR-0014 (:func:`baseline_hit_rate`, :func:`localisation_guard`); its
-pixels are scored per receipt (:func:`pixel_average_precision`, :func:`pixel_f1_iou`); and its
-document scores are checked for growing with receipt size (:func:`size_dependence`).
+pixels are scored per receipt (:func:`pixel_average_precision`, :func:`pixel_f1_iou`), and on
+synthetic forgeries per edit (:func:`edit_average_precisions`); and its document scores are
+checked for growing with receipt size (:func:`size_dependence`).
 
 Nothing here views an image: the functions receive maps, boxes and sizes.
 """
@@ -235,6 +236,69 @@ def pixel_average_precision(
     values = _checked(score_map)
     positive, counted = _truth(values.shape, modified, sources)
     return average_precision(positive[counted], values[counted])
+
+
+def positive_share(
+    shape: tuple[int, int], modified: Iterable[BBox], sources: Iterable[BBox]
+) -> float:
+    """The share of modified pixels among those counted.
+
+    It is the chance level of the average precision of :func:`pixel_average_precision`.
+
+    Raises:
+        ValueError: If the receipt has no modified pixel.
+    """
+    positive, counted = _truth(shape, modified, sources)
+    return int(positive.sum()) / int(counted.sum())
+
+
+@dataclass(frozen=True, slots=True)
+class EditPrecision:
+    """How well a map ranks one edit's pixels above the clean pixels of its receipt."""
+
+    average_precision: float
+    chance: float  # the share of the edit's pixels among those counted
+
+
+def edit_average_precisions(
+    score_map: Map, edits: Sequence[BBox], sources: Iterable[BBox]
+) -> list[EditPrecision]:
+    """The average precision of each edit's pixels against the clean pixels of the receipt.
+
+    Clean pixels lie outside every edit and every copy source. For one edit this is
+    :func:`pixel_average_precision` with that edit as the only modified rectangle and the other
+    edits added to the copy sources, so that their pixels are ignored; the clean pixels are the
+    same for every edit and are sorted once.
+
+    Raises:
+        ValueError: If the map is invalid, there is no edit or an edit holds no pixel.
+    """
+    values = _checked(score_map)
+    if not edits:
+        msg = "no edit to measure"
+        raise ValueError(msg)
+    clean = np.ones(values.shape, dtype=bool)
+    for r in (*edits, *sources):
+        clean[r.y : r.y2, r.x : r.x2] = False
+    negatives = np.sort(values[clean])
+    measured = []
+    for edit in edits:
+        positives = values[edit.y : edit.y2, edit.x : edit.x2].ravel()
+        if positives.size == 0:
+            msg = f"the edit {edit} holds no pixel of the map"
+            raise ValueError(msg)
+        levels, counts = np.unique(positives, return_counts=True)
+        levels, counts = levels[::-1], counts[::-1]  # from the highest score down
+        edited_above = np.cumsum(counts)  # edit pixels scoring at least each level
+        clean_above = negatives.size - np.searchsorted(negatives, levels, side="left")
+        precision = edited_above / (edited_above + clean_above)
+        measured.append(
+            EditPrecision(
+                float(np.sum(counts / positives.size * precision)),
+                positives.size / (positives.size + negatives.size),
+            )
+        )
+    return measured
 
 
 def f1_at_thresholds(

@@ -11,12 +11,14 @@ from docfraud.evaluation.localisation import (
     annotated_rectangles,
     baseline_hit_rate,
     choose_pixel_threshold,
+    edit_average_precisions,
     f1_at_thresholds,
     has_large_rectangle,
     hits,
     localisation_guard,
     pixel_average_precision,
     pixel_f1_iou,
+    positive_share,
     receipt_rng,
     size_dependence,
     spearman,
@@ -133,6 +135,51 @@ def test_pixel_average_precision_ignores_copy_sources_and_matches_scikit_learn()
     assert pixel_average_precision(score_map, [modified], [source]) == pytest.approx(expected)
     with pytest.raises(ValueError, match="without modified pixels"):
         pixel_average_precision(score_map, [], [source])
+
+
+def test_the_chance_level_is_the_share_of_modified_pixels_among_those_counted() -> None:
+    modified, source = box(10, 10, 20, 10), box(60, 30, 10, 10)
+    assert positive_share((60, 100), [modified], []) == 200 / 6000
+    assert positive_share((60, 100), [modified], [source]) == 200 / 5900
+    with pytest.raises(ValueError, match="without modified pixels"):
+        positive_share((60, 100), [], [source])
+
+
+def random_box(rng: np.random.Generator, height: int, width: int) -> BBox:
+    y, x = int(rng.integers(0, height - 1)), int(rng.integers(0, width - 1))
+    return box(x, y, int(rng.integers(1, width - x + 1)), int(rng.integers(1, height - y + 1)))
+
+
+def test_each_edit_is_measured_as_the_only_modified_rectangle_with_the_others_ignored() -> None:
+    rng = np.random.default_rng(5)
+    for _ in range(200):
+        height, width = (int(n) for n in rng.integers(6, 30, size=2))
+        score_map = rng.integers(0, 5, size=(height, width)).astype(float)  # many ties
+        edits = [random_box(rng, height, width) for _ in range(int(rng.integers(1, 4)))]
+        sources = [random_box(rng, height, width) for _ in range(int(rng.integers(0, 2)))]
+        measured = edit_average_precisions(score_map, edits, sources)
+        for edit, result in zip(edits, measured, strict=True):
+            others = [o for o in edits if o is not edit] + sources
+            assert result.average_precision == pytest.approx(
+                pixel_average_precision(score_map, [edit], others), abs=1e-12
+            )
+            assert result.chance == pytest.approx(
+                positive_share((height, width), [edit], others), abs=1e-12
+            )
+
+
+def test_an_edit_scored_above_every_clean_pixel_has_average_precision_one() -> None:
+    score_map = np.zeros((60, 100))
+    score_map[10:20, 10:30] = 1.0
+    score_map[40:50, 10:30] = 2.0  # another edit, ignored when the first is measured
+    first, second = box(10, 10, 20, 10), box(10, 40, 20, 10)
+    measured = edit_average_precisions(score_map, [first, second], [])
+    assert [m.average_precision for m in measured] == [1.0, 1.0]
+    assert measured[0].chance == 200 / 5800
+    with pytest.raises(ValueError, match="no edit"):
+        edit_average_precisions(score_map, [], [])
+    with pytest.raises(ValueError, match="holds no pixel"):
+        edit_average_precisions(score_map, [box(200, 200, 5, 5)], [])
 
 
 def test_pixel_f1_and_iou_at_one_or_many_thresholds() -> None:
