@@ -201,6 +201,40 @@ def stitch(
     return stitched
 
 
+def cut_check(values: npt.NDArray[np.floating]) -> tuple[float, float]:
+    """Where the map of a tiled page peaks against the cuts between windows, and how it jumps there.
+
+    A cut lies between two neighbouring pixels that :func:`stitch` takes from different windows.
+
+    Returns:
+        The distance in pixels from the first maximum to the nearest cut, and the 99th percentile
+        of the jumps between neighbouring pixels across the cuts over that of the jumps inside
+        windows: infinite if only the cuts jump, not a number if nothing does.
+
+    Raises:
+        ValueError: If the page is analysed in one window and has no cut.
+    """
+    height, width = values.shape
+    if len(tiles(height, width)) == 1:
+        msg = "a page analysed in one window has no cut"
+        raise ValueError(msg)
+    rows = np.flatnonzero(np.diff(owners(axis_windows(height), height)))  # last row before a cut
+    columns = np.flatnonzero(np.diff(owners(axis_windows(width), width)))
+    peak_y, peak_x = np.unravel_index(int(np.argmax(values)), values.shape)
+    distance = min(
+        [abs(peak_y - (r + 0.5)) for r in rows] + [abs(peak_x - (c + 0.5)) for c in columns]
+    )
+    vertical = np.abs(np.diff(values, axis=0))
+    horizontal = np.abs(np.diff(values, axis=1))
+    across = np.concatenate([vertical[rows].ravel(), horizontal[:, columns].ravel()])
+    inside = np.concatenate(
+        [np.delete(vertical, rows, axis=0).ravel(), np.delete(horizontal, columns, axis=1).ravel()]
+    )
+    with np.errstate(divide="ignore", invalid="ignore"):  # a map flat inside its windows
+        ratio = np.float64(np.percentile(across, 99)) / np.float64(np.percentile(inside, 99))
+    return float(distance), float(ratio)
+
+
 def sigmoid(logit: float) -> float:
     """The logistic function, in double precision so that scores near 1 stay distinct."""
     return float(1 / (1 + np.exp(-np.float64(logit))))

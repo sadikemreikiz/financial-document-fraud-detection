@@ -21,7 +21,6 @@ from importlib.metadata import version
 from pathlib import Path
 
 import numpy as np
-import numpy.typing as npt
 
 from docfraud.data.benign_marks import Mark, final_marks, load_rounds, marks_plan
 from docfraud.data.findit import load_findit2
@@ -50,8 +49,7 @@ from docfraud.forensics.trufor import (
     TruForModel,
     TruForOutput,
     analyse,
-    axis_windows,
-    owners,
+    cut_check,
     sigmoid,
 )
 from docfraud.markdown import Cell, Table, render_table
@@ -105,29 +103,6 @@ class Measured:
     tiles: tuple[tuple[bool, float], ...]  # tiled receipts: whether each tile is blank, its score
     pooling_error: float  # one window: pooled logit minus TruFor's own logit; NaN if tiled
     cuts: tuple[float, float] | None  # tiled receipts: see cut_check
-
-
-def cut_check(values: npt.NDArray[np.float32]) -> tuple[float, float]:
-    """Where the map's peak lies against the cuts between tiles, and how the map jumps there.
-
-    Returns:
-        The distance in pixels from the peak to the nearest cut, and the 99th percentile of the
-        jumps between neighbouring pixels across the cuts over that of the jumps inside tiles.
-    """
-    height, width = values.shape
-    rows = np.flatnonzero(np.diff(owners(axis_windows(height), height)))  # last row before a cut
-    columns = np.flatnonzero(np.diff(owners(axis_windows(width), width)))
-    peak_y, peak_x = np.unravel_index(int(np.argmax(values)), values.shape)
-    distance = min(
-        [abs(peak_y - (r + 0.5)) for r in rows] + [abs(peak_x - (c + 0.5)) for c in columns]
-    )
-    vertical = np.abs(np.diff(values, axis=0))
-    horizontal = np.abs(np.diff(values, axis=1))
-    across = np.concatenate([vertical[rows].ravel(), horizontal[:, columns].ravel()])
-    inside = np.concatenate(
-        [np.delete(vertical, rows, axis=0).ravel(), np.delete(horizontal, columns, axis=1).ravel()]
-    )
-    return float(distance), float(np.percentile(across, 99) / np.percentile(inside, 99))
 
 
 def size_class(height: int, width: int, windows: int) -> str:

@@ -15,6 +15,7 @@ from docfraud.forensics.trufor import (
     WindowOutput,
     analyse,
     axis_windows,
+    cut_check,
     owners,
     pooled_statistics,
     sigmoid,
@@ -151,6 +152,42 @@ def test_the_stitched_map_puts_every_value_where_its_pixel_is() -> None:
     output = analyse(page, FakeModel())
     assert len(output.windows) > 1
     np.testing.assert_array_equal(output.localisation, page.astype(np.float32) / 255)
+
+
+@pytest.mark.usefixtures("small_tiles")
+def test_the_cut_check_compares_jumps_across_cuts_with_those_inside_windows() -> None:
+    height, width = 100, 70
+    rows, columns = np.mgrid[0:height, 0:width]
+    ramp = (rows + columns) / 100  # the same jump between all neighbours
+    assert cut_check(ramp)[1] == pytest.approx(1.0)
+    windows = tiles(height, width)
+    steps = [np.full((w.height, w.width), i, dtype=np.float32) for i, w in enumerate(windows)]
+    stepped = stitch((height, width), windows, steps) + ramp  # each window one step higher
+    assert cut_check(stepped)[1] > 10
+
+
+@pytest.mark.usefixtures("small_tiles")
+def test_the_cut_check_measures_the_distance_from_the_peak_to_the_nearest_cut() -> None:
+    height, width = 100, 70
+    cut_rows = np.flatnonzero(np.diff(owners(axis_windows(height), height)))
+    rows, columns = np.mgrid[0:height, 0:width]
+    ramp = (rows + columns) / 100
+    peaked = ramp.copy()
+    peaked[cut_rows[0], 5] = 10.0  # on the last row before the first cut, far from column cuts
+    assert cut_check(peaked)[0] == 0.5
+    peaked = ramp.copy()
+    peaked[cut_rows[0] - 3, 5] = 10.0
+    assert cut_check(peaked)[0] == 3.5
+    with pytest.raises(ValueError, match="no cut"):
+        cut_check(np.zeros((40, 40)))
+
+
+@pytest.mark.usefixtures("small_tiles")
+def test_a_map_flat_inside_its_windows_has_an_infinite_or_undefined_ratio() -> None:
+    windows = tiles(100, 70)
+    steps = [np.full((w.height, w.width), i, dtype=np.float32) for i, w in enumerate(windows)]
+    assert cut_check(stitch((100, 70), windows, steps))[1] == np.inf
+    assert np.isnan(cut_check(np.zeros((100, 70)))[1])
 
 
 @pytest.mark.usefixtures("small_tiles")
