@@ -5,6 +5,20 @@
 Explainable multimodal detection of forged receipts and invoices: pixel forensics, accounting-rule
 verification and LLM-assisted review, evaluated on real human forgeries.
 
+## At a glance
+
+- **What it does:** detects forged receipts from the evidence they carry: arithmetic on the
+  receipt that no longer adds up, and traces of editing in its pixels. An LLM-assisted review is
+  planned.
+- **What stands out:** I audited my own thesis, found that data leakage had invalidated its
+  results, and rebuilt it under an evaluation protocol fixed before any model was trained. Along
+  the way I found a shortcut in the dataset: a rule that looks only at the file format beats the
+  best published result (F1 79.3 against 28.39), so every image is normalised before any model
+  sees it.
+- **Built with:** Python 3.14, scikit-learn, RapidOCR, PyTorch (Phase 4), pytest, mypy in strict
+  mode and CI on every pull request.
+- **Status:** Phases 0 to 3 of 8 complete; Phase 4, pixel forensics, in progress.
+
 This repository is **v2** of my M.Sc. thesis (University of Europe for Applied Sciences, Berlin,
 2026). It is a rebuild from scratch: when I reviewed the thesis implementation after
 submission, I found that its headline results were not valid, and v2 is designed to answer the
