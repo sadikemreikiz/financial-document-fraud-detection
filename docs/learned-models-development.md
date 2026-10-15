@@ -182,3 +182,17 @@ the development round starts.
     windows) and the measurement of a forgery with four edits 8.5 s, at a peak of 2.8 GiB. From
     these times and those above, a run takes about 13 minutes to measure (8 of them inference) and
     the 9 runs about 2 hours, an estimate.
+- **The round** ([`rounds.py`](../src/docfraud/forensics/learned/rounds.py);
+  `docfraud forensics train-round` and `measure-round`, together `make learned`). The nine runs
+  of round 2 are trained in the order of ADR-0022: seed 0 of systems 2, 3 and 4, then seed 1, then
+  seed 2, each in its own directory under `artifacts/learned/rounds/round-2`. Two conventions,
+  chosen without data: the round stops at the first run that fails by the rule of decision 5,
+  since a failure repeats all nine runs; and no network runs on a receipt before all nine have
+  finished, the order the clean measurement will follow. Every run names one commit: the commands
+  refuse uncommitted changes, an unfinished round continues only at the commit it started from,
+  and a checkpoint is resumed only by the code that wrote it. A run's initial output bias is the
+  share of forged pixels in its first 100 steps. `measure-round` then measures each run on the
+  190 validation receipts, the 113 of the design fold and the 94 synthetic forgeries, made one at
+  a time by the round's engine, and skips a run that the same weights have already measured.
+  `make learned` verifies the weights and the fonts, keeps the Mac awake with `caffeinate`, trains
+  and measures; interrupted, it resumes where it stopped.

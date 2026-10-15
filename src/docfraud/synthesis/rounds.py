@@ -1,6 +1,6 @@
 """The engine of one cross-validation round, built from the dataset, and its development set."""
 
-from collections.abc import Sequence
+from collections.abc import Iterator, Sequence
 from functools import lru_cache
 from pathlib import Path
 
@@ -56,7 +56,16 @@ def development_set(engine: Engine) -> list[Forgery]:
     Raises:
         ValueError: If the engine is not of the round that holds out the design fold.
     """
+    return list(development_forgeries(engine))
+
+
+def development_forgeries(engine: Engine) -> Iterator[Forgery]:
+    """The forgeries of :func:`development_set`, made one at a time, in the order of their bases.
+
+    Raises:
+        ValueError: If the engine is not of the round that holds out the design fold.
+    """
     if engine.held_out != DESIGN_FOLD:
         msg = f"the development set belongs to round {DESIGN_FOLD}, not {engine.held_out}"
         raise ValueError(msg)
-    return [engine.forge(base, 0, Stream.DEVELOPMENT) for base in engine.pools[Stream.DEVELOPMENT]]
+    return (engine.forge(base, 0, Stream.DEVELOPMENT) for base in engine.pools[Stream.DEVELOPMENT])

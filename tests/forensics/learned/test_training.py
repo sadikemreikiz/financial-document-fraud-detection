@@ -1,4 +1,5 @@
 import math
+from dataclasses import replace
 from datetime import UTC, datetime
 from itertools import pairwise
 from pathlib import Path
@@ -196,6 +197,28 @@ def test_another_run_cannot_continue_this_one(tmp_path: Path, other: Run) -> Non
     (tmp_path / RECORD).unlink()
     with pytest.raises(ValueError, match="run kept here"):
         train(other, Tiny(), Squares(), tmp_path, settings=SETTINGS, device=CPU)
+
+
+def test_a_checkpoint_is_resumed_only_by_the_code_that_wrote_it(tmp_path: Path) -> None:
+    train(run(), Tiny(), Squares(), tmp_path, until=12, settings=SETTINGS, device=CPU)
+    later = replace(run(), code=CodeVersion(commit="def", dirty=False))
+    with pytest.raises(ValueError, match="resume it there"):
+        train(later, Tiny(), Squares(), tmp_path, settings=SETTINGS, device=CPU)
+
+
+def test_every_step_is_reported_with_its_loss(tmp_path: Path) -> None:
+    steps: list[tuple[int, float]] = []
+    record = train(
+        run(),
+        Tiny(),
+        Squares(),
+        tmp_path,
+        until=12,
+        settings=SETTINGS,
+        device=CPU,
+        on_step=lambda done, loss: steps.append((done, loss)),
+    )
+    assert steps == list(zip(range(1, 13), record.losses, strict=True))
 
 
 def test_a_run_whose_loss_is_not_finite_diverges(tmp_path: Path) -> None:

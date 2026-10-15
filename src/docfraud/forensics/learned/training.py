@@ -16,7 +16,7 @@ mean loss over the last steps is not below that of the best constant prediction 
 
 import math
 import time
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from dataclasses import asdict, dataclass
 from datetime import UTC, datetime
 from pathlib import Path
@@ -207,11 +207,13 @@ def train(  # noqa: PLR0913 - the run, its network and data, and where it goes
     settings: Settings | None = None,
     device: torch.device | None = None,
     until: int | None = None,
+    on_step: Callable[[int, float], None] | None = None,
 ) -> RunRecord:
     """Train a run, resuming from its checkpoint, and return its record.
 
     A run whose record says it finished, or diverged, is not trained again. The final weights
-    are saved in ``MODEL`` and the checkpoint is then removed.
+    are saved in ``MODEL`` and the checkpoint is then removed. A checkpoint is resumed only by
+    the code that wrote it, so that no run mixes two versions of the code.
 
     Args:
         run: The run and what its record states about it.
@@ -221,9 +223,10 @@ def train(  # noqa: PLR0913 - the run, its network and data, and where it goes
         settings: Training settings; those of ADR-0022 by default.
         device: Where to train; the Apple GPU if there is one by default.
         until: Stop after this many steps, with a checkpoint, as if interrupted.
+        on_step: Called with ``(steps_done, loss)`` after each step.
 
     Raises:
-        ValueError: If the checkpoint belongs to another run or other settings.
+        ValueError: If the checkpoint belongs to another run, other settings or other code.
     """
     settings = settings or Settings()
     device = device or default_device()
@@ -266,6 +269,8 @@ def train(  # noqa: PLR0913 - the run, its network and data, and where it goes
         seconds.append(now - last)  # waiting for the batch included
         last = now
         done = step + 1
+        if on_step is not None:
+            on_step(done, value)
         if done % settings.checkpoint_every == 0 and done < settings.steps:
             record = record.model_copy(
                 update={"losses": losses, "forged_shares": shares, "seconds": seconds}
@@ -317,6 +322,9 @@ def _start_or_resume(  # noqa: PLR0913 - everything a run starts from
         checkpoint = torch.load(checkpoint_path, map_location=device, weights_only=True)
         record = RunRecord.model_validate_json(checkpoint["record"])
         _check_same_run(record, run, settings)
+        if record.code != run.code:
+            msg = f"the run was started at {record.code}; resume it there, not at {run.code}"
+            raise ValueError(msg)
         network.load_state_dict(checkpoint["model"])
         optimiser.load_state_dict(checkpoint["optimiser"])
         return record.model_copy(update={"resumed_at": [*record.resumed_at, record.steps_done]})

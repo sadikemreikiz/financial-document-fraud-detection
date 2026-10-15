@@ -1,5 +1,5 @@
 .DEFAULT_GOAL := help
-.PHONY: help install lint format typecheck test test-data check data audit reports check-reports bench-ocr bench-synthesis trufor encoder-check clean
+.PHONY: help install lint format typecheck test test-data check data audit reports check-reports bench-ocr bench-synthesis trufor learned encoder-check clean
 
 help:  ## Show available targets
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*## "}; {printf "  %-16s %s\n", $$1, $$2}'
@@ -37,8 +37,8 @@ audit:  ## Regenerate the data audit report
 # Reports that need the dataset and the OCR cache. Not included: the gold evaluations of
 # reports/reading, which depend on the parser version that produced them (see their headers),
 # the OCR benchmark (make bench-ocr), the timing of the synthetic forgery engine (make
-# bench-synthesis) and the development round of system 6 (make trufor), whose model runs on the
-# Apple GPU.
+# bench-synthesis) and the development rounds of system 6 (make trufor) and of systems 2 to 4
+# (make learned), whose models run on the Apple GPU.
 reports:  ## Regenerate every report that the current code produces
 	uv run docfraud data audit
 	uv run python experiments/parser_development.py
@@ -77,6 +77,15 @@ trufor:  ## System 6 development round on the design fold (downloads TruFor and 
 	uv run docfraud forensics download-trufor
 	uv run --with torch==2.14.1 --with torchvision==0.29.1 --with timm==1.0.30 --with yacs==0.1.8 \
 		python -I experiments/system6_development.py
+
+# Keeps a Mac from sleeping while the round runs; the lid must stay open and the power connected.
+KEEP_AWAKE := $(shell command -v caffeinate >/dev/null 2>&1 && echo caffeinate -is)
+
+learned:  ## Development round of systems 2 to 4 on the design fold, about 11 hours (resumes)
+	uv run docfraud forensics download-resnet
+	uv run docfraud synthesis download-fonts
+	$(KEEP_AWAKE) uv run docfraud forensics train-round
+	$(KEEP_AWAKE) uv run docfraud forensics measure-round
 
 encoder-check:  ## One-time check that the learned models' encoder is torchvision's ResNet-18
 	uv run docfraud forensics download-resnet
