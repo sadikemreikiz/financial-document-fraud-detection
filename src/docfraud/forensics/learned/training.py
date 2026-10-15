@@ -115,7 +115,8 @@ class StepData(Dataset[tuple[Tensor, Tensor]]):
 class RunRecord(BaseModel):
     """What a run was made from and what it did, step by step."""
 
-    model_config = ConfigDict(frozen=True, extra="forbid")
+    # a loss that is not finite is written as such, so that a diverged run's record reads back
+    model_config = ConfigDict(frozen=True, extra="forbid", ser_json_inf_nan="constants")
 
     held_out: int
     system: int

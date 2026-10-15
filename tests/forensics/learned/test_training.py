@@ -208,7 +208,11 @@ def test_a_run_whose_loss_is_not_finite_diverges(tmp_path: Path) -> None:
     assert failure(record) == "diverged"
     assert not (tmp_path / MODEL).exists()
     assert not (tmp_path / CHECKPOINT).exists()
-    assert (tmp_path / RECORD).is_file()
+    stored = RunRecord.model_validate_json((tmp_path / RECORD).read_text(encoding="utf-8"))
+    assert stored.status == "diverged"
+    assert math.isnan(stored.losses[0])
+    again = train(run(), Tiny(), Squares(), tmp_path, settings=SETTINGS, device=CPU)
+    assert again.status == "diverged"  # read back, not trained again
 
 
 def record(losses: list[float], shares: list[float], status: str = "finished") -> RunRecord:
