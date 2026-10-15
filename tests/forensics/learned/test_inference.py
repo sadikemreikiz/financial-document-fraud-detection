@@ -54,6 +54,13 @@ def sigmoid(values: np.ndarray) -> np.ndarray:
     return 1 / (1 + np.exp(-values.astype(np.float64)))
 
 
+def test_a_read_only_page_is_analysed_as_it_is() -> None:
+    receipt = page(30, 20)
+    receipt.setflags(write=False)  # as pages decoded from a file or mapped from the cache are
+    output = LearnedModel(Pointwise(), "pointwise", CPU).analyse(receipt)
+    np.testing.assert_array_equal(output.logits, (receipt.astype(np.float32) - 128) / 16)
+
+
 def test_a_small_page_is_one_window() -> None:
     model = LearnedModel(Pointwise(), "pointwise", CPU)
     receipt = page(30, 20)

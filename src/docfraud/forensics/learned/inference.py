@@ -114,7 +114,8 @@ class LearnedModel:
     def window_logits(self, window: npt.NDArray[np.uint8]) -> npt.NDArray[np.float32]:
         """The network's logit for every pixel of a ``(height, width)`` window."""
         with torch.no_grad():
-            pages = torch.from_numpy(np.ascontiguousarray(window))[None, None].to(self.device)
+            writable = np.array(window)  # a copy, since pages may be read-only
+            pages = torch.from_numpy(writable)[None, None].to(self.device)
             logits = self.network(pages)[0, 0].float().cpu().numpy()
         return np.asarray(logits, dtype=np.float32)
 
