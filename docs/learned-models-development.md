@@ -147,3 +147,38 @@ the development round starts.
   (none of the design fold): ordinary receipts took a median of 0.20 s (1 to 6 windows, at most
   1.8 s), page scans 6.3 s (24 windows); the maps on the processor and on the GPU differed by at
   most 1.4e-5. The design fold thus takes about 3 minutes per run.
+- **Results** ([`results.py`](../src/docfraud/forensics/learned/results.py)). The maps of a run
+  are not kept. On the design fold and the synthetic development set they hold 1.70 billion
+  pixels per run (0.91 and 0.79); system 6's compressed cache of the design fold takes 67 % of
+  the maps' size (2.44 of 3.65 GB), which for 9 runs would be about 41 GB against the 31 GB free
+  on the reference machine, and the 36 runs of the clean measurement could not keep theirs
+  either. Each receipt is instead measured while its map is in memory, and the measurements are
+  kept in the run's `results.json`, from which the reports are made. A quantity a report needs
+  later means running the network again, so every measurement of the development report is fixed
+  here, before the round runs. Maps are measured in double precision, by the code of ADR-0015.
+  - *Validation serves thresholds only* (ADR-0022, decision 3): the document scores of its 190
+    receipts are kept for the threshold of document F1, and the maps of its 33 forged receipts
+    choose the threshold of pixel F1 and IoU (ADR-0015, section 5); their logits, 0.53 GiB, are
+    held in memory until it is chosen. Nothing else is measured on validation, and the reports
+    show none of its results. The development round thus runs the threshold step of the clean
+    measurement once before it.
+  - *The held-out fold and the synthetic development set* keep for every receipt both document
+    scores, the top region of ADR-0015, the cuts between windows (the check of system 6, now in
+    [`trufor.py`](../src/docfraud/forensics/trufor.py); system 6's report regenerated from its
+    cache with the moved code is unchanged but for its commit line), and for forged receipts the
+    pixel average precision with its chance level and F1 and IoU at the run's threshold. A
+    synthetic forgery is kept under its base's identifier; copy sources on its own page are
+    ignored, as for real forgeries, while those of copies from another receipt lie on the donor.
+  - *Every edit of a synthetic forgery* keeps two measurements, for the results by technique: the
+    highest map value inside its rectangle, which the report compares with the highest value on
+    the same receipt before the edit (the edit is *seen* if it is higher), and the average
+    precision of its pixels against the clean pixels of the receipt, the other edits ignored,
+    with its chance level. The second sorts the clean pixels once per receipt and equals
+    ADR-0015's pixel average precision with the other edits counted as copy sources (a test on
+    200 maps with ties); on a map of 35 MP, four edits took 1.3 s instead of 19 s. Of the 94
+    forgeries of the development set only 52 hold a single technique (40 of them CPI), so results
+    by technique are per edit: 192 CPI, 29 PIX, 28 CUT, 23 IMI and 3 CPO.
+  - *Time.* On a page of 35 MP, with a network of random weights, inference took 6.9 s (24
+    windows) and the measurement of a forgery with four edits 8.5 s, at a peak of 2.8 GiB. From
+    these times and those above, a run takes about 13 minutes to measure (8 of them inference) and
+    the 9 runs about 2 hours, an estimate.

@@ -36,7 +36,8 @@ SCORE_ORDER = (HIGHEST, CONTRAST)
 """The document scores in the order of ADR-0022: the first whose size check passes is used."""
 
 
-def _sigmoid(logits: npt.NDArray[np.floating]) -> npt.NDArray[np.float64]:
+def probability(logits: npt.NDArray[np.floating]) -> npt.NDArray[np.float64]:
+    """The probability of each logit, in double precision."""
     values = logits.astype(np.float64)
     return np.exp(-np.logaddexp(0.0, -values))
 
@@ -52,15 +53,20 @@ class LearnedOutput:
     @property
     def localisation(self) -> npt.NDArray[np.float32]:
         """The map: the probability that each pixel was edited."""
-        return _sigmoid(self.logits).astype(np.float32)
+        return probability(self.logits).astype(np.float32)
+
+    @property
+    def probabilities(self) -> npt.NDArray[np.float64]:
+        """The map in double precision, as it is measured, so that values near 1 stay distinct."""
+        return probability(self.logits)
 
     def highest(self) -> float:
         """The first document score: the highest probability of the map."""
-        return float(_sigmoid(np.array([self.logits.max()]))[0])
+        return float(probability(np.array([self.logits.max()]))[0])
 
     def contrast(self) -> float:
         """The second document score: the highest probability minus the 99th percentile."""
-        probabilities = _sigmoid(self.logits)
+        probabilities = self.probabilities
         return float(probabilities.max() - np.percentile(probabilities, 99))
 
     def scores(self) -> dict[str, float]:
