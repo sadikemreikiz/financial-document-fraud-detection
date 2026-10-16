@@ -8,8 +8,11 @@ from torch import Tensor, nn
 
 from docfraud.forensics import trufor
 from docfraud.forensics.learned.inference import (
+    ADDED_AFTER_RESULTS,
     CONTRAST,
+    HALF_SQUARE,
     HIGHEST,
+    QUARTER_SQUARE,
     SCORE_ORDER,
     LearnedModel,
     LearnedOutput,
@@ -114,7 +117,26 @@ def test_document_scores_come_from_the_logits() -> None:
     assert output.highest() == pytest.approx(1 - math.exp(-30), abs=1e-16)
     assert output.highest() < 1.0
     assert output.contrast() == pytest.approx(output.highest() - 0.5)
-    assert list(output.scores()) == list(SCORE_ORDER) == [HIGHEST, CONTRAST]
+    scores = output.scores(text_height=40.0)
+    assert list(scores) == list(SCORE_ORDER) == [HIGHEST, CONTRAST, QUARTER_SQUARE, HALF_SQUARE]
+    assert scores[HIGHEST] == output.highest()
+    assert scores[CONTRAST] == output.contrast()
+
+
+def test_the_added_scores_average_the_map_over_squares_of_the_text() -> None:
+    logits = np.full((60, 80), -6.0, dtype=np.float32)
+    logits[10:30, 10:30] = 0.0  # probability 0.5 over a square of 20 px
+    logits[50, 70] = 20.0  # one pixel of probability near 1
+    output = LearnedOutput(logits, (), 0.0)
+    low = float(sigmoid(np.array([-6.0]))[0])
+    scores = output.scores(text_height=40.0)  # squares of 10 and 20 px
+    assert scores[HIGHEST] == pytest.approx(1.0, abs=1e-8)
+    assert scores[QUARTER_SQUARE] == pytest.approx(0.5)
+    assert scores[HALF_SQUARE] == pytest.approx(0.5)
+    smaller = output.scores(text_height=4.0)  # a square of 1 px, then of 2 px
+    assert smaller[QUARTER_SQUARE] == pytest.approx(scores[HIGHEST])
+    assert smaller[HALF_SQUARE] == pytest.approx(max(0.5, (3 * low + scores[HIGHEST]) / 4))
+    assert SCORE_ORDER[2:] == ADDED_AFTER_RESULTS
 
 
 def test_saved_weights_load_into_the_network(tmp_path: Path) -> None:

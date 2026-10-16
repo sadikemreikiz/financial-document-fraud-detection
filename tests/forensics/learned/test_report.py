@@ -9,7 +9,13 @@ from docfraud.data.benign_marks import Mark, MarkKind
 from docfraud.data.models import BBox, Label, Technique
 from docfraud.data.observation import Presence
 from docfraud.evaluation.runs import CodeVersion
-from docfraud.forensics.learned.inference import CONTRAST, HIGHEST
+from docfraud.forensics.learned.inference import (
+    CONTRAST,
+    HALF_SQUARE,
+    HIGHEST,
+    QUARTER_SQUARE,
+    SCORE_ORDER,
+)
 from docfraud.forensics.learned.report import (
     BLANK_SHARE,
     RoundData,
@@ -24,8 +30,13 @@ from docfraud.forensics.learned.report import (
     mark_table,
     report,
     score_table,
+    size_check,
     size_class,
     technique_table,
+    text_table,
+    used_score,
+    word_superiority,
+    word_table,
 )
 from docfraud.forensics.learned.results import (
     EditResult,
@@ -37,6 +48,7 @@ from docfraud.forensics.learned.results import (
 )
 from docfraud.forensics.learned.rounds import RUNS, Repeatability
 from docfraud.forensics.learned.sampler import System
+from docfraud.forensics.learned.text_scale import WordScale
 from docfraud.forensics.learned.training import RunRecord, Settings
 from tests.forensics.learned.test_training import ENVIRONMENT
 
@@ -61,8 +73,11 @@ def receipt(
     modified: tuple[BBox, ...] = (),
     edits: tuple[EditResult, ...] = (),
     windows: int = 1,
+    word_value: float = 0.1,
 ) -> MeasuredReceipt:
     forged = bool(modified)
+    pair: tuple[float, ...] = (word_value, word_value / 2)
+    peaks = dict.fromkeys(WordScale, pair)
     return MeasuredReceipt(
         key=key,
         group=group,
@@ -71,7 +86,14 @@ def receipt(
         width=100,
         windows=windows,
         seconds=0.2,
-        scores={HIGHEST: highest, CONTRAST: contrast},
+        word_count=2,
+        text_height=10.0,
+        scores={
+            HIGHEST: highest,
+            CONTRAST: contrast,
+            QUARTER_SQUARE: 0.9 * contrast,
+            HALF_SQUARE: 0.8 * contrast,
+        },
         lowest=lowest,
         peak=(15, 15),
         top_region=top or box(10, 10, 20, 10),
@@ -80,6 +102,7 @@ def receipt(
         sources=(),
         pixels=PixelScores(average_precision=0.4, chance=0.01, f1=0.3, iou=0.2) if forged else None,
         edits=edits,
+        word_peaks=peaks if group is Group.HELD_OUT else None,
     )
 
 
@@ -197,9 +220,7 @@ def sized(runs: Mapping[RunKey, RunResults]) -> dict[RunKey, RunResults]:
         key: r.model_copy(
             update={
                 "measured": tuple(
-                    m.model_copy(
-                        update={"scores": dict.fromkeys((HIGHEST, CONTRAST), m.height / 1e4)}
-                    )
+                    m.model_copy(update={"scores": dict.fromkeys(SCORE_ORDER, m.height / 1e4)})
                     for m in r.measured
                 )
             }
@@ -231,19 +252,120 @@ def test_the_document_score_follows_the_fixed_order() -> None:
         chosen_score(without, RESAMPLES)
 
 
-def test_the_score_table_shows_every_run_and_each_systems_mean() -> None:
+def unsized_quarter(runs: Mapping[RunKey, RunResults]) -> dict[RunKey, RunResults]:
+    """The same results with score 3 unrelated to the size of the receipt."""
+    return {
+        key: r.model_copy(
+            update={
+                "measured": tuple(
+                    m.model_copy(
+                        update={
+                            "scores": {**m.scores, QUARTER_SQUARE: (int(m.key[1:]) * 17 % 41) / 100}
+                        }
+                    )
+                    for m in r.measured
+                )
+            }
+        )
+        for key, r in runs.items()
+    }
+
+
+def test_the_order_ends_with_the_highest_value_when_no_candidate_passes() -> None:
+    data = round_data()
+    assert used_score(data.results, RESAMPLES) == (HIGHEST, True)
+    assert used_score(sized(data.results), RESAMPLES) == (HIGHEST, False)
+    assert used_score(unsized_quarter(sized(data.results)), RESAMPLES) == (QUARTER_SQUARE, True)
+
+
+def test_the_score_table_shows_every_candidate_run_and_each_systems_mean() -> None:
     table = score_table(round_data())
-    labels = [row[0] for row in table.rows]
-    assert labels[:4] == [
+    assert len(table.rows) == 4 * 12
+    labels = [row[0] for row in table.rows if row[0]]
+    assert labels == [
+        f"1. {HIGHEST}",
+        f"2. {CONTRAST}",
+        f"3. {QUARTER_SQUARE} (added by ADR-0023)",
+        f"4. {HALF_SQUARE} (added by ADR-0023)",
+    ]
+    runs = [row[1] for row in table.rows[:4]]
+    assert runs == [
         "system 2, seed 0",
         "system 2, seed 1",
         "system 2, seed 2",
         "system 2, mean of 3 seeds",
     ]
-    assert len(table.rows) == 12
     mean = table.rows[3]
-    assert mean[1] == pytest.approx(table.rows[0][1])  # every seed has the same receipts here
-    assert (mean[2], mean[3]) == (None, None)  # a size check is not averaged
+    assert mean[2] == pytest.approx(table.rows[0][2])  # every seed has the same receipts here
+    assert (mean[3], mean[4], mean[5]) == (None, None, None)  # a size check is not averaged
+
+
+def test_the_size_check_can_leave_out_page_scans() -> None:
+    data = round_data()
+    first = data.results[RUNS[0]]
+    scan = receipt("A00", height=7000, highest=0.99)
+    changed = first.model_copy(update={"measured": (scan, *first.measured[1:])})
+    every = size_check(changed, HIGHEST, RESAMPLES)
+    without = size_check(changed, HIGHEST, RESAMPLES, page_scans=False)
+    assert without == size_check(
+        first.model_copy(update={"measured": first.measured[1:]}), HIGHEST, RESAMPLES
+    )
+    assert every != without
+
+
+def test_word_superiority_counts_every_pair_of_words() -> None:
+    rng = np.random.default_rng(4)
+    first = [list(np.round(rng.random(n), 1)) for n in (3, 5, 2)]
+    second = [list(np.round(rng.random(n) * 0.8, 1)) for n in (4, 1, 6, 2)]
+    a, b = np.concatenate(first), np.concatenate(second)
+    expected = float(((a[:, None] > b[None, :]) + 0.5 * (a[:, None] == b[None, :])).mean())
+    estimate = word_superiority(first, second, resamples=RESAMPLES)
+    assert estimate.value == pytest.approx(expected)
+    assert estimate.low <= estimate.value <= estimate.high
+    assert word_superiority([[1.0, 2.0]], [[1.0], [0.0]], resamples=10).value == 0.875
+    with pytest.raises(ValueError, match="both groups"):
+        word_superiority([], [[1.0]])
+
+
+def scanned(data: RoundData, count: int = 5) -> RoundData:
+    """The same round with its first authentic receipts as page scans whose words score high."""
+    keys = {f"A{n:02d}" for n in range(count)}
+    scan_words: tuple[float, ...] = (0.9, 0.8, 0.7)
+
+    def changed(m: MeasuredReceipt) -> MeasuredReceipt:
+        if m.key not in keys or m.group is not Group.HELD_OUT:
+            return m
+        return m.model_copy(
+            update={
+                "height": 7000,
+                "word_count": 3,
+                "text_height": 90.0,
+                "word_peaks": dict.fromkeys(WordScale, scan_words),
+            }
+        )
+
+    results = {
+        key: r.model_copy(update={"measured": tuple(changed(m) for m in r.measured)})
+        for key, r in data.results.items()
+    }
+    return replace(data, results=results)
+
+
+def test_the_text_and_words_of_page_scans_are_compared_with_other_receipts() -> None:
+    data = scanned(round_data())
+    text = text_table(data)
+    assert text.rows == [
+        ["page scans", 5, 3.0, 90.0, pytest.approx(0.7)],
+        ["other receipts", AUTHENTIC - 5, 2.0, 10.0, pytest.approx(0.042)],
+    ]
+    assert "kind: 0 of" in text.note
+    words = word_table(data)
+    assert words.columns[1:5] == [f"Blocks of {scale}" for scale in WordScale]
+    assert words.rows[0][1:5] == ["1.00 (1.00 to 1.00)"] * 4  # every scan word scores higher
+    assert words.rows[0][5] == f"{AUTHENTIC} of {AUTHENTIC}"  # (15, 15) lies below row 14
+    taller = replace(data, words={key: [box(5, 5, 40, 20)] for key in data.words})
+    assert word_table(taller).rows[0][5] == f"0 of {AUTHENTIC}"
+    assert word_table(round_data()).rows[0][1] is None  # no page scan to compare
 
 
 def test_the_guard_counts_hits_with_and_without_large_rectangles() -> None:
@@ -308,6 +430,8 @@ def test_the_report_states_its_outcome_and_every_table() -> None:
         "Learning curves",
         "Repeatability",
         "Document scores",
+        "Text of page scans",
+        "Words of page scans against other receipts",
         "Top region on forged receipts",
         "Pixel metrics",
         "Document score on synthetic forgeries",
@@ -321,9 +445,17 @@ def test_the_report_states_its_outcome_and_every_table() -> None:
         assert f"### {title}\n" in text, title
 
 
-def test_a_report_without_a_passing_score_says_development_stops() -> None:
+def test_a_report_without_a_passing_score_keeps_the_highest_value() -> None:
     data = round_data()
     flat = sized(data.results)
     text = report(replace(data, results=flat))
-    assert "development stops" in text
-    assert "Document score on synthetic forgeries" not in text
+    assert "By ADR-0023 (decision 3), the order ends there" in text
+    assert f"keep the **{HIGHEST}**" in text
+    assert "Document score on synthetic forgeries" in text
+    assert "Its size check failed (ADR-0023, decision 3)." in text
+
+
+def test_a_report_names_a_candidate_added_after_the_results() -> None:
+    data = round_data()
+    text = report(replace(data, results=unsized_quarter(sized(data.results))))
+    assert f"the **{QUARTER_SQUARE}**. It was added by ADR-0023" in text

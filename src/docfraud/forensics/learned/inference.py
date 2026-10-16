@@ -11,6 +11,9 @@ The document score is chosen by a fixed order: first the highest value of the ma
 check fails, the highest value minus the receipt's own 99th percentile (:class:`LearnedOutput`).
 Both are computed from the logits in double precision, so that probabilities near 1 stay
 distinct up to logits of about 36, where single precision already rounds them to 1 at about 17.
+ADR-0023 extends the order by two scores at the scale of the receipt's text: the highest mean of
+the map over a square whose side is a quarter, then half, of the text height
+(:mod:`~docfraud.forensics.learned.text_scale`).
 """
 
 import hashlib
@@ -26,14 +29,21 @@ from torch import nn
 from docfraud.data.models import BBox
 from docfraud.forensics import trufor
 from docfraud.forensics.learned.network import UNet
+from docfraud.forensics.learned.text_scale import HALF, QUARTER, highest_square_mean, square_side
 from docfraud.forensics.learned.training import default_device
 
 _PAGE_DIMENSIONS = 2
 
 HIGHEST = "highest value of the map"
 CONTRAST = "highest value of the map minus the receipt's 99th percentile"
-SCORE_ORDER = (HIGHEST, CONTRAST)
-"""The document scores in the order of ADR-0022: the first whose size check passes is used."""
+QUARTER_SQUARE = "highest mean over a square of a quarter of the text height"
+HALF_SQUARE = "highest mean over a square of half the text height"
+SCORE_ORDER = (HIGHEST, CONTRAST, QUARTER_SQUARE, HALF_SQUARE)
+"""The document scores in the order of ADR-0022 as ADR-0023 extends it: the first whose size check
+passes is used."""
+
+ADDED_AFTER_RESULTS = (QUARTER_SQUARE, HALF_SQUARE)
+"""The scores ADR-0023 added after the development round's results of the first two."""
 
 
 def probability(logits: npt.NDArray[np.floating]) -> npt.NDArray[np.float64]:
@@ -64,14 +74,27 @@ class LearnedOutput:
         """The first document score: the highest probability of the map."""
         return float(probability(np.array([self.logits.max()]))[0])
 
-    def contrast(self) -> float:
+    def contrast(self, probabilities: npt.NDArray[np.float64] | None = None) -> float:
         """The second document score: the highest probability minus the 99th percentile."""
-        probabilities = self.probabilities
-        return float(probabilities.max() - np.percentile(probabilities, 99))
+        values = self.probabilities if probabilities is None else probabilities
+        return float(values.max() - np.percentile(values, 99))
 
-    def scores(self) -> dict[str, float]:
-        """Both document scores, by name, in the order of ``SCORE_ORDER``."""
-        return {HIGHEST: self.highest(), CONTRAST: self.contrast()}
+    def scores(
+        self, text_height: float, probabilities: npt.NDArray[np.float64] | None = None
+    ) -> dict[str, float]:
+        """Every document score, by name, in the order of ``SCORE_ORDER``.
+
+        Args:
+            text_height: The receipt's text height, which sets the squares of scores 3 and 4.
+            probabilities: The map in double precision, if already computed.
+        """
+        values = self.probabilities if probabilities is None else probabilities
+        return {
+            HIGHEST: self.highest(),
+            CONTRAST: self.contrast(values),
+            QUARTER_SQUARE: highest_square_mean(values, square_side(text_height, QUARTER)),
+            HALF_SQUARE: highest_square_mean(values, square_side(text_height, HALF)),
+        }
 
 
 def load_model(path: Path) -> UNet:

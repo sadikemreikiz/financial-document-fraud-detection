@@ -7,8 +7,12 @@ round ran: whether the top region of an authentic receipt lies on blank paper, w
 highest score lay on every page scan. Every number comes from the design fold or the synthetic
 development set and is optimistic.
 
-The document score follows the fixed order of decision 1 (:func:`chosen_score`): the first
-candidate whose size check passes for the seed-0 run of every system.
+The document score follows the fixed order of decision 1 as ADR-0023 extends it
+(:func:`chosen_score`): the first candidate whose size check passes for the seed-0 run of every
+system. If none passes, the order ends with the first candidate, the highest value of the map,
+and its failed check is stated (:func:`used_score`, ADR-0023, decision 3). The report also shows
+the diagnostic behind ADR-0023: how the words of page scans score against those of other
+receipts, at four scales.
 """
 
 from collections.abc import Callable, Iterable, Mapping, Sequence
@@ -19,7 +23,7 @@ import numpy.typing as npt
 
 from docfraud.data.benign_marks import Mark
 from docfraud.data.models import BBox, Label, Technique
-from docfraud.evaluation.bootstrap import DEFAULT_RESAMPLES, Estimate
+from docfraud.evaluation.bootstrap import DEFAULT_RESAMPLES, Estimate, stratified
 from docfraud.evaluation.detection import average_precision
 from docfraud.evaluation.localisation import (
     LARGE_RECTANGLE_SHARE,
@@ -31,18 +35,16 @@ from docfraud.evaluation.localisation import (
 )
 from docfraud.evaluation.mark_alarms import check_marks
 from docfraud.evaluation.runs import CodeVersion
-from docfraud.forensics.learned.inference import HIGHEST, SCORE_ORDER
+from docfraud.forensics.learned.inference import ADDED_AFTER_RESULTS, HIGHEST, SCORE_ORDER
 from docfraud.forensics.learned.results import Group, MeasuredReceipt, RunResults
 from docfraud.forensics.learned.rounds import Repeatability
 from docfraud.forensics.learned.sampler import System
+from docfraud.forensics.learned.text_scale import PAGE_SCAN_SIDE, WordScale, on_page, page_scan
 from docfraud.forensics.learned.training import RunRecord, binary_entropy, failure
 from docfraud.markdown import Cell, Table, render_table
 
 WINDOW = 500
 """Steps over which a learning curve averages the loss, as the failure rule does."""
-
-LARGE_SIDE = 6000
-"""Pixels of the longer side above which a receipt is a page scan."""
 
 SIZES = ("one pass", "tiled", "page scan")
 
@@ -84,7 +86,7 @@ def ink_share(page: npt.NDArray[np.uint8], box: BBox) -> float:
 
 def size_class(receipt: MeasuredReceipt) -> str:
     """One pass, tiled, or a page scan, which is always tiled."""
-    if max(receipt.height, receipt.width) > LARGE_SIDE:
+    if page_scan(receipt.height, receipt.width):
         return "page scan"
     return "one pass" if receipt.windows == 1 else "tiled"
 
@@ -98,9 +100,22 @@ def evidence(receipt: MeasuredReceipt) -> bool:
     return receipt.scores[HIGHEST] > receipt.lowest
 
 
-def size_check(results: RunResults, score: str, resamples: int = DEFAULT_RESAMPLES) -> Estimate:
-    """ADR-0015 (section 6) on the held-out fold's authentic receipts with evidence."""
-    authentic = [r for r in _group(results, Group.HELD_OUT) if not r.forged and evidence(r)]
+def size_check(
+    results: RunResults,
+    score: str,
+    resamples: int = DEFAULT_RESAMPLES,
+    *,
+    page_scans: bool = True,
+) -> Estimate:
+    """ADR-0015 (section 6) on the held-out fold's authentic receipts with evidence.
+
+    Without ``page_scans``, the check runs on the other receipts only, as ADR-0023 reports it.
+    """
+    authentic = [
+        r
+        for r in _group(results, Group.HELD_OUT)
+        if not r.forged and evidence(r) and (page_scans or size_class(r) != "page scan")
+    ]
     return size_dependence(
         [r.scores[score] for r in authentic],
         [r.height * r.width for r in authentic],
@@ -130,6 +145,18 @@ def chosen_score(
         ),
         None,
     )
+
+
+def used_score(
+    results: Mapping[RunKey, RunResults], resamples: int = DEFAULT_RESAMPLES
+) -> tuple[str, bool]:
+    """The score systems 2 to 4 use, and whether its size check passed.
+
+    If no candidate passes, the order ends with the highest value of the map (ADR-0023, decision
+    3), not with a candidate picked among the failed ones by their checks.
+    """
+    chosen = chosen_score(results, resamples)
+    return (chosen, True) if chosen is not None else (HIGHEST, False)
 
 
 def _label(key: RunKey) -> str:
@@ -263,36 +290,186 @@ def _interval(estimate: Estimate) -> str:
     return f"{estimate.value:+.2f} ({estimate.low:+.2f} to {estimate.high:+.2f})"
 
 
+def _score_label(position: int, name: str) -> str:
+    added = " (added by ADR-0023)" if name in ADDED_AFTER_RESULTS else ""
+    return f"{position}. {name}{added}"
+
+
 def score_table(data: RoundData) -> Table:
-    """Both candidate document scores of every run: average precision and the size check."""
+    """Every candidate document score of every run: average precision and the size check."""
     chance = 0.0
-
-    def row(key: RunKey) -> list[Cell]:
-        nonlocal chance
-        receipts = _group(data.results[key], Group.HELD_OUT)
-        labels = np.array([r.forged for r in receipts])
-        chance = float(labels.mean())
-        cells: list[Cell] = [_label(key)]
-        for name in SCORE_ORDER:
-            check = size_check(data.results[key], name, data.resamples)
-            scores = np.array([r.scores[name] for r in receipts])
-            cells += [average_precision(labels, scores), _interval(check), passes(check)]
-        return cells
-
-    rows = _with_means(data, row, averaged=(1, 4))
-    columns = ["Run"]
+    rows: list[list[Cell]] = []
     for position, name in enumerate(SCORE_ORDER, start=1):
-        columns += [f"{position}. AP, {name}", f"{position}. Size check", f"{position}. Passes"]
+
+        def row(key: RunKey, name: str = name) -> list[Cell]:
+            nonlocal chance
+            receipts = _group(data.results[key], Group.HELD_OUT)
+            labels = np.array([r.forged for r in receipts])
+            chance = float(labels.mean())
+            scores = np.array([r.scores[name] for r in receipts])
+            check = size_check(data.results[key], name, data.resamples)
+            others = size_check(data.results[key], name, data.resamples, page_scans=False)
+            return [
+                _label(key),
+                average_precision(labels, scores),
+                _interval(check),
+                passes(check),
+                _interval(others),
+            ]
+
+        own = _with_means(data, row, averaged=(1,))
+        rows += [[_score_label(position, name) if n == 0 else "", *r] for n, r in enumerate(own)]
     return Table(
         "Document scores",
-        columns,
+        [
+            "Document score",
+            "Run",
+            "AP",
+            "Size check",
+            "Passes",
+            f"Size check without page scans (longer side above {PAGE_SCAN_SIDE} px)",
+        ],
         rows,
         f"Average precision over the design fold (chance {chance:.3f}). Size check: the Spearman "
         "rank correlation of document score and pixel count over the authentic receipts with "
         "evidence, with its 95 % interval (bootstrap over receipts, 10,000 resamples, seed 0; "
         "ADR-0015, section 6, and ADR-0017); it passes if the interval includes zero. By the "
-        "fixed order of ADR-0022 (decision 1), the seed-0 runs decide for all three systems. No "
-        "choice depends on average precision. Optimistic.",
+        "fixed order of ADR-0022 (decision 1), the seed-0 runs decide for all three systems. "
+        "Scores 3 and 4 were added by ADR-0023 after the results of 1 and 2; if none passes, "
+        "the order ends with score 1 (its decision 3). The check without page scans is shown, "
+        "not used. No choice depends on average precision. Optimistic.",
+    )
+
+
+def word_superiority(
+    first: Sequence[Sequence[float]],
+    second: Sequence[Sequence[float]],
+    *,
+    resamples: int = DEFAULT_RESAMPLES,
+    seed: int = 0,
+) -> Estimate:
+    """The chance that a word of the first receipts scores above a word of the second.
+
+    Every word of every receipt counts and ties count half; the interval comes from resampling
+    receipts within each of the two groups, so that the words of a receipt stay together.
+
+    Raises:
+        ValueError: If a group has no receipt.
+    """
+    if not first or not second:
+        msg = "both groups need a receipt"
+        raise ValueError(msg)
+    words = [np.asarray(w, dtype=np.float64) for w in first]
+    ordered = [np.sort(np.asarray(w, dtype=np.float64)) for w in second]
+    wins = np.array(
+        [
+            [
+                float(np.searchsorted(other, mine, side="left").sum())
+                + 0.5
+                * float(
+                    (
+                        np.searchsorted(other, mine, side="right")
+                        - np.searchsorted(other, mine, side="left")
+                    ).sum()
+                )
+                for other in ordered
+            ]
+            for mine in words
+        ]
+    )
+    sizes_first = np.array([w.size for w in words], dtype=np.float64)
+    sizes_second = np.array([w.size for w in ordered], dtype=np.float64)
+    strata = np.array([1] * len(words) + [0] * len(ordered))
+
+    def statistic(draw: np.ndarray) -> float:
+        weights = np.bincount(draw, minlength=strata.size).astype(np.float64)
+        mine, theirs = weights[: len(words)], weights[len(words) :]
+        pairs = float(mine @ sizes_first) * float(theirs @ sizes_second)
+        return float(mine @ wins @ theirs) / pairs if pairs else float("nan")
+
+    return stratified(statistic, strata, resamples=resamples, seed=seed)
+
+
+def _authentic_held_out(results: RunResults) -> list[MeasuredReceipt]:
+    return [r for r in _group(results, Group.HELD_OUT) if not r.forged]
+
+
+def text_table(data: RoundData) -> Table:
+    """How much text page scans and other authentic receipts hold, and how large it is."""
+    authentic = _authentic_held_out(data.results[data.runs[0]])
+    rows: list[list[Cell]] = []
+    for kind, chosen in (
+        ("page scans", [r for r in authentic if size_class(r) == "page scan"]),
+        ("other receipts", [r for r in authentic if size_class(r) != "page scan"]),
+    ):
+        rows.append(
+            [
+                kind,
+                len(chosen),
+                float(np.median([r.word_count for r in chosen])) if chosen else None,
+                float(np.median([r.text_height for r in chosen])) if chosen else None,
+                float(np.median([r.height * r.width for r in chosen])) / 1e6 if chosen else None,
+            ]
+        )
+    first = data.results[data.runs[0]]
+    every = [*first.validation, *first.measured]
+    without = sum(r.word_count == 0 for r in every)
+    return Table(
+        "Text of page scans",
+        [
+            "Authentic receipts",
+            "Receipts",
+            "Median OCR words",
+            "Median text height (px)",
+            "Median million pixels",
+        ],
+        rows,
+        "The design fold's authentic receipts; a page scan has a longer side above "
+        f"{PAGE_SCAN_SIDE} px. Text height: the median height of a receipt's OCR word boxes "
+        f"(ADR-0023). Receipts measured without any OCR word, which take the text height of their "
+        f"kind: {without} of {len(every)} (validation, design fold and synthetic set).",
+    )
+
+
+def word_table(data: RoundData) -> Table:
+    """ADR-0023's diagnostic: words of page scans against words of other authentic receipts."""
+    rows: list[list[Cell]] = []
+    for key in data.runs:
+        authentic = [r for r in _authentic_held_out(data.results[key]) if r.word_peaks]
+        scans = [r for r in authentic if size_class(r) == "page scan"]
+        others = [r for r in authentic if size_class(r) != "page scan"]
+        cells: list[Cell] = [_label(key)]
+        for scale in WordScale:
+            if not scans or not others:
+                cells.append(None)
+                continue
+            estimate = word_superiority(
+                [r.word_peaks[scale] for r in scans if r.word_peaks],
+                [r.word_peaks[scale] for r in others if r.word_peaks],
+                resamples=data.resamples,
+            )
+            cells.append(f"{estimate.value:.2f} ({estimate.low:.2f} to {estimate.high:.2f})")
+        outside = sum(
+            not any(
+                b.y <= r.peak[0] < b.y2 and b.x <= r.peak[1] < b.x2
+                for b in on_page(data.words[r.key], r.height, r.width)
+            )
+            for r in authentic
+        )
+        cells.append(f"{outside} of {len(authentic)}")
+        rows.append(cells)
+    return Table(
+        "Words of page scans against other receipts",
+        ["Run", *(f"Blocks of {scale}" for scale in WordScale), "Peak outside every word"],
+        rows,
+        "The chance that an OCR word of an authentic page scan scores above one of another "
+        "authentic receipt (0.5: no difference), with its 95 % interval (bootstrap over "
+        "receipts within each kind, 10,000 resamples, seed 0). A word scores the highest mean of "
+        "the map over blocks inside its box that do not overlap, from its corner; blocks of a "
+        "pixel give the highest value. The reading, fixed before the diagnostic first ran and "
+        "recorded in ADR-0023: if blocks scaled to the text bring the chance near 0.5 while "
+        "blocks of a fixed size do not, the difference comes from the number of pixels per "
+        "letter. Peak: the first highest value of the map. Design fold.",
     )
 
 
@@ -396,8 +573,8 @@ def pixel_table(data: RoundData) -> Table:
     )
 
 
-def synthetic_score_table(data: RoundData, score: str) -> Table:
-    """How the chosen document score ranks synthetic forgeries among the authentic receipts."""
+def synthetic_score_table(data: RoundData, score: str, passed: bool = True) -> Table:
+    """How the document score in use ranks synthetic forgeries among the authentic receipts."""
     chance = 0.0
 
     def row(key: RunKey) -> list[Cell]:
@@ -411,12 +588,13 @@ def synthetic_score_table(data: RoundData, score: str) -> Table:
         return [_label(key), len(forged), average_precision(labels, scores)]
 
     rows = _with_means(data, row, averaged=(2,))
+    failed = "" if passed else " Its size check failed (ADR-0023, decision 3)."
     return Table(
         "Document score on synthetic forgeries",
         ["Run", "Synthetic forgeries", f"AP, {score}"],
         rows,
         f"The synthetic development set against the design fold's authentic receipts, which are "
-        f"its bases (chance {chance:.3f}). Optimistic.",
+        f"its bases (chance {chance:.3f}).{failed} Optimistic.",
     )
 
 
@@ -615,29 +793,42 @@ def _commits(codes: Iterable[CodeVersion]) -> str:
     return f"commit {', '.join(named)}" if len(named) == 1 else f"commits {', '.join(named)}"
 
 
+def _outcome(score: str, passed: bool) -> str:
+    if not passed:
+        return (
+            "No candidate document score passes its size check. By ADR-0023 (decision 3), the "
+            f"order ends there: systems 2 to 4 keep the **{score}**, the first candidate, and "
+            "every document-level result carries its failed check."
+        )
+    added = (
+        " It was added by ADR-0023 after the results of the first two candidates."
+        if score in ADDED_AFTER_RESULTS
+        else ""
+    )
+    return (
+        "By the fixed order of ADR-0022 (decision 1), as ADR-0023 extends it, the document score "
+        f"of systems 2 to 4 is the **{score}**.{added}"
+    )
+
+
 def report(data: RoundData) -> str:
     """The development report of a round, in Markdown."""
-    score = chosen_score(data.results, data.resamples)
+    score, passed = used_score(data.results, data.resamples)
     trained = _commits(r.code for r in data.records.values())
     measured = _commits(r.code for r in data.results.values())
-    outcome = (
-        f"By the fixed order of ADR-0022 (decision 1), the document score of systems 2 to 4 is "
-        f"the **{score}**."
-        if score
-        else "Neither candidate document score passes its size check: by ADR-0022 (decision 1), "
-        "development stops and the next step is decided in a new record."
-    )
     tables = [
         runs_table(data),
         curve_table(data),
         repeat_table(data.repeatability),
         score_table(data),
+        text_table(data),
+        word_table(data),
         guard_table(data, Group.HELD_OUT),
         pixel_table(data),
-        *([synthetic_score_table(data, score)] if score else []),
+        synthetic_score_table(data, score, passed),
         guard_table(data, Group.SYNTHETIC),
         technique_table(data),
-        mark_table(data, score or SCORE_ORDER[0]),
+        mark_table(data, score),
         blank_table(data),
         cut_table(data),
         time_table(data),
@@ -651,6 +842,6 @@ def report(data: RoundData) -> str:
         "[learned-models-development.md](../../docs/learned-models-development.md). Every number "
         "comes from the design fold or the synthetic development set and is optimistic.\n\n"
         f"- Trained at {trained}; measured at {measured}.\n\n"
-        f"{outcome}\n\n"
+        f"{_outcome(score, passed)}\n\n"
     )
     return header + "\n".join(render_table(table) for table in tables)

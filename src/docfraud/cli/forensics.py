@@ -220,8 +220,9 @@ def measure_round_command(  # pragma: no cover - needs the dataset, the fonts an
     """Measure every run of the finished development round of systems 2 to 4.
 
     Each network is run on the validation split, for thresholds only, then on the design fold and
-    the synthetic development set; the measurements of every receipt are written to the run's
-    results.json, and runs measured by the same weights before are skipped.
+    the synthetic development set, every receipt with its cached OCR words; the measurements of
+    every receipt are written to the run's results.json, and runs measured by the same weights
+    and in the current form before are skipped.
     """
     require_clean_commit()
     from docfraud.forensics.learned.inference import LearnedModel  # noqa: PLC0415 - PyTorch
@@ -232,8 +233,9 @@ def measure_round_command(  # pragma: no cover - needs the dataset, the fonts an
 
     documents = findit_documents(data_dir)
     folds = load_folds(CV_FOLDS_PATH)
-    engine = round_engine(documents, folds, DESIGN_FOLD, cached_ocr(OCR_CACHE), FONTS_DIR)
-    items = development_items(documents, PageCache(PAGES_DIR), engine)
+    ocr = cached_ocr(OCR_CACHE)
+    engine = round_engine(documents, folds, DESIGN_FOLD, ocr, FONTS_DIR)
+    items = development_items(documents, PageCache(PAGES_DIR), engine, ocr)
     total = (
         sum(d.split is Split.VAL for d in documents)
         + sum(d.doc_id in DESIGN_FOLD_IDS for d in documents)

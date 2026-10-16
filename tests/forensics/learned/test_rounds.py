@@ -290,7 +290,7 @@ def development_engine(toy: Toy) -> Engine:
 @pytest.mark.usefixtures("learning")
 def test_a_finished_round_is_measured_once_per_weights(toy: Toy, tmp_path: Path) -> None:
     train(toy, tmp_path)
-    items = development_items(toy.documents, toy.pages, development_engine(toy))
+    items = development_items(toy.documents, toy.pages, development_engine(toy), FakeOcr())
     WeightsDigest.analysed = 0
     seen: list[tuple[Group, str]] = []
     measured_runs: list[tuple[System, int]] = []
@@ -322,6 +322,10 @@ def test_a_finished_round_is_measured_once_per_weights(toy: Toy, tmp_path: Path)
         assert [r.key for r in result.validation] == validation
         assert [(r.group, r.key) for r in result.measured] == expected[len(validation) :]
         assert all(r.edits for r in result.measured if r.group is Group.SYNTHETIC)
+        words = [t.box for t in FakeOcr().recognize(toy.pages.page(design[0])).tokens]
+        receipts = [*result.validation, *result.measured]
+        assert all(r.word_count == len(words) for r in receipts)  # every receipt read
+        assert all(r.word_peaks is not None for r in result.measured if r.group is Group.HELD_OUT)
     analysed = WeightsDigest.analysed
     again = measure_round(
         tmp_path,
@@ -371,7 +375,7 @@ def test_only_the_round_holding_out_the_design_fold_has_development_items(toy: T
         font,
     )
     with pytest.raises(ValueError, match="holds out fold 2"):
-        development_items(toy.documents, toy.pages, other)
+        development_items(toy.documents, toy.pages, other, FakeOcr())
 
 
 def test_the_repeat_check_trains_one_run_twice_and_compares_the_weights(
@@ -411,6 +415,24 @@ def test_the_repeat_check_trains_one_run_twice_and_compares_the_weights(
         device=CPU,
     )
     assert again == result  # compared again, not trained again
+    later = CodeVersion(commit="later", dirty=False)
+    kept = repeat_check(
+        toy.setup, tmp_path, code=later, environment=ENVIRONMENT, steps=3, settings=SETTINGS
+    )
+    assert kept == result  # a kept result is returned, not trained by the later code
+    elsewhere = repeat_directory(tmp_path / "other", DESIGN_FOLD)
+    elsewhere.mkdir(parents=True)
+    (elsewhere / REPEATABILITY).write_text(result.model_dump_json(), encoding="utf-8")
+    shorter = repeat_check(
+        toy.setup,
+        tmp_path / "other",
+        code=later,
+        environment=ENVIRONMENT,
+        steps=2,
+        settings=SETTINGS,
+        device=CPU,
+    )
+    assert (shorter.steps, shorter.code) == (2, later)  # a result of other steps is not reused
 
 
 def test_the_repeat_check_reports_weights_that_differ(toy: Toy, tmp_path: Path) -> None:

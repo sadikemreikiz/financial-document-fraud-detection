@@ -12,18 +12,21 @@ Before the runs, the first steps of one of them are trained twice and compared
 GPU. No network runs on a receipt before every run of the round has finished. Each run is then
 measured (:mod:`~docfraud.forensics.learned.results`) on the receipts its round assigns: for the
 development round, the validation split for thresholds, the design fold and the synthetic
-development set (:func:`development_items`). A run measured by the same weights before is skipped.
+development set (:func:`development_items`), each with its OCR word boxes, which set the text
+height of the scores of ADR-0023. A run measured by the same weights before is skipped.
 """
 
 from collections.abc import Callable, Iterable, Iterator, Sequence
 from dataclasses import dataclass
 from pathlib import Path
 
+import numpy as np
+import numpy.typing as npt
 import torch
 from pydantic import BaseModel, ConfigDict, ValidationError
 from torch import nn
 
-from docfraud.data.models import Document, Split
+from docfraud.data.models import BBox, Document, Split
 from docfraud.data.normalize import load_grayscale
 from docfraud.evaluation.design_fold import DESIGN_FOLD, DESIGN_FOLD_IDS, require_design_fold
 from docfraud.evaluation.runs import CodeVersion, Environment
@@ -60,6 +63,7 @@ from docfraud.forensics.learned.training import (
     failure,
     train,
 )
+from docfraud.reading.ocr import OcrEngine
 from docfraud.synthesis.engine import Engine
 from docfraud.synthesis.rounds import development_forgeries
 
@@ -237,7 +241,8 @@ def repeat_check(  # noqa: PLR0913 - the round, where it goes and what its recor
     """Train the first steps of a run twice from scratch and compare the two (ADR-0022, 4).
 
     Each training keeps its checkpoint, so that an interrupted check resumes and a finished one
-    is only compared again.
+    is only compared again. A check whose result is kept is returned as it is, by whatever code
+    asks: measuring a finished round again at a later commit does not train anything.
 
     Raises:
         ValueError: If the steps are not fewer than a run's, so that no checkpoint would be kept.
@@ -249,6 +254,13 @@ def repeat_check(  # noqa: PLR0913 - the round, where it goes and what its recor
     held_out = setup.material.held_out
     directory = repeat_directory(root, held_out)
     system, seed = run
+    if (kept := _kept_repeatability(directory)) is not None and (
+        kept.held_out,
+        kept.system,
+        kept.seed,
+        kept.steps,
+    ) == (held_out, int(system), seed, steps):
+        return kept
     states: list[dict[str, torch.Tensor]] = []
     records: list[RunRecord] = []
     for name in ("first", "second"):
@@ -293,6 +305,13 @@ def repeat_check(  # noqa: PLR0913 - the round, where it goes and what its recor
         result.model_dump_json(indent=1) + "\n", encoding="utf-8"
     )
     return result
+
+
+def _kept_repeatability(directory: Path) -> Repeatability | None:
+    path = directory / REPEATABILITY
+    if not path.exists():
+        return None
+    return Repeatability.model_validate_json(path.read_text(encoding="utf-8"))
 
 
 @dataclass(frozen=True, slots=True)
@@ -361,27 +380,34 @@ def _stored_results(directory: Path) -> RunResults | None:
         return None
 
 
-def validation_items(documents: Iterable[Document]) -> Iterator[Item]:
+def _words(ocr: OcrEngine, page: npt.NDArray[np.uint8]) -> list[BBox]:
+    return [token.box for token in ocr.recognize(page).tokens]
+
+
+def validation_items(documents: Iterable[Document], ocr: OcrEngine) -> Iterator[Item]:
     """The receipts of the validation split, in identifier order, each loaded when needed."""
     for document in sorted((d for d in documents if d.split is Split.VAL), key=lambda d: d.doc_id):
-        yield real_item(document, Group.VALIDATION, load_grayscale(document.image_path))
+        page = load_grayscale(document.image_path)
+        yield real_item(document, Group.VALIDATION, page, _words(ocr, page))
 
 
-def design_items(documents: Iterable[Document], pages: PageCache) -> Iterator[Item]:
+def design_items(documents: Iterable[Document], pages: PageCache, ocr: OcrEngine) -> Iterator[Item]:
     """The receipts of the design fold, in identifier order, from the page cache."""
     chosen = sorted((d for d in documents if d.doc_id in DESIGN_FOLD_IDS), key=lambda d: d.doc_id)
     require_design_fold([d.doc_id for d in chosen])
     for document in chosen:
-        yield real_item(document, Group.HELD_OUT, pages.page(document.doc_id))
+        page = pages.page(document.doc_id)
+        yield real_item(document, Group.HELD_OUT, page, _words(ocr, page))
 
 
 def development_items(
-    documents: Sequence[Document], pages: PageCache, engine: Engine
+    documents: Sequence[Document], pages: PageCache, engine: Engine, ocr: OcrEngine
 ) -> RoundItems:
     """What the development round is measured on, in this order.
 
     The validation split, then the design fold, then the synthetic development set made by the
-    round's engine.
+    round's engine. Every receipt carries its OCR word boxes, a synthetic forgery those of its
+    base.
 
     Raises:
         ValueError: If the engine is not of the round that holds out the design fold.
@@ -391,7 +417,8 @@ def development_items(
         raise ValueError(msg)
 
     def measured() -> Iterator[Item]:
-        yield from design_items(documents, pages)
-        yield from (synthetic_item(f) for f in development_forgeries(engine))
+        yield from design_items(documents, pages, ocr)
+        for forgery in development_forgeries(engine):
+            yield synthetic_item(forgery, _words(ocr, pages.page(forgery.record.base)))
 
-    return RoundItems(lambda: validation_items(documents), measured)
+    return RoundItems(lambda: validation_items(documents, ocr), measured)

@@ -28,7 +28,7 @@ from docfraud.evaluation.localisation import (
 )
 from docfraud.evaluation.runs import CodeVersion, Environment
 from docfraud.forensics import trufor
-from docfraud.forensics.learned.inference import HIGHEST, LearnedOutput
+from docfraud.forensics.learned.inference import HIGHEST, QUARTER_SQUARE, LearnedOutput
 from docfraud.forensics.learned.results import (
     Edit,
     Group,
@@ -36,6 +36,7 @@ from docfraud.forensics.learned.results import (
     Item,
     MeasuredReceipt,
     RunResults,
+    ScoredReceipt,
     choose_threshold,
     measure_receipt,
     measure_run,
@@ -43,6 +44,12 @@ from docfraud.forensics.learned.results import (
     real_item,
     synthetic_item,
     write_results,
+)
+from docfraud.forensics.learned.text_scale import (
+    TEXT_HEIGHT_OTHER,
+    WordScale,
+    text_height,
+    word_peaks,
 )
 from docfraud.synthesis.engine import (
     ENGINE_VERSION,
@@ -138,7 +145,8 @@ def test_a_receipt_of_the_dataset_carries_its_annotated_rectangles() -> None:
         ),
         has_region_annotations=True,
     )
-    receipt = real_item(document, Group.HELD_OUT, noise(60, 100))
+    words = [box(5, 5, 20, 8), box(40, 5, 30, 9)]
+    receipt = real_item(document, Group.HELD_OUT, noise(60, 100), words)
     assert (receipt.key, receipt.forged, receipt.modified, receipt.sources, receipt.edits) == (
         "X1",
         True,
@@ -146,12 +154,13 @@ def test_a_receipt_of_the_dataset_carries_its_annotated_rectangles() -> None:
         (source,),
         (),
     )
+    assert receipt.words == tuple(words)
     authentic = real_item(
         document.model_copy(update={"label": Label.AUTHENTIC, "regions": ()}),
         Group.VALIDATION,
         noise(60, 100),
     )
-    assert (authentic.forged, authentic.modified) == (False, ())
+    assert (authentic.forged, authentic.modified, authentic.words) == (False, (), ())
 
 
 def test_a_synthetic_forgery_is_keyed_by_its_base_and_counts_only_sources_on_its_page() -> None:
@@ -185,7 +194,9 @@ def test_a_synthetic_forgery_is_keyed_by_its_base_and_counts_only_sources_on_its
         failures={},
     )
     blank = np.zeros((60, 100), dtype=bool)
-    forgery = synthetic_item(Forgery(noise(60, 100), blank, blank, record))
+    words = [box(2, 2, 10, 7)]  # the OCR words of its base
+    forgery = synthetic_item(Forgery(noise(60, 100), blank, blank, record), words)
+    assert forgery.words == tuple(words)
     assert (forgery.key, forgery.group, forgery.forged) == ("X9", Group.SYNTHETIC, True)
     assert forgery.modified == (box(10, 10, 8, 10), box(30, 10, 8, 10))
     assert forgery.sources == (copied,)
@@ -197,7 +208,8 @@ def test_a_forged_receipt_is_measured_by_the_rules_of_adr_0015() -> None:
     output = PageLogits().analyse(receipt.page)
     values = output.probabilities
     result = measure_receipt(receipt, output, threshold=0.9)
-    assert result.scores == output.scores()
+    assert (result.word_count, result.text_height) == (0, TEXT_HEIGHT_OTHER)  # no OCR words
+    assert result.scores == output.scores(TEXT_HEIGHT_OTHER)
     assert result.top_region == top_region(values)
     assert result.lowest == values.min()
     assert values[result.peak] == values.max() == result.scores[HIGHEST]
@@ -214,6 +226,27 @@ def test_a_forged_receipt_is_measured_by_the_rules_of_adr_0015() -> None:
     )
     assert result.pixels.average_precision > result.pixels.chance
     assert result.edits == ()
+
+
+def test_the_scores_and_the_diagnostic_follow_the_receipts_ocr_words() -> None:
+    words = (box(5, 2, 20, 12), box(40, 30, 30, 8), box(10, 45, 25, 10), box(150, 0, 10, 10))
+    receipt = Item("X5", Group.HELD_OUT, noise(60, 100), forged=False, words=words)
+    output = PageLogits().analyse(receipt.page)
+    values = output.probabilities
+    result = measure_receipt(receipt, output, threshold=0.5)
+    assert result.word_count == 3  # the last box starts outside the page
+    assert result.text_height == text_height(words, 60, 100) == 10.0
+    assert result.scores == output.scores(10.0)
+    assert result.scores[QUARTER_SQUARE] < result.scores[HIGHEST]
+    assert result.word_peaks == word_peaks(values, words)
+    assert result.word_peaks is not None
+    assert [len(p) for p in result.word_peaks.values()] == [3, 3, 3, 3]
+    assert result.word_peaks[WordScale.PIXEL][0] == values[2:14, 5:25].max()
+    synthetic_forgery = measure_receipt(
+        Item("X5", Group.SYNTHETIC, forged_page(), forged=True, words=words), output, 0.5
+    )
+    assert synthetic_forgery.word_peaks is None  # the diagnostic covers the held-out fold
+    assert synthetic_forgery.text_height == 10.0
 
 
 def test_an_authentic_receipt_has_no_pixel_metrics() -> None:
@@ -300,6 +333,7 @@ def test_a_run_scores_validation_for_thresholds_and_measures_the_rest() -> None:
     assert seen == [(i.group, i.key) for i in validation + measured]
     assert [r.key for r in results.validation] == ["V1", "V2", "V3"]
     assert not any(isinstance(r, MeasuredReceipt) for r in results.validation)
+    assert all(type(r) is ScoredReceipt for r in results.validation)
     assert [(r.group, r.key) for r in results.measured] == [
         (Group.HELD_OUT, "D1"),
         (Group.HELD_OUT, "D2"),

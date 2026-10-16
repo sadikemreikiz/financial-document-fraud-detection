@@ -246,3 +246,50 @@ the development round starts.
 
 With the report, this section is complete. The development round runs from one clean commit at
 or after the one that completes it; the report and every run's record name that commit.
+
+## 2. Results of the fixed order (2026-10-16)
+
+`make learned` ran the round from commit `38736c3` on the night of 2026-10-15; the
+[development report](../reports/forensics/learned-development.md) as it wrote it is committed in
+`f7f605c`. All nine runs finished their 6,000 steps in 0.93 to 0.97 hours each and learned by
+the failure rule (mean loss of the last 500 steps 0.007 to 0.013, against 0.036 to 0.101 for the
+best constant), and the repeat check found all 158 tensors identical after 500 steps. Neither
+candidate document score passes its size check for every seed-0 run: system 2 passes both
+(+0.12 and +0.15), systems 3 and 4 fail both (+0.25 and +0.25; +0.22 and +0.26), so by ADR-0022
+(decision 1) development stopped. Every number of the report is optimistic and is not presented
+as a result.
+
+## 3. Changed after the results: scores at the scale of the text (2026-10-16)
+
+**This section was written after the results of section 2 had been seen.** The decision is
+[ADR-0023](decisions/0023-learned-score-at-text-scale.md), which shows the diagnostics behind
+it; this section states how the code implements it.
+
+- **What was found.** The size check fails on the 20 authentic page scans of the design fold:
+  among the other 74 receipts the highest value does not depend on size. A page scan holds about
+  as many OCR words as another receipt (medians 96 and 99) with letters 2.3 times as high (90
+  and 40 px), and once the map inside each word is averaged over blocks scaled to the text, the
+  words of page scans no longer score above those of other receipts for system 3, and barely for
+  system 4. The diagnostic ran on the authentic receipts only, with the unchanged weights, from
+  scripts outside the repository whose reading rule was written before they ran; the report now
+  regenerates it from the measured results (tables "Text of page scans" and "Words of page scans
+  against other receipts").
+- **Scores 3 and 4** ([`text_scale.py`](../src/docfraud/forensics/learned/text_scale.py),
+  [`inference.py`](../src/docfraud/forensics/learned/inference.py)): the highest mean of the map
+  over a square whose side is a quarter, then half, of the receipt's text height, the median
+  height of its OCR word boxes (91 or 40 px for a page scan or another receipt without any word,
+  the training split's medians). Every position counts; the sums are made a band of 512 rows at
+  a time: on a random map of a page scan's size the result differed from an exactly rounded sum
+  of the same square by at most 1.2e-13, and it took 0.3 s.
+- **Measurement.** Every receipt measured carries its cached OCR words, a synthetic forgery those
+  of its base; the results keep each receipt's number of words, its text height and, on the
+  held-out fold, the peak of each word box at the four scales of the diagnostic. Results of the
+  earlier form are measured again; the networks are not trained again, and a kept repeat check
+  is returned as it is rather than trained again by the later code.
+- **Report.** The table of document scores lists the four candidates, marks 3 and 4 as added by
+  ADR-0023, and gives each one's size check also without page scans, for information. If no
+  candidate passes, the report says that the order ends with the highest value of the map and
+  states the failed check beside the document-level results (ADR-0023, decision 3).
+- **Safeguards**, as in ADR-0023 (decision 5): this is the only revision of the score after the
+  round; the choice uses the size check on authentic receipts only; every candidate stays in
+  the report; once the score is chosen, systems 2 to 4 are frozen.

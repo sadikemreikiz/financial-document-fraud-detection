@@ -13,6 +13,10 @@ nothing else is measured on it. The held-out fold and the synthetic development 
 in full: document scores, the lowest value and the peak of the map, the top region, the cuts
 between windows, and on forged receipts the pixel metrics; on synthetic forgeries also each edit,
 by its highest map value and its average precision against the clean pixels of the receipt.
+
+The document scores of ADR-0023 need the receipt's text height, from its OCR word boxes, which
+every item carries (a synthetic forgery those of its base). On the held-out fold the results also
+keep the peak of each word box at the four scales of that record's diagnostic.
 """
 
 from collections.abc import Callable, Iterable, Iterator, Sequence
@@ -41,6 +45,7 @@ from docfraud.evaluation.localisation import (
 )
 from docfraud.evaluation.runs import CodeVersion, Environment
 from docfraud.forensics.learned.inference import LearnedOutput, probability
+from docfraud.forensics.learned.text_scale import WordScale, on_page, text_height, word_peaks
 from docfraud.forensics.trufor import cut_check
 from docfraud.synthesis.engine import Forgery
 
@@ -75,10 +80,13 @@ class Item:
     modified: tuple[BBox, ...] = ()  # the modified rectangles; none if not annotated
     sources: tuple[BBox, ...] = ()  # copy sources on this page, ignored by the pixel metrics
     edits: tuple[Edit, ...] = ()  # the edits of a synthetic forgery
+    words: tuple[BBox, ...] = ()  # the OCR word boxes; of its base for a synthetic forgery
 
 
-def real_item(document: Document, group: Group, page: npt.NDArray[np.uint8]) -> Item:
-    """A receipt of the dataset with its annotated rectangles."""
+def real_item(
+    document: Document, group: Group, page: npt.NDArray[np.uint8], words: Sequence[BBox] = ()
+) -> Item:
+    """A receipt of the dataset with its annotated rectangles and its OCR word boxes."""
     modified, sources = annotated_rectangles(document)
     return Item(
         document.doc_id,
@@ -87,11 +95,15 @@ def real_item(document: Document, group: Group, page: npt.NDArray[np.uint8]) -> 
         document.label is Label.FORGED,
         tuple(modified),
         tuple(sources),
+        words=tuple(words),
     )
 
 
-def synthetic_item(forgery: Forgery) -> Item:
-    """A synthetic forgery, keyed by its base; the sources of copies from the same page count."""
+def synthetic_item(forgery: Forgery, words: Sequence[BBox] = ()) -> Item:
+    """A synthetic forgery, keyed by its base; the sources of copies from the same page count.
+
+    Its words are those of its base, as in the report's random baseline.
+    """
     regions = forgery.record.regions
     return Item(
         forgery.record.base,
@@ -101,6 +113,7 @@ def synthetic_item(forgery: Forgery) -> Item:
         modified=tuple(r.box for r in regions),
         sources=tuple(box for r in regions if r.source_document is None for box in r.sources),
         edits=tuple(Edit(r.technique, r.box) for r in regions),
+        words=tuple(words),
     )
 
 
@@ -118,6 +131,8 @@ class ScoredReceipt(_Frozen):
     width: int
     windows: int
     seconds: float  # time the network took on the machine that ran it
+    word_count: int  # OCR word boxes on the page
+    text_height: float  # the median height of those boxes, or that of the receipt's kind
     scores: dict[str, float]  # by name, in the order of ``inference.SCORE_ORDER``
 
 
@@ -151,6 +166,7 @@ class MeasuredReceipt(ScoredReceipt):
     sources: tuple[BBox, ...]
     pixels: PixelScores | None  # forged receipts with a modified rectangle
     edits: tuple[EditResult, ...]
+    word_peaks: dict[WordScale, tuple[float, ...]] | None  # held-out: ADR-0023 diagnostic
 
 
 class PixelThreshold(_Frozen):
@@ -315,7 +331,7 @@ def measure_receipt(item: Item, output: LearnedOutput, threshold: float) -> Meas
             for edit, precision in zip(item.edits, precisions, strict=True)
         )
     return MeasuredReceipt(
-        **_scored(item, output).model_dump(),
+        **_scored(item, output, values).model_dump(),
         lowest=float(values.min()),
         peak=_first_maximum(values),
         top_region=top_region(values),
@@ -324,6 +340,7 @@ def measure_receipt(item: Item, output: LearnedOutput, threshold: float) -> Meas
         sources=item.sources,
         pixels=pixels,
         edits=edits,
+        word_peaks=word_peaks(values, item.words) if item.group is Group.HELD_OUT else None,
     )
 
 
@@ -332,8 +349,11 @@ def _first_maximum(values: npt.NDArray[np.float64]) -> tuple[int, int]:
     return int(row), int(column)
 
 
-def _scored(item: Item, output: LearnedOutput) -> ScoredReceipt:
+def _scored(
+    item: Item, output: LearnedOutput, values: npt.NDArray[np.float64] | None = None
+) -> ScoredReceipt:
     height, width = item.page.shape
+    text = text_height(item.words, height, width)
     return ScoredReceipt(
         key=item.key,
         group=item.group,
@@ -342,7 +362,9 @@ def _scored(item: Item, output: LearnedOutput) -> ScoredReceipt:
         width=width,
         windows=len(output.windows),
         seconds=output.seconds,
-        scores=output.scores(),
+        word_count=len(on_page(item.words, height, width)),
+        text_height=text,
+        scores=output.scores(text, values),
     )
 
 
