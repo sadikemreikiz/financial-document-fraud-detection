@@ -27,6 +27,7 @@ change of mind is a new record that supersedes the old one.
 | [0019](0019-system-6-trufor.md) | System 6 is TruFor | Accepted |
 | [0020](0020-clean-folds-measured-together.md) | The clean folds are measured once, for all Phase 4 systems together | Accepted |
 | [0021](0021-synthetic-forgery-engine.md) | The synthetic forgery engine: techniques, targets, variants, output, realism review | Accepted |
-| [0022](0022-learned-models.md) | The learned models: architecture, targets, data, training and development round | Accepted |
+| [0022](0022-learned-models.md) | The learned models: architecture, targets, data, training and development round | Accepted; order of document scores extended by 0023 |
+| [0023](0023-learned-score-at-text-scale.md) | The learned models' document score is measured at the scale of the text | Accepted |
 
 New records copy [template.md](template.md).
