@@ -4,9 +4,9 @@
 
 The development round of systems 2 to 4 ([ADR-0022](../../docs/decisions/0022-learned-models.md)), recorded in [learned-models-development.md](../../docs/learned-models-development.md). Every number comes from the design fold or the synthetic development set and is optimistic.
 
-- Trained at commit `38736c3`; measured at commit `38736c3`.
+- Trained at commit `38736c3`; measured at commit `53194c4`.
 
-Neither candidate document score passes its size check: by ADR-0022 (decision 1), development stops and the next step is decided in a new record.
+By the fixed order of ADR-0022 (decision 1), as ADR-0023 extends it, the document score of systems 2 to 4 is the **highest mean over a square of a quarter of the text height**. It was added by ADR-0023 after the results of the first two candidates.
 
 ### Runs
 
@@ -50,22 +50,83 @@ The first steps of one run, trained twice from scratch before the round (ADR-002
 
 ### Document scores
 
-| Run | 1. AP, highest value of the map | 1. Size check | 1. Passes | 2. AP, highest value of the map minus the receipt's 99th percentile | 2. Size check | 2. Passes |
-|---|---|---|---|---|---|---|
-| system 2, seed 0 | 0.583 | +0.12 (-0.08 to +0.31) | yes | 0.526 | +0.15 (-0.05 to +0.33) | yes |
-| system 2, seed 1 | 0.582 | +0.13 (-0.06 to +0.33) | yes | 0.522 | +0.17 (-0.02 to +0.35) | yes |
-| system 2, seed 2 | 0.578 | +0.12 (-0.08 to +0.30) | yes | 0.518 | +0.14 (-0.06 to +0.32) | yes |
-| system 2, mean of 3 seeds | 0.581 | — | — | 0.522 | — | — |
-| system 3, seed 0 | 0.309 | +0.25 (+0.03 to +0.45) | no | 0.309 | +0.25 (+0.04 to +0.45) | no |
-| system 3, seed 1 | 0.287 | +0.39 (+0.18 to +0.58) | no | 0.287 | +0.40 (+0.19 to +0.58) | no |
-| system 3, seed 2 | 0.288 | +0.14 (-0.08 to +0.34) | yes | 0.288 | +0.15 (-0.07 to +0.35) | yes |
-| system 3, mean of 3 seeds | 0.294 | — | — | 0.294 | — | — |
-| system 4, seed 0 | 0.576 | +0.22 (+0.02 to +0.41) | no | 0.552 | +0.26 (+0.05 to +0.44) | no |
-| system 4, seed 1 | 0.543 | +0.18 (-0.04 to +0.37) | yes | 0.503 | +0.21 (-0.01 to +0.40) | yes |
-| system 4, seed 2 | 0.596 | +0.20 (-0.01 to +0.38) | yes | 0.581 | +0.22 (+0.02 to +0.40) | no |
-| system 4, mean of 3 seeds | 0.572 | — | — | 0.545 | — | — |
+| Document score | Run | AP | Size check | Passes | Size check without page scans (longer side above 6000 px) |
+|---|---|---|---|---|---|
+| 1. highest value of the map | system 2, seed 0 | 0.583 | +0.12 (-0.08 to +0.31) | yes | -0.04 (-0.26 to +0.19) |
+|  | system 2, seed 1 | 0.582 | +0.13 (-0.06 to +0.33) | yes | -0.19 (-0.38 to +0.03) |
+|  | system 2, seed 2 | 0.578 | +0.12 (-0.08 to +0.30) | yes | -0.15 (-0.36 to +0.09) |
+|  | system 2, mean of 3 seeds | 0.581 | — | — | — |
+|  | system 3, seed 0 | 0.309 | +0.25 (+0.03 to +0.45) | no | -0.07 (-0.30 to +0.17) |
+|  | system 3, seed 1 | 0.287 | +0.39 (+0.18 to +0.58) | no | +0.14 (-0.10 to +0.37) |
+|  | system 3, seed 2 | 0.288 | +0.14 (-0.08 to +0.34) | yes | -0.08 (-0.31 to +0.16) |
+|  | system 3, mean of 3 seeds | 0.294 | — | — | — |
+|  | system 4, seed 0 | 0.576 | +0.22 (+0.02 to +0.41) | no | -0.06 (-0.29 to +0.17) |
+|  | system 4, seed 1 | 0.543 | +0.18 (-0.04 to +0.37) | yes | -0.25 (-0.46 to -0.03) |
+|  | system 4, seed 2 | 0.596 | +0.20 (-0.01 to +0.38) | yes | -0.03 (-0.26 to +0.21) |
+|  | system 4, mean of 3 seeds | 0.572 | — | — | — |
+| 2. highest value of the map minus the receipt's 99th percentile | system 2, seed 0 | 0.526 | +0.15 (-0.05 to +0.33) | yes | -0.01 (-0.24 to +0.22) |
+|  | system 2, seed 1 | 0.522 | +0.17 (-0.02 to +0.35) | yes | -0.16 (-0.36 to +0.05) |
+|  | system 2, seed 2 | 0.518 | +0.14 (-0.06 to +0.32) | yes | -0.13 (-0.35 to +0.10) |
+|  | system 2, mean of 3 seeds | 0.522 | — | — | — |
+|  | system 3, seed 0 | 0.309 | +0.25 (+0.04 to +0.45) | no | -0.07 (-0.29 to +0.17) |
+|  | system 3, seed 1 | 0.287 | +0.40 (+0.19 to +0.58) | no | +0.14 (-0.11 to +0.37) |
+|  | system 3, seed 2 | 0.288 | +0.15 (-0.07 to +0.35) | yes | -0.07 (-0.30 to +0.17) |
+|  | system 3, mean of 3 seeds | 0.294 | — | — | — |
+|  | system 4, seed 0 | 0.552 | +0.26 (+0.05 to +0.44) | no | -0.04 (-0.26 to +0.20) |
+|  | system 4, seed 1 | 0.503 | +0.21 (-0.01 to +0.40) | yes | -0.24 (-0.45 to -0.01) |
+|  | system 4, seed 2 | 0.581 | +0.22 (+0.02 to +0.40) | no | -0.01 (-0.24 to +0.23) |
+|  | system 4, mean of 3 seeds | 0.545 | — | — | — |
+| 3. highest mean over a square of a quarter of the text height (added by ADR-0023) | system 2, seed 0 | 0.601 | +0.00 (-0.19 to +0.20) | yes | -0.07 (-0.29 to +0.16) |
+|  | system 2, seed 1 | 0.597 | -0.01 (-0.20 to +0.18) | yes | -0.24 (-0.43 to -0.03) |
+|  | system 2, seed 2 | 0.604 | -0.07 (-0.26 to +0.12) | yes | -0.20 (-0.41 to +0.03) |
+|  | system 2, mean of 3 seeds | 0.601 | — | — | — |
+|  | system 3, seed 0 | 0.295 | +0.11 (-0.11 to +0.31) | yes | -0.11 (-0.33 to +0.13) |
+|  | system 3, seed 1 | 0.282 | +0.30 (+0.09 to +0.50) | no | +0.10 (-0.14 to +0.33) |
+|  | system 3, seed 2 | 0.313 | +0.04 (-0.18 to +0.26) | yes | -0.09 (-0.32 to +0.14) |
+|  | system 3, mean of 3 seeds | 0.297 | — | — | — |
+|  | system 4, seed 0 | 0.602 | +0.03 (-0.17 to +0.22) | yes | -0.12 (-0.33 to +0.11) |
+|  | system 4, seed 1 | 0.584 | +0.02 (-0.19 to +0.22) | yes | -0.30 (-0.50 to -0.08) |
+|  | system 4, seed 2 | 0.614 | +0.06 (-0.14 to +0.25) | yes | -0.04 (-0.27 to +0.20) |
+|  | system 4, mean of 3 seeds | 0.600 | — | — | — |
+| 4. highest mean over a square of half the text height (added by ADR-0023) | system 2, seed 0 | 0.584 | -0.13 (-0.33 to +0.07) | yes | -0.14 (-0.35 to +0.09) |
+|  | system 2, seed 1 | 0.599 | -0.18 (-0.36 to +0.02) | yes | -0.30 (-0.48 to -0.09) |
+|  | system 2, seed 2 | 0.616 | -0.25 (-0.42 to -0.05) | no | -0.27 (-0.48 to -0.03) |
+|  | system 2, mean of 3 seeds | 0.600 | — | — | — |
+|  | system 3, seed 0 | 0.289 | +0.00 (-0.20 to +0.22) | yes | -0.17 (-0.38 to +0.07) |
+|  | system 3, seed 1 | 0.282 | +0.21 (-0.00 to +0.42) | yes | +0.04 (-0.19 to +0.28) |
+|  | system 3, seed 2 | 0.313 | -0.05 (-0.26 to +0.17) | yes | -0.13 (-0.36 to +0.09) |
+|  | system 3, mean of 3 seeds | 0.295 | — | — | — |
+|  | system 4, seed 0 | 0.604 | -0.15 (-0.33 to +0.04) | yes | -0.16 (-0.37 to +0.06) |
+|  | system 4, seed 1 | 0.560 | -0.15 (-0.34 to +0.05) | yes | -0.35 (-0.54 to -0.13) |
+|  | system 4, seed 2 | 0.621 | -0.10 (-0.30 to +0.09) | yes | -0.09 (-0.32 to +0.15) |
+|  | system 4, mean of 3 seeds | 0.595 | — | — | — |
 
-Average precision over the design fold (chance 0.168). Size check: the Spearman rank correlation of document score and pixel count over the authentic receipts with evidence, with its 95 % interval (bootstrap over receipts, 10,000 resamples, seed 0; ADR-0015, section 6, and ADR-0017); it passes if the interval includes zero. By the fixed order of ADR-0022 (decision 1), the seed-0 runs decide for all three systems. No choice depends on average precision. Optimistic.
+Average precision over the design fold (chance 0.168). Size check: the Spearman rank correlation of document score and pixel count over the authentic receipts with evidence, with its 95 % interval (bootstrap over receipts, 10,000 resamples, seed 0; ADR-0015, section 6, and ADR-0017); it passes if the interval includes zero. By the fixed order of ADR-0022 (decision 1), the seed-0 runs decide for all three systems. Scores 3 and 4 were added by ADR-0023 after the results of 1 and 2; if none passes, the order ends with score 1 (its decision 3). The check without page scans is shown, not used. No choice depends on average precision. Optimistic.
+
+### Text of page scans
+
+| Authentic receipts | Receipts | Median OCR words | Median text height (px) | Median million pixels |
+|---|---|---|---|---|
+| page scans | 20 | 95.500 | 89.500 | 34.806 |
+| other receipts | 74 | 99.000 | 40.000 | 1.102 |
+
+The design fold's authentic receipts; a page scan has a longer side above 6000 px. Text height: the median height of a receipt's OCR word boxes (ADR-0023). Receipts measured without any OCR word, which take the text height of their kind: 0 of 397 (validation, design fold and synthetic set).
+
+### Words of page scans against other receipts
+
+| Run | Blocks of pixel | Blocks of a quarter of the text height | Blocks of half the text height | Blocks of 10 px on every receipt | Peak outside every word |
+|---|---|---|---|---|---|
+| system 2, seed 0 | 0.82 (0.78 to 0.85) | 0.76 (0.73 to 0.80) | 0.72 (0.68 to 0.76) | 0.82 (0.79 to 0.85) | 15 of 94 |
+| system 2, seed 1 | 0.75 (0.71 to 0.79) | 0.68 (0.63 to 0.72) | 0.62 (0.57 to 0.67) | 0.75 (0.71 to 0.79) | 27 of 94 |
+| system 2, seed 2 | 0.77 (0.73 to 0.80) | 0.67 (0.63 to 0.71) | 0.61 (0.56 to 0.65) | 0.76 (0.72 to 0.79) | 21 of 94 |
+| system 3, seed 0 | 0.77 (0.74 to 0.80) | 0.52 (0.48 to 0.56) | 0.52 (0.48 to 0.55) | 0.76 (0.73 to 0.78) | 39 of 94 |
+| system 3, seed 1 | 0.77 (0.74 to 0.80) | 0.51 (0.46 to 0.55) | 0.49 (0.45 to 0.53) | 0.78 (0.75 to 0.81) | 41 of 94 |
+| system 3, seed 2 | 0.73 (0.69 to 0.77) | 0.49 (0.45 to 0.53) | 0.53 (0.49 to 0.57) | 0.69 (0.66 to 0.73) | 28 of 94 |
+| system 4, seed 0 | 0.73 (0.69 to 0.77) | 0.64 (0.59 to 0.68) | 0.59 (0.54 to 0.64) | 0.73 (0.69 to 0.76) | 17 of 94 |
+| system 4, seed 1 | 0.72 (0.68 to 0.76) | 0.63 (0.58 to 0.67) | 0.56 (0.51 to 0.60) | 0.72 (0.68 to 0.76) | 13 of 94 |
+| system 4, seed 2 | 0.73 (0.68 to 0.78) | 0.61 (0.55 to 0.66) | 0.53 (0.47 to 0.59) | 0.72 (0.67 to 0.77) | 15 of 94 |
+
+The chance that an OCR word of an authentic page scan scores above one of another authentic receipt (0.5: no difference), with its 95 % interval (bootstrap over receipts within each kind, 10,000 resamples, seed 0). A word scores the highest mean of the map over blocks inside its box that do not overlap, from its corner; blocks of a pixel give the highest value. The reading, fixed before the diagnostic first ran and recorded in ADR-0023: if blocks scaled to the text bring the chance near 0.5 while blocks of a fixed size do not, the difference comes from the number of pixels per letter. Peak: the first highest value of the map. Design fold.
 
 ### Top region on forged receipts
 
@@ -101,6 +162,25 @@ Top region, hit, random baseline and guard as ADR-0014 and ADR-0015 fix them: th
 | system 4, mean of 3 seeds | 0.016 | — | 0.369 | 0.017 | 0.250 | 0.164 | — | 0.440 | 0.001 | 0.259 | 0.163 |
 
 Per forged receipt, then averaged over receipts with equal weight; pixels of a copy source outside every modified rectangle are ignored (ADR-0015, section 5). Chance: the mean share of modified pixels. F1 and IoU at the run's threshold, chosen on the forged receipts of the validation split, whose own results are not shown. Optimistic.
+
+### Document score on synthetic forgeries
+
+| Run | Synthetic forgeries | AP, highest mean over a square of a quarter of the text height |
+|---|---|---|
+| system 2, seed 0 | 94 | 0.941 |
+| system 2, seed 1 | 94 | 0.956 |
+| system 2, seed 2 | 94 | 0.953 |
+| system 2, mean of 3 seeds | — | 0.950 |
+| system 3, seed 0 | 94 | 0.656 |
+| system 3, seed 1 | 94 | 0.612 |
+| system 3, seed 2 | 94 | 0.595 |
+| system 3, mean of 3 seeds | — | 0.621 |
+| system 4, seed 0 | 94 | 0.847 |
+| system 4, seed 1 | 94 | 0.877 |
+| system 4, seed 2 | 94 | 0.851 |
+| system 4, mean of 3 seeds | — | 0.858 |
+
+The synthetic development set against the design fold's authentic receipts, which are its bases (chance 0.500). Optimistic.
 
 ### Top region on synthetic forgeries
 
@@ -182,14 +262,14 @@ A cut lies between two neighbouring pixels that come from different windows. Rat
 
 | Run | Training hours | Median seconds, one pass | Median seconds, tiled | Median seconds, page scan | Network minutes, all receipts |
 |---|---|---|---|---|---|
-| system 2, seed 0 | 0.97 | 0.21 | 0.45 | 6.92 | 8.7 |
-| system 2, seed 1 | 0.97 | 0.21 | 0.47 | 7.26 | 9.0 |
-| system 2, seed 2 | 0.97 | 0.21 | 0.45 | 7.25 | 9.2 |
-| system 3, seed 0 | 0.95 | 0.20 | 0.45 | 6.46 | 8.6 |
-| system 3, seed 1 | 0.94 | 0.21 | 0.45 | 7.24 | 9.2 |
-| system 3, seed 2 | 0.93 | 0.21 | 0.46 | 7.22 | 9.2 |
-| system 4, seed 0 | 0.96 | 0.20 | 0.45 | 6.63 | 8.4 |
-| system 4, seed 1 | 0.96 | 0.22 | 0.50 | 7.86 | 10.0 |
-| system 4, seed 2 | 0.95 | 0.21 | 0.45 | 7.34 | 9.3 |
+| system 2, seed 0 | 0.97 | 0.21 | 0.46 | 6.47 | 8.2 |
+| system 2, seed 1 | 0.97 | 0.21 | 0.45 | 6.84 | 8.7 |
+| system 2, seed 2 | 0.97 | 0.21 | 0.44 | 6.43 | 8.3 |
+| system 3, seed 0 | 0.95 | 0.21 | 0.45 | 6.64 | 8.4 |
+| system 3, seed 1 | 0.94 | 0.21 | 0.44 | 6.56 | 8.6 |
+| system 3, seed 2 | 0.93 | 0.21 | 0.45 | 6.58 | 8.4 |
+| system 4, seed 0 | 0.96 | 0.21 | 0.45 | 6.72 | 8.8 |
+| system 4, seed 1 | 0.96 | 0.20 | 0.45 | 6.55 | 8.5 |
+| system 4, seed 2 | 0.95 | 0.21 | 0.47 | 7.49 | 8.9 |
 
 On the reference machine. Seconds: the network on a whole receipt of the design fold or the synthetic set; network minutes add validation. Measuring the maps takes more time on top.
