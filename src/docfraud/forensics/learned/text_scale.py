@@ -1,7 +1,7 @@
 """The scale of a receipt's text, for the document scores of ADR-0023 and their diagnostic.
 
 A page scan holds one receipt at a higher resolution: about as many words as another receipt,
-with letters about 2.3 times as high. The highest value of a map is a maximum over pixels, so a
+with letters about 2.2 times as high. The highest value of a map is a maximum over pixels, so a
 word of a page scan gives it more chances. ADR-0023 therefore adds document scores that average
 the map over squares tied to the receipt's text height before the highest value is taken
 (:func:`highest_square_mean`), and the development report shows the diagnostic behind that record:
