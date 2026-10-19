@@ -68,6 +68,9 @@ output on a clean fold.
 - **Spread over seeds** (evaluation protocol, section 6). For systems 2 to 4, the mean and
   standard deviation over seeds 0, 1 and 2 of average precision, region hit rate and pixel
   average precision.
+- **Time and memory** (evaluation protocol, section 5). The seconds each system took per
+  receipt, validation included, and the most resident memory of the process that measured it,
+  as the operating system counts it, which may leave out what the Apple GPU allocates.
 - **RQ5 without earlier contact.** The difference of system 4 against system 3 is also reported
   without the 98 receipts of earlier contact (ADR-0014, decision 1), as a sensitivity check that
   decides nothing.

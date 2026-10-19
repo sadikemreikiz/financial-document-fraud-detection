@@ -3,7 +3,12 @@ from pathlib import Path
 import pytest
 
 from docfraud.data.models import BBox, Document, Entity, Label, Region, RegionRole, Technique
-from docfraud.evaluation.breakdowns import breakdown, flagged_by_budget, flagged_by_threshold
+from docfraud.evaluation.breakdowns import (
+    breakdown,
+    flagged_by_budget,
+    flagged_by_threshold,
+    rules_blind,
+)
 
 
 def doc(doc_id: str, label: Label, **extra: object) -> Document:
@@ -80,3 +85,15 @@ def test_decisions_by_threshold_and_by_review_budget() -> None:
     assert flagged_by_threshold(scores, 0.5) == {"a": 1.0, "b": 1.0, "c": 1.0, "d": 0.0}
     # half of four receipts: "a", then one of the two tied at 0.5
     assert flagged_by_budget(scores, 0.5) == {"a": 1.0, "b": 0.5, "c": 0.5, "d": 0.0}
+
+
+def test_only_changes_that_avoid_amounts_and_products_are_blind_to_the_rules() -> None:
+    def forged(*entities: Entity) -> Document:
+        regions = tuple(region(Technique.CPI, e) for e in entities)
+        return doc("F", Label.FORGED, regions=regions, has_region_annotations=True)
+
+    assert rules_blind(forged(Entity.METADATA))
+    assert rules_blind(forged(Entity.COMPANY, Entity.OTHER))
+    assert not rules_blind(forged(Entity.METADATA, Entity.TOTAL_PAYMENT))
+    assert not rules_blind(forged(Entity.PRODUCT))
+    assert not rules_blind(doc("A", Label.AUTHENTIC))  # nothing annotated changed

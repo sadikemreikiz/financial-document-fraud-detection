@@ -22,6 +22,8 @@ The clean measurement measures the maps of systems 1 and 6 the same way: anythin
 map with its windows, time and document scores (:class:`MapOutput`) is measured by these rules.
 """
 
+import resource
+import sys
 from collections.abc import Callable, Iterable, Iterator, Sequence
 from dataclasses import dataclass
 from datetime import UTC, datetime
@@ -193,6 +195,7 @@ class RunResults(_Frozen):
     threshold: PixelThreshold
     validation: tuple[ScoredReceipt, ...]
     measured: tuple[MeasuredReceipt, ...]
+    peak_memory: int | None = None  # bytes; see ``peak_memory``; not kept by earlier results
 
 
 class MapOutput(Protocol):
@@ -298,7 +301,18 @@ def measure_run(  # noqa: PLR0913 - the network, its receipts and what the resul
         threshold=threshold,
         validation=tuple(scored),
         measured=tuple(results),
+        peak_memory=peak_memory(),
     )
+
+
+def peak_memory() -> int:
+    """The most resident memory the process has held so far, in bytes.
+
+    As the operating system counts it, which may leave out what the Apple GPU allocates. A
+    process that measures several runs reports, after each, its peak since it started.
+    """
+    peak = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+    return int(peak) if sys.platform == "darwin" else int(peak) * 1024  # Linux counts kibibytes
 
 
 def _unique(items: Iterable[Item], groups: Sequence[Group]) -> Iterator[Item]:

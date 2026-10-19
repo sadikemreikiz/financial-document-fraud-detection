@@ -31,6 +31,7 @@ from docfraud.data.findit import (
 from docfraud.data.gold import load_manifest
 from docfraud.data.models import Document, Entity, Label, RegionRole, Split, Technique
 from docfraud.data.splits import select
+from docfraud.evaluation.breakdowns import rules_blind
 from docfraud.evaluation.design_fold import DESIGN_FOLD
 from docfraud.evaluation.folds import FoldAssignment, load_folds
 from docfraud.markdown import Cell, Table, render_table
@@ -39,7 +40,6 @@ ROOT = Path(__file__).resolve().parents[1]
 OUTPUT = ROOT / "reports" / "forensics" / "preregistration-data.md"
 ANNOTATIONS = ROOT / "annotations" / "findit2"
 FOLDS = ANNOTATIONS / "cv-folds.json"
-ARITHMETIC_ENTITIES = {Entity.TOTAL_PAYMENT, Entity.PRODUCT}
 NAMED_TECHNIQUES = (Technique.CPI, Technique.CPO, Technique.CUT, Technique.PIX, Technique.IMI)
 TILE = 256
 FITTED_SIDE = 1024
@@ -53,12 +53,6 @@ def techniques(document: Document) -> set[Technique]:
 def entities(document: Document) -> set[Entity]:
     """Entities changed by the modified regions of a receipt."""
     return {r.entity for r in document.modified_regions if r.entity is not None}
-
-
-def rules_blind(document: Document) -> bool:
-    """A forged receipt whose annotated changes avoid amounts and products."""
-    changed = entities(document)
-    return bool(changed) and not changed & ARITHMETIC_ENTITIES
 
 
 def forged(documents: Iterable[Document]) -> list[Document]:
