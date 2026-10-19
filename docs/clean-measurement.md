@@ -79,6 +79,36 @@ output on a clean fold.
   steps, and its measurement on copies of the development round's runs, since the measurement
   refuses runs of a few steps. The trial's outputs are deleted.
 
-## 3. The measurement
+## 3. The trial (2026-10-19)
+
+The steps of `make clean-measurement` ran with `--trial` from commit `496c1ce`, on the
+development round in a scratch directory, never on a clean fold.
+
+- **Training.** `train-clean` trained six runs of 20 steps; the sixth, system 4 with seed 1,
+  did not learn by the failure rule of ADR-0022, and the command stopped as the measurement
+  would, before any clean result exists. The round's setup, the runs, their records and the stop
+  were tried.
+- **Measurement.** Copies of the development round's nine runs, their weights and records only,
+  were measured by `measure-clean` in 74 minutes. Every quantity of every run, on the 190
+  validation receipts, at the pixel threshold and on the 113 receipts of the design fold, is
+  identical to the development round's results field by field, the seconds aside.
+  `measure-lattice` (8 minutes), `measure-probe` (10 seconds) and `measure-trufor` (52 minutes)
+  reproduce the development reports: an average precision of 0.500 for system 1, 0.153 with a
+  ROC-AUC of 0.452 for the probe and 0.270 for system 6, with the same size checks. The report,
+  written in 25 seconds, gives the learned models 0.601, 0.295 and 0.602 and the size checks of
+  their record (section 4), and system 1 evidence on 15 of the 19 forged and 58 of the 94
+  authentic receipts, as ADR-0017 states. The measuring processes held at most 2.9 GiB for the
+  learned models, 2.5 GiB for system 1 and 3.7 GiB for TruFor.
+- **Kept.** TruFor's outputs on the validation split, which the trial computed, stay in its
+  cache for the measurement; those of the design fold were there already. The trial's runs,
+  results and report were deleted.
+- **Changed after the trial.** The report's wording for a single round, and a note to the guard
+  that a map without evidence makes the whole page its top region, which hits with a baseline
+  of 1 (ADR-0015, section 2): on the design fold this is so for 4 of system 1's 19 forged
+  receipts.
+- **Expected time.** From the trial and the development round: about 34 hours of training, 5 of
+  measuring the learned models, half an hour for system 1 and 2.5 for TruFor, about 42 in all.
+
+## 4. The measurement
 
 Written when it runs: the clean commit, the run records, the times and any defect.

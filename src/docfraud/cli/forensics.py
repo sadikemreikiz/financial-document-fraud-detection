@@ -337,7 +337,7 @@ def train_clean_command(  # pragma: no cover - needs the dataset, fonts and pret
     Rounds 0, 1, 3 and 4, each holding out its clean fold, in this order and each in the order of
     the development round. Every run comes from one commit; runs resume from their last
     checkpoint and finished runs are skipped; the rounds stop at the first run that fails, before
-    any clean result exists. About 36 hours on the reference machine, which must stay awake, on
+    any clean result exists. About 34 hours on the reference machine, which must stay awake, on
     power and with its lid open. A trial trains the development round for a few steps.
     """
     rounds = clean_rounds(directory, trial=trial)

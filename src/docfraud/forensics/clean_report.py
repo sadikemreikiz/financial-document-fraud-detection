@@ -526,7 +526,9 @@ def guard_table(data: CleanData) -> Table:
         "baseline is the share of 1,000 boxes of the same size, centred on OCR text, that hit. A "
         "system detects forgeries if the lower bound of its hit rate's interval (bootstrap over "
         "receipts) exceeds the baseline; otherwise its result is a probable shortcut (ADR-0014, "
-        "decision 4). Large rectangles cover more than 5 % of the page (ADR-0015, section 4). "
+        "decision 4). A map without evidence makes the whole page its top region, which hits with "
+        "a baseline of 1 (ADR-0015, section 2), so such receipts raise a system's hit rate and its "
+        "baseline alike. Large rectangles cover more than 5 % of the page (ADR-0015, section 4). "
         "Systems 2 to 4: seed 0.",
     )
 
@@ -1109,9 +1111,11 @@ def report(data: CleanData) -> str:
     ]
     forged = sum(d.label is Label.FORGED for d in data.documents.values())
     folds = ", ".join(map(str, data.rounds))
+    several = len(data.rounds) > 1
     trial = (
-        f"> **Trial.** Rounds {folds} are not the clean measurement: this report only tries the "
-        "commands, nothing in it is a result, and it is deleted after the trial.\n\n"
+        f"> **Trial.** {'Rounds' if several else 'Round'} {folds} {'are' if several else 'is'} not "
+        "the clean measurement: this report only tries the commands, nothing in it is a result, "
+        "and it is deleted after the trial.\n\n"
         if tuple(data.rounds) != CLEAN_FOLDS
         else ""
     )
@@ -1123,7 +1127,8 @@ def report(data: CleanData) -> str:
         "The single measurement of every Phase 4 system on the clean folds "
         "([ADR-0020](../../docs/decisions/0020-clean-folds-measured-together.md)), recorded in "
         "[clean-measurement.md](../../docs/clean-measurement.md): "
-        f"{len(data.documents)} receipts of folds {folds}, {forged} of them forged. No result of "
+        f"{len(data.documents)} receipts of {'folds' if several else 'fold'} {folds}, {forged} of "
+        "them forged. No result of "
         "a system was looked at before every system had run, and nothing below chose "
         "anything.\n\n"
         f"- Systems 2 to 4 trained at {trained}; every system measured at {measured}.\n\n"

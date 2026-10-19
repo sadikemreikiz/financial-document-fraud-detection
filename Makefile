@@ -95,7 +95,7 @@ learned:  ## Development round of systems 2 to 4 on the design fold, about 11 ho
 # The single measurement of every system on the clean folds (ADR-0020, docs/clean-measurement.md):
 # the 36 runs of systems 2 to 4 first, then every system's predictions, then the report. Every
 # step resumes or skips what it has done; rerun the target from the same commit after a stop.
-clean-measurement:  ## Clean measurement of every Phase 4 system, about 45 hours (resumes)
+clean-measurement:  ## Clean measurement of every Phase 4 system, about 42 hours (resumes)
 	uv run docfraud forensics download-resnet
 	uv run docfraud synthesis download-fonts
 	uv run docfraud forensics download-trufor
