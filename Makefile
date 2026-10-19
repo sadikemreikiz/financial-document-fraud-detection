@@ -1,8 +1,8 @@
 .DEFAULT_GOAL := help
-.PHONY: help install lint format typecheck test test-data check data audit reports check-reports bench-ocr bench-synthesis trufor learned encoder-check clean
+.PHONY: help install lint format typecheck test test-data check data audit reports check-reports bench-ocr bench-synthesis trufor learned clean-measurement encoder-check clean
 
 help:  ## Show available targets
-	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*## "}; {printf "  %-16s %s\n", $$1, $$2}'
+	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*## "}; {printf "  %-18s %s\n", $$1, $$2}'
 
 install:  ## Create the environment and install git hooks
 	uv sync
@@ -73,10 +73,13 @@ bench-synthesis:  ## Time the synthetic forgery engine (reports/synthesis/engine
 	uv run docfraud synthesis download-fonts
 	uv run python experiments/synthetic_engine.py --timing
 
+# TruFor's own libraries, which are not project dependencies (ADR-0019).
+WITH_TRUFOR := uv run --with torch==2.14.1 --with torchvision==0.29.1 --with timm==1.0.30 \
+	--with yacs==0.1.8
+
 trufor:  ## System 6 development round on the design fold (downloads TruFor and its libraries)
 	uv run docfraud forensics download-trufor
-	uv run --with torch==2.14.1 --with torchvision==0.29.1 --with timm==1.0.30 --with yacs==0.1.8 \
-		python -I experiments/system6_development.py
+	$(WITH_TRUFOR) python -I experiments/system6_development.py
 
 # Keeps a Mac from sleeping while the round runs; the lid must stay open and the power connected.
 KEEP_AWAKE := $(shell command -v caffeinate >/dev/null 2>&1 && echo caffeinate -is)
@@ -88,6 +91,20 @@ learned:  ## Development round of systems 2 to 4 on the design fold, about 11 ho
 	$(KEEP_AWAKE) uv run docfraud forensics train-round
 	$(KEEP_AWAKE) uv run docfraud forensics measure-round
 	uv run python -I experiments/learned_development.py
+
+# The single measurement of every system on the clean folds (ADR-0020, docs/clean-measurement.md):
+# the 36 runs of systems 2 to 4 first, then every system's predictions, then the report. Every
+# step resumes or skips what it has done; rerun the target from the same commit after a stop.
+clean-measurement:  ## Clean measurement of every Phase 4 system, about 45 hours (resumes)
+	uv run docfraud forensics download-resnet
+	uv run docfraud synthesis download-fonts
+	uv run docfraud forensics download-trufor
+	$(KEEP_AWAKE) uv run docfraud forensics train-clean
+	$(KEEP_AWAKE) uv run docfraud forensics measure-clean
+	$(KEEP_AWAKE) uv run docfraud forensics measure-lattice
+	uv run docfraud forensics measure-probe
+	$(KEEP_AWAKE) $(WITH_TRUFOR) docfraud forensics measure-trufor
+	uv run python -I experiments/clean_measurement.py
 
 encoder-check:  ## One-time check that the learned models' encoder is torchvision's ResNet-18
 	uv run docfraud forensics download-resnet
