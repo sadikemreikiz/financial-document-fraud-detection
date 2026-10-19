@@ -28,7 +28,7 @@ from docfraud.evaluation.localisation import (
 )
 from docfraud.evaluation.runs import CodeVersion, Environment
 from docfraud.forensics import trufor
-from docfraud.forensics.learned.inference import HIGHEST, QUARTER_SQUARE, LearnedOutput
+from docfraud.forensics.learned.inference import HIGHEST, QUARTER_SQUARE, LearnedOutput, probability
 from docfraud.forensics.learned.results import (
     Edit,
     Group,
@@ -284,12 +284,13 @@ def test_a_receipt_in_several_windows_records_the_cuts(monkeypatch: pytest.Monke
 def test_the_pixel_threshold_follows_adr_0015_on_the_held_maps() -> None:
     model = PageLogits()
     held = []
+    maps = []
     for seed in range(3):
         receipt = item(f"V{seed}", Group.VALIDATION, seed=seed)
-        logits = model.analyse(receipt.page).logits
-        held.append(HeldMap(receipt.key, receipt.modified, receipt.sources, logits))
+        output = model.analyse(receipt.page)
+        held.append(HeldMap(receipt.key, receipt.modified, receipt.sources, output))
+        maps.append(probability(output.logits))
     threshold = choose_threshold(held)
-    maps = [LearnedOutput(h.logits, (), 0.0).probabilities for h in held]
     candidates = threshold_candidates(
         [threshold_sample(m, h.key) for m, h in zip(maps, held, strict=True)]
     )

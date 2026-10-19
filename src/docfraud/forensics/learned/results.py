@@ -17,6 +17,9 @@ by its highest map value and its average precision against the clean pixels of t
 The document scores of ADR-0023 need the receipt's text height, from its OCR word boxes, which
 every item carries (a synthetic forgery those of its base). On the held-out fold the results also
 keep the peak of each word box at the four scales of that record's diagnostic.
+
+The clean measurement measures the maps of systems 1 and 6 the same way: anything that gives a
+map with its windows, time and document scores (:class:`MapOutput`) is measured by these rules.
 """
 
 from collections.abc import Callable, Iterable, Iterator, Sequence
@@ -28,7 +31,7 @@ from typing import Protocol
 
 import numpy as np
 import numpy.typing as npt
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, ValidationError
 
 from docfraud.data.models import BBox, Document, Label, Technique
 from docfraud.evaluation.localisation import (
@@ -44,7 +47,6 @@ from docfraud.evaluation.localisation import (
     top_region,
 )
 from docfraud.evaluation.runs import CodeVersion, Environment
-from docfraud.forensics.learned.inference import LearnedOutput, probability
 from docfraud.forensics.learned.text_scale import WordScale, on_page, text_height, word_peaks
 from docfraud.forensics.trufor import cut_check
 from docfraud.synthesis.engine import Forgery
@@ -193,16 +195,41 @@ class RunResults(_Frozen):
     measured: tuple[MeasuredReceipt, ...]
 
 
+class MapOutput(Protocol):
+    """A system's outputs on one page, such as a ``LearnedOutput``."""
+
+    @property
+    def windows(self) -> tuple[BBox, ...]:
+        """The windows the page was analysed in."""
+        ...
+
+    @property
+    def seconds(self) -> float:
+        """Time the analysis took on the machine that ran it."""
+        ...
+
+    @property
+    def values(self) -> npt.NDArray[np.float64]:
+        """The map in double precision, one value per pixel, higher meaning more suspicious."""
+        ...
+
+    def scores(
+        self, text_height: float, values: npt.NDArray[np.float64] | None = None, /
+    ) -> dict[str, float]:
+        """The document scores, by name, from the receipt's text height and the map if known."""
+        ...
+
+
 class Analyser(Protocol):
-    """A network that analyses whole pages, such as a ``LearnedModel``."""
+    """A system that analyses whole pages, such as a ``LearnedModel``."""
 
     @property
     def identifier(self) -> str:
         """Weights, version and device; changes whenever outputs may change."""
         ...
 
-    def analyse(self, page: npt.NDArray[np.uint8]) -> LearnedOutput:
-        """The network's map of a page."""
+    def analyse(self, page: npt.NDArray[np.uint8]) -> MapOutput:
+        """The system's map of a page."""
         ...
 
 
@@ -211,12 +238,12 @@ type Progress = Callable[[Group, str], None]
 
 @dataclass(frozen=True, slots=True)
 class HeldMap:
-    """The logits of a forged validation receipt, held until the pixel threshold is chosen."""
+    """The output of a forged validation receipt, held until the pixel threshold is chosen."""
 
     key: str
     modified: tuple[BBox, ...]
     sources: tuple[BBox, ...]
-    logits: npt.NDArray[np.float32]
+    output: MapOutput  # a learned output holds its logits in single precision
 
 
 def measure_run(  # noqa: PLR0913 - the network, its receipts and what the results state
@@ -230,11 +257,14 @@ def measure_run(  # noqa: PLR0913 - the network, its receipts and what the resul
     code: CodeVersion,
     environment: Environment,
     on_progress: Progress | None = None,
+    peaks: bool = True,
 ) -> RunResults:
     """Measure a run's network: the validation receipts first, for the thresholds, then the rest.
 
     The items are taken one at a time, so that a generator can load each page when it is needed.
-    The logits of the forged validation receipts are held until the pixel threshold is chosen.
+    The outputs of the forged validation receipts are held until the pixel threshold is chosen.
+    Without ``peaks``, the word peaks of ADR-0023's diagnostic, which concerns the learned models,
+    are not measured.
 
     Raises:
         ValueError: If an item is in the wrong group, a key repeats within a group, or no forged
@@ -246,14 +276,15 @@ def measure_run(  # noqa: PLR0913 - the network, its receipts and what the resul
         output = model.analyse(item.page)
         scored.append(_scored(item, output))
         if item.modified:
-            held.append(HeldMap(item.key, item.modified, item.sources, output.logits))
+            held.append(HeldMap(item.key, item.modified, item.sources, output))
         if on_progress is not None:
             on_progress(item.group, item.key)
     threshold = choose_threshold(held)
-    held.clear()  # free the logits before the larger groups
+    held.clear()  # free the maps before the larger groups
     results = []
     for item in _unique(measured, (Group.HELD_OUT, Group.SYNTHETIC)):
-        results.append(measure_receipt(item, model.analyse(item.page), threshold.value))
+        output = model.analyse(item.page)
+        results.append(measure_receipt(item, output, threshold.value, peaks=peaks))
         if on_progress is not None:
             on_progress(item.group, item.key)
     return RunResults(
@@ -293,9 +324,9 @@ def choose_threshold(held: Sequence[HeldMap]) -> PixelThreshold:
     if not held:
         msg = "no forged validation receipt with a modified rectangle to choose a threshold"
         raise ValueError(msg)
-    samples = [threshold_sample(probability(h.logits), h.key) for h in held]
+    samples = [threshold_sample(h.output.values, h.key) for h in held]
     candidates = threshold_candidates(samples)
-    f1 = [f1_at_thresholds(probability(h.logits), candidates, h.modified, h.sources) for h in held]
+    f1 = [f1_at_thresholds(h.output.values, candidates, h.modified, h.sources) for h in held]
     return PixelThreshold(
         receipts=len(held),
         candidates=tuple(float(c) for c in candidates),
@@ -304,9 +335,11 @@ def choose_threshold(held: Sequence[HeldMap]) -> PixelThreshold:
     )
 
 
-def measure_receipt(item: Item, output: LearnedOutput, threshold: float) -> MeasuredReceipt:
+def measure_receipt(
+    item: Item, output: MapOutput, threshold: float, *, peaks: bool = True
+) -> MeasuredReceipt:
     """Everything a report needs from one map of the held-out fold or the synthetic set."""
-    values = output.probabilities
+    values = output.values
     pixels = None
     if item.modified:
         f1, iou = pixel_f1_iou(values, threshold, item.modified, item.sources)
@@ -340,7 +373,9 @@ def measure_receipt(item: Item, output: LearnedOutput, threshold: float) -> Meas
         sources=item.sources,
         pixels=pixels,
         edits=edits,
-        word_peaks=word_peaks(values, item.words) if item.group is Group.HELD_OUT else None,
+        word_peaks=word_peaks(values, item.words)
+        if peaks and item.group is Group.HELD_OUT
+        else None,
     )
 
 
@@ -350,7 +385,7 @@ def _first_maximum(values: npt.NDArray[np.float64]) -> tuple[int, int]:
 
 
 def _scored(
-    item: Item, output: LearnedOutput, values: npt.NDArray[np.float64] | None = None
+    item: Item, output: MapOutput, values: npt.NDArray[np.float64] | None = None
 ) -> ScoredReceipt:
     height, width = item.page.shape
     text = text_height(item.words, height, width)
@@ -380,3 +415,17 @@ def write_results(directory: Path, results: RunResults) -> Path:
 def read_results(directory: Path) -> RunResults:
     """The results written by :func:`write_results`."""
     return RunResults.model_validate_json((directory / RESULTS).read_text(encoding="utf-8"))
+
+
+def stored_results(directory: Path) -> RunResults | None:
+    """The results kept in a directory, unless none are or this code cannot read their form.
+
+    Results are made again from the system, so results of an earlier form are measured again
+    rather than read.
+    """
+    if not (directory / RESULTS).exists():
+        return None
+    try:
+        return read_results(directory)
+    except ValidationError:
+        return None

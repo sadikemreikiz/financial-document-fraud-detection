@@ -70,6 +70,11 @@ class LearnedOutput:
         """The map in double precision, as it is measured, so that values near 1 stay distinct."""
         return probability(self.logits)
 
+    @property
+    def values(self) -> npt.NDArray[np.float64]:
+        """The map as it is measured: :attr:`probabilities`."""
+        return self.probabilities
+
     def highest(self) -> float:
         """The first document score: the highest probability of the map."""
         return float(probability(np.array([self.logits.max()]))[0])

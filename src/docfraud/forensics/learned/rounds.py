@@ -28,7 +28,7 @@ from pathlib import Path
 import numpy as np
 import numpy.typing as npt
 import torch
-from pydantic import BaseModel, ConfigDict, ValidationError
+from pydantic import BaseModel, ConfigDict
 from torch import nn
 
 from docfraud.data.models import BBox, Document, Split
@@ -43,15 +43,14 @@ from docfraud.evaluation.folds import FoldAssignment
 from docfraud.evaluation.runs import CodeVersion, Environment
 from docfraud.forensics.learned.pages import PageCache
 from docfraud.forensics.learned.results import (
-    RESULTS,
     Analyser,
     Group,
     Item,
     Progress,
     RunResults,
     measure_run,
-    read_results,
     real_item,
+    stored_results,
     synthetic_item,
     write_results,
 )
@@ -417,7 +416,7 @@ def measure_round(  # noqa: PLR0913 - the round, its receipts and what the resul
     for system, seed in runs:
         directory = run_directory(root, held_out, system, seed)
         network = model(directory / MODEL)
-        stored = _stored_results(directory)
+        stored = stored_results(directory)
         if stored is not None and stored.model == network.identifier:
             measured.append(stored)
             continue
@@ -439,6 +438,31 @@ def measure_round(  # noqa: PLR0913 - the round, its receipts and what the resul
     return measured
 
 
+def require_trained(
+    root: Path,
+    rounds: Sequence[int] = CLEAN_FOLDS,
+    runs: Sequence[tuple[System, int]] = RUNS,
+    settings: Settings | None = None,
+) -> None:
+    """Accept rounds whose runs have all finished, without failing, with the settings of ADR-0022.
+
+    The clean measurement predicts nothing on a clean fold, with any system, before this holds,
+    and the short runs of a trial never pass it.
+
+    Raises:
+        ValueError: If a run has not finished, failed or was trained with other settings.
+    """
+    wanted = asdict(settings or Settings())
+    for held_out in rounds:
+        for record in finished_records(root, held_out, runs):
+            if record.settings != wanted:
+                msg = (
+                    f"system {record.system}, seed {record.seed} of round {held_out} was trained "
+                    f"with {record.settings}, not {wanted}"
+                )
+                raise ValueError(msg)
+
+
 def measure_rounds(  # noqa: PLR0913 - the rounds, their receipts and what the results state
     root: Path,
     items: Callable[[int], RoundItems],
@@ -454,22 +478,12 @@ def measure_rounds(  # noqa: PLR0913 - the rounds, their receipts and what the r
 ) -> list[RunResults]:
     """Measure every run of several rounds, once all of them have finished.
 
-    No network runs on a receipt before every run of every round has finished without failing
-    and was trained with the settings of ADR-0022, so that the short runs of a trial are never
-    measured as the clean measurement.
+    No network runs on a receipt before :func:`require_trained` accepts the rounds.
 
     Raises:
         ValueError: If a run has not finished, failed or was trained with other settings.
     """
-    wanted = asdict(settings or Settings())
-    for held_out in rounds:
-        for record in finished_records(root, held_out, runs):
-            if record.settings != wanted:
-                msg = (
-                    f"system {record.system}, seed {record.seed} of round {held_out} was trained "
-                    f"with {record.settings}, not {wanted}"
-                )
-                raise ValueError(msg)
+    require_trained(root, rounds, runs, settings)
     measured: list[RunResults] = []
     for held_out in rounds:
 
@@ -491,20 +505,6 @@ def measure_rounds(  # noqa: PLR0913 - the rounds, their receipts and what the r
             )
         )
     return measured
-
-
-def _stored_results(directory: Path) -> RunResults | None:
-    """A run's kept results, unless there are none or they are in a form this code does not read.
-
-    Results are made again from the weights, so results of an earlier form are measured again
-    rather than read.
-    """
-    if not (directory / RESULTS).exists():
-        return None
-    try:
-        return read_results(directory)
-    except ValidationError:
-        return None
 
 
 def _words(ocr: OcrEngine, page: npt.NDArray[np.uint8]) -> list[BBox]:

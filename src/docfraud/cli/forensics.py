@@ -5,7 +5,7 @@ and the training and measurement of their development round (ADR-0022) and of th
 the clean measurement (ADR-0020).
 """
 
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from pathlib import Path
 from typing import TYPE_CHECKING, Annotated
 
@@ -24,9 +24,9 @@ from docfraud.cli.common import (
 )
 from docfraud.cli.synthesis import FONTS_DIR
 from docfraud.data.download import safe_extract
-from docfraud.data.models import Split
+from docfraud.data.models import Document, Split
 from docfraud.evaluation.design_fold import CLEAN_FOLDS, DESIGN_FOLD, DESIGN_FOLD_IDS
-from docfraud.evaluation.folds import load_folds
+from docfraud.evaluation.folds import FoldAssignment, load_folds
 from docfraud.evaluation.runs import code_version, environment
 from docfraud.forensics.learned.pages import PageCache
 from docfraud.forensics.learned.pretrained import IMAGENET_WEIGHTS, read_weights
@@ -40,6 +40,7 @@ TRUFOR_DIR = Path("artifacts/trufor")
 PRETRAINED_DIR = Path("artifacts/learned/pretrained")
 PAGES_DIR = Path("artifacts/learned/pages")
 ROUNDS_DIR = Path("artifacts/learned/rounds")
+PROBE_CACHE = Path("artifacts/probe")
 
 app = typer.Typer(
     help="External models and weights of the pixel-forensics systems, and the rounds of the "
@@ -48,6 +49,7 @@ app = typer.Typer(
 )
 
 if TYPE_CHECKING:
+    from docfraud.forensics.learned.results import Analyser
     from docfraud.forensics.learned.rounds import RoundSetup
     from docfraud.forensics.learned.training import RunRecord
 
@@ -429,3 +431,135 @@ def measure_clean_command(  # pragma: no cover - needs the dataset and the train
             f"{len(result.measured)} receipts measured by {result.model}"
         )
     console.print(f"[green]rounds {', '.join(map(str, rounds))} measured[/green]: {directory}")
+
+
+def _measured_receipts(documents: Sequence[Document], folds: FoldAssignment, held_out: int) -> int:
+    """How many receipts a round measures: the validation split and the held-out fold."""
+    return sum(d.split is Split.VAL for d in documents) + len(folds.documents(held_out))
+
+
+def _measure_untrained(  # pragma: no cover - needs the dataset and the trained runs
+    analyser: Analyser, system: int, data_dir: Path, directory: Path, *, trial: bool
+) -> None:
+    """Measure system 1 or 6 in the rounds of the clean measurement, or of a trial."""
+    from docfraud.forensics.clean import measure_system  # noqa: PLC0415 - imports PyTorch
+    from docfraud.forensics.learned.rounds import clean_round_items  # noqa: PLC0415
+
+    rounds = clean_rounds(directory, trial=trial)
+    documents = findit_documents(data_dir)
+    folds = load_folds(CV_FOLDS_PATH)
+    ocr = cached_ocr(OCR_CACHE)
+    pages = PageCache(PAGES_DIR)
+    columns = (BarColumn(), MofNCompleteColumn(), TimeRemainingColumn())
+    with Progress("{task.description}", *columns, console=console) as progress:
+        task = progress.add_task("", total=None, visible=False)
+
+        def started(held_out: int) -> None:
+            progress.update(
+                task,
+                description=f"round {held_out}, system {system}",
+                total=_measured_receipts(documents, folds, held_out),
+                completed=0,
+                visible=True,
+            )
+
+        results = measure_system(
+            analyser,
+            system,
+            directory,
+            lambda held_out: clean_round_items(documents, folds, held_out, pages, ocr),
+            code=code_version(),
+            environment=environment(),
+            rounds=rounds,
+            on_round=started,
+            on_progress=lambda _group, _key: progress.advance(task),
+        )
+    for result in results:
+        console.print(
+            f"round {result.held_out}, system {system}: {len(result.measured)} receipts "
+            f"measured by {result.model}"
+        )
+    console.print(f"[green]system {system} measured[/green]: {directory}")
+
+
+@app.command("measure-lattice")
+def measure_lattice_command(  # pragma: no cover - needs the dataset and the trained runs
+    data_dir: DataDir = Path("data"), directory: RoundsDir = ROUNDS_DIR, trial: Trial = False
+) -> None:
+    """Measure system 1, the JPEG-lattice map, in the rounds of the clean measurement (ADR-0020).
+
+    Only once every run of systems 2 to 4 has finished. Each round's validation split, for
+    thresholds only, and held-out fold are measured as the learned models are, and the results go
+    to the round's system-1 directory; nothing else is shown. Rounds measured by the same code
+    before are skipped.
+    """
+    clean_rounds(directory, trial=trial)  # refuse a misplaced trial first
+    require_clean_commit()
+    from docfraud.forensics.clean import LATTICE, LatticeSystem  # noqa: PLC0415 - PyTorch
+
+    _measure_untrained(LatticeSystem(), LATTICE, data_dir, directory, trial=trial)
+
+
+@app.command("measure-trufor")
+def measure_trufor_command(  # pragma: no cover - needs TruFor, the dataset and the trained runs
+    data_dir: DataDir = Path("data"),
+    directory: RoundsDir = ROUNDS_DIR,
+    trufor_dir: Annotated[
+        Path, typer.Option(help="Where TruFor's code, weights and cache are kept.")
+    ] = TRUFOR_DIR,
+    trial: Trial = False,
+) -> None:
+    """Measure system 6, TruFor, in the rounds of the clean measurement (ADR-0020).
+
+    Only once every run of systems 2 to 4 has finished. As `measure-lattice`, with TruFor's
+    outputs read from or written to its cache; a page scan takes about two minutes on the
+    reference machine. TruFor's own libraries come from `uv run --with`, as `make trufor` does.
+    """
+    clean_rounds(directory, trial=trial)  # refuse a misplaced trial first
+    require_clean_commit()
+    from docfraud.forensics.clean import TRUFOR, TruForSystem  # noqa: PLC0415 - PyTorch
+    from docfraud.forensics.trufor import CachedTruFor, TruForModel  # noqa: PLC0415
+
+    cached = CachedTruFor(TruForModel(trufor_dir), trufor_dir / "outputs")
+    _measure_untrained(TruForSystem(cached), TRUFOR, data_dir, directory, trial=trial)
+    console.print(f"TruFor is for informational and nonprofit use; credit: {CITATION}")
+
+
+@app.command("measure-probe")
+def measure_probe_command(  # pragma: no cover - needs the dataset and the trained runs
+    data_dir: DataDir = Path("data"), directory: RoundsDir = ROUNDS_DIR, trial: Trial = False
+) -> None:
+    """Train and score system 5, the global-trace probe, in the clean rounds (ADR-0018, ADR-0020).
+
+    Only once every run of systems 2 to 4 has finished. In each round the forest learns from the
+    receipts of the other four folds and scores the held-out fold; the properties come from the
+    probe's cache, and the results go to the round's system-5 directory; nothing else is shown.
+    """
+    rounds = clean_rounds(directory, trial=trial)
+    require_clean_commit()
+    from docfraud.forensics.clean import measure_probe  # noqa: PLC0415 - imports PyTorch
+    from docfraud.forensics.probe import PropertyCache  # noqa: PLC0415
+
+    documents = findit_documents(data_dir)
+    folds = load_folds(CV_FOLDS_PATH)
+    pages = PageCache(PAGES_DIR)
+    cache = PropertyCache(PROBE_CACHE)
+    columns = (BarColumn(), MofNCompleteColumn(), TimeRemainingColumn())
+    with Progress("properties", *columns, console=console) as progress:
+        task = progress.add_task("properties", total=len(folds.folds))
+        results = measure_probe(
+            documents,
+            folds,
+            lambda document: cache.properties(pages.page(document.doc_id)),
+            directory,
+            code=code_version(),
+            environment=environment(),
+            rounds=rounds,
+            on_receipt=lambda _key: progress.advance(task),
+        )
+    for result in results:
+        console.print(
+            f"round {result.held_out}, system 5: {len(result.receipts)} receipts scored by "
+            f"{result.model}, trained on {result.trained_on}"
+        )
+    console.print(f"[green]system 5 measured[/green]: {directory}")
