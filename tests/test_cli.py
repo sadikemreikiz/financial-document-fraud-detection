@@ -10,6 +10,7 @@ from typing import Any
 import numpy as np
 import numpy.typing as npt
 import pytest
+import typer
 from typer.testing import CliRunner
 
 from docfraud import __version__
@@ -17,6 +18,7 @@ from docfraud.cli import app
 from docfraud.cli import baseline as cli_baseline
 from docfraud.cli import common as cli_common
 from docfraud.cli import data as cli_data
+from docfraud.cli import forensics as cli_forensics
 from docfraud.cli import marks as cli_marks
 from docfraud.cli import observation as cli_observation
 from docfraud.cli import reading as cli_reading
@@ -35,7 +37,7 @@ from docfraud.data.observation import (
     seal,
 )
 from docfraud.data.splits import TestSetLockedError
-from docfraud.evaluation.design_fold import DESIGN_FOLD
+from docfraud.evaluation.design_fold import CLEAN_FOLDS, DESIGN_FOLD
 from docfraud.evaluation.folds import assign_folds, load_folds, save_folds
 from docfraud.evaluation.runs import CodeVersion, JsonRunStore
 from docfraud.forensics.learned.pretrained import IMAGENET_WEIGHTS
@@ -171,6 +173,18 @@ def test_download_resnet_fetches_the_pinned_weights(
     assert result.exit_code == 0, result.output
     assert calls == [(IMAGENET_WEIGHTS, tmp_path)]
     assert "He" in result.output
+
+
+def test_a_trial_of_the_clean_rounds_never_runs_where_the_development_round_is_kept(
+    tmp_path: Path,
+) -> None:
+    assert cli_forensics.clean_rounds(cli_forensics.ROUNDS_DIR, trial=False) == CLEAN_FOLDS
+    assert cli_forensics.clean_rounds(tmp_path, trial=True) == (DESIGN_FOLD,)
+    with pytest.raises(typer.BadParameter, match="keeps the development round"):
+        cli_forensics.clean_rounds(cli_forensics.ROUNDS_DIR, trial=True)
+    for command in ("train-clean", "measure-clean"):
+        result = runner.invoke(app, ["forensics", command, "--trial"])
+        assert result.exit_code == 2, result.output  # refused before anything is read
 
 
 def test_data_audit_writes_report(toy_source: Path, tmp_path: Path) -> None:

@@ -19,6 +19,9 @@ from collections.abc import Iterable
 DESIGN_FOLD = 2
 """The cross-validation fold whose receipts may be studied by eye (ADR-0014, decision 2)."""
 
+CLEAN_FOLDS = (0, 1, 3, 4)
+"""The other four folds, in the order of their rounds, which measure each system once (ADR-0020)."""
+
 DESIGN_FOLD_IDS: frozenset[str] = frozenset(
     {
         "X00016469670",

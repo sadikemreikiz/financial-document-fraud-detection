@@ -14,10 +14,15 @@ measured (:mod:`~docfraud.forensics.learned.results`) on the receipts its round 
 development round, the validation split for thresholds, the design fold and the synthetic
 development set (:func:`development_items`), each with its OCR word boxes, which set the text
 height of the scores of ADR-0023. A run measured by the same weights before is skipped.
+
+The clean measurement (ADR-0020) runs the rounds of the four clean folds the same way, after the
+systems are frozen: :func:`train_rounds` trains all 36 runs from one commit, and
+:func:`measure_rounds` measures them only once every one has finished with the settings of
+ADR-0022, on the validation split and the round's held-out fold (:func:`clean_round_items`).
 """
 
 from collections.abc import Callable, Iterable, Iterator, Sequence
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from pathlib import Path
 
 import numpy as np
@@ -28,7 +33,13 @@ from torch import nn
 
 from docfraud.data.models import BBox, Document, Split
 from docfraud.data.normalize import load_grayscale
-from docfraud.evaluation.design_fold import DESIGN_FOLD, DESIGN_FOLD_IDS, require_design_fold
+from docfraud.evaluation.design_fold import (
+    CLEAN_FOLDS,
+    DESIGN_FOLD,
+    DESIGN_FOLD_IDS,
+    require_design_fold,
+)
+from docfraud.evaluation.folds import FoldAssignment
 from docfraud.evaluation.runs import CodeVersion, Environment
 from docfraud.forensics.learned.pages import PageCache
 from docfraud.forensics.learned.results import (
@@ -71,6 +82,9 @@ SEEDS = (0, 1, 2)
 
 RUNS: tuple[tuple[System, int], ...] = tuple((system, seed) for seed in SEEDS for system in System)
 """The runs of a round in the order they are trained: every system's seed 0 first."""
+
+TRIAL = Settings(steps=20, warmup=2, checkpoint_every=10, failure_window=10)
+"""Runs of a few steps, to try the commands before the clean measurement; it never measures them."""
 
 type NetworkFactory = Callable[[int, int, float], nn.Module]
 """The initial network of a run from its held-out fold, its seed and its initial output bias."""
@@ -137,6 +151,65 @@ def train_round(  # noqa: PLR0913 - the round, where it goes and what its record
         if (reason := failure(record)) is not None:
             return RoundOutcome(tuple(records), (system, seed, reason))
     return RoundOutcome(tuple(records), None)
+
+
+def train_rounds(  # noqa: PLR0913 - the rounds, where they go and what their records state
+    setup: Callable[[int], RoundSetup],
+    root: Path,
+    *,
+    code: CodeVersion,
+    environment: Environment,
+    rounds: Sequence[int] = CLEAN_FOLDS,
+    runs: Sequence[tuple[System, int]] = RUNS,
+    settings: Settings | None = None,
+    device: torch.device | None = None,
+    on_round: Callable[[int], None] | None = None,
+    on_run: Callable[[System, int], None] | None = None,
+    on_step: Callable[[int, float], None] | None = None,
+) -> tuple[RoundOutcome, ...]:
+    """Train the runs of several rounds in order, all from one commit, until one fails.
+
+    The setup of a round, made from its held-out fold, is made only when the round's turn comes.
+    Unlike a single round, which a later commit may measure once it has finished, the rounds of
+    the clean measurement come from one commit: a run that other code trained stops all of them.
+
+    Raises:
+        ValueError: If a run of the rounds was trained by other code, or a setup does not hold
+            out its round's fold.
+    """
+    others = {
+        record.code
+        for held_out in rounds
+        for system, seed in runs
+        if (record := stored_record(root, held_out, system, seed)) is not None
+        and record.code != code
+    }
+    if others:
+        msg = f"rounds {list(rounds)} hold runs trained by {sorted(map(str, others))}, not {code}"
+        raise ValueError(msg)
+    outcomes: list[RoundOutcome] = []
+    for held_out in rounds:
+        if on_round is not None:
+            on_round(held_out)
+        made = setup(held_out)
+        if made.material.held_out != held_out:
+            msg = f"the setup of round {held_out} holds out fold {made.material.held_out}"
+            raise ValueError(msg)
+        outcome = train_round(
+            made,
+            root,
+            code=code,
+            environment=environment,
+            runs=runs,
+            settings=settings,
+            device=device,
+            on_run=on_run,
+            on_step=on_step,
+        )
+        outcomes.append(outcome)
+        if outcome.failed is not None:
+            break
+    return tuple(outcomes)
 
 
 def _sampler(setup: RoundSetup, system: System, seed: int) -> TileSampler:
@@ -366,6 +439,60 @@ def measure_round(  # noqa: PLR0913 - the round, its receipts and what the resul
     return measured
 
 
+def measure_rounds(  # noqa: PLR0913 - the rounds, their receipts and what the results state
+    root: Path,
+    items: Callable[[int], RoundItems],
+    *,
+    model: Callable[[Path], Analyser],
+    code: CodeVersion,
+    environment: Environment,
+    rounds: Sequence[int] = CLEAN_FOLDS,
+    runs: Sequence[tuple[System, int]] = RUNS,
+    settings: Settings | None = None,
+    on_run: Callable[[int, System, int], None] | None = None,
+    on_progress: Progress | None = None,
+) -> list[RunResults]:
+    """Measure every run of several rounds, once all of them have finished.
+
+    No network runs on a receipt before every run of every round has finished without failing
+    and was trained with the settings of ADR-0022, so that the short runs of a trial are never
+    measured as the clean measurement.
+
+    Raises:
+        ValueError: If a run has not finished, failed or was trained with other settings.
+    """
+    wanted = asdict(settings or Settings())
+    for held_out in rounds:
+        for record in finished_records(root, held_out, runs):
+            if record.settings != wanted:
+                msg = (
+                    f"system {record.system}, seed {record.seed} of round {held_out} was trained "
+                    f"with {record.settings}, not {wanted}"
+                )
+                raise ValueError(msg)
+    measured: list[RunResults] = []
+    for held_out in rounds:
+
+        def started(system: System, seed: int, held_out: int = held_out) -> None:
+            if on_run is not None:
+                on_run(held_out, system, seed)
+
+        measured.extend(
+            measure_round(
+                root,
+                held_out,
+                items(held_out),
+                model=model,
+                code=code,
+                environment=environment,
+                runs=runs,
+                on_run=started,
+                on_progress=on_progress,
+            )
+        )
+    return measured
+
+
 def _stored_results(directory: Path) -> RunResults | None:
     """A run's kept results, unless there are none or they are in a form this code does not read.
 
@@ -420,5 +547,35 @@ def development_items(
         yield from design_items(documents, pages, ocr)
         for forgery in development_forgeries(engine):
             yield synthetic_item(forgery, _words(ocr, pages.page(forgery.record.base)))
+
+    return RoundItems(lambda: validation_items(documents, ocr), measured)
+
+
+def clean_round_items(
+    documents: Sequence[Document],
+    folds: FoldAssignment,
+    held_out: int,
+    pages: PageCache,
+    ocr: OcrEngine,
+) -> RoundItems:
+    """What a round of the clean measurement is measured on, in this order.
+
+    The validation split, then the round's held-out fold in identifier order, from the page
+    cache, every receipt with its OCR word boxes. No synthetic forgery is measured (ADR-0021,
+    decision 6). A trial of the commands on the development round takes the design fold this way.
+
+    Raises:
+        ValueError: If the fold holds no receipt.
+    """
+    ids = folds.documents(held_out)
+    if not ids:
+        msg = f"fold {held_out} holds no receipt"
+        raise ValueError(msg)
+    chosen = sorted((d for d in documents if d.doc_id in ids), key=lambda d: d.doc_id)
+
+    def measured() -> Iterator[Item]:
+        for document in chosen:
+            page = pages.page(document.doc_id)
+            yield real_item(document, Group.HELD_OUT, page, _words(ocr, page))
 
     return RoundItems(lambda: validation_items(documents, ocr), measured)

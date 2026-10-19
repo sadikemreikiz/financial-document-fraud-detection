@@ -72,8 +72,9 @@ output on a clean fold.
   without the 98 receipts of earlier contact (ADR-0014, decision 1), as a sensitivity check that
   decides nothing.
 - **A trial before the run.** The commands are tried end to end on the development round, which
-  holds out fold 2, with few training steps and in a separate directory, never on a clean fold;
-  the trial's outputs are deleted.
+  holds out fold 2, in a separate directory and never on a clean fold: its training for a few
+  steps, and its measurement on copies of the development round's runs, since the measurement
+  refuses runs of a few steps. The trial's outputs are deleted.
 
 ## 3. The measurement
 

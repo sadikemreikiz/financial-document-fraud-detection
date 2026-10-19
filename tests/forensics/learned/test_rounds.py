@@ -11,27 +11,31 @@ import torch
 from torch import Tensor, nn
 
 from docfraud.data.models import Document, Entity, Split, Technique
-from docfraud.evaluation.design_fold import DESIGN_FOLD
+from docfraud.evaluation.design_fold import CLEAN_FOLDS, DESIGN_FOLD
 from docfraud.evaluation.folds import FoldAssignment
 from docfraud.evaluation.runs import CodeVersion
 from docfraud.forensics import trufor
 from docfraud.forensics.learned.inference import LearnedOutput
 from docfraud.forensics.learned.pages import PageCache
-from docfraud.forensics.learned.results import RESULTS, Group, read_results
+from docfraud.forensics.learned.results import RESULTS, Group, RunResults, read_results
 from docfraud.forensics.learned.rounds import (
     REPEATABILITY,
     RUNS,
+    TRIAL,
     Repeatability,
     RoundOutcome,
     RoundSetup,
+    clean_round_items,
     development_items,
     finished_records,
     measure_round,
+    measure_rounds,
     repeat_check,
     repeat_directory,
     run_directory,
     stored_record,
     train_round,
+    train_rounds,
 )
 from docfraud.forensics.learned.sampler import (
     CachedReceipts,
@@ -69,10 +73,17 @@ class Tiny(nn.Module):
         return logits
 
 
-def statistics() -> RoundStatistics:
+def statistics(held_out: int = DESIGN_FOLD) -> RoundStatistics:
     entities = (Entity.PRODUCT, Entity.TOTAL_PAYMENT, Entity.METADATA, Entity.OTHER)
     templates = tuple(Template((Technique.CPI,), entity, 2) for entity in entities)
-    return RoundStatistics(DESIGN_FOLD, templates, (1, 2), {}, {})
+    return RoundStatistics(held_out, templates, (1, 2), {}, {})
+
+
+def diverging(_held_out: int, seed: int, prior: float) -> nn.Module:
+    network = Tiny(seed, prior)
+    with torch.no_grad():
+        network.conv.bias.fill_(math.nan)  # type: ignore[union-attr]
+    return network
 
 
 class CountingForger:
@@ -194,12 +205,6 @@ def test_a_system_trained_on_real_forgeries_makes_no_synthetic_one(
 
 
 def test_the_round_stops_at_the_first_run_that_fails(toy: Toy, tmp_path: Path) -> None:
-    def diverging(_held_out: int, seed: int, prior: float) -> nn.Module:
-        network = Tiny(seed, prior)
-        with torch.no_grad():
-            network.conv.bias.fill_(math.nan)  # type: ignore[union-attr]
-        return network
-
     broken = RoundSetup(toy.setup.material, toy.pages, toy.forger, diverging)
     outcome = train_round(
         broken,
@@ -376,6 +381,148 @@ def test_only_the_round_holding_out_the_design_fold_has_development_items(toy: T
     )
     with pytest.raises(ValueError, match="holds out fold 2"):
         development_items(toy.documents, toy.pages, other, FakeOcr())
+
+
+def round_setups(toy: Toy, made: list[int] | None = None) -> Callable[[int], RoundSetup]:
+    """The setup of any round of the toy data, noting the rounds it was made for."""
+
+    def setup(held_out: int) -> RoundSetup:
+        if made is not None:
+            made.append(held_out)
+        material = round_material(toy.documents, toy.folds, held_out, toy.pages, FakeOcr())
+        forger = RoundForger(
+            statistics(held_out),
+            toy.documents,
+            toy.folds,
+            CachedReceipts(toy.pages, material.words),
+            Path("fonts"),
+        )
+        return RoundSetup(material, toy.pages, forger, lambda _h, seed, prior: Tiny(seed, prior))
+
+    return setup
+
+
+def train_clean(
+    setup: Callable[[int], RoundSetup],
+    root: Path,
+    rounds: tuple[int, ...] = CLEAN_FOLDS,
+    *,
+    code: CodeVersion = CODE,
+    on_round: Callable[[int], None] | None = None,
+) -> tuple[RoundOutcome, ...]:
+    return train_rounds(
+        setup,
+        root,
+        code=code,
+        environment=ENVIRONMENT,
+        rounds=rounds,
+        runs=TWO_RUNS[:1],
+        settings=SETTINGS,
+        device=CPU,
+        on_round=on_round,
+    )
+
+
+def test_the_clean_folds_are_trained_after_one_another() -> None:
+    assert CLEAN_FOLDS == (0, 1, 3, 4)
+    assert TRIAL.steps < Settings().steps  # a trial is short, and never measured
+
+
+@pytest.mark.usefixtures("learning")
+def test_each_clean_round_is_set_up_when_its_turn_comes(toy: Toy, tmp_path: Path) -> None:
+    made: list[int] = []
+    started: list[int] = []
+    outcomes = train_clean(round_setups(toy, made), tmp_path, on_round=started.append)
+    assert made == started == list(CLEAN_FOLDS)
+    assert [o.failed for o in outcomes] == [None] * len(CLEAN_FOLDS)
+    for held_out, outcome in zip(CLEAN_FOLDS, outcomes, strict=True):
+        assert [(r.held_out, r.system, r.status) for r in outcome.records] == [
+            (held_out, int(System.SYNTHETIC), "finished")
+        ]
+    assert stored_record(tmp_path, DESIGN_FOLD, *TWO_RUNS[0]) is None
+
+
+@pytest.mark.usefixtures("learning")
+def test_the_clean_rounds_stop_at_the_first_run_that_fails(toy: Toy, tmp_path: Path) -> None:
+    made: list[int] = []
+    setups = round_setups(toy, made)
+
+    def breaking_in_round_1(held_out: int) -> RoundSetup:
+        setup = setups(held_out)
+        if held_out != 1:
+            return setup
+        return RoundSetup(setup.material, setup.pages, setup.forger, diverging)
+
+    outcomes = train_clean(breaking_in_round_1, tmp_path)
+    assert made == [0, 1]  # no later round is even set up
+    assert [o.failed for o in outcomes] == [None, (System.SYNTHETIC, 0, "diverged")]
+    assert stored_record(tmp_path, 3, *TWO_RUNS[0]) is None
+
+
+@pytest.mark.usefixtures("learning")
+def test_every_run_of_the_clean_rounds_comes_from_one_commit(toy: Toy, tmp_path: Path) -> None:
+    setups = round_setups(toy)
+    train_clean(setups, tmp_path, rounds=(0,))
+    later = CodeVersion(commit="def", dirty=False)
+    with pytest.raises(ValueError, match="hold runs trained by"):
+        train_clean(setups, tmp_path, code=later)  # round 0 finished, but at another commit
+    assert stored_record(tmp_path, 1, *TWO_RUNS[0]) is None
+    with pytest.raises(ValueError, match="the setup of round 1 holds out fold 0"):
+        train_clean(lambda _held_out: setups(0), tmp_path, rounds=(1,))
+
+
+@pytest.mark.usefixtures("learning")
+def test_the_clean_rounds_are_measured_once_all_have_finished(toy: Toy, tmp_path: Path) -> None:
+    setups = round_setups(toy)
+    started: list[tuple[int, System, int]] = []
+    seen: list[tuple[Group, str]] = []
+
+    def measure(settings: Settings = SETTINGS) -> list[RunResults]:
+        return measure_rounds(
+            tmp_path,
+            lambda k: clean_round_items(toy.documents, toy.folds, k, toy.pages, FakeOcr()),
+            model=WeightsDigest,
+            code=CODE,
+            environment=ENVIRONMENT,
+            runs=TWO_RUNS[:1],
+            settings=settings,
+            on_run=lambda k, system, seed: started.append((k, system, seed)),
+            on_progress=lambda group, key: seen.append((group, key)),
+        )
+
+    train_clean(setups, tmp_path, rounds=CLEAN_FOLDS[:-1])
+    WeightsDigest.analysed = 0
+    with pytest.raises(ValueError, match="of round 4 has not finished"):
+        measure()
+    assert WeightsDigest.analysed == 0  # no receipt before every round has finished
+    train_clean(setups, tmp_path)
+    with pytest.raises(ValueError, match="was trained with"):
+        measure(Settings())  # runs of a few steps are not those of ADR-0022
+    assert WeightsDigest.analysed == 0
+    results = measure()
+    assert started == [(k, *TWO_RUNS[0]) for k in CLEAN_FOLDS]
+    validation = sorted(d.doc_id for d in toy.documents if d.split is Split.VAL)
+    expected = [
+        pair
+        for k in CLEAN_FOLDS
+        for pair in (
+            *((Group.VALIDATION, v) for v in validation),
+            *((Group.HELD_OUT, i) for i in sorted(toy.folds.documents(k))),
+        )
+    ]
+    assert seen == expected  # no synthetic forgery in a clean round
+    assert [r.held_out for r in results] == list(CLEAN_FOLDS)
+    for held_out, result in zip(CLEAN_FOLDS, results, strict=True):
+        assert [r.key for r in result.measured] == sorted(toy.folds.documents(held_out))
+        assert read_results(run_directory(tmp_path, held_out, *TWO_RUNS[0])) == result
+
+
+def test_a_round_of_the_clean_measurement_needs_receipts(toy: Toy) -> None:
+    design = clean_round_items(toy.documents, toy.folds, DESIGN_FOLD, toy.pages, FakeOcr())
+    keys = [item.key for item in design.measured()]
+    assert keys == sorted(toy.folds.documents(DESIGN_FOLD))  # a trial measures the design fold
+    with pytest.raises(ValueError, match="fold 7 holds no receipt"):
+        clean_round_items(toy.documents, toy.folds, 7, toy.pages, FakeOcr())
 
 
 def test_the_repeat_check_trains_one_run_twice_and_compares_the_weights(

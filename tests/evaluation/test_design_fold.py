@@ -5,6 +5,7 @@ import pytest
 
 from docfraud.data.findit import SENSITIVITY_EXCLUSIONS
 from docfraud.evaluation.design_fold import (
+    CLEAN_FOLDS,
     DESIGN_FOLD,
     DESIGN_FOLD_IDS,
     EARLIER_CONTACTS,
@@ -26,6 +27,11 @@ def test_design_fold_is_fold_2_of_the_stored_folds(folds: FoldAssignment) -> Non
     assert (folds.dataset, folds.n_folds, folds.seed) == ("findit2", CV_FOLDS, FOLD_SEED)
     assert folds.documents(DESIGN_FOLD) == DESIGN_FOLD_IDS
     assert len(DESIGN_FOLD_IDS) == 113
+
+
+def test_the_clean_folds_are_the_other_four(folds: FoldAssignment) -> None:
+    assert sorted((*CLEAN_FOLDS, DESIGN_FOLD)) == list(range(CV_FOLDS))
+    assert sum(len(folds.documents(fold)) for fold in CLEAN_FOLDS) == 449
 
 
 def test_earlier_contacts_are_the_exclusion_list_of_the_report(folds: FoldAssignment) -> None:
