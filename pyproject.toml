@@ -141,6 +141,10 @@ ignore_missing_imports = true
 module = ["torchvision", "torchvision.*"]  # not a dependency; `uv run --with` supplies it to checks
 ignore_missing_imports = true
 
+[[tool.mypy.overrides]]
+module = ["matplotlib", "matplotlib.*"]  # not a dependency; `make figures` supplies it
+ignore_missing_imports = true
+
 [tool.pydantic-mypy]
 init_forbid_extra = true
 init_typed = true

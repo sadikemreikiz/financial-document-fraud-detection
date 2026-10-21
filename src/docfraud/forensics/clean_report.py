@@ -17,10 +17,12 @@ the threshold of its round.
 from collections.abc import Callable, Iterable, Mapping, Sequence
 from dataclasses import dataclass
 from functools import partial
+from pathlib import Path
 
 import numpy as np
 import numpy.typing as npt
 
+from docfraud.data.findit import load_findit2
 from docfraud.data.models import BBox, Document, Label
 from docfraud.evaluation.bootstrap import DEFAULT_RESAMPLES, Estimate, ratio, stratified
 from docfraud.evaluation.breakdowns import breakdown, flagged_by_budget, rules_blind
@@ -35,6 +37,7 @@ from docfraud.evaluation.detection import (
     roc_auc,
     threshold_metrics,
 )
+from docfraud.evaluation.folds import load_folds
 from docfraud.evaluation.localisation import (
     LARGE_RECTANGLE_SHARE,
     Guard,
@@ -53,15 +56,20 @@ from docfraud.forensics.clean import (
     TRUFOR,
     TRUFOR_SCORE,
     ProbeResults,
+    read_probe_results,
+    system_directory,
 )
 from docfraud.forensics.learned.inference import HIGHEST, QUARTER_SQUARE
-from docfraud.forensics.learned.results import Group, MeasuredReceipt, RunResults
+from docfraud.forensics.learned.pages import PageCache
+from docfraud.forensics.learned.results import Group, MeasuredReceipt, RunResults, read_results
+from docfraud.forensics.learned.rounds import RUNS, finished_records, require_trained, run_directory
 from docfraud.forensics.learned.sampler import System
 from docfraud.forensics.learned.text_scale import page_scan
 from docfraud.forensics.learned.training import RunRecord, binary_entropy, failure
 from docfraud.forensics.probe import PROPERTIES
 from docfraud.forensics.trufor import CITATION
 from docfraud.markdown import Cell, Table, render_table
+from docfraud.reading.ocr import CachedOcr, RapidOcrEngine
 
 MAP_SYSTEMS = (LATTICE, *(int(s) for s in System), TRUFOR)
 """The systems with a map, in the order of ADR-0014 (decision 6)."""
@@ -110,6 +118,72 @@ class CleanData:
     def seeds(self) -> list[int]:
         """The seeds of systems 2 to 4."""
         return sorted({seed for _, _, seed in self.learned})
+
+
+@dataclass(frozen=True, slots=True)
+class Sources:
+    """Where the clean measurement's inputs are kept."""
+
+    rounds: Path  # the runs and results of every round
+    data: Path  # the Find-it-again folder
+    folds: Path  # the stored cross-validation folds
+    pages: Path  # the page cache of the training split
+    ocr: Path  # the OCR cache
+
+    @classmethod
+    def of(cls, root: Path) -> Sources:
+        """The places in a checkout of this repository."""
+        return cls(
+            rounds=root / "artifacts" / "learned" / "rounds",
+            data=root / "data" / "raw" / "findit2",
+            folds=root / "annotations" / "findit2" / "cv-folds.json",
+            pages=root / "artifacts" / "learned" / "pages",
+            ocr=root / "artifacts" / "ocr",
+        )
+
+
+def load(  # pragma: no cover - needs the dataset and the measurement's runs
+    sources: Sources, held_out: tuple[int, ...] = CLEAN_FOLDS, resamples: int = DEFAULT_RESAMPLES
+) -> CleanData:
+    """Everything the report is made from, once every run of systems 2 to 4 has finished.
+
+    Raises:
+        RuntimeError: If the dataset lacks receipts of the folds.
+    """
+    require_trained(sources.rounds, held_out)
+    folds = load_folds(sources.folds)
+    chosen = {doc_id for doc_id, fold in folds.folds.items() if fold in held_out}
+    documents = {d.doc_id: d for d in load_findit2(sources.data) if d.doc_id in chosen}
+    if set(documents) != chosen:
+        msg = "the dataset lacks receipts of the folds"
+        raise RuntimeError(msg)
+    pages = PageCache(sources.pages)
+    ocr = CachedOcr(RapidOcrEngine(), sources.ocr)
+    words = {
+        doc_id: [token.box for token in ocr.recognize(pages.page(doc_id)).tokens]
+        for doc_id in sorted(documents)
+    }
+    records = {
+        (k, system, seed): record
+        for k in held_out
+        for (system, seed), record in zip(
+            RUNS, finished_records(sources.rounds, k, RUNS), strict=True
+        )
+    }
+    return CleanData(
+        records=records,
+        learned={key: read_results(run_directory(sources.rounds, *key)) for key in records},
+        untrained={
+            (k, system): read_results(system_directory(sources.rounds, k, system))
+            for k in held_out
+            for system in (LATTICE, TRUFOR)
+        },
+        probe={k: read_probe_results(sources.rounds, k) for k in held_out},
+        documents=documents,
+        words=words,
+        rounds=held_out,
+        resamples=resamples,
+    )
 
 
 def results_of(data: CleanData, system: int, held_out: int, seed: int) -> RunResults:
@@ -202,6 +276,13 @@ def _metric(
 ) -> Estimate:
     """A document metric with the stratified bootstrap interval of the evaluation protocol."""
     return stratified(lambda d: metric(labels[d], values[d]), labels, resamples=resamples)
+
+
+def precision_interval(
+    labels: npt.NDArray[np.bool_], scores: npt.NDArray[np.float64], resamples: int
+) -> Estimate:
+    """Average precision with the stratified bootstrap interval, as the primary metric has it."""
+    return _metric(average_precision, labels, scores, resamples)
 
 
 def _mean(values: Iterable[float], resamples: int) -> Estimate | None:
@@ -362,7 +443,7 @@ def primary_table(data: CleanData) -> Table:
         found = pooled(data, system)
         kept = np.array([r.key not in data.earlier for r in found.receipts], dtype=bool)
         rows.append([NAMES[system], *_primary_cells(found.labels, found.scores, kept, data)])
-    labels, scores, kept = _probe_arrays(data)
+    labels, scores, kept = probe_arrays(data)
     rows.append([f"{NAMES[PROBE]} (not a detector)", *_primary_cells(labels, scores, kept, data)])
     return Table(
         "Primary metric: document-level average precision",
@@ -392,7 +473,7 @@ def _earlier(data: CleanData) -> int:
     return len(data.earlier & set(data.documents))
 
 
-def _probe_arrays(
+def probe_arrays(
     data: CleanData,
 ) -> tuple[npt.NDArray[np.bool_], npt.NDArray[np.float64], npt.NDArray[np.bool_]]:
     """The probe's pooled labels and scores, and which receipts are not of earlier contact."""
@@ -904,7 +985,7 @@ def evidence_table(data: CleanData) -> Table:
 
 def probe_table(data: CleanData) -> Table:
     """Whether the dataset carries a global trace (ADR-0018, decision 4)."""
-    labels, scores, kept = _probe_arrays(data)
+    labels, scores, kept = probe_arrays(data)
     rows: list[list[Cell]] = []
     for name, chosen in (
         ("all", np.ones(labels.size, dtype=bool)),
@@ -1055,7 +1136,7 @@ def summary(data: CleanData) -> str:
         found = guard(localised(data, pooled(data, system).receipts), data.resamples)
         name = NAMES[system]
         lines.append(f"- {name[0].upper()}{name[1:]}: {_verdict(found)} by the localisation guard.")
-    labels, scores, _ = _probe_arrays(data)
+    labels, scores, _ = probe_arrays(data)
     ap = _metric(average_precision, labels, scores, data.resamples)
     trace = "carries a global trace" if ap.low > float(labels.mean()) else "shows no global trace"
     lines.append(f"- The global-trace probe: the dataset {trace} (ADR-0018).")

@@ -1,5 +1,5 @@
 .DEFAULT_GOAL := help
-.PHONY: help install lint format typecheck test test-data check data audit reports check-reports bench-ocr bench-synthesis trufor learned clean-measurement encoder-check clean
+.PHONY: help install lint format typecheck test test-data check data audit reports check-reports bench-ocr bench-synthesis trufor learned clean-measurement figures encoder-check clean
 
 help:  ## Show available targets
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*## "}; {printf "  %-18s %s\n", $$1, $$2}'
@@ -105,6 +105,9 @@ clean-measurement:  ## Clean measurement of every Phase 4 system, about 42 hours
 	uv run docfraud forensics measure-probe
 	$(KEEP_AWAKE) $(WITH_TRUFOR) docfraud forensics measure-trufor
 	uv run python -I experiments/clean_measurement.py
+
+figures:  ## Figures of the clean measurement (reports/forensics/figures; needs its runs)
+	uv run --with matplotlib==3.10.7 python -I experiments/clean_figures.py
 
 encoder-check:  ## One-time check that the learned models' encoder is torchvision's ResNet-18
 	uv run docfraud forensics download-resnet
