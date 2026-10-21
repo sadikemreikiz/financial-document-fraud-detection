@@ -109,6 +109,34 @@ development round in a scratch directory, never on a clean fold.
 - **Expected time.** From the trial and the development round: about 34 hours of training, 5 of
   measuring the learned models, half an hour for system 1 and 2.5 for TruFor, about 42 in all.
 
-## 4. The measurement
+## 4. The measurement (2026-10-19 to 2026-10-21)
 
-Written when it runs: the clean commit, the run records, the times and any defect.
+- **Commit.** Every run was trained and every system measured from the clean commit `2a8998f`,
+  with `UV_OFFLINE=1 make clean-measurement`, so that no step could reach the network. The
+  results are in the [report](../reports/forensics/clean-measurement.md); no result was looked at
+  before the report was written.
+- **Runs.** All 36 runs of systems 2 to 4 finished their 6,000 steps with the settings of
+  ADR-0022 and learned by its failure rule, in 0.94 to 1.12 hours each and 36.5 hours in all, on
+  the Apple GPU. Systems 1 and 6 were measured in every round, and the probe trained in every
+  round.
+- **Interruptions.** None was a defect and none a rerun: each time the measurement continued at
+  the same commit, and nothing was measured twice.
+  - It started on 2026-10-19 at 13:01 in the terminal panel of the Claude desktop app, whose
+    session ended between 13:17 and 13:21 and stopped the run with it at step 1,500 of the first
+    run (round 0, system 2, seed 0). At 14:45 it was started again in a detached `screen`
+    session, outside the app, and that run resumed from its checkpoint at step 1,500.
+  - At 23:20 the lid was closed for two minutes; the Mac slept and the run went on after it.
+    From then on `caffeinate` also held the Mac awake for the whole of `make`, not only for each
+    of its steps.
+  - On 2026-10-20 at 18:23 the measurement was stopped by hand, because another job on the
+    machine left too little memory, and it continued at 23:05; the run in progress (round 3,
+    system 4, seed 2) resumed from its checkpoint at step 5,000.
+  - Two runs therefore resumed from a checkpoint. The tiles of every step follow from the run's
+    seed and the step, so a resumed run trains on the tiles it would have seen; its weights are
+    not bit for bit those of an uninterrupted run, which training on the Apple GPU does not give
+    anyway (ADR-0022, decision 4).
+- **Times.** Training ended on 2026-10-21 at 08:02. Measuring the 36 networks took 4.5 hours
+  (until 12:30), system 1 32 minutes, the probe a minute and TruFor 2.4 hours (until 15:29); the
+  report was written at 15:31. The measuring processes held at most 3.0 GiB for the learned
+  models, 2.0 GiB for system 1 and 3.4 GiB for TruFor.
+- **Defects.** None was found.
