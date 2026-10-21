@@ -1,8 +1,68 @@
-# Phase 4 so far: pixel forensics
+# Phase 4 results: pixel forensics
 
-This page summarises Phase 4 up to the end of step 4.3 and links the generated reports behind
-every number. It is written by hand; when a number here and a generated report disagree, the
-generated report is right.
+This page summarises Phase 4 and links the generated reports behind every number. It is written
+by hand; when a number here and a generated report disagree, the generated report is right.
+
+## Results on the clean folds
+
+Every system was measured once, together, on the four clean folds that no person viewed in
+Phase 4: 449 receipts of the training split, 75 of them forged
+([report](clean-measurement.md), [record](../../docs/clean-measurement.md)). The numbers are
+cross-validated on the training split; the test split stays locked until Phase 7, so no claim
+against published work is made here.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="figures/clean-precision-dark.svg">
+  <img alt="Document-level average precision on the clean folds, with 95 % intervals: system 2 (synthetic forgeries) 0.65, system 1 (JPEG lattice) 0.51, system 4 (both) 0.44, system 3 (real forgeries) 0.30, system 6 (TruFor) 0.18, probe 0.19; chance 0.17." src="figures/clean-precision-light.svg">
+</picture>
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="figures/clean-localisation-dark.svg">
+  <img alt="Share of the 74 forged receipts with region annotations whose top region hits the edit, against a random box of the same size: system 2 0.69 against 0.03, system 1 0.80 against 0.36, system 4 0.66 against 0.03, system 3 0.41 against 0.03, system 6 0.35 against 0.07." src="figures/clean-localisation-light.svg">
+</picture>
+
+The figures are drawn by `make figures` from the measurement's results; the report's tables are
+their table view.
+
+- **RQ5: synthetic forgeries help.** Adding synthetic forgeries to the real ones (system 4
+  against system 3) raises the average precision by 0.139 (95 % interval 0.056 to 0.242), the
+  comparison fixed in advance; without the 98 receipts of earlier contact the gain is 0.206.
+  Trained on synthetic forgeries alone, system 2 beats the real ones by 0.348 (0.243 to 0.443).
+- **The best system is the one trained on synthetic forgeries only.** System 2 reaches an
+  average precision of 0.647 (0.554 to 0.739) against a chance level of 0.167, a ROC-AUC of
+  0.849, and an F1 of 0.573 at its validation threshold against the floor of 0.286; reviewing
+  its 10 % most suspicious receipts finds 45 % of the forgeries. Its three seeds agree within
+  0.03. That it also beats system 4 (0.437) was not a comparison fixed in advance, so it is
+  stated, not claimed.
+- **The systems find the edits, not a shortcut.** On the 74 forged receipts with region
+  annotations, system 2's most suspicious region hits the edit on 69 %, where a random box of
+  the same size hits 3 %; every system with a map passes the localisation guard. The global-trace
+  probe finds no trace of forgery in 28 global properties of the receipts (average precision
+  0.186, chance 0.167), and no system's score follows it (rank correlations 0.03 to 0.13).
+- **Pixel forensics sees what the accounting rules cannot.** On the 31 forged receipts whose
+  edits avoid amounts and products, measured against every authentic receipt, system 2 reaches
+  an average precision of 0.482 against a chance level of 0.077, and its 10 % review budget
+  finds 52 % of them.
+- **The classical trace holds; the pretrained model does not.** System 1, the JPEG-lattice map
+  without training, reaches 0.507 although it has evidence on only 49 of the 75 forged receipts
+  and on no page scan. TruFor, trained elsewhere, stays near chance (0.183, 0.153 to 0.233) and
+  flags mostly authentic receipts.
+- **The design fold did not flatter.** Systems 1, 2 and 3 score on the clean folds as on the
+  design fold (0.507, 0.647 and 0.298 against 0.500, 0.601 and 0.295); system 4 (0.437 against
+  0.602) and TruFor (0.183 against 0.270) score lower.
+
+### Limits of these results
+
+- Cross-validated numbers on the training split; the success criterion of ADR-0013 is judged on
+  the test split in Phase 7.
+- The size check of ADR-0015, descriptive on the clean folds, finds the score of system 3
+  growing with receipt size on three of four folds and that of system 4 on one; system 2's and
+  TruFor's do not.
+- At the 10 % budget system 2 flags 11 of the 23 authentic receipts with digital annotations,
+  which are digital edits, though benign; Phase 5's decision policy has to account for them.
+- No system finds the source of a copy, which Phase 5's copy-move detection is for.
+- The conventions and limitations that ADR-0022 lists for the learned models stand beside every
+  number (the [report](clean-measurement.md) states them).
 
 ## 4.1 Pre-registration
 
@@ -236,10 +296,10 @@ No clean-fold receipt was viewed, and nothing was predicted on a clean fold.
 
 ### What comes next
 
-- **Step 4.4** built the synthetic forgery engine (below); **step 4.5** builds the learned models
-  (systems 2 to 4).
-- **One clean measurement** follows when every system is frozen (ADR-0020); until then no
-  clean-fold number exists.
+- **Step 4.4** built the synthetic forgery engine and **step 4.5** the learned models (systems 2
+  to 4), both below.
+- **One clean measurement** followed once every system was frozen (ADR-0020, step 4.6); until
+  then no clean-fold number existed.
 
 ## 4.4 The synthetic forgery engine
 
@@ -264,6 +324,48 @@ checked and reviewed is in its [record](../../docs/synthetic-engine-development.
   forgeries) and the report's counts found five defects before the engine was committed, among
   them source boxes that would have inflated localisation hits; all are listed in the record.
 
+## 4.5 The learned models
+
+Systems 2 to 4 are one network trained on three kinds of forged tiles: synthetic forgeries only,
+real ones only, or both. Five decisions, each taken before any model was trained, are recorded
+in [ADR-0022](../../docs/decisions/0022-learned-models.md); how the code implements them and what
+the development round found is in their [record](../../docs/learned-models-development.md).
+
+- **The network.** A U-Net with ImageNet's ResNet-18 as encoder, on grayscale receipts at their
+  native resolution, trained on tiles of 384 pixels for a fixed 6,000 steps with seeds 0, 1 and
+  2 in every round. The three systems share the architecture, the settings, the initial weights
+  of a seed and every tile without an edit; only the source of their forged tiles differs.
+- **The development round.** Nine runs on the design fold. The fixed order of document scores
+  failed its size check for systems 3 and 4: page scans, whose letters are about 2.2 times as
+  high, gave their maps more pixels per word to peak in. A diagnostic on authentic receipts only
+  traced it to that, and [ADR-0023](../../docs/decisions/0023-learned-score-at-text-scale.md),
+  written after those results and saying so, added two scores at the scale of the text, with a
+  fixed end point if neither passed. The first, the highest mean over a square a quarter of the
+  text height wide, passed for the seed-0 run of every system, and systems 2 to 4 were frozen
+  with it
+  ([development report](learned-development.md)).
+
+## 4.6 The clean measurement
+
+The single measurement of [ADR-0020](../../docs/decisions/0020-clean-folds-measured-together.md)
+ran from one clean commit between 2026-10-19 and 2026-10-21, after a trial on the design fold had
+reproduced every known number through the new commands
+([record](../../docs/clean-measurement.md)).
+
+- **Fixed before it ran.** The order (all 36 trainings first, then every system's predictions,
+  then the report), calibration for TruFor alone, breakdowns at the 10 % budget, a descriptive
+  size check per fold, the spread over seeds and the trial.
+- **What it took.** 36 runs of about an hour each, 36.5 hours of training, then 7.5 hours of
+  measuring. The run stopped twice, once when the desktop app's session that hosted it ended and
+  once by hand; it continued each time from the same commit, two runs from a checkpoint, and
+  nothing was measured twice.
+
+## What comes next
+
+Phase 5 combines the evidence: copy-move detection, linking pixel evidence to the fields it
+changes, fusion with the accounting rules, a decision policy and an audit report. The learned
+model's maps and the rules' verdicts complement each other on the receipts above.
+
 ## Reproducing
 
 ```bash
@@ -275,6 +377,9 @@ uv run python experiments/jpeg_trace_comparison.py       # jpeg-trace-comparison
 uv run python experiments/system1_development.py         # system-1-development.md
 uv run python experiments/global_trace_probe.py          # global-trace-probe-development.md
 make trufor                                              # system-6-development.md (Apple GPU)
+make learned                                             # learned-development.md (Apple GPU)
+make clean-measurement                                   # clean-measurement.md (Apple GPU)
+make figures                                             # figures/ (from the measurement)
 uv run python experiments/synthetic_engine.py            # ../synthesis/engine.md
 uv run docfraud synthesis review-report --round 1        # ../synthesis/realism-review.md
 ```
