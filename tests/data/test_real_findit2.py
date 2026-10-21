@@ -6,6 +6,7 @@ from pathlib import Path
 import pytest
 
 from docfraud.data.audit import build_audit, inspect_files, render_audit
+from docfraud.data.benign_marks import marks_plan
 from docfraud.data.download import FINDIT2
 from docfraud.data.duplicates import find_candidates, resolve_duplicates, undocumented
 from docfraud.data.findit import (
@@ -15,7 +16,7 @@ from docfraud.data.findit import (
     load_findit2,
 )
 from docfraud.data.models import Document, Label, Split
-from docfraud.data.normalize import read_transcript
+from docfraud.data.normalize import BOX_PREFIX, read_transcript
 from docfraud.data.splits import check_disjoint
 from docfraud.evaluation.folds import assign_folds, check_folds, load_folds
 
@@ -69,11 +70,27 @@ def test_normalised_transcripts_carry_no_format_traces(documents: tuple[Document
         text = read_transcript(document.transcript_path)
         assert "\r" not in text
         assert all(line == line.rstrip() for line in text.splitlines())
+        assert not any(BOX_PREFIX.match(line) for line in text.splitlines())
 
 
 @pytest.fixture(scope="module")
 def raw_documents() -> tuple[Document, ...]:
     return load_findit2(DATA, duplicate_groups=())
+
+
+def test_one_transcript_carries_box_coordinates(raw_documents: tuple[Document, ...]) -> None:
+    # Every file, including the copies that the audit leaves out (data card, Shortcuts).
+    boxed = [
+        d.doc_id
+        for d in raw_documents
+        if d.transcript_path
+        and any(
+            BOX_PREFIX.match(line)
+            for line in d.transcript_path.read_text(encoding="utf-8").splitlines()
+        )
+    ]
+    assert len(raw_documents) == 987
+    assert boxed == ["X51008030565"]
 
 
 def test_the_test_split_is_kept_whole(raw_documents: tuple[Document, ...]) -> None:
@@ -107,3 +124,20 @@ def test_stored_folds_match_the_training_split(documents: tuple[Document, ...]) 
     stored = load_folds(CV_FOLDS)
     check_folds(stored, documents)
     assert stored == assign_folds(documents, n_folds=stored.n_folds, seed=stored.seed)
+
+
+def test_the_benign_marks_plan_has_the_receipts_of_the_guide(
+    documents: tuple[Document, ...],
+) -> None:
+    by_id = {d.doc_id: d for d in documents}
+    plan = marks_plan(documents)
+    groups = Counter(
+        (by_id[d].label, by_id[d].handwritten_annotation, by_id[d].digital_annotation) for d in plan
+    )
+    assert len(plan) == len(set(plan)) == 58  # docs/benign-marks-guide.md, "Receipts"
+    assert groups == {
+        (Label.AUTHENTIC, True, False): 45,
+        (Label.AUTHENTIC, True, True): 4,
+        (Label.AUTHENTIC, False, True): 1,
+        (Label.FORGED, True, False): 8,
+    }

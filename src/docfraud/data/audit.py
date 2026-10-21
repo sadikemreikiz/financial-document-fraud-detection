@@ -20,7 +20,7 @@ from PIL import Image
 from docfraud.data.duplicates import Dropped, DuplicateGroup
 from docfraud.data.findit import KNOWN_CORRECTIONS
 from docfraud.data.models import Document, Entity, Label, RegionRole, Split, Technique
-from docfraud.data.normalize import normalize_transcript
+from docfraud.data.normalize import BOX_PREFIX, normalize_transcript
 from docfraud.data.splits import check_disjoint
 from docfraud.markdown import Cell, Table, render_table
 
@@ -42,8 +42,10 @@ class FileTraits:
     crlf: bool
     trailing_whitespace: bool
     non_ascii: bool
+    box_coordinates: bool
     normalized_crlf: bool
     normalized_trailing_whitespace: bool
+    normalized_box_coordinates: bool
     normalized_transcript_bytes: int
 
     @property
@@ -80,14 +82,20 @@ def inspect_files(document: Document) -> FileTraits:
         crlf="\r" in text,
         trailing_whitespace=_has_trailing_whitespace(text),
         non_ascii=not text.isascii(),
+        box_coordinates=_has_box_coordinates(text),
         normalized_crlf="\r" in normalized,
         normalized_trailing_whitespace=_has_trailing_whitespace(normalized),
+        normalized_box_coordinates=_has_box_coordinates(normalized),
         normalized_transcript_bytes=len(normalized.encode("utf-8")),
     )
 
 
 def _has_trailing_whitespace(text: str) -> bool:
     return any(line != line.rstrip() for line in text.replace("\r\n", "\n").split("\n"))
+
+
+def _has_box_coordinates(text: str) -> bool:
+    return any(BOX_PREFIX.match(line) for line in text.splitlines())
 
 
 def roc_auc(scores: Sequence[float], positives: Sequence[bool]) -> float:
@@ -300,12 +308,18 @@ def _integrity(traits: Sequence[FileTraits]) -> Table:
     unlocalisable = [
         t.document.doc_id for t in traits if t.forged and not t.document.has_region_annotations
     ]
+    box_format = [
+        f"{t.document.doc_id} ({t.document.split}, {t.document.label})"
+        for t in traits
+        if t.box_coordinates
+    ]
     rows: list[list[Cell]] = [
         ["No document or source document in more than one split", "passed"],
         ["Images decoded", f"{len(traits)} / {len(traits)}"],
         ["Transcripts decoded as strict UTF-8", f"{len(traits)} / {len(traits)}"],
         ["Regions outside the image bounds", out_of_bounds],
         ["Forged documents without region annotations", ", ".join(unlocalisable) or "none"],
+        ["Transcripts with SROIE box coordinates", ", ".join(box_format) or "none"],
     ]
     return Table("Integrity checks", ["Check", "Result"], rows)
 
@@ -339,12 +353,22 @@ _BINARY_TRAITS = (
         lambda t: t.non_ascii,
     ),
     _BinaryTrait(
+        "Transcript has SROIE box coordinates",
+        "removed: coordinates stripped",
+        lambda t: t.box_coordinates,
+    ),
+    _BinaryTrait(
         "After normalisation: CR line endings", "must be 0 %", lambda t: t.normalized_crlf
     ),
     _BinaryTrait(
         "After normalisation: trailing whitespace",
         "must be 0 %",
         lambda t: t.normalized_trailing_whitespace,
+    ),
+    _BinaryTrait(
+        "After normalisation: SROIE box coordinates",
+        "must be 0 %",
+        lambda t: t.normalized_box_coordinates,
     ),
 )
 

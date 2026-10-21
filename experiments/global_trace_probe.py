@@ -1,0 +1,128 @@
+"""Development round of the global-trace probe, system 5 (ADR-0018).
+
+Writes reports/forensics/global-trace-probe-development.md: the forest trained on folds 0, 1, 3
+and 4 predicts fold 2, once, to check the code; nothing is chosen from the result. The clean
+measurement (folds 0, 1, 3 and 4 predicted) is a separate, one-time run at the time decision 6
+of step 4.3 fixes. The clean folds are read by code for training only; nothing per receipt of
+theirs is reported.
+
+Usage: ``uv run python experiments/global_trace_probe.py``
+"""
+
+from concurrent.futures import ProcessPoolExecutor
+from pathlib import Path
+
+import numpy as np
+
+from docfraud.data.findit import load_findit2
+from docfraud.data.models import Label, Split
+from docfraud.data.normalize import load_grayscale
+from docfraud.data.splits import select
+from docfraud.evaluation.bootstrap import stratified
+from docfraud.evaluation.design_fold import DESIGN_FOLD, DESIGN_FOLD_IDS
+from docfraud.evaluation.detection import average_precision, roc_auc
+from docfraud.evaluation.folds import load_folds
+from docfraud.forensics.probe import (
+    PROPERTIES,
+    SEED,
+    TREES,
+    PropertyCache,
+    as_matrix,
+    probe_scores,
+)
+from docfraud.markdown import Cell, Table, render_table
+
+ROOT = Path(__file__).resolve().parents[1]
+OUTPUT = ROOT / "reports" / "forensics" / "global-trace-probe-development.md"
+DATA = ROOT / "data" / "raw" / "findit2"
+FOLDS = ROOT / "annotations" / "findit2" / "cv-folds.json"
+CACHE = ROOT / "artifacts" / "probe"
+WORKERS = 4  # page scans need about 1 GB each
+
+
+def _properties(path: str) -> dict[str, float]:
+    return PropertyCache(CACHE).properties(load_grayscale(Path(path)))
+
+
+def round_table(forged: np.ndarray, scores: np.ndarray, trained_on: int) -> Table:
+    """Average precision and ROC-AUC of the development round."""
+    interval = stratified(lambda draw: average_precision(forged[draw], scores[draw]), forged)
+    return Table(
+        "Development round: fold 2 predicted",
+        [
+            "Trained on",
+            "Predicted",
+            "Forged",
+            "Chance",
+            "Average precision (95 % interval)",
+            "ROC-AUC",
+        ],
+        [
+            [
+                f"{trained_on} receipts of folds 0, 1, 3, 4",
+                len(forged),
+                int(forged.sum()),
+                float(forged.mean()),
+                f"{interval.value:.3f} ({interval.low:.3f} to {interval.high:.3f})",
+                roc_auc(forged, scores),
+            ]
+        ],
+        f"Random forest, {TREES} trees, seed {SEED}, library defaults otherwise (ADR-0018). The "
+        "interval is the stratified bootstrap of the evaluation protocol (10,000 resamples, seed "
+        "0). Run once to check the code; the rule of ADR-0018 applies to the clean measurement "
+        "only.",
+    )
+
+
+def property_table(forged: np.ndarray, values: np.ndarray) -> Table:
+    """Each property on the design fold: how often it is empty and its ROC-AUC alone."""
+    rows: list[list[Cell]] = []
+    for column, name in enumerate(PROPERTIES):
+        defined = np.isfinite(values[:, column])
+        both = forged[defined].any() and not forged[defined].all()
+        rows.append(
+            [
+                name,
+                int((~defined).sum()),
+                roc_auc(forged[defined], values[defined, column]) if both else None,
+            ]
+        )
+    return Table(
+        "Properties on the design fold",
+        ["Property", "Empty", "ROC-AUC alone"],
+        rows,
+        f"Over the {len(forged)} receipts of fold 2. ROC-AUC alone: the property used as a "
+        "fraud score on the receipts where it is defined; 0.5 means no signal, below 0.5 a signal "
+        "in the other direction. Descriptive: the list of properties is fixed by ADR-0018.",
+    )
+
+
+def main() -> None:
+    """Compute the properties, run the development round and write the report."""
+    documents = sorted(select(load_findit2(DATA), Split.TRAIN), key=lambda d: d.doc_id)
+    folds = load_folds(FOLDS)
+    with ProcessPoolExecutor(max_workers=WORKERS) as pool:
+        found = list(pool.map(_properties, [str(d.image_path) for d in documents]))
+    values = as_matrix(found)
+    forged = np.array([d.label is Label.FORGED for d in documents])
+    held_out = np.array([folds.folds[d.doc_id] == DESIGN_FOLD for d in documents])
+    if {d.doc_id for d, h in zip(documents, held_out, strict=True) if h} != DESIGN_FOLD_IDS:
+        msg = "fold 2 of the stored folds differs from the design fold"
+        raise RuntimeError(msg)
+    scores = probe_scores(values[~held_out], forged[~held_out], values[held_out])
+    tables = [
+        round_table(forged[held_out], scores, int((~held_out).sum())),
+        property_table(forged[held_out], values[held_out]),
+    ]
+    header = (
+        "# Global-trace probe: development round\n\n"
+        "> Generated by `experiments/global_trace_probe.py`. Do not edit by hand.\n\n"
+        "System 5 of [ADR-0018](../../docs/decisions/0018-global-trace-probe.md), run once on "
+        "the design fold to check the code. The clean measurement is made once, separately.\n\n"
+    )
+    OUTPUT.write_text(header + "\n".join(render_table(t) for t in tables), encoding="utf-8")
+    print(f"written: {OUTPUT.relative_to(ROOT)}")  # noqa: T201
+
+
+if __name__ == "__main__":
+    main()

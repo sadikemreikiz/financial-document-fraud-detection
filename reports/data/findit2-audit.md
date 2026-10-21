@@ -108,6 +108,7 @@ Areas come from annotated rectangles, which are larger than the edited pixels.
 | Transcripts decoded as strict UTF-8 | 970 / 970 |
 | Regions outside the image bounds | 0 |
 | Forged documents without region annotations | X51008114260 |
+| Transcripts with SROIE box coordinates | X51008030565 (train, forged) |
 
 ### Shortcut audit: binary traits
 
@@ -119,8 +120,10 @@ Areas come from annotated rectangles, which are larger than the edited pixels.
 | Transcript has CR line endings | 1.9 % | 0.0 % | removed: LF only |
 | Transcript has trailing whitespace | 1.2 % | 0.2 % | removed: stripped |
 | Transcript has non-ASCII characters | 1.2 % | 0.1 % | content, kept: e.g. a wrong currency symbol |
+| Transcript has SROIE box coordinates | 0.6 % | 0.0 % | removed: coordinates stripped |
 | After normalisation: CR line endings | 0.0 % | 0.0 % | must be 0 % |
 | After normalisation: trailing whitespace | 0.0 % | 0.0 % | must be 0 % |
+| After normalisation: SROIE box coordinates | 0.0 % | 0.0 % | must be 0 % |
 
 A trait that differs between classes but is not evidence of forgery is a shortcut. Format traits are removed by normalisation; content traits are kept on purpose.
 
@@ -133,7 +136,7 @@ A trait that differs between classes but is not evidence of forgery is a shortcu
 | Image height | 0.518 |
 | Image area | 0.522 |
 | Transcript bytes, raw | 0.486 |
-| Transcript bytes, normalised | 0.485 |
+| Transcript bytes, normalised | 0.481 |
 
 0.5 means no signal. The file size reflects re-saving with editing tools and is never visible to models, which receive decoded, normalised pixels.
 

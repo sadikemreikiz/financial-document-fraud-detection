@@ -1,0 +1,892 @@
+{
+  "run_id": "20261012T132532799647Z-rules-breakdown",
+  "name": "rules-breakdown",
+  "started": "2026-10-12T13:25:32.799647Z",
+  "finished": "2026-10-12T13:25:32.802535Z",
+  "code": {
+    "commit": "35d1e82d9e14e94835bac7e330163dd58d1eb8e4",
+    "dirty": false
+  },
+  "environment": {
+    "python": "3.14.8",
+    "docfraud": "2.0.0.dev0",
+    "packages": {
+      "annotated-doc": "0.0.5",
+      "annotated-types": "0.8.0",
+      "antlr4-python3-runtime": "4.9.3",
+      "ast_serialize": "0.12.1",
+      "certifi": "2026.7.22",
+      "cfgv": "3.5.0",
+      "charset-normalizer": "3.5.2",
+      "cloudpickle": "3.1.2",
+      "colorlog": "6.12.0",
+      "coverage": "7.16.2",
+      "distlib": "0.4.3",
+      "docfraud": "2.0.0.dev0",
+      "filelock": "4.0.12",
+      "flatbuffers": "25.12.19",
+      "identify": "2.6.20",
+      "idna": "3.20",
+      "iniconfig": "2.3.0",
+      "joblib": "1.6.0",
+      "librt": "0.16.0",
+      "markdown-it-py": "4.2.0",
+      "mdurl": "0.1.2",
+      "mypy": "2.4.0",
+      "mypy_extensions": "1.1.0",
+      "narwhals": "2.26.0",
+      "nodeenv": "1.11.0",
+      "numpy": "2.5.3",
+      "omegaconf": "2.3.1",
+      "onnxruntime": "1.30.0",
+      "opencv-python": "5.0.0.93",
+      "packaging": "26.3",
+      "pathspec": "1.1.1",
+      "pillow": "12.3.0",
+      "platformdirs": "4.12.3",
+      "pluggy": "1.6.0",
+      "pre_commit": "4.6.2",
+      "protobuf": "7.36.2",
+      "pyclipper": "1.4.0",
+      "pydantic": "2.13.5",
+      "pydantic_core": "2.46.5",
+      "pygments": "2.21.0",
+      "pytest": "9.1.1",
+      "pytest-cov": "7.1.0",
+      "python-discovery": "1.6.1",
+      "pyyaml": "6.0.3",
+      "rapidocr": "3.9.2",
+      "requests": "2.34.2",
+      "rich": "15.0.0",
+      "ruff": "0.16.10",
+      "scikit-learn": "1.9.1",
+      "scipy": "1.18.1",
+      "shapely": "2.1.2",
+      "shellingham": "1.5.4",
+      "six": "1.17.0",
+      "threadpoolctl": "3.7.0",
+      "tqdm": "4.70.1",
+      "typer": "0.27.2",
+      "typing-inspection": "0.4.4",
+      "typing_extensions": "4.16.0",
+      "urllib3": "2.8.0",
+      "virtualenv": "21.14.5"
+    },
+    "platform": "macOS-15.7.7-arm64-arm-64bit-Mach-O",
+    "machine": "arm64",
+    "processor": "arm",
+    "cpu_count": 10,
+    "memory_bytes": 17179869184
+  },
+  "config": {
+    "from_runs": {
+      "training": "20261012T132413572418Z-rules-cv",
+      "validation": "20261007T082342276385Z-rules-validation"
+    },
+    "review_budget": 0.1
+  },
+  "config_hash": "62433ab4daf194decf1ecbd49c216a0b82cd9b172e60a36a6c79322251a26dab",
+  "dataset_sha256": {
+    "findit2": "6f8c6f134951956627edcc06c7e8fc298abb9e984073ab193174aee204d46261"
+  },
+  "seeds": {},
+  "test_unlocks": [],
+  "results": {
+    "training": {
+      "transcript": {
+        "any_fail": {
+          "forged": {
+            "technique": {
+              "cpi": {
+                "receipts": 73.0,
+                "found": 35.0
+              },
+              "cpo": {
+                "receipts": 4.0,
+                "found": 2.0
+              },
+              "cut": {
+                "receipts": 16.0,
+                "found": 8.0
+              },
+              "imi": {
+                "receipts": 9.0,
+                "found": 5.0
+              },
+              "not annotated": {
+                "receipts": 1.0,
+                "found": 1.0
+              },
+              "other": {
+                "receipts": 3.0,
+                "found": 1.0
+              },
+              "pix": {
+                "receipts": 13.0,
+                "found": 7.0
+              }
+            },
+            "entity": {
+              "company": {
+                "receipts": 7.0,
+                "found": 1.0
+              },
+              "metadata": {
+                "receipts": 33.0,
+                "found": 14.0
+              },
+              "not annotated": {
+                "receipts": 1.0,
+                "found": 1.0
+              },
+              "other": {
+                "receipts": 9.0,
+                "found": 4.0
+              },
+              "product": {
+                "receipts": 28.0,
+                "found": 15.0
+              },
+              "total_payment": {
+                "receipts": 46.0,
+                "found": 31.0
+              }
+            },
+            "software": {
+              "aperçu": {
+                "receipts": 7.0,
+                "found": 3.0
+              },
+              "gimp": {
+                "receipts": 40.0,
+                "found": 19.0
+              },
+              "kolourpaint": {
+                "receipts": 1.0,
+                "found": 1.0
+              },
+              "not recorded": {
+                "receipts": 1.0,
+                "found": 1.0
+              },
+              "paint": {
+                "receipts": 38.0,
+                "found": 20.0
+              },
+              "paint3d": {
+                "receipts": 7.0,
+                "found": 5.0
+              }
+            }
+          },
+          "authentic": {
+            "digital": {
+              "receipts": 10.0,
+              "flagged": 4.0
+            },
+            "handwritten": {
+              "receipts": 233.0,
+              "flagged": 81.0
+            },
+            "handwritten and digital": {
+              "receipts": 18.0,
+              "flagged": 5.0
+            },
+            "none": {
+              "receipts": 207.0,
+              "flagged": 83.0
+            }
+          }
+        },
+        "learned_at_budget": {
+          "forged": {
+            "technique": {
+              "cpi": {
+                "receipts": 73.0,
+                "found": 12.0
+              },
+              "cpo": {
+                "receipts": 4.0,
+                "found": 0.0
+              },
+              "cut": {
+                "receipts": 16.0,
+                "found": 3.0
+              },
+              "imi": {
+                "receipts": 9.0,
+                "found": 2.0
+              },
+              "not annotated": {
+                "receipts": 1.0,
+                "found": 0.0
+              },
+              "other": {
+                "receipts": 3.0,
+                "found": 1.0
+              },
+              "pix": {
+                "receipts": 13.0,
+                "found": 2.0
+              }
+            },
+            "entity": {
+              "company": {
+                "receipts": 7.0,
+                "found": 1.0
+              },
+              "metadata": {
+                "receipts": 33.0,
+                "found": 2.0
+              },
+              "not annotated": {
+                "receipts": 1.0,
+                "found": 0.0
+              },
+              "other": {
+                "receipts": 9.0,
+                "found": 2.0
+              },
+              "product": {
+                "receipts": 28.0,
+                "found": 3.0
+              },
+              "total_payment": {
+                "receipts": 46.0,
+                "found": 12.0
+              }
+            },
+            "software": {
+              "aperçu": {
+                "receipts": 7.0,
+                "found": 2.0
+              },
+              "gimp": {
+                "receipts": 40.0,
+                "found": 6.0
+              },
+              "kolourpaint": {
+                "receipts": 1.0,
+                "found": 0.0
+              },
+              "not recorded": {
+                "receipts": 1.0,
+                "found": 0.0
+              },
+              "paint": {
+                "receipts": 38.0,
+                "found": 4.0
+              },
+              "paint3d": {
+                "receipts": 7.0,
+                "found": 4.0
+              }
+            }
+          },
+          "authentic": {
+            "digital": {
+              "receipts": 10.0,
+              "flagged": 0.0
+            },
+            "handwritten": {
+              "receipts": 233.0,
+              "flagged": 23.0
+            },
+            "handwritten and digital": {
+              "receipts": 18.0,
+              "flagged": 0.0
+            },
+            "none": {
+              "receipts": 207.0,
+              "flagged": 17.200000000000003
+            }
+          }
+        }
+      },
+      "ocr": {
+        "any_fail": {
+          "forged": {
+            "technique": {
+              "cpi": {
+                "receipts": 73.0,
+                "found": 38.0
+              },
+              "cpo": {
+                "receipts": 4.0,
+                "found": 2.0
+              },
+              "cut": {
+                "receipts": 16.0,
+                "found": 9.0
+              },
+              "imi": {
+                "receipts": 9.0,
+                "found": 5.0
+              },
+              "not annotated": {
+                "receipts": 1.0,
+                "found": 1.0
+              },
+              "other": {
+                "receipts": 3.0,
+                "found": 1.0
+              },
+              "pix": {
+                "receipts": 13.0,
+                "found": 7.0
+              }
+            },
+            "entity": {
+              "company": {
+                "receipts": 7.0,
+                "found": 1.0
+              },
+              "metadata": {
+                "receipts": 33.0,
+                "found": 16.0
+              },
+              "not annotated": {
+                "receipts": 1.0,
+                "found": 1.0
+              },
+              "other": {
+                "receipts": 9.0,
+                "found": 4.0
+              },
+              "product": {
+                "receipts": 28.0,
+                "found": 17.0
+              },
+              "total_payment": {
+                "receipts": 46.0,
+                "found": 31.0
+              }
+            },
+            "software": {
+              "aperçu": {
+                "receipts": 7.0,
+                "found": 3.0
+              },
+              "gimp": {
+                "receipts": 40.0,
+                "found": 20.0
+              },
+              "kolourpaint": {
+                "receipts": 1.0,
+                "found": 1.0
+              },
+              "not recorded": {
+                "receipts": 1.0,
+                "found": 1.0
+              },
+              "paint": {
+                "receipts": 38.0,
+                "found": 22.0
+              },
+              "paint3d": {
+                "receipts": 7.0,
+                "found": 5.0
+              }
+            }
+          },
+          "authentic": {
+            "digital": {
+              "receipts": 10.0,
+              "flagged": 5.0
+            },
+            "handwritten": {
+              "receipts": 233.0,
+              "flagged": 86.0
+            },
+            "handwritten and digital": {
+              "receipts": 18.0,
+              "flagged": 9.0
+            },
+            "none": {
+              "receipts": 207.0,
+              "flagged": 82.0
+            }
+          }
+        },
+        "learned_at_budget": {
+          "forged": {
+            "technique": {
+              "cpi": {
+                "receipts": 73.0,
+                "found": 10.0
+              },
+              "cpo": {
+                "receipts": 4.0,
+                "found": 0.0
+              },
+              "cut": {
+                "receipts": 16.0,
+                "found": 2.0
+              },
+              "imi": {
+                "receipts": 9.0,
+                "found": 1.0
+              },
+              "not annotated": {
+                "receipts": 1.0,
+                "found": 0.0
+              },
+              "other": {
+                "receipts": 3.0,
+                "found": 1.0
+              },
+              "pix": {
+                "receipts": 13.0,
+                "found": 2.0
+              }
+            },
+            "entity": {
+              "company": {
+                "receipts": 7.0,
+                "found": 1.0
+              },
+              "metadata": {
+                "receipts": 33.0,
+                "found": 2.0
+              },
+              "not annotated": {
+                "receipts": 1.0,
+                "found": 0.0
+              },
+              "other": {
+                "receipts": 9.0,
+                "found": 1.0
+              },
+              "product": {
+                "receipts": 28.0,
+                "found": 2.0
+              },
+              "total_payment": {
+                "receipts": 46.0,
+                "found": 10.0
+              }
+            },
+            "software": {
+              "aperçu": {
+                "receipts": 7.0,
+                "found": 1.0
+              },
+              "gimp": {
+                "receipts": 40.0,
+                "found": 4.0
+              },
+              "kolourpaint": {
+                "receipts": 1.0,
+                "found": 0.0
+              },
+              "not recorded": {
+                "receipts": 1.0,
+                "found": 0.0
+              },
+              "paint": {
+                "receipts": 38.0,
+                "found": 5.0
+              },
+              "paint3d": {
+                "receipts": 7.0,
+                "found": 3.0
+              }
+            }
+          },
+          "authentic": {
+            "digital": {
+              "receipts": 10.0,
+              "flagged": 0.0
+            },
+            "handwritten": {
+              "receipts": 233.0,
+              "flagged": 29.0
+            },
+            "handwritten and digital": {
+              "receipts": 18.0,
+              "flagged": 1.0
+            },
+            "none": {
+              "receipts": 207.0,
+              "flagged": 13.200000000000003
+            }
+          }
+        }
+      }
+    },
+    "validation": {
+      "transcript": {
+        "any_fail": {
+          "forged": {
+            "technique": {
+              "cpi": {
+                "receipts": 26.0,
+                "found": 17.0
+              },
+              "cpo": {
+                "receipts": 1.0,
+                "found": 0.0
+              },
+              "cut": {
+                "receipts": 6.0,
+                "found": 4.0
+              },
+              "imi": {
+                "receipts": 1.0,
+                "found": 1.0
+              },
+              "other": {
+                "receipts": 1.0,
+                "found": 0.0
+              },
+              "pix": {
+                "receipts": 3.0,
+                "found": 2.0
+              }
+            },
+            "entity": {
+              "company": {
+                "receipts": 2.0,
+                "found": 2.0
+              },
+              "metadata": {
+                "receipts": 12.0,
+                "found": 3.0
+              },
+              "other": {
+                "receipts": 4.0,
+                "found": 3.0
+              },
+              "product": {
+                "receipts": 8.0,
+                "found": 7.0
+              },
+              "total_payment": {
+                "receipts": 17.0,
+                "found": 16.0
+              }
+            },
+            "software": {
+              "aperçu": {
+                "receipts": 5.0,
+                "found": 2.0
+              },
+              "gimp": {
+                "receipts": 11.0,
+                "found": 7.0
+              },
+              "kolourpaint": {
+                "receipts": 2.0,
+                "found": 2.0
+              },
+              "paint": {
+                "receipts": 13.0,
+                "found": 9.0
+              },
+              "paint3d": {
+                "receipts": 2.0,
+                "found": 1.0
+              }
+            }
+          },
+          "authentic": {
+            "digital": {
+              "receipts": 3.0,
+              "flagged": 1.0
+            },
+            "handwritten": {
+              "receipts": 66.0,
+              "flagged": 22.0
+            },
+            "handwritten and digital": {
+              "receipts": 5.0,
+              "flagged": 2.0
+            },
+            "none": {
+              "receipts": 83.0,
+              "flagged": 33.0
+            }
+          }
+        },
+        "learned_at_budget": {
+          "forged": {
+            "technique": {
+              "cpi": {
+                "receipts": 26.0,
+                "found": 6.8
+              },
+              "cpo": {
+                "receipts": 1.0,
+                "found": 0.0
+              },
+              "cut": {
+                "receipts": 6.0,
+                "found": 1.0
+              },
+              "imi": {
+                "receipts": 1.0,
+                "found": 1.0
+              },
+              "other": {
+                "receipts": 1.0,
+                "found": 0.0
+              },
+              "pix": {
+                "receipts": 3.0,
+                "found": 1.0
+              }
+            },
+            "entity": {
+              "company": {
+                "receipts": 2.0,
+                "found": 1.0
+              },
+              "metadata": {
+                "receipts": 12.0,
+                "found": 2.0
+              },
+              "other": {
+                "receipts": 4.0,
+                "found": 1.0
+              },
+              "product": {
+                "receipts": 8.0,
+                "found": 2.0
+              },
+              "total_payment": {
+                "receipts": 17.0,
+                "found": 7.8
+              }
+            },
+            "software": {
+              "aperçu": {
+                "receipts": 5.0,
+                "found": 2.0
+              },
+              "gimp": {
+                "receipts": 11.0,
+                "found": 2.0
+              },
+              "kolourpaint": {
+                "receipts": 2.0,
+                "found": 1.0
+              },
+              "paint": {
+                "receipts": 13.0,
+                "found": 4.8
+              },
+              "paint3d": {
+                "receipts": 2.0,
+                "found": 0.0
+              }
+            }
+          },
+          "authentic": {
+            "digital": {
+              "receipts": 3.0,
+              "flagged": 0.0
+            },
+            "handwritten": {
+              "receipts": 66.0,
+              "flagged": 3.8
+            },
+            "handwritten and digital": {
+              "receipts": 5.0,
+              "flagged": 0.0
+            },
+            "none": {
+              "receipts": 83.0,
+              "flagged": 5.4
+            }
+          }
+        }
+      },
+      "ocr": {
+        "any_fail": {
+          "forged": {
+            "technique": {
+              "cpi": {
+                "receipts": 26.0,
+                "found": 16.0
+              },
+              "cpo": {
+                "receipts": 1.0,
+                "found": 0.0
+              },
+              "cut": {
+                "receipts": 6.0,
+                "found": 4.0
+              },
+              "imi": {
+                "receipts": 1.0,
+                "found": 1.0
+              },
+              "other": {
+                "receipts": 1.0,
+                "found": 0.0
+              },
+              "pix": {
+                "receipts": 3.0,
+                "found": 1.0
+              }
+            },
+            "entity": {
+              "company": {
+                "receipts": 2.0,
+                "found": 2.0
+              },
+              "metadata": {
+                "receipts": 12.0,
+                "found": 2.0
+              },
+              "other": {
+                "receipts": 4.0,
+                "found": 3.0
+              },
+              "product": {
+                "receipts": 8.0,
+                "found": 7.0
+              },
+              "total_payment": {
+                "receipts": 17.0,
+                "found": 15.0
+              }
+            },
+            "software": {
+              "aperçu": {
+                "receipts": 5.0,
+                "found": 2.0
+              },
+              "gimp": {
+                "receipts": 11.0,
+                "found": 6.0
+              },
+              "kolourpaint": {
+                "receipts": 2.0,
+                "found": 2.0
+              },
+              "paint": {
+                "receipts": 13.0,
+                "found": 8.0
+              },
+              "paint3d": {
+                "receipts": 2.0,
+                "found": 1.0
+              }
+            }
+          },
+          "authentic": {
+            "digital": {
+              "receipts": 3.0,
+              "flagged": 1.0
+            },
+            "handwritten": {
+              "receipts": 66.0,
+              "flagged": 21.0
+            },
+            "handwritten and digital": {
+              "receipts": 5.0,
+              "flagged": 4.0
+            },
+            "none": {
+              "receipts": 83.0,
+              "flagged": 36.0
+            }
+          }
+        },
+        "learned_at_budget": {
+          "forged": {
+            "technique": {
+              "cpi": {
+                "receipts": 26.0,
+                "found": 6.166666666666667
+              },
+              "cpo": {
+                "receipts": 1.0,
+                "found": 0.0
+              },
+              "cut": {
+                "receipts": 6.0,
+                "found": 1.0
+              },
+              "imi": {
+                "receipts": 1.0,
+                "found": 1.0
+              },
+              "other": {
+                "receipts": 1.0,
+                "found": 0.0
+              },
+              "pix": {
+                "receipts": 3.0,
+                "found": 0.0
+              }
+            },
+            "entity": {
+              "company": {
+                "receipts": 2.0,
+                "found": 1.0
+              },
+              "metadata": {
+                "receipts": 12.0,
+                "found": 2.0
+              },
+              "other": {
+                "receipts": 4.0,
+                "found": 1.0
+              },
+              "product": {
+                "receipts": 8.0,
+                "found": 2.0
+              },
+              "total_payment": {
+                "receipts": 17.0,
+                "found": 6.166666666666666
+              }
+            },
+            "software": {
+              "aperçu": {
+                "receipts": 5.0,
+                "found": 2.0
+              },
+              "gimp": {
+                "receipts": 11.0,
+                "found": 2.166666666666667
+              },
+              "kolourpaint": {
+                "receipts": 2.0,
+                "found": 1.0
+              },
+              "paint": {
+                "receipts": 13.0,
+                "found": 3.0
+              },
+              "paint3d": {
+                "receipts": 2.0,
+                "found": 0.0
+              }
+            }
+          },
+          "authentic": {
+            "digital": {
+              "receipts": 3.0,
+              "flagged": 0.0
+            },
+            "handwritten": {
+              "receipts": 66.0,
+              "flagged": 3.166666666666667
+            },
+            "handwritten and digital": {
+              "receipts": 5.0,
+              "flagged": 1.1666666666666667
+            },
+            "none": {
+              "receipts": 83.0,
+              "flagged": 6.5
+            }
+          }
+        }
+      }
+    }
+  }
+}

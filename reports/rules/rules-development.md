@@ -18,9 +18,9 @@ Training receipts only (ADR-0012). These numbers guided the rules; they are not 
 
 | Checks, text source | Authentic | Forged |
 |---|---|---|
-| Phase 2 checks, transcript | 168 / 468 (35.9 %) | 46 / 94 (48.9 %) |
+| Phase 2 checks, transcript | 168 / 468 (35.9 %) | 47 / 94 (50.0 %) |
 | Phase 2 checks, ocr | 182 / 468 (38.9 %) | 52 / 94 (55.3 %) |
-| Phase 3 rules, transcript | 173 / 468 (37.0 %) | 48 / 94 (51.1 %) |
+| Phase 3 rules, transcript | 173 / 468 (37.0 %) | 49 / 94 (52.1 %) |
 | Phase 3 rules, ocr | 182 / 468 (38.9 %) | 52 / 94 (55.3 %) |
 
 ### At least one check fails, 80 gold receipts
@@ -28,9 +28,9 @@ Training receipts only (ADR-0012). These numbers guided the rules; they are not 
 | Checks, reading | Authentic | Forged |
 |---|---|---|
 | Phase 2 checks, gold annotations | 10 / 64 (15.6 %) | 8 / 16 (50.0 %) |
-| Phase 2 checks, parser v2, transcript | 23 / 64 (35.9 %) | 6 / 16 (37.5 %) |
+| Phase 2 checks, parser v2, transcript | 23 / 64 (35.9 %) | 7 / 16 (43.8 %) |
 | Phase 3 rules, gold annotations | 2 / 64 (3.1 %) | 8 / 16 (50.0 %) |
-| Phase 3 rules, parser v2, transcript | 22 / 64 (34.4 %) | 6 / 16 (37.5 %) |
+| Phase 3 rules, parser v2, transcript | 22 / 64 (34.4 %) | 7 / 16 (43.8 %) |
 
 The rules were developed on these receipts, so the rule rows are descriptive.
 
@@ -60,10 +60,10 @@ Manual diagnosis recorded in annotations/findit2/rule-failure-review.json. readi
 
 | Scorer | Average precision | ROC-AUC | Recall at 10 % review | Recall at 20 % review |
 |---|---|---|---|---|
-| transcript: logistic regression, fail and not applicable (kept) | 0.204 | 0.515 | 0.171 | 0.234 |
-| transcript: logistic regression, fail only | 0.215 | 0.512 | 0.181 | 0.287 |
-| transcript: any rule fails | 0.193 | 0.570 | 0.130 | 0.260 |
-| transcript: number of failing rules | 0.207 | 0.581 | 0.167 | 0.292 |
+| transcript: logistic regression, fail and not applicable (kept) | 0.203 | 0.498 | 0.170 | 0.255 |
+| transcript: logistic regression, fail only | 0.219 | 0.519 | 0.181 | 0.298 |
+| transcript: any rule fails | 0.195 | 0.576 | 0.132 | 0.264 |
+| transcript: number of failing rules | 0.209 | 0.586 | 0.167 | 0.294 |
 | ocr: logistic regression, fail and not applicable (kept) | 0.220 | 0.514 | 0.138 | 0.298 |
 | ocr: logistic regression, fail only | 0.239 | 0.547 | 0.171 | 0.336 |
 | ocr: any rule fails | 0.198 | 0.582 | 0.133 | 0.266 |

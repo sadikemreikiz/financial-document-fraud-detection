@@ -22,6 +22,9 @@ dependencies = [
     "pydantic>=2.13.5",
     "rapidocr>=3.9.2",
     "scikit-learn>=1.9.1",
+    "scipy>=1.18.1",
+    # Pinned exactly: the learned models of ADR-0022 are timed and trained with this version.
+    "torch==2.14.1",
     "typer>=0.27.2",
 ]
 
@@ -36,6 +39,16 @@ dev = [
     "pytest-cov>=7.1.0",
     "ruff>=0.16.10",
 ]
+
+# On Linux, where CI runs, PyTorch comes from its index of processor-only builds rather than the
+# default build with graphics libraries of several gigabytes (ADR-0022).
+[tool.uv.sources]
+torch = [{ index = "pytorch-cpu", marker = "sys_platform == 'linux'" }]
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
 
 [build-system]
 requires = ["uv_build>=0.12.23,<0.13"]
@@ -121,7 +134,15 @@ exclude_also = [
 ]
 
 [[tool.mypy.overrides]]
-module = ["doctr.*"]
+module = ["doctr.*", "scipy.*"]  # neither ships type information
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = ["torchvision", "torchvision.*"]  # not a dependency; `uv run --with` supplies it to checks
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = ["matplotlib", "matplotlib.*"]  # not a dependency; `make figures` supplies it
 ignore_missing_imports = true
 
 [tool.pydantic-mypy]

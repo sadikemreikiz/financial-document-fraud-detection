@@ -8,6 +8,10 @@ Groups are small, so every count is reported with its group size and nothing is 
 A decision can be partial: at a review budget, receipts tied at the cut-off are reviewed with
 equal probability, so each receipt carries the probability of being flagged and group counts are
 expected values.
+
+Some forged receipts change only what the accounting rules of Phase 3 cannot check: the date, the
+merchant or other text, but no amount and no product (:func:`rules_blind`). Phase 4 reports every
+metric for them as well (ADR-0014, decision 4).
 """
 
 from collections import defaultdict
@@ -17,7 +21,16 @@ from typing import Any
 import numpy as np
 import numpy.typing as npt
 
-from docfraud.data.models import Document, Label
+from docfraud.data.models import Document, Entity, Label
+
+ARITHMETIC_ENTITIES = frozenset({Entity.TOTAL_PAYMENT, Entity.PRODUCT})
+"""What the accounting rules check: amounts and products."""
+
+
+def rules_blind(document: Document) -> bool:
+    """A forged receipt whose annotated changes avoid amounts and products."""
+    changed = {r.entity for r in document.modified_regions if r.entity is not None}
+    return bool(changed) and not changed & ARITHMETIC_ENTITIES
 
 
 def flagged_by_threshold(scores: Mapping[str, float], threshold: float) -> dict[str, float]:

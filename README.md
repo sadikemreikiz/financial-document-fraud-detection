@@ -15,9 +15,12 @@ verification and LLM-assisted review, evaluated on real human forgeries.
   the way I found a shortcut in the dataset: a rule that looks only at the file format beats the
   best published result (F1 79.3 against 28.39), so every image is normalised before any model
   sees it.
-- **Built with:** Python 3.14, scikit-learn, RapidOCR, PyTorch (Phase 4), pytest, mypy in strict
-  mode and CI on every pull request.
-- **Status:** Phases 0 to 3 of 8 complete; Phase 4, pixel forensics, in progress.
+- **Result so far:** a model trained only on forgeries from my own synthetic engine finds real
+  human forgeries it has never seen with an average precision of 0.65 (chance 0.17), and points
+  to the edited region on 69 % of them, in a single pre-registered measurement on held-out folds.
+- **Built with:** Python 3.14, PyTorch, scikit-learn, RapidOCR, pytest, mypy in strict mode and
+  CI on every pull request.
+- **Status:** Phases 0 to 4 of 8 complete; Phase 5, combining the evidence, is next.
 
 This repository is **v2** of my M.Sc. thesis (University of Europe for Applied Sciences, Berlin,
 2026). It is a rebuild from scratch: when I reviewed the thesis implementation after
@@ -26,13 +29,11 @@ same research questions properly. See [From thesis to v2](docs/thesis-review.md)
 
 ## Status
 
-**Under active development.** Phases 0 to 3 of the [roadmap](docs/project-charter.md#roadmap)
-are complete: foundations, data, reading and accounting rules. Phase 4, pixel forensics, is in
-progress on the branch `phase-4-forensics`
-([draft pull request](https://github.com/sadikemreikiz/financial-document-fraud-detection/pull/5)):
-its pre-registration, the study of real forgeries, three reference systems and a synthetic
-forgery engine are done, and the code of the learned models is complete; their development
-round and the single measurement of every Phase 4 system on held-out data come next. The test split stays locked until the final evaluation of Phase 7.
+**Under active development.** Phases 0 to 4 of the [roadmap](docs/project-charter.md#roadmap)
+are complete: foundations, data, reading, accounting rules and pixel forensics. Phase 5 combines
+the evidence: copy-move detection, linking pixel evidence to the fields it changes, fusion with
+the accounting rules and a decision policy. The test split stays locked until the final
+evaluation of Phase 7.
 
 ## Findings so far
 
@@ -55,8 +56,17 @@ round and the single measurement of every Phase 4 system on held-out data come n
   reviewing the 10 % most suspicious receipts finds 29.7 % of the forgeries (chance 10 %). Most of their false alarms come from
   reading errors, not from the receipts ([Phase 3 results](reports/rules/README.md)).
 - **Real edits are hard to see.** At 100 % zoom, I found 2 of the 45 edited regions of the
-  receipts studied for Phase 4
-  ([Phase 4 summary](https://github.com/sadikemreikiz/financial-document-fraud-detection/blob/phase-4-forensics/reports/forensics/README.md)).
+  receipts studied for Phase 4 ([Phase 4 results](reports/forensics/README.md)).
+- **Synthetic forgeries train the best pixel detector.** Every Phase 4 system was measured once,
+  together, on 449 receipts no person had viewed. Adding synthetic forgeries to the real ones
+  raises the average precision by 0.14 (95 % interval 0.06 to 0.24), the comparison fixed in
+  advance; trained on synthetic forgeries alone, the model reaches 0.65 against 0.30 for the
+  real ones alone and 0.18 for TruFor, a pretrained forensic model
+  ([report](reports/forensics/clean-measurement.md)).
+- **The detectors find the edit, not a shortcut.** The most suspicious region of the best model
+  hits the edit on 69 % of the forged receipts, where a random box of the same size hits 3 %,
+  and a probe over 28 global properties of the images finds no trace of forgery
+  ([Phase 4 results](reports/forensics/README.md)).
 
 ## How the work is done
 
@@ -82,7 +92,7 @@ round and the single measurement of every Phase 4 system on held-out data come n
 | [Annotation guidelines](docs/annotation-guidelines.md) | How the gold sets for field extraction are drawn, annotated and verified |
 | [Phase 2 results](reports/reading/README.md) | OCR choice, field extraction accuracy on two gold sets, known limitations |
 | [Phase 3 results](reports/rules/README.md) | Published baseline reproduced, accounting rules measured once on validation |
-| [Phase 4 so far](https://github.com/sadikemreikiz/financial-document-fraud-detection/blob/phase-4-forensics/reports/forensics/README.md) | Pre-registration, real forgeries, reference systems, synthetic engine (on the Phase 4 branch) |
+| [Phase 4 results](reports/forensics/README.md) | Pre-registration, real forgeries, reference systems, synthetic engine, learned models, one clean measurement |
 | [From thesis to v2](docs/thesis-review.md) | Code-verified review of the original implementation |
 
 ## Development

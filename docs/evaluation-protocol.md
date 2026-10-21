@@ -31,10 +31,12 @@ results exist so that metrics, thresholds and comparisons cannot be chosen after
 
 ## 2. Evaluation tracks
 
-Inputs are normalised before any model sees them: images are decoded to 8-bit grayscale with any
-alpha channel discarded, and file metadata is ignored. Transcripts are normalised to LF line
-endings, stripped trailing whitespace and Unicode NFC. Both choices remove byte-level traces that
-correlate with the label without being evidence of forgery (Phase 1 shortcut audit).
+Inputs are normalised before any model sees them: images are rendered onto white where they are
+transparent and decoded to 8-bit grayscale, and file metadata is ignored. Transcripts are
+normalised to LF line endings, stripped trailing whitespace and Unicode NFC, and SROIE box
+coordinates are removed (one training transcript, found after Phase 3; see the data card). Both
+choices remove byte-level traces that correlate with the label without being evidence of forgery
+(Phase 1 shortcut audit).
 
 | Track | Inputs at inference | Purpose |
 |---|---|---|
@@ -52,6 +54,10 @@ T1 and T2 are both headline results and are always reported side by side.
   and the **validation split** (calibration and thresholds).
 - Synthetic forgeries are generated only from documents of the training data in use, so that no
   test or validation document can leak in through augmentation.
+- Pixel forensics (Phase 4) is developed on one design fold of the training split; the other
+  four folds are not inspected by a person and measure each pre-registered system once. Within
+  cross-validation, synthetic forgeries come only from the training folds of each round.
+  *(Added on 2026-10-07 by [ADR-0014](decisions/0014-pixel-forensics-preregistration.md).)*
 - **The test split is locked.** Loading it requires an explicit unlock flag in code, and every
   unlock is written to the run record. It is unlocked once, in Phase 7, after the configuration
   is frozen at a tagged commit.
@@ -104,6 +110,9 @@ T1 and T2 are both headline results and are always reported side by side.
 - Region level: hit rate, the fraction of forged documents whose highest-scoring predicted region
   overlaps an annotated modified rectangle.
 - Copy-move source localisation: hit rate against annotated original areas, where available.
+  *(Clarified on 2026-10-13 by [ADR-0015](decisions/0015-pixel-measurement-rules.md): the
+  highest-scoring region is derived from each map by one rule, and pixel metrics are computed
+  per document and averaged, with copy-source pixels ignored.)*
 
 **Explanations**
 

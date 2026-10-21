@@ -17,6 +17,20 @@ def test_bbox_edges_and_area() -> None:
     assert not b.fits_within(5, 8)
 
 
+@pytest.mark.parametrize(
+    ("other", "expected"),
+    [
+        ({"x": 5, "y": 7, "width": 1, "height": 1}, True),  # shares the last pixel
+        ({"x": 6, "y": 3}, False),  # touches the right edge only
+        ({"x": 0, "y": 8}, False),  # touches the bottom edge only
+        ({"x": 0, "y": 0, "width": 20, "height": 20}, True),  # contains it
+    ],
+)
+def test_bbox_overlap_means_a_shared_pixel(other: dict[str, int], expected: bool) -> None:
+    assert box().overlaps(box(**other)) is expected
+    assert box(**other).overlaps(box()) is expected
+
+
 @pytest.mark.parametrize("bad", [{"x": -1}, {"width": 0}, {"height": -2}])
 def test_bbox_rejects_invalid_geometry(bad: dict[str, int]) -> None:
     with pytest.raises(ValidationError):

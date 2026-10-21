@@ -19,14 +19,14 @@ The published bag-of-words + logistic-regression baseline (Martínez Tornés et 
 
 | Metric | Value [95 % interval] |
 |---|---|
-| Precision | 13.16 [3.1, 24.4] |
-| Recall | 5.32 [1.1, 10.6] |
-| F1 | 7.58 [1.6, 14.3] |
-| Average precision | 16.72 [14.5, 21.6] |
-| ROC-AUC | 48.56 [42.0, 55.1] |
-| MCC | -2.57 [-9.4, 5.4] |
-| Recall at 10 % review | 7.45 [3.2, 13.0] |
-| Recall at 20 % review | 17.02 [8.5, 24.5] |
-| Counts: forged found / authentic flagged / forged missed / authentic passed | 5 / 33 / 89 / 435 |
+| Precision | 11.11 [2.6, 22.0] |
+| Recall | 4.26 [1.1, 8.5] |
+| F1 | 6.15 [1.5, 12.3] |
+| Average precision | 16.32 [14.3, 20.5] |
+| ROC-AUC | 48.53 [42.1, 54.9] |
+| MCC | -3.94 [-10.2, 3.6] |
+| Recall at 10 % review | 6.60 [2.1, 11.9] |
+| Recall at 20 % review | 14.89 [7.4, 22.3] |
+| Counts: forged found / authentic flagged / forged missed / authentic passed | 4 / 32 / 90 / 436 |
 
-Out-of-fold predictions of the 562 training receipts (94 forged), 5 stored folds; percentages, stratified bootstrap over receipts. Iteration limit per fold: [1000, 1000, 1000, 1000, 1000]. run `20261007T074135747237Z-bow-lr-cv` (commit 4fd2217).
+Out-of-fold predictions of the 562 training receipts (94 forged), 5 stored folds; percentages, stratified bootstrap over receipts. Iteration limit per fold: [1000, 1000, 1000, 1000, 1000]. run `20261012T131938206903Z-bow-lr-cv` (commit 35d1e82).
