@@ -99,4 +99,12 @@ round 2; the examples use made-up numbers, not those of gold set A's receipts:
   out of the column order (`9555123400017 4.20 4.20 SR 1` under `QTY PRICE AMOUNT`), and states
   that a money value is never a quantity.
 
-Result: pending.
+Result: exact on 39 of 50 receipts from the transcripts and 26 of 50 from our OCR, fewer than
+round 2 (42 and 30); 0 and 2 rejections; authentic receipts with an accounting-rule false alarm
+5 and 10 of 40. The two readings the examples aimed at became exact, and per-rate totals are no
+longer recorded as amounts, but 9 readings that round 2 read exactly are no longer exact, for
+causes the changes did not touch: a line naming a tax code also recorded as the tax amount, a
+plain total after the tax lines recorded as including tax, a payment recorded twice, and OCR
+readings. Part of the difference may be run-to-run variation, which models without a sampling
+temperature allow; the stability rerun of the frozen version measures it. The round cost
+0.31 USD ([report](../reports/llm/development/round-03.md)).
