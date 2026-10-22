@@ -10,11 +10,12 @@ and [ADR-0006](decisions/0006-llm-placement.md).
 | Layer | Status |
 |---|---|
 | Data (Phase 1) | Done: Find-it-again adapter, normalisation, test lock, audits |
-| Reading (Phase 2) | Done: RapidOCR behind `OcrEngine`, rule-based parser (v2), gold-set evaluation ([results](../reports/reading/README.md)). `ReceiptFields` does not yet keep references to source tokens; that comes with linking in Phase 5 |
+| Reading (Phase 2) | Done: RapidOCR behind `OcrEngine`, rule-based parser (v2), gold-set evaluation ([results](../reports/reading/README.md)). Since Phase 6a the parser also records where each value is printed (`FieldSources`: row, characters, segments, box), with the values of parser v2 unchanged |
 | Evaluation and baselines (Phase 3) | Done: run records, stored folds, pre-registered metrics with floors, BoW + LR reproduced ([results](../reports/rules/README.md)) |
 | Detection: accounting rules (Phase 3) | Done: six rules with worded verdicts, scored by logistic regression. Verdicts are not yet `Finding` objects; that contract is introduced with fusion in Phase 5 |
 | Pixel forensics (Phase 4) | Done: pre-registration ([ADR-0014](decisions/0014-pixel-forensics-preregistration.md)), viewing lock of the design fold, [observation form and page](forgery-observation-guide.md), [benign mark boxes and check page](benign-marks-guide.md), measurement rules ([ADR-0015](decisions/0015-pixel-measurement-rules.md)), system 1 the JPEG-lattice map ([ADR-0016](decisions/0016-system-1-jpeg-trace.md), [ADR-0017](decisions/0017-size-check-on-evidence.md)), the global-trace probe ([ADR-0018](decisions/0018-global-trace-probe.md)), TruFor as system 6 ([ADR-0019](decisions/0019-system-6-trufor.md), [record](system-6-development.md)), one clean measurement ([ADR-0020](decisions/0020-clean-folds-measured-together.md), [record](clean-measurement.md)), the synthetic forgery engine ([ADR-0021](decisions/0021-synthetic-forgery-engine.md), [record](synthetic-engine-development.md)), the learned models ([ADR-0022](decisions/0022-learned-models.md), [record](learned-models-development.md)); [results](../reports/forensics/README.md) |
-| Copy-move, linking, fusion, decision, reporting, LLM | Not started (Phases 5 and 6) |
+| LLM field extraction (Phase 6a) | In progress: pre-registered ([ADR-0024](decisions/0024-llm-extraction-before-fusion.md), [ADR-0025](decisions/0025-llm-extraction-preregistration.md)); source references in the parser |
+| Copy-move, linking, fusion, decision, reporting, investigation agent | Not started (Phases 5 and 6b) |
 
 ## Overview
 
@@ -81,7 +82,7 @@ finding.
 | `docfraud.fusion` | Calibration and fusion models | 5 |
 | `docfraud.decision` | Decision policy | 5 |
 | `docfraud.reporting` | Audit reports | 5 |
-| `docfraud.llm` | Provider interface, LLM extraction, investigation agent | 6 |
+| `docfraud.llm` | Provider interface, LLM extraction (6a), investigation agent (6b) | 6a, 6b |
 | `docfraud.api`, `docfraud.cli` | HTTP API and command line | 0, 7 |
 
 Modules are created when their phase starts, not before.

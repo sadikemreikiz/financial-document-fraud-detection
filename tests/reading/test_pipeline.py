@@ -58,6 +58,8 @@ def test_transcript_source_uses_transcript_text_with_ocr_layout(document: Docume
     reading = read_document(document, FakeEngine(OCR_TOKENS), TextSource.TRANSCRIPT)
     assert [r.text for r in reading.rows] == ["TOTAL 6.50", "CASH 10.00"]
     assert reading.fields.amounts[AmountRole.TOTAL_DUE] == (Decimal("6.50"),)
+    (total,) = reading.sources.amounts[AmountRole.TOTAL_DUE]
+    assert (total.row, total.segments, total.box) == (0, (1,), OCR_TOKENS[1].box)
 
 
 def test_ocr_source_reads_what_the_engine_saw(document: Document) -> None:
