@@ -83,3 +83,20 @@ also recorded as `total_excluding_tax` and `total_including_tax`, a side effect 
 rule; a tax printed on its own line still goes into a summary row; returned lines keep a
 positive quantity; and one price column is chosen against the first-column rule. Of the 20 OCR
 readings not exact, 14 are exact on the transcripts, so most are OCR misreads.
+
+## Round 3: `extraction-v3.md`
+
+Changes from version 2, aimed at the rules the model still misses and at the side effect of
+round 2; the examples use made-up numbers, not those of gold set A's receipts:
+
+- Per-rate totals and summary rows are only rows, never also amounts. In gold set A, none of the
+  8 per-rate totals (`TOTAL 6% SUPPLIES ...`, `TOTAL 0% SUPPLIES`) is also recorded as an amount.
+  The rule that an amount printed beside a tax line as the taxable amount is
+  `total_excluding_tax` now applies only to receipts without per-rate totals.
+- A tax printed on a line of its own is not part of a summary row, shown with an example
+  (`TOTAL 6% SUPPLIES (EXCL. GST): 20.00`, `GST: 1.20`).
+- The rule that values are placed by what they are gets an example of a line whose values come
+  out of the column order (`9555123400017 4.20 4.20 SR 1` under `QTY PRICE AMOUNT`), and states
+  that a money value is never a quantity.
+
+Result: pending.
