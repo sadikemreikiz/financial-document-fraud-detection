@@ -92,19 +92,23 @@ class Runner:
         self.margin = margin
 
     def requests(
-        self, settings: Settings, instruction: str, targets: Sequence[Target]
+        self, settings: Settings, instruction: str, targets: Sequence[Target], *, repeat: int = 0
     ) -> list[Request]:
-        """The request for each target."""
+        """The request for each target; ``repeat`` 1 asks for a second, independent reading."""
         schema = answer_schema()
         return [
             Request(
-                settings=settings, system=instruction, user=t.labelled.text, answer_schema=schema
+                settings=settings,
+                system=instruction,
+                user=t.labelled.text,
+                answer_schema=schema,
+                repeat=repeat,
             )
             for t in targets
         ]
 
     def run(
-        self, settings: Settings, instruction: str, targets: Sequence[Target]
+        self, settings: Settings, instruction: str, targets: Sequence[Target], *, repeat: int = 0
     ) -> list[LlmReading]:
         """Read every target, sending only requests that have no stored answer.
 
@@ -112,7 +116,7 @@ class Runner:
             SpendingLimitError: Before the pilot or the batch, if it could pass the limit.
             RuntimeError: If no pilot request was answered, so nothing can be projected.
         """
-        requests = self.requests(settings, instruction, targets)
+        requests = self.requests(settings, instruction, targets, repeat=repeat)
         missing = self.store.missing(requests)
         if missing:
             pilot, rest = missing[: self.pilot], missing[self.pilot :]

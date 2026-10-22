@@ -22,15 +22,18 @@ from docfraud.cli.common import (
     cached_ocr,
     console,
     findit_documents,
+    require_clean_commit,
 )
 from docfraud.data.gold import GoldAnnotation, GoldManifest, load_annotations, load_manifest
 from docfraud.data.models import Split
 from docfraud.evaluation.extraction import DocumentScore, score_document
+from docfraud.evaluation.runs import code_version
 from docfraud.llm.claude import ClaudeProvider
 from docfraud.llm.cost import Ledger
 from docfraud.llm.decision import LADDER, ModelStep, model_step
 from docfraud.llm.provider import Settings, Thinking
 from docfraud.llm.reader import LlmReading
+from docfraud.llm.record import FrozenVersion, RoundRecord, best_round
 from docfraud.llm.report import ReaderRun, render_model_comparison, render_round
 from docfraud.llm.run import COMPARISON_SETTINGS, Runner, Target, check_documents, target
 from docfraud.llm.store import ResponseStore
@@ -42,6 +45,8 @@ app = typer.Typer(help="The LLM field reader: model comparison and development o
 STORE = Path("artifacts/llm/responses")
 LEDGER = Path("artifacts/llm/ledger.jsonl")
 CHOICE = Path("reports/llm/model-choice.json")
+ROUNDS = Path("reports/llm/development")
+FROZEN = Path("reports/llm/frozen.json")
 GOLD_A = GOLD_MANIFEST
 GOLD_B = GOLD_B_MANIFEST
 MAX_ROUNDS = 10
@@ -131,9 +136,7 @@ def llm_develop(  # noqa: PLR0913, PLR0917 - one option per input and output
     store: Store = STORE,
     ledger: LedgerPath = LEDGER,
     choice: Annotated[Path, typer.Option(help="The recorded model choice.")] = CHOICE,
-    reports: Annotated[Path, typer.Option(help="Directory of the round reports.")] = Path(
-        "reports/llm/development"
-    ),
+    reports: Annotated[Path, typer.Option(help="Directory of the round reports.")] = ROUNDS,
 ) -> None:
     """Read gold set A with the chosen model in one development round (ADR-0025, decision 3)."""
     if not 1 <= round_number <= MAX_ROUNDS:
@@ -167,7 +170,116 @@ def llm_develop(  # noqa: PLR0913, PLR0917 - one option per input and output
     forged = frozenset(_gold_a_manifest().forged)
     reports.mkdir(parents=True, exist_ok=True)
     output.write_text(render_round(header, run, forged), encoding="utf-8")
+    record = RoundRecord(
+        round=round_number,
+        settings=settings,
+        instruction=str(instruction),
+        instruction_sha256=digest,
+        receipts=len(targets) // len(TRACKS),
+        exact={
+            track: sum(s.rule_inputs_exact for s in scores) for track, scores in run.scores.items()
+        },
+    )
+    output.with_suffix(".json").write_text(
+        record.model_dump_json(indent=2) + "\n", encoding="utf-8"
+    )
     console.print(f"[green]written[/green] {output}")
+
+
+@app.command("freeze")
+def llm_freeze(
+    reports: Annotated[Path, typer.Option(help="Directory of the round reports.")] = ROUNDS,
+    frozen: Annotated[Path, typer.Option(help="Where to record the frozen version.")] = FROZEN,
+) -> None:
+    """Freeze the best development round, once, from a clean commit (ADR-0025, decision 3)."""
+    if frozen.exists():
+        console.print(f"[red]{frozen} exists[/red]: the version is frozen once")
+        raise typer.Exit(1)
+    require_clean_commit()
+    records = [
+        RoundRecord.model_validate_json(path.read_text(encoding="utf-8"))
+        for path in sorted(reports.glob("round-*.json"))
+    ]
+    best = best_round(records)
+    text = Path(best.instruction).read_text(encoding="utf-8")
+    if hashlib.sha256(text.encode()).hexdigest() != best.instruction_sha256:
+        console.print(f"[red]{best.instruction} changed after round {best.round}[/red]")
+        raise typer.Exit(1)
+    version = FrozenVersion(
+        round=best.round,
+        settings=best.settings,
+        instruction=best.instruction,
+        instruction_sha256=best.instruction_sha256,
+        commit=str(code_version().commit),
+    )
+    frozen.parent.mkdir(parents=True, exist_ok=True)
+    frozen.write_text(version.model_dump_json(indent=2) + "\n", encoding="utf-8")
+    console.print(
+        f"[green]frozen[/green] round {best.round} ({best.exact_total} exact readings of "
+        f"{best.receipts * len(best.exact)}) at {version.commit[:12]}"
+    )
+
+
+@app.command("stability")
+def llm_stability(  # noqa: PLR0913, PLR0917 - one option per input and output
+    data_dir: DataDir = Path("data"),
+    cache: Cache = OCR_CACHE,
+    store: Store = STORE,
+    ledger: LedgerPath = LEDGER,
+    frozen: Annotated[Path, typer.Option(help="The frozen version.")] = FROZEN,
+    output: Annotated[Path, typer.Option(help="Where to write the report.")] = Path(
+        "reports/llm/stability.md"
+    ),
+) -> None:
+    """Read gold set A a second time with the frozen version and compare (ADR-0025, decision 3)."""
+    version = _frozen(frozen)
+    text = Path(version.instruction).read_text(encoding="utf-8")
+    _, targets = _gold_a_targets(data_dir, cache)
+    runner = Runner(ClaudeProvider(), ResponseStore(store), Ledger(ledger))
+    first = runner.run(version.settings, text, targets)
+    second = runner.run(version.settings, text, targets, repeat=1)
+    rows: list[tuple[str, int, int, int]] = []
+    for source, label in TRACKS.items():
+        pairs = [
+            (a.fields, b.fields)
+            for t, a, b in zip(targets, first, second, strict=True)
+            if t.source is source
+        ]
+        same_inputs = sum(score_document("", a, b).rule_inputs_exact for a, b in pairs)
+        rows.append((label, len(pairs), same_inputs, sum(a == b for a, b in pairs)))
+    lines = [
+        "# Stability of the frozen version on gold set A",
+        "",
+        "Generated by `docfraud llm stability`; do not edit by hand.",
+        "",
+        f"Round {version.round}, model `{version.settings.model}`, read twice. The models do not "
+        "accept a sampling temperature, so two readings of the same receipt can differ.",
+        "",
+        "| Text source | Readings | Same rule inputs | Same fields |",
+        "|---|---|---|---|",
+        *(f"| {label} | {n} | {inputs} | {fields} |" for label, n, inputs, fields in rows),
+        "",
+    ]
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text("\n".join(lines), encoding="utf-8")
+    console.print(f"[green]written[/green] {output}")
+
+
+def _frozen(path: Path) -> FrozenVersion:
+    """The frozen version, after checking that its instruction is unchanged.
+
+    Raises:
+        typer.Exit: If nothing is frozen yet or the instruction changed.
+    """
+    if not path.exists():
+        console.print(f"[red]{path} does not exist[/red]: freeze a development round first")
+        raise typer.Exit(1)
+    version = FrozenVersion.model_validate_json(path.read_text(encoding="utf-8"))
+    text = Path(version.instruction).read_text(encoding="utf-8")
+    if hashlib.sha256(text.encode()).hexdigest() != version.instruction_sha256:
+        console.print(f"[red]{version.instruction} changed after it was frozen[/red]")
+        raise typer.Exit(1)
+    return version
 
 
 @app.command("spending")

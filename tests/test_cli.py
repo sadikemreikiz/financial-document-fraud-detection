@@ -896,6 +896,11 @@ def test_review_report_counts_a_finished_round(
     assert "| real, step 4.2, visibility only | 2 | 8.000 |" in report
 
 
+def flat(text: str) -> str:
+    """Console output with line wrapping undone."""
+    return " ".join(text.split())
+
+
 def _llm_setup(toy_source: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> list[str]:
     runner.invoke(app, ["data", "prepare", "--data-dir", str(toy_source)])
     monkeypatch.setattr(cli_common, "RapidOcrEngine", FakeOcr)
@@ -992,3 +997,95 @@ def test_llm_compare_models_climbs_while_the_larger_model_is_clearly_better(
     assert "Model `claude-opus-5-5`, thinking adaptive, effort low" in (
         rounds / "round-02.md"
     ).read_text(encoding="utf-8")
+
+
+def test_llm_freeze_the_best_round_then_read_gold_set_a_again(
+    toy_source: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    common = _llm_setup(toy_source, tmp_path, monkeypatch)
+    choice, rounds, frozen = tmp_path / "choice.json", tmp_path / "rounds", tmp_path / "frozen.json"
+    runner.invoke(
+        app,
+        [
+            "llm",
+            "compare-models",
+            *common,
+            "--output",
+            str(tmp_path / "c.md"),
+            "--choice",
+            str(choice),
+        ],
+    )
+    develop = ["llm", "develop", *common, "--choice", str(choice), "--reports", str(rounds)]
+    assert runner.invoke(app, [*develop, "--round", "1"]).exit_code == 0
+    assert runner.invoke(app, [*develop, "--round", "2", "--effort", "low"]).exit_code == 0
+    assert (
+        json.loads((rounds / "round-02.json").read_text(encoding="utf-8"))["settings"]["effort"]
+        == "low"
+    )
+
+    stability = ["llm", "stability", *common[2:], "--frozen", str(frozen)]
+    stability += ["--output", str(tmp_path / "stability.md")]
+    early = runner.invoke(app, stability)
+    assert early.exit_code == 1
+    assert "freeze a development round first" in flat(early.output)
+
+    monkeypatch.setattr(cli_llm, "require_clean_commit", lambda: None)
+    monkeypatch.setattr(cli_llm, "code_version", lambda: CodeVersion(commit="abc123", dirty=False))
+    freeze = ["llm", "freeze", "--reports", str(rounds), "--frozen", str(frozen)]
+    result = runner.invoke(app, freeze)
+    assert result.exit_code == 0, result.output
+    version = json.loads(frozen.read_text(encoding="utf-8"))
+    assert (version["round"], version["commit"]) == (1, "abc123")  # equal rounds: the earlier
+    again = runner.invoke(app, freeze)
+    assert again.exit_code == 1
+    assert "frozen once" in flat(again.output)
+
+    result = runner.invoke(app, stability)
+    assert result.exit_code == 0, result.output
+    assert "| T1 transcript |" in (tmp_path / "stability.md").read_text(encoding="utf-8")
+
+    Path(version["instruction"]).write_text("Read the receipt carefully.", encoding="utf-8")
+    changed = runner.invoke(app, stability)
+    assert changed.exit_code == 1
+    assert "changed after it was frozen" in flat(changed.output)
+
+
+def test_llm_freeze_refuses_an_instruction_changed_after_its_round(
+    toy_source: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    common = _llm_setup(toy_source, tmp_path, monkeypatch)
+    choice, rounds = tmp_path / "choice.json", tmp_path / "rounds"
+    runner.invoke(
+        app,
+        [
+            "llm",
+            "compare-models",
+            *common,
+            "--output",
+            str(tmp_path / "c.md"),
+            "--choice",
+            str(choice),
+        ],
+    )
+    runner.invoke(
+        app,
+        [
+            "llm",
+            "develop",
+            "--round",
+            "1",
+            *common,
+            "--choice",
+            str(choice),
+            "--reports",
+            str(rounds),
+        ],
+    )
+    Path(common[1]).write_text("Something else.", encoding="utf-8")
+    monkeypatch.setattr(cli_llm, "require_clean_commit", lambda: None)
+    result = runner.invoke(
+        app, ["llm", "freeze", "--reports", str(rounds), "--frozen", str(tmp_path / "f.json")]
+    )
+    assert result.exit_code == 1
+    assert "changed after round 1" in flat(result.output)
