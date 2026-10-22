@@ -7,10 +7,17 @@ refusal is kept as a response without an answer. The fixed instructions are mark
 caching, and the answer is constrained to the form's JSON schema. Inference is routed globally,
 as the request says rather than a workspace default, so that every answer is billed at the list
 prices the ledger uses (US-only inference costs 1.1 times as much).
+
+A batch is remembered on disk from the moment it is submitted until its results are in. Polls
+wait out transient failures, such as a lost connection, for up to an hour; if the run stops for
+any reason, running it again collects the same batch instead of paying for a second one.
 """
 
+import hashlib
+import json
 import time
 from collections.abc import Callable, Sequence
+from pathlib import Path
 
 import anthropic
 from anthropic.types import Message, ThinkingConfigParam
@@ -20,6 +27,8 @@ from anthropic.types.messages import MessageBatchIndividualResponse
 from docfraud.llm.provider import Request, Response, Thinking, Usage
 
 POLL_SECONDS = 30.0
+#: Transient failures in a row that a batch run waits out, one poll apart: an hour at 30 s.
+PATIENCE = 120
 
 #: Failures that the client still reports after its own retries and that are not billed: the
 #: request is answered later by sending it again. Any other error stops the run.
@@ -38,22 +47,29 @@ class ClaudeProvider:
 
     identifier = "anthropic"
 
-    def __init__(
+    def __init__(  # noqa: PLR0913 - the client, where batches are remembered, and timing
         self,
         client: anthropic.Anthropic | None = None,
         *,
+        pending: Path | None = None,
         wait: Callable[[float], None] = time.sleep,
         poll_seconds: float = POLL_SECONDS,
         clock: Callable[[], float] = time.perf_counter,
+        patience: int = PATIENCE,
     ) -> None:
         """Use ``client``, or create one on first use.
 
-        ``wait`` sleeps between batch polls; ``clock`` times each request sent on its own.
+        ``pending`` is the directory where a submitted batch is remembered until its results
+        are in; without it, a stopped run cannot collect its batch. ``wait`` sleeps between
+        batch polls, ``patience`` is how many transient failures in a row a batch run waits
+        out, and ``clock`` times each request sent on its own.
         """
         self._client = client
+        self._pending = pending
         self._wait = wait
         self._poll_seconds = poll_seconds
         self._clock = clock
+        self._patience = patience
 
     @property
     def client(self) -> anthropic.Anthropic:
@@ -77,22 +93,53 @@ class ClaudeProvider:
         if len(set(keys)) != len(keys):
             msg = "a batch cannot hold the same request twice"
             raise ValueError(msg)
-        job = self.client.messages.batches.create(
-            requests=[{"custom_id": r.key, "params": params(r)} for r in requests]
-        )
+        batches = self.client.messages.batches
+        marker = self._marker(keys)
+        batch_id = _remembered(marker)
+        if batch_id is None:
+            job = batches.create(
+                requests=[{"custom_id": r.key, "params": params(r)} for r in requests]
+            )
+            batch_id = job.id
+            _remember(marker, batch_id, len(keys))
+        else:
+            job = self._patiently(lambda: batches.retrieve(batch_id))
         while job.processing_status != "ended":
             self._wait(self._poll_seconds)
-            job = self.client.messages.batches.retrieve(job.id)
+            job = self._patiently(lambda: batches.retrieve(batch_id))
         models = {request.key: request.settings.model for request in requests}
-        found = {
-            result.custom_id: _from_result(result, models[result.custom_id])
-            for result in self.client.messages.batches.results(job.id)
-        }
+        found = self._patiently(
+            lambda: {
+                result.custom_id: _from_result(result, models[result.custom_id])
+                for result in batches.results(batch_id)
+            }
+        )
         missing = [key for key in keys if key not in found]
         if missing:
-            msg = f"batch {job.id} returned no result for {len(missing)} requests"
+            msg = f"batch {batch_id} returned no result for {len(missing)} requests"
             raise RuntimeError(msg)
+        if marker is not None:
+            marker.unlink(missing_ok=True)
         return [found[key] for key in keys]
+
+    def _marker(self, keys: Sequence[str]) -> Path | None:
+        """Where the batch of these requests is remembered, if anywhere."""
+        if self._pending is None:
+            return None
+        digest = hashlib.sha256("\n".join(keys).encode()).hexdigest()
+        return self._pending / f"{digest}.json"
+
+    def _patiently[T](self, call: Callable[[], T]) -> T:
+        """Call, waiting out transient failures one poll apart, up to the patience."""
+        failures = 0
+        while True:
+            try:
+                return call()
+            except TRANSIENT:
+                failures += 1
+                if failures >= self._patience:
+                    raise
+                self._wait(self._poll_seconds)
 
     def _one(self, request: Request) -> Response:
         """Send one request on its own and time it, retries by the client included.
@@ -118,6 +165,22 @@ class ClaudeProvider:
             )
         seconds = self._clock() - sent
         return _from_message(request.key, message).model_copy(update={"seconds": seconds})
+
+
+def _remembered(marker: Path | None) -> str | None:
+    """The batch remembered at ``marker``, if one was submitted and not yet collected."""
+    if marker is None or not marker.exists():
+        return None
+    batch_id: str = json.loads(marker.read_text(encoding="utf-8"))["batch"]
+    return batch_id
+
+
+def _remember(marker: Path | None, batch_id: str, requests: int) -> None:
+    """Remember a submitted batch until its results are collected."""
+    if marker is None:
+        return
+    marker.parent.mkdir(parents=True, exist_ok=True)
+    marker.write_text(json.dumps({"batch": batch_id, "requests": requests}) + "\n", "utf-8")
 
 
 def params(request: Request) -> MessageCreateParamsNonStreaming:

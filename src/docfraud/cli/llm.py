@@ -122,7 +122,7 @@ def llm_compare_models(  # noqa: PLR0913, PLR0917 - one option per input and out
 ) -> None:
     """Choose the model on gold set A, from the cheapest up (ADR-0025, decision 2)."""
     annotations, targets = _gold_a_targets(data_dir, cache)
-    runner = Runner(ClaudeProvider(), ResponseStore(store), Ledger(ledger))
+    runner = _runner(store, ledger)
     text = instruction.read_text(encoding="utf-8")
     runs: dict[str, ReaderRun] = {}
     exact: dict[str, list[tuple[bool, ...]]] = {}
@@ -205,7 +205,7 @@ def llm_develop(  # noqa: PLR0913, PLR0917 - one option per input and output
         update["effort"] = effort
     settings = Settings.model_validate(recorded["settings"] | update)
     annotations, targets = _gold_a_targets(data_dir, cache)
-    runner = Runner(ClaudeProvider(), ResponseStore(store), Ledger(ledger))
+    runner = _runner(store, ledger)
     text = instruction.read_text(encoding="utf-8")
     readings = runner.run(settings, text, targets)
     keys = {r.key for r in runner.requests(settings, text, targets)}
@@ -290,7 +290,7 @@ def llm_stability(  # noqa: PLR0913, PLR0917 - one option per input and output
     version = _frozen(frozen)
     text = Path(version.instruction).read_text(encoding="utf-8")
     _, targets = _gold_a_targets(data_dir, cache)
-    runner = Runner(ClaudeProvider(), ResponseStore(store), Ledger(ledger))
+    runner = _runner(store, ledger)
     first = runner.run(version.settings, text, targets)
     second = runner.run(version.settings, text, targets, repeat=1)
     rows: list[tuple[str, int, int, int]] = []
@@ -318,6 +318,11 @@ def llm_stability(  # noqa: PLR0913, PLR0917 - one option per input and output
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text("\n".join(lines), encoding="utf-8")
     console.print(f"[green]written[/green] {output}")
+
+
+def _runner(store: Path, ledger: Path) -> Runner:
+    """A runner with Claude that keeps its answers in ``store`` and its batches beside them."""
+    return Runner(ClaudeProvider(pending=store / "batches"), ResponseStore(store), Ledger(ledger))
 
 
 def _frozen(path: Path) -> FrozenVersion:
@@ -387,7 +392,7 @@ def llm_measure_b(  # noqa: PLR0913, PLR0917 - one option per input and output
         for source in TRACKS
     ]
     targets = [target(doc_id, source, reading.rows) for doc_id, source, reading in reads]
-    runner = Runner(ClaudeProvider(), ResponseStore(store), Ledger(ledger))
+    runner = _runner(store, ledger)
     text = Path(version.instruction).read_text(encoding="utf-8")
     llm = runner.run(version.settings, text, targets, batch=False)
     requests = runner.requests(version.settings, text, targets)

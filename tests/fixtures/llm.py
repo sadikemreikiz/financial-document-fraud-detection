@@ -1,6 +1,7 @@
 """A provider that answers without calling any API, for tests of the LLM reader."""
 
 from collections.abc import Sequence
+from pathlib import Path
 
 from docfraud.llm.answer import Answer
 from docfraud.llm.provider import Request, Response, Usage
@@ -24,9 +25,10 @@ class FakeProvider:
 
     identifier = "fake"
 
-    def __init__(self, fail: frozenset[int] = frozenset()) -> None:
+    def __init__(self, fail: frozenset[int] = frozenset(), *, pending: Path | None = None) -> None:
         self.calls: list[tuple[int, bool]] = []
         self.fail = fail
+        self.pending = pending  # where the real provider remembers its batches; unused here
 
     def run(self, requests: Sequence[Request], *, batch: bool) -> list[Response]:
         self.calls.append((len(requests), batch))

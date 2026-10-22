@@ -1,4 +1,6 @@
+import json
 from collections.abc import Iterator
+from pathlib import Path
 from typing import Any, cast
 
 import anthropic
@@ -67,20 +69,37 @@ def batch(status: str) -> MessageBatch:
 
 
 class FakeBatches:
-    def __init__(self, results: list[MessageBatchIndividualResponse]) -> None:
+    """Each poll takes the next status, or raises it; results may fail a few times first."""
+
+    def __init__(
+        self,
+        results: list[MessageBatchIndividualResponse],
+        statuses: list[str | Exception] | None = None,
+        results_failures: int = 0,
+    ) -> None:
         self.results_list = results
+        self.statuses = iter(statuses if statuses is not None else ["in_progress", "ended"])
+        self.results_failures = results_failures
         self.created: list[dict[str, Any]] = []
+        self.creations = 0
         self.polls = 0
 
     def create(self, *, requests: list[dict[str, Any]]) -> MessageBatch:
         self.created = requests
+        self.creations += 1
         return batch("in_progress")
 
     def retrieve(self, _batch_id: str) -> MessageBatch:
         self.polls += 1
-        return batch("ended" if self.polls >= 2 else "in_progress")
+        status = next(self.statuses)
+        if isinstance(status, Exception):
+            raise status
+        return batch(status)
 
     def results(self, _batch_id: str) -> Iterator[MessageBatchIndividualResponse]:
+        if self.results_failures:
+            self.results_failures -= 1
+            raise anthropic.APIConnectionError(request=SENT)
         return iter(self.results_list)
 
 
@@ -105,18 +124,29 @@ class FakeClient:
         self,
         replies: list[Message | Exception] | None = None,
         results: list[MessageBatchIndividualResponse] | None = None,
+        statuses: list[str | Exception] | None = None,
+        results_failures: int = 0,
     ) -> None:
         self.messages = FakeMessages(replies or [], results or [])
+        self.messages.batches = FakeBatches(results or [], statuses, results_failures)
 
 
-def provider(client: FakeClient, waits: list[float] | None = None) -> ClaudeProvider:
+def provider(
+    client: FakeClient,
+    waits: list[float] | None = None,
+    *,
+    pending: Path | None = None,
+    patience: int = 120,
+) -> ClaudeProvider:
     sleeps = waits if waits is not None else []
     ticks = iter(float(n) for n in range(0, 1000, 2))  # every request takes two seconds
     return ClaudeProvider(
         cast("anthropic.Anthropic", client),
+        pending=pending,
         wait=sleeps.append,
         poll_seconds=7.0,
         clock=lambda: next(ticks),
+        patience=patience,
     )
 
 
@@ -276,3 +306,39 @@ def test_the_client_is_created_on_first_use(monkeypatch: pytest.MonkeyPatch) -> 
     assert lazy.client is first
     assert made == [sentinel]
     assert cast("object", first) is sentinel
+
+
+def answered(*keys: str) -> list[MessageBatchIndividualResponse]:
+    return [
+        result(key, {"type": "succeeded", "message": message().model_dump(mode="json")})
+        for key in keys
+    ]
+
+
+def test_a_batch_waits_out_a_lost_connection() -> None:
+    a = request("a")
+    lost = anthropic.APIConnectionError(request=SENT)
+    client = FakeClient(
+        results=answered(a.key), statuses=[lost, "in_progress", lost, "ended"], results_failures=1
+    )
+    waits: list[float] = []
+    (response,) = provider(client, waits).run([a], batch=True)
+    assert response.answer == '{"a": 1}'
+    assert waits == [7.0] * 5  # two polls, two lost polls and one lost result download
+
+
+def test_a_stopped_batch_is_collected_again_without_paying_twice(tmp_path: Path) -> None:
+    a, b = request("a"), request("b")
+    pending = tmp_path / "batches"
+    lost = anthropic.APIConnectionError(request=SENT)
+    first = FakeClient(results=answered(a.key, b.key), statuses=[lost, lost])
+    with pytest.raises(anthropic.APIConnectionError):
+        provider(first, pending=pending, patience=2).run([a, b], batch=True)
+    (marker,) = pending.iterdir()
+    assert json.loads(marker.read_text(encoding="utf-8")) == {"batch": "batch_1", "requests": 2}
+
+    again = FakeClient(results=answered(a.key, b.key), statuses=["ended"])
+    responses = provider(again, pending=pending).run([a, b], batch=True)
+    assert [r.answer for r in responses] == ['{"a": 1}', '{"a": 1}']
+    assert again.messages.batches.creations == 0  # the remembered batch, not a new one
+    assert list(pending.iterdir()) == []  # forgotten once its results are in
