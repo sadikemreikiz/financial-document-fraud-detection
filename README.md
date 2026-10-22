@@ -21,7 +21,8 @@ forgeries.
   to the edited region on 69 % of them, in a single pre-registered measurement on held-out folds.
 - **Built with:** Python 3.14, PyTorch, scikit-learn, RapidOCR, pytest, mypy in strict mode and
   CI on every pull request.
-- **Status:** Phases 0 to 4 of 8 complete; Phase 5, combining the evidence, is next.
+- **Status:** Phases 0 to 4 of 8 complete; next, an LLM reads the receipt fields and is
+  measured against the rule-based parser, before Phase 5 combines the evidence.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="reports/forensics/figures/clean-precision-dark.svg">

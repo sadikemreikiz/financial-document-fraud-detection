@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Purpose** | A gold set to measure field extraction (the rule-based parser in Phase 2, LLM extraction in Phase 6) |
+| **Purpose** | A gold set to measure field extraction (the rule-based parser in Phase 2, LLM extraction in Phase 6a) |
 | **Status** | Fixed on 2026-10-06, before the parser was written |
 | **Schema** | `docfraud.reading.fields.ReceiptFields` |
 
@@ -32,7 +32,8 @@ before the parser exists and are never used to develop it.
    left out are listed as missed; agreement = accepted units / (units + missed values). The
    owner sees the annotations, so this is a verification, not a blind second annotation.)*
 6. **Evaluate.** The frozen parser is evaluated once on the gold set. LLM extraction is
-   evaluated on the same set in Phase 6.
+   evaluated on the same set in Phase 6a; on gold set B, values in dispute are first
+   adjudicated by the owner ([ADR-0025](decisions/0025-llm-extraction-preregistration.md)).
 
 **Gold set B.** A second gold set of 30 training receipts (24 authentic, 6 forged, seed
 20261007) was drawn outside gold set A after the first parser had been evaluated, to measure
@@ -170,6 +171,10 @@ Fixed before the parser is evaluated:
 - **Counts, dates, merchant**: exact-match accuracy (merchant after case and whitespace
   normalisation).
 - **Document level**: the share of receipts whose amounts are all extracted correctly.
+- **Document level, rule inputs**: the share of receipts whose amounts, items and tax summary
+  rows are all extracted correctly, with nothing extra. *(Added on 2026-10-22 by
+  [ADR-0025](decisions/0025-llm-extraction-preregistration.md), after parser v2 was evaluated
+  and before any LLM output existed.)*
 
 All metrics are reported on the two text sources: dataset transcripts (track T1) and our OCR
 (track T2).

@@ -4,8 +4,8 @@
 |---|---|
 | **Project** | docfraud: explainable multimodal detection of forged financial documents |
 | **Origin** | v2 of the M.Sc. thesis *AI-Based Expert System for Detecting Fraud in Financial Documents* (S. E. Ikiz, University of Europe for Applied Sciences, Berlin, 2026) |
-| **Status** | Phase 5 (copy-move, evidence linking, fusion and decision) next; Phases 0 to 4 complete |
-| **Last updated** | 2026-10-07 |
+| **Status** | Phase 6a (LLM field extraction, moved before Phase 5) next; Phases 0 to 4 complete |
+| **Last updated** | 2026-10-22 |
 
 ## Problem
 
@@ -91,10 +91,15 @@ Each phase ends with a short review before the next one starts.
 | 2 | Reading: image normalisation, OCR with coordinates, receipt parser, parser accuracy | Parser accuracy reported |
 | 3 | Accounting rules, evaluation infrastructure, run tracking, baselines incl. reproduction of the published BoW + LR baseline | Baseline reproduced, rules measured in cross-validation |
 | 4 | Synthetic forgery engine and pixel-forensics model with localisation | Localisation results |
+| 6a | LLM field extraction, measured against the rule-based parser on the gold sets | Parser vs LLM comparison on gold set B |
 | 5 | Copy-move detection, cross-modal evidence linking, fusion, decision policy, audit report, ablations | End-to-end system, ablation table |
-| 6 | LLM layer: field extraction, review-only investigation agent, LLM evaluations | Parser vs LLM comparison |
+| 6b | LLM layer: review-only investigation agent, standalone LLM detection, cost and latency | LLM evaluations reported |
 | 7 | Single test-set unlock, robustness and error analysis, model card, API and demo, publication | Public repository |
 | 8 | Career package: profile README, CV entries, write-up | Ready for applications |
+
+*(Order changed on 2026-10-22 by [ADR-0024](decisions/0024-llm-extraction-before-fusion.md):
+field extraction runs before Phase 5, so that fusion is built and measured once, on the better
+reader. Phase numbers are kept.)*
 
 ## Principles
 
