@@ -1,6 +1,8 @@
 import re
 from pathlib import Path
 
+import pytest
+
 from docfraud.llm.answer import Answer
 from docfraud.llm.labels import CLOSE, OPEN, label_rows
 from docfraud.llm.reader import read_answer
@@ -9,8 +11,11 @@ from docfraud.reading.layout import Row, Segment
 INSTRUCTIONS = Path(__file__).parents[2] / "src" / "docfraud" / "llm" / "instructions"
 
 
-def test_the_first_instruction_shows_rows_and_an_answer_as_the_reader_has_them() -> None:
-    text = (INSTRUCTIONS / "extraction-v1.md").read_text(encoding="utf-8")
+@pytest.mark.parametrize(
+    "version", sorted(INSTRUCTIONS.glob("extraction-v*.md")), ids=lambda p: p.stem
+)
+def test_every_instruction_shows_rows_and_an_answer_as_the_reader_has_them(version: Path) -> None:
+    text = version.read_text(encoding="utf-8")
     shown, answer = re.findall(r"```(?:json)?\n(.*?)```", text, re.DOTALL)
     printed = [
         re.sub(rf"{OPEN}[nd]\d+{CLOSE}", "", line.split(": ", 1)[1]) for line in shown.splitlines()
