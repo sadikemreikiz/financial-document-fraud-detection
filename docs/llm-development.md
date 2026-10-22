@@ -133,3 +133,22 @@ thinking tokens on average and the round cost 0.44 USD (round 2: 0.31)
 Of the 6 transcript readings still not exact, 3 are text that differs from the image; the others
 are a price column chosen against the first-column rule, a money value taken as a quantity, and
 a line naming a tax code (`RELIEF GST C RM 0.00`) also recorded as the tax amount.
+
+## Freeze and stability
+
+Round 4 has the most receipts with all rule inputs exact over both text sources (76 of 100;
+rounds 1 to 3: 55, 72, 65) and was frozen at commit `f80bc32`
+([record](../reports/llm/frozen.json)): Claude Sonnet 5.5, adaptive thinking at effort high,
+instruction version 2. Development stopped after 4 of the 10 rounds allowed.
+
+The frozen version read gold set A a second time ([report](../reports/llm/stability.md)). The
+rule inputs were the same in both readings on 47 of 50 receipts from the transcripts and 42 of 50
+from our OCR, and every field on 39 and 36. The second reading has all rule inputs exact on 43
+and 30 receipts, 73 in all against the first reading's 76; the rerun cost 0.45 USD.
+
+Two readings of the same version thus differ by about 3 receipts. The 4 more receipts that round
+4 read exactly than round 2 are within that variation, so this development cannot show that
+thinking reads better than no thinking; it reads at least as well, for 1.4 times the cost. The
+frozen version is also the best of 4 rounds on the receipts it was chosen on, so its 76 is
+higher than a fresh reading would give, as the second reading's 73 shows. Gold set B measures
+it without that advantage.
