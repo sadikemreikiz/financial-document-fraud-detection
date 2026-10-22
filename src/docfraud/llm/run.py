@@ -2,8 +2,9 @@
 
 Before anything is sent, requests already answered are taken from the store. Of the rest, a
 pilot of a few requests is sent one by one, after checking its worst case against the spending
-limit; its measured cost projects the cost of the remaining requests, which go to the batch
-service only if the projection, with a margin, stays within the limit (ADR-0024, decision 6).
+limit; its measured cost projects the cost of the remaining requests, which are sent only if
+the projection, with a margin, stays within the limit (ADR-0024, decision 6). They go to the
+batch service at half the price, or one by one when the time to each answer is measured.
 Which receipts a run may read is checked before any request is built (ADR-0025, decision 3).
 """
 
@@ -108,9 +109,18 @@ class Runner:
         ]
 
     def run(
-        self, settings: Settings, instruction: str, targets: Sequence[Target], *, repeat: int = 0
+        self,
+        settings: Settings,
+        instruction: str,
+        targets: Sequence[Target],
+        *,
+        repeat: int = 0,
+        batch: bool = True,
     ) -> list[LlmReading]:
         """Read every target, sending only requests that have no stored answer.
+
+        With ``batch`` false, the requests after the pilot are sent one by one too, so that
+        every answer is timed, at the full price.
 
         Raises:
             SpendingLimitError: Before the pilot or the batch, if it could pass the limit.
@@ -127,9 +137,9 @@ class Runner:
                     msg = "no pilot request was answered; nothing is sent in a batch"
                     raise RuntimeError(msg)
                 spent = sum((cost(r.usage, settings.model, batch=False) for r in paid), Decimal(0))
-                per_request = spent / len(paid) * BATCH_FACTOR
+                per_request = spent / len(paid) * (BATCH_FACTOR if batch else 1)
                 self.ledger.check(per_request * len(rest) * self.margin)
-                self._settle(self.provider.run(rest, batch=True), settings.model)
+                self._settle(self.provider.run(rest, batch=batch), settings.model)
         return [self._read(r, t) for r, t in zip(requests, targets, strict=True)]
 
     def _settle(self, responses: Sequence[Response], model: str) -> list[Response]:

@@ -951,7 +951,10 @@ def test_llm_compare_models_then_a_development_round(
     develop += ["--reports", str(rounds), "--effort", "low"]
     result = runner.invoke(app, develop)
     assert result.exit_code == 0, result.output
-    assert "thinking disabled, effort low" in (rounds / "round-01.md").read_text(encoding="utf-8")
+    round_report = (rounds / "round-01.md").read_text(encoding="utf-8")
+    assert "thinking disabled, effort low" in round_report
+    assert "| gold set A | 0 | 0 |" in round_report
+    assert "| LLM | 0 | 0 |" in round_report
     again = runner.invoke(app, develop)
     assert again.exit_code == 1
     assert "never rewritten" in again.output
@@ -1156,9 +1159,16 @@ def test_llm_gold_set_b_is_read_once_then_served_for_adjudication(
     assert "1 of 4 requests were not answered" in flat(failed.output)
     assert not (directory / "m.json").exists()  # nothing is kept
 
-    monkeypatch.setattr(cli_llm, "ClaudeProvider", FakeProvider)
+    sent: list[FakeProvider] = []
+
+    def provider() -> FakeProvider:
+        sent.append(FakeProvider())
+        return sent[-1]
+
+    monkeypatch.setattr(cli_llm, "ClaudeProvider", provider)
     result = runner.invoke(app, ["llm", "measure-b", *measure])
     assert result.exit_code == 0, result.output
+    assert sent[0].calls == [(1, False)]  # the one left unanswered, sent on its own
     assert "read 2 receipts of gold set B; 2 questions on 2 receipts" in flat(result.output)
     assert "no metric is computed" in result.output
     again = runner.invoke(app, ["llm", "measure-b", *measure])
@@ -1231,6 +1241,7 @@ def test_llm_gold_set_b_is_evaluated_once_after_every_answer(
     assert "read the 2 receipts of gold set B (1 authentic, 1 forged) once" in text
     assert "| T1 transcript | 0 of 2 | 0 of 2 | +0.000 [" in text
     assert "| Amounts of one role | 2 | 2 | 0 |" in text
+    assert "| T1 transcript | 0 | 2 | 1.50 | 1.50 |" in text  # every answer timed
     assert "## T2 OCR" in text
     once = runner.invoke(app, evaluate)
     assert once.exit_code == 1

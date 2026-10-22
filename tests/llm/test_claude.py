@@ -2,6 +2,7 @@ from collections.abc import Iterator
 from typing import Any, cast
 
 import anthropic
+import httpx2
 import pytest
 from anthropic.types import Message
 from anthropic.types.messages import MessageBatch, MessageBatchIndividualResponse
@@ -85,7 +86,7 @@ class FakeBatches:
 
 class FakeMessages:
     def __init__(
-        self, replies: list[Message], results: list[MessageBatchIndividualResponse]
+        self, replies: list[Message | Exception], results: list[MessageBatchIndividualResponse]
     ) -> None:
         self.replies = iter(replies)
         self.calls: list[dict[str, Any]] = []
@@ -93,13 +94,16 @@ class FakeMessages:
 
     def create(self, **kwargs: Any) -> Message:
         self.calls.append(kwargs)
-        return next(self.replies)
+        reply = next(self.replies)
+        if isinstance(reply, Exception):
+            raise reply
+        return reply
 
 
 class FakeClient:
     def __init__(
         self,
-        replies: list[Message] | None = None,
+        replies: list[Message | Exception] | None = None,
         results: list[MessageBatchIndividualResponse] | None = None,
     ) -> None:
         self.messages = FakeMessages(replies or [], results or [])
@@ -107,7 +111,21 @@ class FakeClient:
 
 def provider(client: FakeClient, waits: list[float] | None = None) -> ClaudeProvider:
     sleeps = waits if waits is not None else []
-    return ClaudeProvider(cast("anthropic.Anthropic", client), wait=sleeps.append, poll_seconds=7.0)
+    ticks = iter(float(n) for n in range(0, 1000, 2))  # every request takes two seconds
+    return ClaudeProvider(
+        cast("anthropic.Anthropic", client),
+        wait=sleeps.append,
+        poll_seconds=7.0,
+        clock=lambda: next(ticks),
+    )
+
+
+SENT = httpx2.Request("POST", "https://api.anthropic.com/v1/messages")
+
+
+def status_error(kind: type[anthropic.APIStatusError], status: int, name: str) -> Exception:
+    body = {"type": "error", "error": {"type": name, "message": name}}
+    return kind(name, response=httpx2.Response(status, request=SENT), body=body)
 
 
 def test_the_request_caches_the_instructions_and_constrains_the_answer() -> None:
@@ -159,7 +177,27 @@ def test_one_request_at_a_time() -> None:
         "msg_1",
         "claude-haiku-5-5",
     )
+    assert response.seconds == 2.0
     assert len(client.messages.calls) == 1
+
+
+def test_a_transient_failure_costs_nothing_and_keeps_the_other_answers() -> None:
+    replies: list[Message | Exception] = [
+        message(),
+        status_error(anthropic.OverloadedError, 529, "overloaded_error"),
+        anthropic.APIConnectionError(request=SENT),
+        message(),
+    ]
+    answered = provider(FakeClient(replies=replies)).run([request(n) for n in "abcd"], batch=False)
+    assert [r.error for r in answered] == [None, "overloaded_error", "APIConnectionError", None]
+    assert [r.usage.output_tokens for r in answered] == [20, 0, 0, 20]
+    assert [r.seconds for r in answered] == [2.0, 2.0, 2.0, 2.0]
+
+
+def test_any_other_failure_stops_the_run() -> None:
+    invalid = status_error(anthropic.BadRequestError, 400, "invalid_request_error")
+    with pytest.raises(anthropic.BadRequestError):
+        provider(FakeClient(replies=[invalid])).run([request("a")], batch=False)
 
 
 def test_a_refusal_is_kept_without_an_answer() -> None:

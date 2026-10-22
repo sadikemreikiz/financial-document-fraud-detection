@@ -19,6 +19,17 @@ from docfraud.llm.provider import Request, Response, Thinking, Usage
 
 POLL_SECONDS = 30.0
 
+#: Failures that the client still reports after its own retries and that are not billed: the
+#: request is answered later by sending it again. Any other error stops the run.
+TRANSIENT = (
+    anthropic.APIConnectionError,
+    anthropic.RateLimitError,
+    anthropic.InternalServerError,
+    anthropic.OverloadedError,
+    anthropic.ServiceUnavailableError,
+    anthropic.DeadlineExceededError,
+)
+
 
 class ClaudeProvider:
     """Answers requests with Claude models."""
@@ -31,11 +42,16 @@ class ClaudeProvider:
         *,
         wait: Callable[[float], None] = time.sleep,
         poll_seconds: float = POLL_SECONDS,
+        clock: Callable[[], float] = time.perf_counter,
     ) -> None:
-        """Use ``client``, or create one on first use; ``wait`` sleeps between batch polls."""
+        """Use ``client``, or create one on first use.
+
+        ``wait`` sleeps between batch polls; ``clock`` times each request sent on its own.
+        """
         self._client = client
         self._wait = wait
         self._poll_seconds = poll_seconds
+        self._clock = clock
 
     @property
     def client(self) -> anthropic.Anthropic:
@@ -54,9 +70,7 @@ class ClaudeProvider:
         if not requests:
             return []
         if not batch:
-            return [
-                _from_message(r.key, self.client.messages.create(**params(r))) for r in requests
-            ]
+            return [self._one(request) for request in requests]
         keys = [request.key for request in requests]
         if len(set(keys)) != len(keys):
             msg = "a batch cannot hold the same request twice"
@@ -77,6 +91,31 @@ class ClaudeProvider:
             msg = f"batch {job.id} returned no result for {len(missing)} requests"
             raise RuntimeError(msg)
         return [found[key] for key in keys]
+
+    def _one(self, request: Request) -> Response:
+        """Send one request on its own and time it, retries by the client included.
+
+        A transient failure comes back as a response without an answer and without cost, as a
+        failed request of the batch service does, so the answers already paid for are kept.
+        """
+        client = self.client
+        sent = self._clock()
+        try:
+            message = client.messages.create(**params(request))
+        except TRANSIENT as error:
+            status = error.type if isinstance(error, anthropic.APIStatusError) else None
+            return Response(
+                key=request.key,
+                model=request.settings.model,
+                answer=None,
+                stop_reason=None,
+                error=status or type(error).__name__,
+                usage=Usage(),
+                batch=False,
+                seconds=self._clock() - sent,
+            )
+        seconds = self._clock() - sent
+        return _from_message(request.key, message).model_copy(update={"seconds": seconds})
 
 
 def params(request: Request) -> MessageCreateParamsNonStreaming:

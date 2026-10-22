@@ -5,6 +5,9 @@ v2 reads the same rows again. Both readers' fields are kept here, together with 
 dispute among them and the gold annotation. No metric is computed from them until every question
 of the adjudication has a final answer (ADR-0026); then the gold set with the owner's answers in
 place decides, per text source, whether the LLM reader replaces parser v2 (decision 5).
+
+The LLM's requests on gold set B are sent one by one rather than to the batch service, at twice
+the price, so that the time to each answer is measured (decision 6).
 """
 
 from collections import Counter, defaultdict
@@ -14,6 +17,7 @@ from datetime import datetime
 from decimal import Decimal
 from pathlib import Path
 
+import numpy as np
 from pydantic import BaseModel, ConfigDict
 
 from docfraud.detectors.rules import Status, check
@@ -58,6 +62,7 @@ class ReaderOutput(_Frozen):
     source: TextSource
     extraction: Extraction
     rejections: tuple[Rejection, ...] = ()
+    seconds: float | None = None  # time to the answer of a request sent on its own
 
     @property
     def name(self) -> str:
@@ -173,6 +178,23 @@ def adjudication_counts(
                     gold_changed += 1
         found.append(AdjudicationCounts(kind, len(asked), first_matched, gold_changed, agreed))
     return found
+
+
+@dataclass(frozen=True, slots=True)
+class Latency:
+    """Seconds from sending a request on its own to its answer, over the timed answers."""
+
+    timed: int
+    median: float
+    p95: float
+
+
+def latency(seconds: Sequence[float | None]) -> Latency | None:
+    """Median and 95th percentile of the timed answers, or ``None`` if none was timed."""
+    timed = [s for s in seconds if s is not None]
+    if not timed:
+        return None
+    return Latency(len(timed), float(np.median(timed)), float(np.percentile(timed, 95)))
 
 
 def false_alarms(fields: Mapping[str, ReceiptFields], authentic: frozenset[str]) -> int:

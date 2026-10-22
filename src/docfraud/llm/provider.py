@@ -81,6 +81,8 @@ class Response(_Frozen):
     ``answer`` is the structured answer as JSON text, or ``None`` when the model refused, ran
     out of tokens or the request failed; ``stop_reason`` or ``error`` says which. ``model`` is
     the model ID the provider reports, which can name a snapshot of the requested model.
+    ``seconds`` is the time from sending the request to its answer when it was sent on its own;
+    the batch service answers requests together and times none of them.
     """
 
     key: str
@@ -91,6 +93,7 @@ class Response(_Frozen):
     usage: Usage
     batch: bool
     request_id: str | None = None
+    seconds: float | None = None
 
 
 class Provider(Protocol):

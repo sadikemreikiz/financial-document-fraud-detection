@@ -49,6 +49,16 @@ def test_a_pilot_is_sent_one_by_one_and_the_rest_as_a_batch_once(tmp_path: Path)
     assert provider.calls == [(5, False), (7, True)]
 
 
+def test_without_the_batch_every_request_is_sent_one_by_one_and_timed(tmp_path: Path) -> None:
+    provider = FakeProvider()
+    runner = make(tmp_path, provider)
+    runner.run(SETTINGS, "Read.", targets(12), batch=False)
+    assert provider.calls == [(5, False), (7, False)]
+    timed = [runner.store.get(r.key) for r in runner.requests(SETTINGS, "Read.", targets(12))]
+    assert all(r is not None and r.seconds == 1.5 for r in timed)
+    assert runner.ledger.spent() == Decimal("0.0024")  # 12 x 0.0002 USD, no batch discount
+
+
 def test_the_batch_is_refused_when_its_projection_passes_the_limit(tmp_path: Path) -> None:
     # Haiku: 1000 x 0.10 + 200 x 0.50 per million = 0.0002 USD a request, half in a batch.
     worst = worst_case(make(tmp_path, FakeProvider()).requests(SETTINGS, "Read.", targets(5)))

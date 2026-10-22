@@ -5,7 +5,7 @@ from docfraud.evaluation.extraction import score_document
 from docfraud.llm.adjudication import GOLD as GOLD_READING
 from docfraud.llm.adjudication import Kind
 from docfraud.llm.decision import ModelStep, decide_reader
-from docfraud.llm.gold_b import AdjudicationCounts
+from docfraud.llm.gold_b import AdjudicationCounts, Latency
 from docfraud.llm.report import ReaderRun, render_gold_b, render_model_comparison, render_round
 from docfraud.reading.fields import ReceiptFields
 
@@ -38,8 +38,15 @@ def test_the_model_comparison_lists_readers_steps_and_the_choice() -> None:
 
 
 def test_a_round_report_leads_with_the_primary_metric() -> None:
-    text = render_round("# Round 1\n\n", run("claude-haiku-5-5", True), frozenset({"A"}))
+    alarms = {
+        "gold set A": {"T1 transcript": 0, "T2 OCR": 0},
+        "LLM": {"T1 transcript": 1, "T2 OCR": 2},
+    }
+    text = render_round("# Round 1\n\n", run("claude-haiku-5-5", True), frozenset({"A"}), alarms, 1)
     assert text.startswith("# Round 1\n\n### Primary metric, rejections and cost")
+    assert "### Accounting rules on authentic receipts" in text
+    assert "| LLM | 1 | 2 |" in text
+    assert "Authentic receipts, of 1, on which" in text
     assert "| T2 OCR | 1 of 2 | 0.500 [" in text
     assert "Cost of the round: 0.0123 USD." in text
     assert "### Headline metrics" in text
@@ -66,7 +73,9 @@ def test_the_gold_b_report_leads_with_the_decision_per_text_source() -> None:
         readings=[GOLD_READING, "LLM transcript"],
         false_alarms={"parser v2": {"T1 transcript": 1, "T2 OCR": 0}},
         rejections={"T1 transcript": 0, "T2 OCR": 2},
+        latencies={"T1 transcript": Latency(2, 1.5, 2.25), "T2 OCR": None},
         forged=frozenset({"B"}),
+        authentic=1,
     )
     assert text.startswith("# Gold set B\n\n### Decision")
     assert "| T1 transcript | 1 of 2 | 2 of 2 | +0.500 [" in text
@@ -74,6 +83,7 @@ def test_the_gold_b_report_leads_with_the_decision_per_text_source() -> None:
     assert "| Amounts of one role | 2 | 1 | 1 | 1 | 2 |" in text
     assert "| Item list | 0 | 0 | 0 | 0 | 0 |" in text
     assert "| parser v2 | 1 | 0 |" in text
-    assert "| T2 OCR | 2 |" in text
+    assert "| T1 transcript | 0 | 2 | 1.50 | 2.25 |" in text
+    assert "| T2 OCR | 2 | — | — | — |" in text
     assert "## T2 OCR\n\n### Headline metrics" in text
     assert "### Difference LLM - parser v2" in text

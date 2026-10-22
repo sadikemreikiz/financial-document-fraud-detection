@@ -57,13 +57,14 @@ from docfraud.llm.gold_b import (
     adjudicated_gold,
     adjudication_counts,
     false_alarms,
+    latency,
     load_measurement,
     questions_on,
     reading_name,
     save_measurement,
     unanswered,
 )
-from docfraud.llm.provider import Settings, Thinking
+from docfraud.llm.provider import Request, Settings, Thinking
 from docfraud.llm.reader import LlmReading
 from docfraud.llm.record import FrozenVersion, RoundRecord, best_round
 from docfraud.llm.report import ReaderRun, render_gold_b, render_model_comparison, render_round
@@ -217,9 +218,13 @@ def llm_develop(  # noqa: PLR0913, PLR0917 - one option per input and output
         f"instruction `{instruction}` (SHA-256 `{digest[:12]}`). Gold set A is the development "
         "set, so these numbers are optimistic (ADR-0025).\n\n"
     )
-    forged = frozenset(_gold_a_manifest().forged)
+    manifest = _gold_a_manifest()
+    alarms = _false_alarms(targets, readings, annotations, frozenset(manifest.authentic))
     reports.mkdir(parents=True, exist_ok=True)
-    output.write_text(render_round(header, run, forged), encoding="utf-8")
+    output.write_text(
+        render_round(header, run, frozenset(manifest.forged), alarms, len(manifest.authentic)),
+        encoding="utf-8",
+    )
     record = RoundRecord(
         round=round_number,
         settings=settings,
@@ -345,7 +350,8 @@ def llm_measure_b(  # noqa: PLR0913, PLR0917 - one option per input and output
     """Read gold set B once with the frozen version and parser v2, and list what is in dispute.
 
     Prints only how many questions there are: no metric on gold set B is computed before every
-    question has a final answer (ADR-0025, decision 4). A run that leaves a request unanswered
+    question has a final answer (ADR-0025, decision 4). Requests are sent one by one, so that
+    the time to each answer is measured (decision 6). A run that leaves a request unanswered
     keeps nothing; running it again sends only what is missing.
     """
     if measurement.exists():
@@ -383,7 +389,7 @@ def llm_measure_b(  # noqa: PLR0913, PLR0917 - one option per input and output
     targets = [target(doc_id, source, reading.rows) for doc_id, source, reading in reads]
     runner = Runner(ClaudeProvider(), ResponseStore(store), Ledger(ledger))
     text = Path(version.instruction).read_text(encoding="utf-8")
-    llm = runner.run(version.settings, text, targets)
+    llm = runner.run(version.settings, text, targets, batch=False)
     requests = runner.requests(version.settings, text, targets)
     missing = runner.store.missing(requests)
     if missing:
@@ -399,8 +405,9 @@ def llm_measure_b(  # noqa: PLR0913, PLR0917 - one option per input and output
             source=source,
             extraction=answered.extraction,
             rejections=answered.rejections,
+            seconds=_seconds(runner.store, request),
         )
-        for (doc_id, source, _), answered in zip(reads, llm, strict=True)
+        for (doc_id, source, _), answered, request in zip(reads, llm, requests, strict=True)
     ] + [
         ReaderOutput(
             doc_id=doc_id,
@@ -553,12 +560,12 @@ def llm_evaluate_b(
         reader: {label: false_alarms(read[reader, s], authentic) for s, label in TRACKS.items()}
         for reader in READERS
     }
-    rejections = {
-        label: sum(
-            len(r.rejections) for r in measured.readings if r.reader == LLM and r.source is source
-        )
+    llm_readings = {
+        label: [r for r in measured.readings if r.reader == LLM and r.source is source]
         for source, label in TRACKS.items()
     }
+    rejections = {label: sum(len(r.rejections) for r in got) for label, got in llm_readings.items()}
+    latencies = {label: latency([r.seconds for r in got]) for label, got in llm_readings.items()}
     names = [GOLD, *(reading_name(r, s) for r in READERS for s in TextSource)]
     version = measured.version
     header = (
@@ -589,7 +596,9 @@ def llm_evaluate_b(
             readings=names,
             false_alarms=alarms,
             rejections=rejections,
+            latencies=latencies,
             forged=frozenset(manifest.forged),
+            authentic=len(manifest.authentic),
         ),
         encoding="utf-8",
     )
@@ -651,6 +660,25 @@ def _summary(
     return ReaderRun(name, scores, None if readings is None else rejections, cost)
 
 
+def _false_alarms(
+    targets: Sequence[Target],
+    readings: Sequence[LlmReading],
+    annotations: dict[str, GoldAnnotation],
+    authentic: frozenset[str],
+) -> dict[str, dict[str, int]]:
+    """False alarms of the accounting rules on gold set A: gold fields, parser v2 and the LLM."""
+    read: dict[tuple[str, str], dict[str, ReceiptFields]] = defaultdict(dict)
+    for item, reading in zip(targets, readings, strict=True):
+        label = TRACKS[item.source]
+        read[PARSER, label][item.doc_id] = parse_receipt(item.rows)
+        read[LLM, label][item.doc_id] = reading.fields
+    gold = {doc_id: a.fields for doc_id, a in annotations.items()}
+    return {"gold set A": dict.fromkeys(TRACKS.values(), false_alarms(gold, authentic))} | {
+        reader: {label: false_alarms(read[reader, label], authentic) for label in TRACKS.values()}
+        for reader in READERS
+    }
+
+
 def _per_receipt(targets: Sequence[Target], run: ReaderRun) -> list[tuple[bool, ...]]:
     """For each receipt, whether each text source has all rule inputs exact."""
     by_track = {
@@ -659,6 +687,12 @@ def _per_receipt(targets: Sequence[Target], run: ReaderRun) -> list[tuple[bool, 
     }
     receipts = list(dict.fromkeys(t.doc_id for t in targets))
     return [tuple(by_track[label][doc_id] for label in TRACKS.values()) for doc_id in receipts]
+
+
+def _seconds(store: ResponseStore, request: Request) -> float | None:
+    """How long the stored answer to a request took, if it was timed."""
+    response = store.get(request.key)
+    return None if response is None else response.seconds
 
 
 def _spent(ledger: Ledger, keys: set[str]) -> Decimal:

@@ -12,7 +12,7 @@ from docfraud.evaluation.extraction import (
 )
 from docfraud.llm.adjudication import Kind
 from docfraud.llm.decision import ModelStep, ReaderDecision
-from docfraud.llm.gold_b import AdjudicationCounts
+from docfraud.llm.gold_b import AdjudicationCounts, Latency
 from docfraud.markdown import Cell, Table, render_table
 
 
@@ -104,8 +104,29 @@ def render_model_comparison(
     )
 
 
-def render_round(header: str, run: ReaderRun, forged: frozenset[str]) -> str:
-    """The report of one development round on gold set A, both text sources."""
+def _alarm_table(false_alarms: Mapping[str, Mapping[str, int]], authentic: int) -> Table:
+    """False alarms of the accounting rules per set of fields and text source."""
+    tracks = list(next(iter(false_alarms.values())))
+    return Table(
+        "Accounting rules on authentic receipts",
+        ("Fields", *tracks),
+        [(name, *(by_track[t] for t in tracks)) for name, by_track in false_alarms.items()],
+        note=f"Authentic receipts, of {authentic}, on which at least one accounting rule fails: "
+        "false alarms caused by the fields alone (ADR-0025, decision 6).",
+    )
+
+
+def render_round(
+    header: str,
+    run: ReaderRun,
+    forged: frozenset[str],
+    false_alarms: Mapping[str, Mapping[str, int]],
+    authentic: int,
+) -> str:
+    """The report of one development round on gold set A, both text sources.
+
+    ``false_alarms`` holds, per set of fields, the count per text source.
+    """
     tracks = list(run.scores)
     rejections = run.rejections or {}
     primary = Table(
@@ -118,7 +139,8 @@ def render_round(header: str, run: ReaderRun, forged: frozenset[str]) -> str:
         note=f"Receipts whose rule inputs are all exact (ADR-0025, decision 5). Cost of the "
         f"round: {_cost(run) or 0} USD.",
     )
-    return render_extraction_report(run.scores, forged, header + render_table(primary) + "\n")
+    tables = render_table(primary) + "\n" + render_table(_alarm_table(false_alarms, authentic))
+    return render_extraction_report(run.scores, forged, header + tables + "\n")
 
 
 KIND_NAMES = {
@@ -137,7 +159,9 @@ def render_gold_b(  # noqa: PLR0913 - one argument per part of the report
     readings: Sequence[str],
     false_alarms: Mapping[str, Mapping[str, int]],
     rejections: Mapping[str, int],
+    latencies: Mapping[str, Latency | None],
     forged: frozenset[str],
+    authentic: int,
 ) -> str:
     """The report of gold set B (ADR-0025, decisions 5 and 6).
 
@@ -198,19 +222,25 @@ def render_gold_b(  # noqa: PLR0913 - one argument per part of the report
         "asked, so an error they share stays in the gold set.",
     )
     tracks = list(scores)
-    alarms = Table(
-        "Accounting rules on authentic receipts",
-        ("Fields", *tracks),
-        [(name, *(by_track[t] for t in tracks)) for name, by_track in false_alarms.items()],
-        note="Authentic receipts on which at least one accounting rule fails: false alarms "
-        "caused by the fields alone.",
-    )
+    alarms = _alarm_table(false_alarms, authentic)
     rejected = Table(
-        "Rejections of the LLM reader",
-        ("Text source", "Rejections"),
-        [(track, rejections[track]) for track in tracks],
-        note="References in the answers that do not hold what their field needs; the field is "
-        "left empty.",
+        "LLM reader: rejections and time to answer",
+        ("Text source", "Rejections", "Timed answers", "Median (s)", "95th percentile (s)"),
+        [
+            (
+                track,
+                rejections[track],
+                *(
+                    (None, None, None)
+                    if (timed := latencies[track]) is None
+                    else (timed.timed, f"{timed.median:.2f}", f"{timed.p95:.2f}")
+                ),
+            )
+            for track in tracks
+        ],
+        note="Rejections: references in the answers that do not hold what their field needs; "
+        "the field is left empty. Time: from sending a request on its own to its answer, the "
+        "client's retries included (ADR-0025, decision 6).",
     )
     sections = [
         render_extraction_report(scores[track], forged, f"## {track}\n\n") for track in tracks

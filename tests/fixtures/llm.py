@@ -15,6 +15,7 @@ EMPTY_ANSWER = Answer(
     quantity_total=None,
 )
 USAGE = Usage(input_tokens=1000, output_tokens=200)
+SECONDS = 1.5  # the time to every answer of a request sent on its own
 
 
 class FakeProvider:
@@ -38,6 +39,7 @@ class FakeProvider:
                 error="overloaded_error" if n in self.fail else None,
                 usage=Usage() if n in self.fail else USAGE,
                 batch=batch,
+                seconds=None if batch else SECONDS,
             )
             for n, r in enumerate(requests)
         ]

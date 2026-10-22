@@ -13,6 +13,7 @@ from docfraud.llm.gold_b import (
     adjudicated_gold,
     adjudication_counts,
     false_alarms,
+    latency,
     load_measurement,
     questions_on,
     reading_name,
@@ -108,9 +109,17 @@ def test_false_alarms_count_authentic_receipts_whose_rules_fail() -> None:
     assert false_alarms({"A2": RIGHT}, frozenset({"A2"})) == 0
 
 
+def test_latency_is_taken_over_the_timed_answers_only() -> None:
+    found = latency([1.0, None, 3.0, 2.0, 10.0])
+    assert found is not None
+    assert (found.timed, found.median) == (4, 2.5)
+    assert found.p95 == pytest.approx(8.95)  # linear between the two largest
+    assert latency([None, None]) is None
+
+
 def test_the_measurement_is_kept_with_rejections(tmp_path: Path) -> None:
     rejected = output("R1", LLM, T1, ReceiptFields()).model_copy(
-        update={"rejections": (Rejection("answer", "", "not answered"),)}
+        update={"rejections": (Rejection("answer", "", "not answered"),), "seconds": 3.25}
     )
     measurement = Measurement(
         version=FrozenVersion(
@@ -130,4 +139,5 @@ def test_the_measurement_is_kept_with_rejections(tmp_path: Path) -> None:
     save_measurement(measurement, path)
     assert load_measurement(path) == measurement
     assert load_measurement(path).readings[0].rejections[0].reason == "not answered"
+    assert load_measurement(path).readings[0].seconds == 3.25
     assert AmountRole.TOTAL_DUE in load_measurement(path).readings[1].extraction.fields.amounts
