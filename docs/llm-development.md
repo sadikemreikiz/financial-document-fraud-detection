@@ -108,3 +108,20 @@ plain total after the tax lines recorded as including tax, a payment recorded tw
 readings. Part of the difference may be run-to-run variation, which models without a sampling
 temperature allow; the stability rerun of the frozen version measures it. The round cost
 0.31 USD ([report](../reports/llm/development/round-03.md)).
+
+## Round 4: `extraction-v2.md` with adaptive thinking
+
+The instruction stays version 2, the best so far, and only the thinking setting changes: Claude
+Sonnet 5.5 decides how much to think before it answers (adaptive), at effort high. Instructions
+had stopped helping in round 3, while choosing a role or placing values out of column order is
+reasoning the model did without thinking until now.
+
+Result: exact on 44 of 50 receipts from the transcripts and 32 of 50 from our OCR (round 2: 42
+and 30); no rejection; authentic receipts with an accounting-rule false alarm 4 and 8 of 40.
+Against round 2, 7 readings became exact and 3 stopped being exact. The answers used 205
+thinking tokens on average and the round cost 0.44 USD (round 2: 0.31)
+([report](../reports/llm/development/round-04.md)).
+
+Of the 6 transcript readings still not exact, 3 are text that differs from the image; the others
+are a price column chosen against the first-column rule, a money value taken as a quantity, and
+a line naming a tax code (`RELIEF GST C RM 0.00`) also recorded as the tax amount.
