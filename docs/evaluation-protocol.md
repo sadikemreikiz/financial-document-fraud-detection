@@ -119,12 +119,15 @@ T1 and T2 are both headline results and are always reported side by side.
 - Grounding rate: the fraction of facts (numbers, fields, regions) stated in a generated report
   that are traceable to a detector output. Target is 100 %; every violation is listed.
 
-**LLM components** (Phase 6)
+**LLM components** (field extraction in Phase 6a, before Phase 5; the rest in Phase 6b)
 
 - Field extraction accuracy on a manually verified gold set drawn from the training split; its
   size and annotation procedure are defined in Phase 2 before any LLM is run.
 - Standalone LLM detection with the document-level metrics above, on track T2.
 - Cost per document, latency (median and 95th percentile) and grounding rate.
+
+*(Phase order changed on 2026-10-22 by [ADR-0024](decisions/0024-llm-extraction-before-fusion.md);
+the measurements are unchanged.)*
 
 **Efficiency**
 

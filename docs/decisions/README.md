@@ -11,7 +11,7 @@ change of mind is a new record that supersedes the old one.
 | [0003](0003-content-only-headline.md) | Content-only headline results, file metadata as a separate track | Accepted |
 | [0004](0004-locked-test-set.md) | Locked test set and pre-registered evaluation protocol | Accepted |
 | [0005](0005-evidence-based-architecture.md) | Evidence-based architecture instead of score-only late fusion | Accepted |
-| [0006](0006-llm-placement.md) | Where LLMs are used, and where they are not | Accepted |
+| [0006](0006-llm-placement.md) | Where LLMs are used, and where they are not | Accepted; provider and timing of field extraction decided by 0024 |
 | [0007](0007-python-and-tooling.md) | Python 3.14, uv and the quality toolchain | Accepted |
 | [0008](0008-ocr-engine.md) | RapidOCR (PP-OCRv6 small) as the OCR engine | Accepted |
 | [0009](0009-duplicate-receipts.md) | Resolving copies of the same receipt across splits | Accepted |
@@ -29,5 +29,7 @@ change of mind is a new record that supersedes the old one.
 | [0021](0021-synthetic-forgery-engine.md) | The synthetic forgery engine: techniques, targets, variants, output, realism review | Accepted |
 | [0022](0022-learned-models.md) | The learned models: architecture, targets, data, training and development round | Accepted; order of document scores extended by 0023 |
 | [0023](0023-learned-score-at-text-scale.md) | The learned models' document score is measured at the scale of the text | Accepted |
+| [0024](0024-llm-extraction-before-fusion.md) | LLM field extraction moves before Phase 5, on a hosted model with a spending limit | Accepted |
+| [0025](0025-llm-extraction-preregistration.md) | How LLM field extraction is developed and measured | Accepted |
 
 New records copy [template.md](template.md).
