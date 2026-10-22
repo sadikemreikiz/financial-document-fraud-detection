@@ -1,0 +1,16 @@
+{
+  "round": 3,
+  "settings": {
+    "model": "claude-sonnet-5-5",
+    "max_tokens": 8000,
+    "thinking": "between_tools",
+    "effort": "high"
+  },
+  "instruction": "src/docfraud/llm/instructions/extraction-v3.md",
+  "instruction_sha256": "def9acc3f5e2bd80724dfe9904d5e054c75cc8a26ec4080d688435b6914539cb",
+  "receipts": 50,
+  "exact": {
+    "T1 transcript": 39,
+    "T2 OCR": 26
+  }
+}

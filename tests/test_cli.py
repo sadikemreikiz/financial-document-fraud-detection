@@ -1153,7 +1153,7 @@ def test_llm_gold_set_b_is_read_once_then_served_for_adjudication(
     assert early.exit_code == 1
     assert "run docfraud llm measure-b first" in flat(early.output)
 
-    monkeypatch.setattr(cli_llm, "ClaudeProvider", lambda: FakeProvider(fail=frozenset({0})))
+    monkeypatch.setattr(cli_llm, "ClaudeProvider", lambda **_: FakeProvider(fail=frozenset({0})))
     failed = runner.invoke(app, ["llm", "measure-b", *measure])
     assert failed.exit_code == 1
     assert "1 of 4 requests were not answered" in flat(failed.output)
@@ -1161,7 +1161,7 @@ def test_llm_gold_set_b_is_read_once_then_served_for_adjudication(
 
     sent: list[FakeProvider] = []
 
-    def provider() -> FakeProvider:
+    def provider(**_: object) -> FakeProvider:
         sent.append(FakeProvider())
         return sent[-1]
 

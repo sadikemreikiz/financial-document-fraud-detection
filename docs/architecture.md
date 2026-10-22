@@ -80,7 +80,9 @@ How the LLM reads a receipt, and what code guarantees on the way
    make one `Request`, identified by a hash of everything that can change its answer. Each
    command checks which receipts it may read before it builds a request.
 3. **Provider.** `ClaudeProvider` implements the `Provider` interface, sending requests one by
-   one (timed) or through the batch service (half the price). `Runner` sends only requests
+   one (timed) or through the batch service (half the price). A submitted batch is remembered
+   until its results are in and its polls wait out a lost connection, so a stopped run collects
+   it instead of paying for it twice. `Runner` sends only requests
    without a stored answer (`ResponseStore`), pays a small pilot first, projects the cost of the
    rest and stops before the spending limit; `Ledger` records every cost.
 4. **Reader.** The answer names labels and rows, never values. `docfraud.llm.reader` takes each
