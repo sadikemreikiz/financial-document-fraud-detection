@@ -1,0 +1,11 @@
+{
+  "model": "claude-sonnet-5-5",
+  "settings": {
+    "model": "claude-sonnet-5-5",
+    "max_tokens": 8000,
+    "thinking": "between_tools",
+    "effort": "high"
+  },
+  "instruction": "src/docfraud/llm/instructions/extraction-v1.md",
+  "instruction_sha256": "daa44cb6553a5dc28c2b70478686fff3795bbc33b1c5f72ac6acb48137df44df"
+}
