@@ -70,4 +70,16 @@ it:
   negative items.
 - A total whose value is not printed is left out.
 
-Result: pending.
+Result: exact on 42 of 50 receipts from the transcripts (round 1: 30) and 30 of 50 from our OCR
+(25); 1 and 4 rejections; authentic receipts with an accounting-rule false alarm 4 and 9 of 40
+(round 1: 7 and 9). 18 readings became exact and 1 stopped being exact (on OCR, a total read as
+`42` where the receipt prints `42.10`). The round cost 0.31 USD
+([report](../reports/llm/development/round-02.md)).
+
+Of the 8 transcript readings still not exact, 3 are text that differs from the image. The other
+5 are rules the model still misses: on two receipts whose values are out of the column order a
+price is still taken as the quantity; per-rate totals (`TOTAL 6% SUPPLIES (EXCL. GST)`) are now
+also recorded as `total_excluding_tax` and `total_including_tax`, a side effect of the new tax
+rule; a tax printed on its own line still goes into a summary row; returned lines keep a
+positive quantity; and one price column is chosen against the first-column rule. Of the 20 OCR
+readings not exact, 14 are exact on the transcripts, so most are OCR misreads.
