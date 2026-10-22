@@ -4,7 +4,9 @@ The client takes its credentials from the environment (``ANTHROPIC_API_KEY``) or
 stored by ``ant auth login``; this code never handles a key. No server-side fallback to another
 model is requested: every measured answer must come from the model the record names, so a
 refusal is kept as a response without an answer. The fixed instructions are marked for prompt
-caching, and the answer is constrained to the form's JSON schema.
+caching, and the answer is constrained to the form's JSON schema. Inference is routed globally,
+as the request says rather than a workspace default, so that every answer is billed at the list
+prices the ledger uses (US-only inference costs 1.1 times as much).
 """
 
 import time
@@ -128,6 +130,7 @@ def params(request: Request) -> MessageCreateParamsNonStreaming:
             {"type": "text", "text": request.system, "cache_control": {"type": "ephemeral"}}
         ],
         "messages": [{"role": "user", "content": request.user}],
+        "inference_geo": "global",
         "thinking": _thinking(settings.thinking),
         "output_config": {
             "effort": settings.effort,

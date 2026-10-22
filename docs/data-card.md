@@ -108,7 +108,7 @@ receipt text to a hosted model, which reads the fields; how it is measured is fi
 
 | | |
 |---|---|
-| **Recipient** | Anthropic, through the Claude API, as data processor; requests are sent one at a time or through its batch service, from a workspace of their own whose data location ("workspace geo") is the United States, the only location the console offers this organisation |
+| **Recipient** | Anthropic, through the Claude API, as data processor; requests are sent one at a time or through its batch service, from a workspace of their own. Inference may run in any geography the provider routes it to (`inference_geo: "global"`); what the provider stores is kept in the United States, the only workspace location it offers |
 | **What is sent** | Per request: a fixed instruction, the form of the answer (a JSON schema), and the text rows of one receipt as the parser reads them, from the dataset transcript (T1) or from our OCR (T2), numbered and with a label on every number and date. Never the image, the file name or identifier, the label (authentic or forged) or any annotation |
 | **Which receipts** | The 50 receipts of gold set A (development), the 30 of gold set B (read once) and, only for a text source that passes the rule fixed in ADR-0025, the 752 non-test receipts from that source. Nothing from the test split before Phase 7. The code refuses any other receipt before it builds a request |
 | **Personal data** | Besides the merchant's name, address and phone number, many receipts print a cashier's name, and a few a customer's name or part of a card number. The text is sent as the dataset or our OCR has it; nothing is added |

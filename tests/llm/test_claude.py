@@ -140,6 +140,7 @@ def test_the_request_caches_the_instructions_and_constrains_the_answer() -> None
         "format": {"type": "json_schema", "schema": SCHEMA},
     }
     assert (sent["model"], sent["max_tokens"]) == ("claude-haiku-5-5", 4000)
+    assert sent["inference_geo"] == "global"  # the list prices, whatever the workspace default
 
 
 @pytest.mark.parametrize(
