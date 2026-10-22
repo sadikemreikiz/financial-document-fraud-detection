@@ -1,4 +1,4 @@
-"""Generated reports of the LLM reader: the model comparison and the development rounds."""
+"""Generated reports of the LLM reader: model comparison, development rounds and gold set B."""
 
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
@@ -10,7 +10,9 @@ from docfraud.evaluation.extraction import (
     estimate,
     render_extraction_report,
 )
-from docfraud.llm.decision import ModelStep
+from docfraud.llm.adjudication import Kind
+from docfraud.llm.decision import ModelStep, ReaderDecision
+from docfraud.llm.gold_b import AdjudicationCounts
 from docfraud.markdown import Cell, Table, render_table
 
 
@@ -117,3 +119,105 @@ def render_round(header: str, run: ReaderRun, forged: frozenset[str]) -> str:
         f"round: {_cost(run) or 0} USD.",
     )
     return render_extraction_report(run.scores, forged, header + render_table(primary) + "\n")
+
+
+KIND_NAMES = {
+    Kind.AMOUNTS: "Amounts of one role",
+    Kind.ITEMS: "Item list",
+    Kind.TAX_ROWS: "Tax summary rows",
+}
+
+
+def render_gold_b(  # noqa: PLR0913 - one argument per part of the report
+    header: str,
+    *,
+    decisions: Sequence[ReaderDecision],
+    scores: Mapping[str, Mapping[str, Sequence[DocumentScore]]],
+    counts: Sequence[AdjudicationCounts],
+    readings: Sequence[str],
+    false_alarms: Mapping[str, Mapping[str, int]],
+    rejections: Mapping[str, int],
+    forged: frozenset[str],
+) -> str:
+    """The report of gold set B (ADR-0025, decisions 5 and 6).
+
+    ``scores`` holds, per text source, the scores of parser v2 and then of the LLM reader;
+    ``false_alarms`` holds, per set of fields, the count per text source.
+    """
+    decision = Table(
+        "Decision",
+        (
+            "Text source",
+            *(f"Exact: {reader}" for reader in next(iter(scores.values()))),
+            "Difference [95 % interval]",
+            "Exact for the LLM only",
+            "Exact for parser v2 only",
+            "McNemar p",
+            "LLM replaces parser v2",
+        ),
+        [
+            (
+                d.source,
+                *(_exact(s) for s in scores[d.source].values()),
+                f"{d.difference.value:+.3f} [{d.difference.low:+.3f}, {d.difference.high:+.3f}]",
+                d.llm_only,
+                d.parser_only,
+                f"{d.p_value:.4f}",
+                d.passes,
+            )
+            for d in decisions
+        ],
+        note="Receipts whose rule inputs (amounts, items and tax summary rows) are all exact "
+        "against the adjudicated gold set. Difference: LLM minus parser v2 in that share, paired "
+        "bootstrap over receipts (10,000 resamples). The LLM reader replaces parser v2 for a "
+        "text source only if the interval lies above zero and the exact McNemar test on the "
+        "receipts exact for one reader only gives p < 0.05, two-sided (ADR-0025, decision 5).",
+    )
+    adjudication = Table(
+        "Adjudication",
+        (
+            "Question",
+            "Asked",
+            "First answer equalled a reading",
+            "Gold changed",
+            *(f"Agreed: {name}" for name in readings),
+        ),
+        [
+            (
+                KIND_NAMES[c.kind],
+                c.questions,
+                c.first_matched,
+                c.gold_changed,
+                *(c.agreed.get(name, 0) for name in readings),
+            )
+            for c in counts
+        ],
+        note="One question per receipt and amount role in dispute, and one per receipt whose "
+        "item list or tax summary is in dispute (ADR-0026). Agreed: questions whose final answer "
+        "equals that reading. Values on which the gold set and all four readings agree were not "
+        "asked, so an error they share stays in the gold set.",
+    )
+    tracks = list(scores)
+    alarms = Table(
+        "Accounting rules on authentic receipts",
+        ("Fields", *tracks),
+        [(name, *(by_track[t] for t in tracks)) for name, by_track in false_alarms.items()],
+        note="Authentic receipts on which at least one accounting rule fails: false alarms "
+        "caused by the fields alone.",
+    )
+    rejected = Table(
+        "Rejections of the LLM reader",
+        ("Text source", "Rejections"),
+        [(track, rejections[track]) for track in tracks],
+        note="References in the answers that do not hold what their field needs; the field is "
+        "left empty.",
+    )
+    sections = [
+        render_extraction_report(scores[track], forged, f"## {track}\n\n") for track in tracks
+    ]
+    return (
+        header
+        + "\n".join(render_table(t) for t in (decision, adjudication, alarms, rejected))
+        + "\n"
+        + "\n".join(sections)
+    )

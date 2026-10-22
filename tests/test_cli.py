@@ -3,6 +3,7 @@ import json
 import shutil
 import zipfile
 from datetime import UTC, datetime, timedelta
+from decimal import Decimal
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
@@ -44,8 +45,15 @@ from docfraud.evaluation.folds import assign_folds, load_folds, save_folds
 from docfraud.evaluation.runs import CodeVersion, JsonRunStore
 from docfraud.forensics.learned.pretrained import IMAGENET_WEIGHTS
 from docfraud.forensics.trufor import TRUFOR_CODE, TRUFOR_WEIGHTS
+from docfraud.llm.adjudication import (
+    AdjudicationLog,
+    Listing,
+    first_answer,
+    load_questions,
+)
+from docfraud.llm.adjudication import save_log as save_adjudication
 from docfraud.llm.decision import ModelStep
-from docfraud.llm.run import ForbiddenDocumentsError
+from docfraud.llm.run import COMPARISON_SETTINGS, ForbiddenDocumentsError
 from docfraud.reading.fields import ReceiptFields
 from docfraud.reading.ocr import OcrResult
 from docfraud.synthesis.engine import Engine
@@ -1089,3 +1097,168 @@ def test_llm_freeze_refuses_an_instruction_changed_after_its_round(
     )
     assert result.exit_code == 1
     assert "changed after round 1" in flat(result.output)
+
+
+def _write_gold_set(directory: Path, authentic: tuple[str, ...], forged: tuple[str, ...]) -> Path:
+    directory.mkdir(parents=True)
+    manifest = GoldManifest(
+        dataset="findit2", split=Split.TRAIN, seed=0, authentic=authentic, forged=forged
+    )
+    (directory / "manifest.json").write_text(manifest.model_dump_json(), encoding="utf-8")
+    for doc_id in (*authentic, *forged):
+        record = {"doc_id": doc_id, "annotator": "t", "fields": {"amounts": {"total_due": ["5"]}}}
+        (directory / f"{doc_id}.json").write_text(json.dumps(record), encoding="utf-8")
+    return directory / "manifest.json"
+
+
+def _gold_b_setup(
+    toy_source: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> tuple[list[str], Path]:
+    """Gold set A is F2; gold set B is A1 (authentic) and F1 (forged); round 1 is frozen."""
+    common = _llm_setup(toy_source, tmp_path, monkeypatch)
+    monkeypatch.setattr(cli_llm, "GOLD_A", _write_gold_set(tmp_path / "gold-a", (), ("F2",)))
+    monkeypatch.setattr(cli_llm, "GOLD_B", _write_gold_set(tmp_path / "gold-b", ("A1",), ("F1",)))
+    monkeypatch.setattr(cli_llm, "require_clean_commit", lambda: None)
+    monkeypatch.setattr(cli_llm, "code_version", lambda: CodeVersion(commit="def456", dirty=False))
+    monkeypatch.setattr(cli_llm, "changed_since", lambda *_: [])
+    instruction = Path(common[1])
+    frozen = tmp_path / "frozen.json"
+    frozen.write_text(
+        json.dumps(
+            {
+                "round": 1,
+                "settings": COMPARISON_SETTINGS["claude-haiku-5-5"].model_dump(mode="json"),
+                "instruction": str(instruction),
+                "instruction_sha256": hashlib.sha256(instruction.read_bytes()).hexdigest(),
+                "commit": "abc123",
+            }
+        ),
+        encoding="utf-8",
+    )
+    paths = ["--measurement", str(tmp_path / "b" / "m.json")]
+    paths += ["--questions", str(tmp_path / "b" / "q.json")]
+    return [*common[2:], "--frozen", str(frozen), *paths], tmp_path / "b"
+
+
+def test_llm_gold_set_b_is_read_once_then_served_for_adjudication(
+    toy_source: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    measure, directory = _gold_b_setup(toy_source, tmp_path, monkeypatch)
+    log = tmp_path / "adjudication.json"
+    adjudicate = ["llm", "adjudicate", "--questions", str(directory / "q.json"), "--log", str(log)]
+    early = runner.invoke(app, [*adjudicate, "--no-browser", "--data-dir", measure[1]])
+    assert early.exit_code == 1
+    assert "run docfraud llm measure-b first" in flat(early.output)
+
+    monkeypatch.setattr(cli_llm, "ClaudeProvider", lambda: FakeProvider(fail=frozenset({0})))
+    failed = runner.invoke(app, ["llm", "measure-b", *measure])
+    assert failed.exit_code == 1
+    assert "1 of 4 requests were not answered" in flat(failed.output)
+    assert not (directory / "m.json").exists()  # nothing is kept
+
+    monkeypatch.setattr(cli_llm, "ClaudeProvider", FakeProvider)
+    result = runner.invoke(app, ["llm", "measure-b", *measure])
+    assert result.exit_code == 0, result.output
+    assert "read 2 receipts of gold set B; 2 questions on 2 receipts" in flat(result.output)
+    assert "no metric is computed" in result.output
+    again = runner.invoke(app, ["llm", "measure-b", *measure])
+    assert again.exit_code == 1
+    assert "read once" in flat(again.output)
+
+    served: list[Any] = []
+
+    class FakeServer:
+        server_port = 9996
+
+        def serve_forever(self) -> None:
+            raise KeyboardInterrupt
+
+        def server_close(self) -> None:
+            pass
+
+    def make_server(page: Any, _: int) -> FakeServer:
+        served.append(page)
+        return FakeServer()
+
+    monkeypatch.setattr(cli_llm, "make_server", make_server)
+    opened: list[str] = []
+    monkeypatch.setattr("webbrowser.open", opened.append)
+    assistant = runner.invoke(app, [*adjudicate, "--reviewer", "claude", "--data-dir", measure[1]])
+    assert assistant.exit_code == 1
+    assert "only the owner adjudicates" in flat(assistant.output)
+    result = runner.invoke(app, [*adjudicate, "--data-dir", measure[1]])
+    assert result.exit_code == 0, result.output
+    assert "0 of 2 questions done" in flat(result.output)
+    assert opened == ["http://127.0.0.1:9996/"]
+    assert served[0].handle("GET", "/image/A1.png").status == 200
+
+
+def test_llm_gold_set_b_is_evaluated_once_after_every_answer(
+    toy_source: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    measure, directory = _gold_b_setup(toy_source, tmp_path, monkeypatch)
+    log, report = tmp_path / "adjudication.json", tmp_path / "gold-b.md"
+    evaluate = ["llm", "evaluate-b", "--measurement", str(directory / "m.json")]
+    evaluate += ["--questions", str(directory / "q.json"), "--log", str(log)]
+    evaluate += ["--output", str(report)]
+    unread = runner.invoke(app, evaluate)
+    assert unread.exit_code == 1
+    assert "gold set B has not been read" in flat(unread.output)
+    assert runner.invoke(app, ["llm", "measure-b", *measure]).exit_code == 0
+    unfinished = runner.invoke(app, evaluate)
+    assert unfinished.exit_code == 1
+    assert "2 of 2 questions have no final answer" in flat(unfinished.output)
+
+    asked = load_questions(directory / "q.json")
+    printed = Listing(amounts=(Decimal(5),))  # the owner reads what the gold set says
+    answers = {q.key: first_answer(q, printed, datetime.now(UTC), "def456") for q in asked}
+    save_adjudication(AdjudicationLog(reviewer="emre", answers=answers), log)
+    other = runner.invoke(app, [*evaluate, "--reviewer", "someone"])
+    assert other.exit_code == 1
+    assert "belongs to emre" in flat(other.output)
+    kept = (directory / "m.json").read_text(encoding="utf-8")
+    partial = json.loads(kept)
+    partial["readings"] = partial["readings"][1:]
+    (directory / "m.json").write_text(json.dumps(partial), encoding="utf-8")
+    short = runner.invoke(app, evaluate)
+    assert short.exit_code == 1
+    assert "does not cover the receipts" in flat(short.output)
+    (directory / "m.json").write_text(kept, encoding="utf-8")
+    result = runner.invoke(app, evaluate)
+    assert result.exit_code == 0, result.output
+    assert "T1 transcript: parser v2; T2 OCR: parser v2" in flat(result.output)
+    text = report.read_text(encoding="utf-8")
+    assert "read the 2 receipts of gold set B (1 authentic, 1 forged) once" in text
+    assert "| T1 transcript | 0 of 2 | 0 of 2 | +0.000 [" in text
+    assert "| Amounts of one role | 2 | 2 | 0 |" in text
+    assert "## T2 OCR" in text
+    once = runner.invoke(app, evaluate)
+    assert once.exit_code == 1
+    assert "runs once" in flat(once.output)
+
+
+def test_llm_gold_set_b_is_read_only_by_the_frozen_reader(
+    toy_source: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    measure, directory = _gold_b_setup(toy_source, tmp_path, monkeypatch)
+    monkeypatch.setattr(cli_llm, "changed_since", lambda *_: ["src/docfraud/llm/reader.py"])
+    changed = runner.invoke(app, ["llm", "measure-b", *measure])
+    assert changed.exit_code == 1
+    assert "the reader changed after it was frozen at abc123: src/docfraud/llm/reader.py" in flat(
+        changed.output
+    )
+    monkeypatch.setattr(cli_llm, "changed_since", lambda *_: None)
+    unknown = runner.invoke(app, ["llm", "measure-b", *measure])
+    assert unknown.exit_code == 1
+    assert "cannot compare with the frozen commit" in flat(unknown.output)
+
+    monkeypatch.setattr(cli_llm, "changed_since", lambda *_: [])
+    (tmp_path / "gold-b" / "F1.json").rename(tmp_path / "F1.json")
+    unannotated = runner.invoke(app, ["llm", "measure-b", *measure])
+    assert unannotated.exit_code == 1
+    assert "not fully annotated" in flat(unannotated.output)
+    (tmp_path / "F1.json").rename(tmp_path / "gold-b" / "F1.json")
+    monkeypatch.setattr(cli_llm, "GOLD_A", _write_gold_set(tmp_path / "overlap", ("A1",), ()))
+    result = runner.invoke(app, ["llm", "measure-b", *measure])
+    assert isinstance(result.exception, ForbiddenDocumentsError)
+    assert not directory.exists()
