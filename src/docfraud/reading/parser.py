@@ -11,10 +11,10 @@ them does not change what is read: the values are those of parser v2 as frozen a
 
 import re
 from collections.abc import Sequence
-from datetime import date
 from decimal import Decimal, InvalidOperation
 from typing import NamedTuple
 
+from docfraud.reading.dates import DATE_PATTERNS, to_date
 from docfraud.reading.fields import (
     AmountRole,
     Extraction,
@@ -137,19 +137,6 @@ _REGISTRATION = re.compile(
     r"|\(\s*\d{5,10}\s[A-Z]\s*\)|\(\s*(?:CO\.?)?\s*$"
 )
 _NOT_MERCHANT = re.compile(r"\b(?:TAX INVOICE|INVOICE|RECEIPT|GST|TEL|FAX|NO\.)\b")
-_MONTHS = {
-    month: number
-    for number, month in enumerate(
-        ("JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"),
-        start=1,
-    )
-}
-_DATE_DMY = re.compile(r"(?<!\d)(?P<d>\d{1,2})[/.-](?P<m>\d{1,2})[/.-](?P<y>\d{4}|\d{2})(?!\d)")
-_DATE_YMD = re.compile(r"(?<!\d)(?P<y>20\d{2})[/.-](?P<m>\d{1,2})[/.-](?P<d>\d{1,2})(?!\d)")
-_DATE_TEXT = re.compile(
-    r"(?<!\d)(?P<d>\d{1,2})[\s-]*(?P<m>JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC)[A-Z]*"
-    r"[\s,-]*(?P<y>\d{4}|\d{2})(?!\d)"
-)
 
 
 class _Pos(NamedTuple):
@@ -738,7 +725,7 @@ def _describes(text: str) -> bool:
 
 
 def _has_date(text: str) -> bool:
-    return any(p.search(text) for p in (_DATE_YMD, _DATE_TEXT, _DATE_DMY))
+    return any(p.search(text) for p in DATE_PATTERNS)
 
 
 def _unit_price(prices: Sequence[Decimal], quantity: Decimal | None, amount: Decimal) -> int | None:
@@ -783,23 +770,12 @@ def _merchant(texts: Sequence[str]) -> tuple[str | None, tuple[int, ...]]:
 def _dates(texts: Sequence[str]) -> tuple[tuple[str, _Pos], ...]:
     found: list[tuple[str, _Pos]] = []
     for index, text in enumerate(texts):
-        for pattern in (_DATE_YMD, _DATE_TEXT, _DATE_DMY):
+        for pattern in DATE_PATTERNS:
             for match in pattern.finditer(text):
-                parsed = _to_date(match)
+                parsed = to_date(match)
                 if parsed is not None and parsed.isoformat() not in (d for d, _ in found):
                     found.append((parsed.isoformat(), _Pos(index, *match.span())))
     return tuple(found)
-
-
-def _to_date(match: re.Match[str]) -> date | None:
-    year = int(match["y"])
-    year = year + 2000 if year < 100 else year  # noqa: PLR2004 - two-digit years mean 20YY
-    month_text = match["m"]
-    month = _MONTHS.get(month_text[:3]) if month_text.isalpha() else int(month_text)
-    try:
-        return date(year, month or 0, int(match["d"]))
-    except ValueError:
-        return None
 
 
 def _first_int(pattern: re.Pattern[str], texts: Sequence[str]) -> tuple[int, _Pos] | None:
