@@ -84,6 +84,14 @@ rule; a tax printed on its own line still goes into a summary row; returned line
 positive quantity; and one price column is chosen against the first-column rule. Of the 20 OCR
 readings not exact, 14 are exact on the transcripts, so most are OCR misreads.
 
+**Gold set A in the instruction.** Six examples of version 2 quote lines of gold set A's receipts
+with their numbers (`GST TA AMT RM 1.30`, `TOTAL-EXCL-GST RM 11.23`, `GST: 0.64`,
+`6.00% GST A RM 5.66`, `SR : 0% GOODS : 7.70 TAX : 0.00`, `GST @6% INCLUDED IN TOTAL RM 1.19`),
+and a few more nearly do. A version using it is shown part of the very receipts it is measured on,
+so its results on gold set A are more optimistic still than the development set already makes
+them. Gold set B, which no instruction has seen, is where the difference shows; version 3 uses
+made-up numbers instead.
+
 ## Round 3: `extraction-v3.md`
 
 Changes from version 2, aimed at the rules the model still misses and at the side effect of
