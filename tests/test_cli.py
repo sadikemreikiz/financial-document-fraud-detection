@@ -19,6 +19,7 @@ from docfraud.cli import baseline as cli_baseline
 from docfraud.cli import common as cli_common
 from docfraud.cli import data as cli_data
 from docfraud.cli import forensics as cli_forensics
+from docfraud.cli import llm as cli_llm
 from docfraud.cli import marks as cli_marks
 from docfraud.cli import observation as cli_observation
 from docfraud.cli import reading as cli_reading
@@ -37,11 +38,14 @@ from docfraud.data.observation import (
     seal,
 )
 from docfraud.data.splits import TestSetLockedError
+from docfraud.evaluation.bootstrap import Estimate
 from docfraud.evaluation.design_fold import CLEAN_FOLDS, DESIGN_FOLD
 from docfraud.evaluation.folds import assign_folds, load_folds, save_folds
 from docfraud.evaluation.runs import CodeVersion, JsonRunStore
 from docfraud.forensics.learned.pretrained import IMAGENET_WEIGHTS
 from docfraud.forensics.trufor import TRUFOR_CODE, TRUFOR_WEIGHTS
+from docfraud.llm.decision import ModelStep
+from docfraud.llm.run import ForbiddenDocumentsError
 from docfraud.reading.fields import ReceiptFields
 from docfraud.reading.ocr import OcrResult
 from docfraud.synthesis.engine import Engine
@@ -56,6 +60,7 @@ from tests.data.test_benign_marks import HAND, PLAIN, check_log, mark, mark_log,
 from tests.data.test_observation import observation_documents, receipt_answers
 from tests.evaluation.test_folds import documents as fold_documents
 from tests.fixtures.findit import load_toy
+from tests.fixtures.llm import FakeProvider
 from tests.synthesis.pages import documents as synthesis_documents
 from tests.synthesis.pages import font as synthesis_font
 from tests.synthesis.pages import receipt as synthesis_receipt
@@ -889,3 +894,101 @@ def test_review_report_counts_a_finished_round(
     report = output.read_text()
     assert "Found at 100 %: 0 of 40; the criterion is **not exceeded**" in report
     assert "| real, step 4.2, visibility only | 2 | 8.000 |" in report
+
+
+def _llm_setup(toy_source: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> list[str]:
+    runner.invoke(app, ["data", "prepare", "--data-dir", str(toy_source)])
+    monkeypatch.setattr(cli_common, "RapidOcrEngine", FakeOcr)
+    monkeypatch.setattr(cli_llm, "ClaudeProvider", FakeProvider)
+    train = [d.doc_id for d in load_toy(toy_source / "raw" / "findit2") if d.split is Split.TRAIN]
+    monkeypatch.setattr(cli_llm, "GOLD_A", write_gold(tmp_path, tuple(train)))
+    monkeypatch.setattr(cli_llm, "GOLD_B", tmp_path / "no-gold-b.json")
+    instruction = tmp_path / "extraction-v1.md"
+    instruction.write_text("Read the receipt.", encoding="utf-8")
+    return [
+        "--instruction",
+        str(instruction),
+        "--data-dir",
+        str(toy_source),
+        "--cache",
+        str(tmp_path / "ocr"),
+        "--store",
+        str(tmp_path / "store"),
+        "--ledger",
+        str(tmp_path / "ledger.jsonl"),
+    ]
+
+
+def test_llm_compare_models_then_a_development_round(
+    toy_source: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    common = _llm_setup(toy_source, tmp_path, monkeypatch)
+    report, choice = tmp_path / "comparison.md", tmp_path / "choice.json"
+    compare = ["llm", "compare-models", *common, "--output", str(report), "--choice", str(choice)]
+    result = runner.invoke(app, compare)
+    assert result.exit_code == 0, result.output
+    text = report.read_text(encoding="utf-8")
+    assert "| claude-haiku-5-5 | claude-sonnet-5-5 |" in text  # one step: Sonnet is no better
+    assert "claude-opus-5-5 |" not in text  # so Opus is never read
+    assert text.endswith("**Chosen model:** `claude-haiku-5-5`.\n")
+    assert json.loads(choice.read_text(encoding="utf-8"))["model"] == "claude-haiku-5-5"
+
+    rounds = tmp_path / "rounds"
+    develop = ["llm", "develop", "--round", "1", *common, "--choice", str(choice)]
+    develop += ["--reports", str(rounds), "--effort", "low"]
+    result = runner.invoke(app, develop)
+    assert result.exit_code == 0, result.output
+    assert "thinking disabled, effort low" in (rounds / "round-01.md").read_text(encoding="utf-8")
+    again = runner.invoke(app, develop)
+    assert again.exit_code == 1
+    assert "never rewritten" in again.output
+    eleventh = runner.invoke(app, [*develop[:3], "11", *develop[4:]])
+    assert eleventh.exit_code == 1
+    assert "numbered 1 to 10" in eleventh.output
+    spending = runner.invoke(app, ["llm", "spending", "--ledger", str(tmp_path / "ledger.jsonl")])
+    assert spending.exit_code == 0
+    assert "limit 12 USD" in spending.output
+
+
+def test_llm_development_refuses_receipts_of_gold_set_b(
+    toy_source: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    common = _llm_setup(toy_source, tmp_path, monkeypatch)
+    train = [d.doc_id for d in load_toy(toy_source / "raw" / "findit2") if d.split is Split.TRAIN]
+    gold_b = tmp_path / "gold-b" / "manifest.json"
+    gold_b.parent.mkdir()
+    gold_b.write_text(
+        GoldManifest(
+            dataset="findit2", split=Split.TRAIN, seed=1, authentic=(train[0],), forged=()
+        ).model_dump_json(),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(cli_llm, "GOLD_B", gold_b)
+    output = tmp_path / "comparison.md"
+    result = runner.invoke(app, ["llm", "compare-models", *common, "--output", str(output)])
+    assert isinstance(result.exception, ForbiddenDocumentsError)
+    assert not output.exists()
+
+
+def test_llm_compare_models_climbs_while_the_larger_model_is_clearly_better(
+    toy_source: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    common = _llm_setup(toy_source, tmp_path, monkeypatch)
+
+    def better(smaller: str, larger: str, *_: object) -> ModelStep:
+        return ModelStep(smaller, larger, Estimate(0.3, 0.1, 0.5))
+
+    monkeypatch.setattr(cli_llm, "model_step", better)
+    report, choice = tmp_path / "comparison.md", tmp_path / "choice.json"
+    compare = ["llm", "compare-models", *common, "--output", str(report), "--choice", str(choice)]
+    assert runner.invoke(app, compare).exit_code == 0
+    text = report.read_text(encoding="utf-8")
+    assert "| claude-sonnet-5-5 | claude-opus-5-5 |" in text
+    assert text.endswith("**Chosen model:** `claude-opus-5-5`.\n")
+    rounds = tmp_path / "rounds"
+    develop = ["llm", "develop", "--round", "2", *common, "--choice", str(choice)]
+    result = runner.invoke(app, [*develop, "--reports", str(rounds), "--thinking", "adaptive"])
+    assert result.exit_code == 0, result.output
+    assert "Model `claude-opus-5-5`, thinking adaptive, effort low" in (
+        rounds / "round-02.md"
+    ).read_text(encoding="utf-8")

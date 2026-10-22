@@ -32,6 +32,7 @@ def test_the_key_is_stable_and_ignores_the_order_of_the_schema() -> None:
         {"system": "Read the receipt carefully."},
         {"user": "r0: CASH 52.01"},
         {"answer_schema": {"type": "object"}},
+        {"repeat": 1},
     ],
 )
 def test_everything_that_can_change_the_answer_changes_the_key(change: dict[str, object]) -> None:

@@ -46,6 +46,7 @@ class Request(_Frozen):
     system: str
     user: str
     answer_schema: Mapping[str, object]
+    repeat: int = Field(default=0, ge=0, description="0 for a first reading, 1 to read it again")
 
     @property
     def key(self) -> str:
@@ -56,6 +57,7 @@ class Request(_Frozen):
                 "system": self.system,
                 "user": self.user,
                 "schema": self.answer_schema,
+                "repeat": self.repeat,
             },
             sort_keys=True,
             ensure_ascii=False,
