@@ -99,6 +99,23 @@ Treatment in this project:
 - **Content is kept.** Two forged transcripts contain a euro sign on ringgit receipts. That is a
   mistake a real forger can make and is legitimate evidence, so it is not normalised away.
 
+## Use with a hosted language model
+
+Recorded on 2026-10-22, before the first call to a model, as
+[ADR-0024](decisions/0024-llm-extraction-before-fusion.md) (decision 8) requires. Phase 6a sends
+receipt text to a hosted model, which reads the fields; how it is measured is fixed in
+[ADR-0025](decisions/0025-llm-extraction-preregistration.md).
+
+| | |
+|---|---|
+| **Recipient** | Anthropic, through the Claude API, as data processor; requests are sent one at a time or through its batch service |
+| **What is sent** | Per request: a fixed instruction, the form of the answer (a JSON schema), and the text rows of one receipt as the parser reads them, from the dataset transcript (T1) or from our OCR (T2), numbered and with a label on every number and date. Never the image, the file name or identifier, the label (authentic or forged) or any annotation |
+| **Which receipts** | The 50 receipts of gold set A (development), the 30 of gold set B (read once) and, only for a text source that passes the rule fixed in ADR-0025, the 752 non-test receipts from that source. Nothing from the test split before Phase 7. The code refuses any other receipt before it builds a request |
+| **Personal data** | Besides the merchant's name, address and phone number, many receipts print a cashier's name, and a few a customer's name or part of a card number. The text is sent as the dataset or our OCR has it; nothing is added |
+| **Provider's use and retention** | Not used to train models without express permission. Inputs and outputs are deleted within 30 days, unless flagged under the provider's usage policy or required by law; the batch service keeps a job for 29 days; prompt caching stores no prompt or output. Checked on 2026-10-22 in the provider's [API data retention documentation](https://platform.claude.com/docs/en/manage-claude/api-and-data-retention) and [commercial retention policy](https://privacy.claude.com/en/articles/7996866-how-long-do-you-store-my-organization-s-data) |
+| **Licence** | Not stated (see [Summary](#summary)). Sending text to a processor to answer a request is not publication, and nothing from the dataset is published by this use |
+| **What is kept here** | Each response, under a hash of its request, in `artifacts/llm` (not committed): the model ID the provider reports, the answer (labels and row numbers), the stop reason, the token usage and, for a request sent on its own, the seconds to the answer. The receipt text is not stored with it. A model could write free text where a label belongs; the reader rejects it as a label that does not exist, and stored responses are checked for such text before any is published |
+
 ## Limitations
 
 - **Small test set** (35 forged receipts): results need confidence intervals, and differences of

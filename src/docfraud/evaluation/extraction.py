@@ -48,6 +48,18 @@ class DocumentScore:
         """Whether every amount was extracted with its role and nothing else was."""
         return not self.missed_amounts and not self.extra_amounts
 
+    @property
+    def rule_inputs_exact(self) -> bool:
+        """Whether amounts, items and tax summary rows, which the rules read, are all exact.
+
+        Every gold element is matched and nothing extra is read (ADR-0025, decision 5).
+        """
+        return (
+            self.amounts_exact
+            and self.items.matched == self.items.gold == self.items.predicted
+            and self.tax_rows.matched == self.tax_rows.gold == self.tax_rows.predicted
+        )
+
 
 def _amount_pairs(fields: ReceiptFields) -> Counter[tuple[AmountRole, Decimal]]:
     return Counter((role, value) for role, values in fields.amounts.items() for value in values)
@@ -173,6 +185,11 @@ def _prf(name: str, m: Callable[[DocumentScore], Matches]) -> list[Metric]:
 AMOUNTS = _prf("Amounts", lambda s: s.amounts)
 ALL_AMOUNTS_EXACT = Metric(
     "Documents with all amounts exact", lambda s: s.amounts_exact, lambda _: 1, paired=True
+)
+#: The primary metric of the LLM pilot (ADR-0025); kept out of :data:`METRICS` so that the
+#: reports of the parser regenerate unchanged.
+RULE_INPUTS_EXACT = Metric(
+    "Documents with all rule inputs exact", lambda s: s.rule_inputs_exact, lambda _: 1, paired=True
 )
 METRICS: tuple[Metric, ...] = (
     *AMOUNTS,

@@ -1,0 +1,45 @@
+"""A provider that answers without calling any API, for tests of the LLM reader."""
+
+from collections.abc import Sequence
+
+from docfraud.llm.answer import Answer
+from docfraud.llm.provider import Request, Response, Usage
+
+EMPTY_ANSWER = Answer(
+    merchant_rows=[],
+    dates=[],
+    items=[],
+    amounts=[],
+    tax_summary=[],
+    item_count=None,
+    quantity_total=None,
+)
+USAGE = Usage(input_tokens=1000, output_tokens=200)
+SECONDS = 1.5  # the time to every answer of a request sent on its own
+
+
+class FakeProvider:
+    """Answers every request with an empty form; requests at the positions in ``fail`` fail
+    without cost, as an overloaded service would."""
+
+    identifier = "fake"
+
+    def __init__(self, fail: frozenset[int] = frozenset()) -> None:
+        self.calls: list[tuple[int, bool]] = []
+        self.fail = fail
+
+    def run(self, requests: Sequence[Request], *, batch: bool) -> list[Response]:
+        self.calls.append((len(requests), batch))
+        return [
+            Response(
+                key=r.key,
+                model=r.settings.model,
+                answer=None if n in self.fail else EMPTY_ANSWER.model_dump_json(),
+                stop_reason=None if n in self.fail else "end_turn",
+                error="overloaded_error" if n in self.fail else None,
+                usage=Usage() if n in self.fail else USAGE,
+                batch=batch,
+                seconds=None if batch else SECONDS,
+            )
+            for n, r in enumerate(requests)
+        ]

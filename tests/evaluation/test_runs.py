@@ -6,7 +6,14 @@ import pytest
 
 from docfraud.data.models import Document, Split
 from docfraud.data.splits import select
-from docfraud.evaluation.runs import JsonRunStore, code_version, config_hash, environment, run
+from docfraud.evaluation.runs import (
+    JsonRunStore,
+    changed_since,
+    code_version,
+    config_hash,
+    environment,
+    run,
+)
 
 
 def test_a_run_records_its_inputs_and_results(tmp_path: Path) -> None:
@@ -93,6 +100,25 @@ def test_code_version_reports_commit_and_dirty_state(tmp_path: Path) -> None:
     assert clean.dirty is False
     (tmp_path / "f").write_text("2", encoding="utf-8")
     assert code_version(tmp_path).dirty is True
+
+
+def test_changed_since_lists_committed_files_that_differ(tmp_path: Path) -> None:
+    assert changed_since("HEAD", ["src"], tmp_path) is None  # not a repository
+    git(tmp_path, "init", "-q")
+    for name in ("reader.py", "notes.md"):
+        (tmp_path / name).write_text("1", encoding="utf-8")
+    git(tmp_path, "add", ".")
+    git(tmp_path, "commit", "-q", "-m", "frozen")
+    frozen = code_version(tmp_path).commit
+    assert frozen is not None
+    (tmp_path / "notes.md").write_text("2", encoding="utf-8")
+    git(tmp_path, "commit", "-q", "-am", "notes")
+    assert changed_since(frozen, ["reader.py"], tmp_path) == []
+    (tmp_path / "reader.py").write_text("2", encoding="utf-8")
+    assert changed_since(frozen, ["reader.py"], tmp_path) == []  # not committed: not compared
+    git(tmp_path, "commit", "-q", "-am", "reader")
+    assert changed_since(frozen, ["reader.py"], tmp_path) == ["reader.py"]
+    assert changed_since("0" * 40, ["reader.py"], tmp_path) is None  # unknown commit
 
 
 def test_environment_lists_installed_packages() -> None:

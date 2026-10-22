@@ -10,10 +10,10 @@ from enum import StrEnum
 from docfraud.data.models import Document
 from docfraud.data.normalize import load_grayscale, read_transcript
 from docfraud.reading.align import align_transcript
-from docfraud.reading.fields import ReceiptFields
+from docfraud.reading.fields import FieldSources, ReceiptFields
 from docfraud.reading.layout import Row, Segment, group_rows, union
 from docfraud.reading.ocr import OcrEngine, OcrResult
-from docfraud.reading.parser import parse_receipt
+from docfraud.reading.parser import extract_fields
 
 
 class TextSource(StrEnum):
@@ -25,12 +25,13 @@ class TextSource(StrEnum):
 
 @dataclass(frozen=True, slots=True)
 class Reading:
-    """What was read from one document."""
+    """What was read from one document, and where on the page each field value is printed."""
 
     source: TextSource
     ocr: OcrResult
     rows: tuple[Row, ...]
     fields: ReceiptFields
+    sources: FieldSources
 
 
 def ocr_segments(ocr: OcrResult) -> list[Segment]:
@@ -63,4 +64,7 @@ def read_document(document: Document, ocr_engine: OcrEngine, source: TextSource)
         lines = read_transcript(document.transcript_path).splitlines()
         segments = align_transcript([line for line in lines if line.strip()], ocr)
     rows = tuple(group_rows(segments))
-    return Reading(source=source, ocr=ocr, rows=rows, fields=parse_receipt(rows))
+    extraction = extract_fields(rows)
+    return Reading(
+        source=source, ocr=ocr, rows=rows, fields=extraction.fields, sources=extraction.sources
+    )

@@ -15,7 +15,7 @@ import os
 import platform
 import re
 import subprocess
-from collections.abc import Iterator, Mapping
+from collections.abc import Iterator, Mapping, Sequence
 from contextlib import contextmanager
 from datetime import UTC, datetime
 from importlib.metadata import distributions
@@ -87,6 +87,18 @@ def code_version(repo: Path | None = None) -> CodeVersion:
     except OSError, subprocess.CalledProcessError:
         return CodeVersion(commit=None, dirty=None)
     return CodeVersion(commit=commit, dirty=bool(status))
+
+
+def changed_since(commit: str, paths: Sequence[str], repo: Path | None = None) -> list[str] | None:
+    """The committed files under ``paths`` that differ between ``commit`` and HEAD.
+
+    ``None`` if git is unavailable or does not know the commit.
+    """
+    try:
+        names = _git(repo or Path.cwd(), "diff", "--name-only", commit, "HEAD", "--", *paths)
+    except OSError, subprocess.CalledProcessError:
+        return None
+    return names.splitlines()
 
 
 def _git(cwd: Path, *args: str) -> str:

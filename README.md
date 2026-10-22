@@ -9,7 +9,8 @@ forgeries.
 ## At a glance
 
 - **What it does:** detects forged receipts from the evidence they carry: arithmetic on the
-  receipt that no longer adds up, and traces of editing in its pixels. An LLM-assisted review is
+  receipt that no longer adds up, and traces of editing in its pixels. An LLM that reads the
+  receipt's fields is being measured against the rule-based parser; an LLM-assisted review is
   planned.
 - **What stands out:** I audited my own thesis, found that data leakage had invalidated its
   results, and rebuilt it under an evaluation protocol fixed before any model was trained. Along
@@ -19,10 +20,11 @@ forgeries.
 - **Result so far:** a model trained only on forgeries from my own synthetic engine finds real
   human forgeries it has never seen with an average precision of 0.65 (chance 0.17), and points
   to the edited region on 69 % of them, in a single pre-registered measurement on held-out folds.
-- **Built with:** Python 3.14, PyTorch, scikit-learn, RapidOCR, pytest, mypy in strict mode and
-  CI on every pull request.
-- **Status:** Phases 0 to 4 of 8 complete; next, an LLM reads the receipt fields and is
-  measured against the rule-based parser, before Phase 5 combines the evidence.
+- **Built with:** Python 3.14, PyTorch, scikit-learn, RapidOCR, the Claude API, pytest, mypy in
+  strict mode and CI on every pull request.
+- **Status:** Phases 0 to 4 of 8 complete. Phase 6a, an LLM that reads the receipt fields, is
+  built and pre-registered against the rule-based parser; it runs before Phase 5 combines the
+  evidence.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="reports/forensics/figures/clean-precision-dark.svg">
@@ -40,10 +42,16 @@ same research questions properly. See [From thesis to v2](docs/thesis-review.md)
 ## Status
 
 **Under active development.** Phases 0 to 4 of the [roadmap](docs/project-charter.md#roadmap)
-are complete: foundations, data, reading, accounting rules and pixel forensics. Phase 5 combines
-the evidence: copy-move detection, linking pixel evidence to the fields it changes, fusion with
-the accounting rules and a decision policy. The test split stays locked until the final
-evaluation of Phase 7.
+are complete: foundations, data, reading, accounting rules and pixel forensics. Reading errors
+cause most false alarms of the accounting rules, so LLM field extraction moved before Phase 5
+([ADR-0024](docs/decisions/0024-llm-extraction-before-fusion.md)). It is built and its
+measurement is fixed in advance
+([ADR-0025](docs/decisions/0025-llm-extraction-preregistration.md)): the LLM points to the
+numbers in the receipt text and code takes the values, the model and instruction are developed
+on one gold set, and a second gold set, adjudicated by the owner, decides once whether the LLM
+replaces the parser. Phase 5 then combines the evidence: copy-move detection, linking pixel
+evidence to the fields it changes, fusion with the accounting rules and a decision policy. The
+test split stays locked until the final evaluation of Phase 7.
 
 ## Findings so far
 
@@ -103,6 +111,7 @@ evaluation of Phase 7.
 | [Phase 2 results](reports/reading/README.md) | OCR choice, field extraction accuracy on two gold sets, known limitations |
 | [Phase 3 results](reports/rules/README.md) | Published baseline reproduced, accounting rules measured once on validation |
 | [Phase 4 results](reports/forensics/README.md) | Pre-registration, real forgeries, reference systems, synthetic engine, learned models, one clean measurement |
+| [Phase 6a pre-registration](docs/decisions/0025-llm-extraction-preregistration.md) | How the LLM field reader is developed, measured once and judged against the parser |
 | [From thesis to v2](docs/thesis-review.md) | Code-verified review of the original implementation |
 
 ## Development
@@ -129,6 +138,8 @@ report and are reproduced as described in the [Phase 2 results](reports/reading/
 ## Licence
 
 Code is released under the [MIT licence](LICENSE). Datasets are not redistributed; they are
-downloaded from their original sources and verified by checksum. Phase 4 uses third-party
+downloaded from their original sources and verified by checksum. Phase 6a sends receipt text,
+never images, to the Claude API for processing; what is sent and kept is recorded in the
+[data card](docs/data-card.md#use-with-a-hosted-language-model). Phase 4 uses third-party
 models under their own terms: TruFor for nonprofit research, credited to its authors, and
 ImageNet-trained weights, which limit the models trained from them to non-commercial research.

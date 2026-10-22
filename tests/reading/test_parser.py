@@ -2,9 +2,9 @@ from decimal import Decimal
 
 import pytest
 
-from docfraud.reading.fields import AmountRole, LineItem, TaxSummaryRow
+from docfraud.reading.fields import AmountRole, LineItem, Source, TaxSummaryRow
 from docfraud.reading.layout import Row, Segment
-from docfraud.reading.parser import parse_receipt
+from docfraud.reading.parser import extract_fields, parse_receipt
 
 D = Decimal
 
@@ -369,3 +369,121 @@ def test_total_includes_line_is_the_total_when_it_stands_alone() -> None:
 
 def test_abbreviated_total() -> None:
     assert parse_receipt(rows("TL:RM 28.60")).amounts == {AmountRole.TOTAL_DUE: (D("28.60"),)}
+
+
+def printed(lines: list[Row], source: Source | None) -> tuple[int, str] | None:
+    """The row of a source and the text it covers."""
+    if source is None:
+        return None
+    return source.row, lines[source.row].text[source.start : source.end]
+
+
+def test_every_value_keeps_the_row_and_characters_it_was_read_from() -> None:
+    extraction = extract_fields(SAMPLE)
+    assert extraction.fields == parse_receipt(SAMPLE)
+    sources = extraction.sources
+    assert printed(SAMPLE, sources.amounts[AmountRole.TENDERED][0]) == (13, "52.00")
+    assert printed(SAMPLE, sources.amounts[AmountRole.ROUNDING][0]) == (11, "0.02")
+    first, second = sources.items
+    assert [printed(SAMPLE, s) for s in (first.quantity, first.unit_price, first.amount)] == [
+        (5, "2"),
+        (5, "9.50"),
+        (5, "19.00"),
+    ]
+    assert [s.row for s in first.description] == [4]  # the description row above the numbers
+    assert [s.row for s in second.description] == [6]
+    assert printed(SAMPLE, second.unit_price) == (6, "4.20")
+    summary = sources.tax_summary[0]
+    assert [
+        printed(SAMPLE, s)
+        for s in (summary.code, summary.rate_percent, summary.taxable_amount, summary.tax)
+    ] == [(16, "SR"), (16, "6"), (16, "13.00"), (16, "0.78")]
+    assert printed(SAMPLE, sources.dates[0]) == (2, "06-03-2018")
+    assert printed(SAMPLE, sources.quantity_total) == (7, "5")
+    assert [s.row for s in sources.merchant] == [0]
+
+
+def test_sources_point_into_the_text_as_printed_not_as_normalised() -> None:
+    lines = rows("Cash :   52.00", "Change  :\t25.00")
+    sources = extract_fields(lines).sources
+    assert printed(lines, sources.amounts[AmountRole.TENDERED][0]) == (0, "52.00")
+    assert printed(lines, sources.amounts[AmountRole.CHANGE][0]) == (1, "25.00")
+
+
+def test_a_value_on_the_row_below_its_label_points_to_that_row() -> None:
+    lines = rows("TOTAL INCL. GST@6%", "RM 32.80")
+    sources = extract_fields(lines).sources
+    assert printed(lines, sources.amounts[AmountRole.TOTAL_INCLUDING_TAX][0]) == (1, "32.80")
+
+
+@pytest.mark.parametrize(
+    ("line", "quantity", "unit"),
+    [("TP-24 5 1.32 6.60", "5", "1.32"), ("11046 2 80.00 84.80 169.60 SR", "2", "84.80")],
+    ids=["bare-quantity", "second-price-column"],
+)
+def test_prices_after_a_quantity_point_to_their_own_digits(
+    line: str, quantity: str, unit: str
+) -> None:
+    lines = rows("ITEM QTY PRICE AMOUNT", line)
+    (item,) = extract_fields(lines).sources.items
+    assert printed(lines, item.quantity) == (1, quantity)
+    assert printed(lines, item.unit_price) == (1, unit)
+
+
+def test_items_without_quantity_or_price_have_no_sources_for_them() -> None:
+    lines = rows("DESCRIPTION AMOUNT", "TEH 2.10", "TOTAL 2.10")
+    (item,) = extract_fields(lines).sources.items
+    assert (item.quantity, item.unit_price) == (None, None)
+    assert printed(lines, item.amount) == (1, "2.10")
+
+
+def test_fuel_litres_and_price_per_litre_point_to_their_own_rows() -> None:
+    lines = rows(
+        "PRODUCT QTY AMOUNT", "V-POWER 97 50.00", "22.27 LITRE", "2.245 RM / LITRE", "TOTAL 50.00"
+    )
+    extraction = extract_fields(lines)
+    (item,) = extraction.fields.items
+    assert (item.quantity, item.unit_price, item.amount) == (D("22.27"), D("2.245"), D("50.00"))
+    (sources,) = extraction.sources.items
+    assert [printed(lines, s) for s in (sources.quantity, sources.unit_price, sources.amount)] == [
+        (2, "22.27"),
+        (3, "2.245"),
+        (1, "50.00"),
+    ]
+
+
+def test_tax_rows_of_every_kind_keep_their_sources() -> None:
+    lines = rows(
+        "TOTAL RM 100.00",
+        "6.00% GST A RM 5.66",
+        "RELIEF GST C RM 0.00",
+        "TOTAL 6% SUPPLIES (EXCL. GST): 12.24",
+    )
+    per_code, relief, supplies = extract_fields(lines).sources.tax_summary
+    assert [printed(lines, s) for s in (per_code.code, per_code.rate_percent, per_code.tax)] == [
+        (1, "A"),
+        (1, "6.00"),
+        (1, "5.66"),
+    ]
+    assert (printed(lines, relief.code), relief.rate_percent) == ((2, "C"), None)
+    assert [printed(lines, s) for s in (supplies.rate_percent, supplies.taxable_amount)] == [
+        (3, "6"),
+        (3, "12.24"),
+    ]
+
+
+def test_counts_subtotal_on_the_quantity_row_and_a_two_row_merchant() -> None:
+    lines = rows(
+        "PASARAYA BORONG PINTAR", "SDN BHD", "ITEM(S) : 4", "TOTAL QTY: 3 14.20", "TOTAL 14.20"
+    )
+    sources = extract_fields(lines).sources
+    assert [s.row for s in sources.merchant] == [0, 1]
+    assert printed(lines, sources.item_count) == (2, "4")
+    assert printed(lines, sources.quantity_total) == (3, "3")
+    assert printed(lines, sources.amounts[AmountRole.SUBTOTAL][0]) == (3, "14.20")
+
+
+def test_an_empty_reading_has_no_sources() -> None:
+    sources = extract_fields([]).sources
+    assert (sources.merchant, sources.items, sources.amounts) == ((), (), {})
+    assert (sources.item_count, sources.quantity_total) == (None, None)

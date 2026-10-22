@@ -4,6 +4,7 @@ import pytest
 
 from docfraud.evaluation.extraction import (
     METRICS,
+    RULE_INPUTS_EXACT,
     DocumentScore,
     estimate,
     item_matches,
@@ -126,3 +127,18 @@ def test_report_compares_two_sources_on_the_same_documents() -> None:
     )
     with pytest.raises(ValueError, match="same documents"):
         render_extraction_report({"T1": t1, "T2": t2[::-1]}, frozenset(), "")
+
+
+def test_rule_inputs_are_exact_only_when_amounts_items_and_tax_rows_all_are() -> None:
+    assert score_document("D1", GOLD, GOLD).rule_inputs_exact
+    changes: tuple[dict[str, object], ...] = (
+        {"amounts": {"total_due": ["4.00"]}},
+        {"items": [{"description": "TEH", "amount": "3.00"}]},
+        {"tax_summary": []},
+    )
+    for change in changes:
+        changed = fields(**change)
+        predicted = GOLD.model_copy(update={name: getattr(changed, name) for name in change})
+        score = score_document("D1", GOLD, predicted)
+        assert not score.rule_inputs_exact, change
+    assert RULE_INPUTS_EXACT not in METRICS  # the parser's reports stay as they were
