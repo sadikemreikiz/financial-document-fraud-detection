@@ -14,7 +14,7 @@ and [ADR-0006](decisions/0006-llm-placement.md).
 | Evaluation and baselines (Phase 3) | Done: run records, stored folds, pre-registered metrics with floors, BoW + LR reproduced ([results](../reports/rules/README.md)) |
 | Detection: accounting rules (Phase 3) | Done: six rules with worded verdicts, scored by logistic regression. Verdicts are not yet `Finding` objects; that contract is introduced with fusion in Phase 5 |
 | Pixel forensics (Phase 4) | Done: pre-registration ([ADR-0014](decisions/0014-pixel-forensics-preregistration.md)), viewing lock of the design fold, [observation form and page](forgery-observation-guide.md), [benign mark boxes and check page](benign-marks-guide.md), measurement rules ([ADR-0015](decisions/0015-pixel-measurement-rules.md)), system 1 the JPEG-lattice map ([ADR-0016](decisions/0016-system-1-jpeg-trace.md), [ADR-0017](decisions/0017-size-check-on-evidence.md)), the global-trace probe ([ADR-0018](decisions/0018-global-trace-probe.md)), TruFor as system 6 ([ADR-0019](decisions/0019-system-6-trufor.md), [record](system-6-development.md)), one clean measurement ([ADR-0020](decisions/0020-clean-folds-measured-together.md), [record](clean-measurement.md)), the synthetic forgery engine ([ADR-0021](decisions/0021-synthetic-forgery-engine.md), [record](synthetic-engine-development.md)), the learned models ([ADR-0022](decisions/0022-learned-models.md), [record](learned-models-development.md)); [results](../reports/forensics/README.md) |
-| LLM field extraction (Phase 6a) | In progress: pre-registered ([ADR-0024](decisions/0024-llm-extraction-before-fusion.md), [ADR-0025](decisions/0025-llm-extraction-preregistration.md)); source references in the parser |
+| LLM field extraction (Phase 6a) | In progress: pre-registered ([ADR-0024](decisions/0024-llm-extraction-before-fusion.md), [ADR-0025](decisions/0025-llm-extraction-preregistration.md), [ADR-0026](decisions/0026-adjudication-of-items-and-tax-rows.md)); the reader and its measurement are built ([below](#llm-field-reader-phase-6a)), the use of the data is recorded in the [data card](data-card.md#use-with-a-hosted-language-model); no model has been called yet |
 | Copy-move, linking, fusion, decision, reporting, investigation agent | Not started (Phases 5 and 6b) |
 
 ## Overview
@@ -66,6 +66,38 @@ deterministic code.
 `Finding` is the contract between layers. Detectors produce findings, linking relates them,
 fusion consumes them and reporting renders them. A report cannot state anything that is not a
 finding.
+
+## LLM field reader (Phase 6a)
+
+How the LLM reads a receipt, and what code guarantees on the way
+([ADR-0024](decisions/0024-llm-extraction-before-fusion.md),
+[ADR-0025](decisions/0025-llm-extraction-preregistration.md)):
+
+1. **Rows and labels.** `docfraud.reading` builds the rows the parser reads: transcript lines
+   placed on OCR boxes for T1, OCR tokens for T2. `docfraud.llm.labels` marks every number, with
+   its sign, and every date with a short label such as `⟦n12⟧` or `⟦d1⟧`.
+2. **Request.** A fixed instruction, the numbered rows and the answer form (a closed JSON schema)
+   make one `Request`, identified by a hash of everything that can change its answer. Each
+   command checks which receipts it may read before it builds a request.
+3. **Provider.** `ClaudeProvider` implements the `Provider` interface, sending requests one by
+   one (timed) or through the batch service (half the price). `Runner` sends only requests
+   without a stored answer (`ResponseStore`), pays a small pilot first, projects the cost of the
+   rest and stops before the spending limit; `Ledger` records every cost.
+4. **Reader.** The answer names labels and rows, never values. `docfraud.llm.reader` takes each
+   value from the labelled text, with its row, characters and box, so a forged value is read as
+   printed. A reference that does not exist or holds the wrong kind of value leaves the field
+   empty and is counted as a rejection.
+5. **Measurement.** The model is chosen and the instruction developed on gold set A only, and
+   the best round is frozen. Gold set B is read once, while the reader code is unchanged since
+   the freeze; the values in dispute are decided by the owner on a page that shows no candidate
+   before the first answer, and only then is the pre-registered rule applied, per text source.
+
+| Command (`docfraud llm …`) | Step |
+|---|---|
+| `compare-models` | Model choice on gold set A, from the cheapest up |
+| `develop`, `freeze`, `stability` | Development rounds on gold set A, the frozen version, its run-to-run stability |
+| `measure-b`, `adjudicate`, `evaluate-b` | The one reading of gold set B, its adjudication, the decision report |
+| `spending` | What has been spent, against the limit |
 
 ## Package layout
 

@@ -4,7 +4,7 @@
 |---|---|
 | **Project** | docfraud: explainable multimodal detection of forged financial documents |
 | **Origin** | v2 of the M.Sc. thesis *AI-Based Expert System for Detecting Fraud in Financial Documents* (S. E. Ikiz, University of Europe for Applied Sciences, Berlin, 2026) |
-| **Status** | Phase 6a (LLM field extraction, moved before Phase 5) next; Phases 0 to 4 complete |
+| **Status** | Phase 6a (LLM field extraction, moved before Phase 5) in progress: built and pre-registered, the model comparison next; Phases 0 to 4 complete |
 | **Last updated** | 2026-10-22 |
 
 ## Problem
