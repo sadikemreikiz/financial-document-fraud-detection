@@ -1,0 +1,2727 @@
+{
+ "reviewer": "emre",
+ "answers": {
+  "X51005746207:amounts:tendered": {
+   "first": {
+    "amounts": [],
+    "items": [],
+    "tax_rows": []
+   },
+   "final": {
+    "amounts": [],
+    "items": [],
+    "tax_rows": []
+   },
+   "matched": true,
+   "answered_at": "2026-10-23T08:20:19.423288Z",
+   "commit": "a61135e07a6e825411e63119529da532d71c2a32"
+  },
+  "X51007103668:amounts:total_due": {
+   "first": {
+    "amounts": [
+     "27.20"
+    ],
+    "items": [],
+    "tax_rows": []
+   },
+   "final": {
+    "amounts": [
+     "27.20"
+    ],
+    "items": [],
+    "tax_rows": []
+   },
+   "matched": true,
+   "answered_at": "2026-10-23T08:20:55.334200Z",
+   "commit": "a61135e07a6e825411e63119529da532d71c2a32"
+  },
+  "X51006389884:tax_rows": {
+   "first": {
+    "amounts": [],
+    "items": [],
+    "tax_rows": [
+     {
+      "code": "",
+      "rate_percent": "6",
+      "taxable_amount": "33.56",
+      "tax": "2.02"
+     },
+     {
+      "code": "",
+      "rate_percent": "0",
+      "taxable_amount": "146.40",
+      "tax": "0.00"
+     }
+    ]
+   },
+   "final": {
+    "amounts": [],
+    "items": [],
+    "tax_rows": [
+     {
+      "code": "",
+      "rate_percent": "6",
+      "taxable_amount": "33.56",
+      "tax": "2.02"
+     },
+     {
+      "code": "",
+      "rate_percent": "0",
+      "taxable_amount": "146.40",
+      "tax": "0.00"
+     }
+    ]
+   },
+   "matched": true,
+   "answered_at": "2026-10-23T08:21:32.901908Z",
+   "commit": "a61135e07a6e825411e63119529da532d71c2a32"
+  },
+  "X51005663323:amounts:tax": {
+   "first": {
+    "amounts": [
+     "48.00"
+    ],
+    "items": [],
+    "tax_rows": []
+   },
+   "final": {
+    "amounts": [
+     "48.00"
+    ],
+    "items": [],
+    "tax_rows": []
+   },
+   "matched": true,
+   "answered_at": "2026-10-23T08:21:48.252381Z",
+   "commit": "a61135e07a6e825411e63119529da532d71c2a32"
+  },
+  "X51005705760:amounts:rounding": {
+   "first": {
+    "amounts": [
+     "0.00"
+    ],
+    "items": [],
+    "tax_rows": []
+   },
+   "final": {
+    "amounts": [
+     "0.00"
+    ],
+    "items": [],
+    "tax_rows": []
+   },
+   "matched": true,
+   "answered_at": "2026-10-23T08:23:36.651253Z",
+   "commit": "a61135e07a6e825411e63119529da532d71c2a32"
+  },
+  "X51006557213:tax_rows": {
+   "first": {
+    "amounts": [],
+    "items": [],
+    "tax_rows": [
+     {
+      "code": "",
+      "rate_percent": "6",
+      "taxable_amount": "-3.60",
+      "tax": "-0.22"
+     }
+    ]
+   },
+   "final": {
+    "amounts": [],
+    "items": [],
+    "tax_rows": [
+     {
+      "code": "",
+      "rate_percent": "0",
+      "taxable_amount": "35.14",
+      "tax": null
+     },
+     {
+      "code": "",
+      "rate_percent": "6",
+      "taxable_amount": "-3.60",
+      "tax": null
+     }
+    ]
+   },
+   "matched": false,
+   "answered_at": "2026-10-23T08:25:31.204501Z",
+   "commit": "a61135e07a6e825411e63119529da532d71c2a32"
+  },
+  "X51005663323:tax_rows": {
+   "first": {
+    "amounts": [],
+    "items": [],
+    "tax_rows": [
+     {
+      "code": "",
+      "rate_percent": "6",
+      "taxable_amount": "800",
+      "tax": "48.00"
+     }
+    ]
+   },
+   "final": {
+    "amounts": [],
+    "items": [],
+    "tax_rows": [
+     {
+      "code": "",
+      "rate_percent": "6",
+      "taxable_amount": "800",
+      "tax": "48.00"
+     }
+    ]
+   },
+   "matched": true,
+   "answered_at": "2026-10-23T08:28:00.418553Z",
+   "commit": "a61135e07a6e825411e63119529da532d71c2a32"
+  },
+  "X51006856982:items": {
+   "first": {
+    "amounts": [],
+    "items": [
+     {
+      "description": "121066051 OPTICARE 500X3",
+      "quantity": "1",
+      "unit_price": "13.78",
+      "amount": "13.78"
+     },
+     {
+      "description": "121066051 OPTICARE 500X3",
+      "quantity": "1",
+      "unit_price": "13.78",
+      "amount": "13.78"
+     },
+     {
+      "description": "121066051 OPTICARE 500X3",
+      "quantity": "1",
+      "unit_price": "13.78",
+      "amount": "13.78"
+     },
+     {
+      "description": "121066051 OPTICARE 500X3",
+      "quantity": "1",
+      "unit_price": "13.78",
+      "amount": "13.78"
+     },
+     {
+      "description": "126093669 GDN PLASTIC BAG",
+      "quantity": "1",
+      "unit_price": "0.20",
+      "amount": "0.20"
+     },
+     {
+      "description": "121096616 HASK COND335 CHA",
+      "quantity": "1",
+      "unit_price": "39.01",
+      "amount": "39.01"
+     },
+     {
+      "description": "121010604 COUNTERPAIN 30G",
+      "quantity": "1",
+      "unit_price": "8.88",
+      "amount": "8.88"
+     },
+     {
+      "description": "121002847 SALONPAS 1*10S",
+      "quantity": "1",
+      "unit_price": "5.00",
+      "amount": "5.00"
+     }
+    ],
+    "tax_rows": []
+   },
+   "final": {
+    "amounts": [],
+    "items": [
+     {
+      "description": "121066051 OPTICARE 500X3",
+      "quantity": "1",
+      "unit_price": "13.78",
+      "amount": "13.78"
+     },
+     {
+      "description": "121066051 OPTICARE 500X3",
+      "quantity": "1",
+      "unit_price": "13.78",
+      "amount": "13.78"
+     },
+     {
+      "description": "121066051 OPTICARE 500X3",
+      "quantity": "1",
+      "unit_price": "13.78",
+      "amount": "13.78"
+     },
+     {
+      "description": "121066051 OPTICARE 500X3",
+      "quantity": "1",
+      "unit_price": "13.78",
+      "amount": "13.78"
+     },
+     {
+      "description": "126093669 GDN PLASTIC BAG",
+      "quantity": "1",
+      "unit_price": "0.20",
+      "amount": "0.20"
+     },
+     {
+      "description": "121096616 HASK COND335 CHA",
+      "quantity": "1",
+      "unit_price": "39.01",
+      "amount": "39.01"
+     },
+     {
+      "description": "121010604 COUNTERPAIN 30G",
+      "quantity": "1",
+      "unit_price": "8.88",
+      "amount": "8.88"
+     },
+     {
+      "description": "121002847 SALONPAS 1*10S",
+      "quantity": "1",
+      "unit_price": "5.00",
+      "amount": "5.00"
+     }
+    ],
+    "tax_rows": []
+   },
+   "matched": true,
+   "answered_at": "2026-10-23T08:33:17.106696Z",
+   "commit": "a61135e07a6e825411e63119529da532d71c2a32"
+  },
+  "X51006389884:amounts:tendered": {
+   "first": {
+    "amounts": [
+     "182.00"
+    ],
+    "items": [],
+    "tax_rows": []
+   },
+   "final": {
+    "amounts": [
+     "182.00"
+    ],
+    "items": [],
+    "tax_rows": []
+   },
+   "matched": true,
+   "answered_at": "2026-10-23T08:34:06.416041Z",
+   "commit": "a61135e07a6e825411e63119529da532d71c2a32"
+  },
+  "X51006619790:amounts:tendered": {
+   "first": {
+    "amounts": [
+     "15.50"
+    ],
+    "items": [],
+    "tax_rows": []
+   },
+   "final": {
+    "amounts": [
+     "15.50"
+    ],
+    "items": [],
+    "tax_rows": []
+   },
+   "matched": true,
+   "answered_at": "2026-10-23T08:34:25.398626Z",
+   "commit": "a61135e07a6e825411e63119529da532d71c2a32"
+  },
+  "X51006349083:tax_rows": {
+   "first": {
+    "amounts": [],
+    "items": [],
+    "tax_rows": [
+     {
+      "code": "",
+      "rate_percent": "6",
+      "taxable_amount": "43.63",
+      "tax": "2.62"
+     }
+    ]
+   },
+   "final": {
+    "amounts": [],
+    "items": [],
+    "tax_rows": [
+     {
+      "code": "",
+      "rate_percent": "6",
+      "taxable_amount": "43.63",
+      "tax": "2.62"
+     }
+    ]
+   },
+   "matched": true,
+   "answered_at": "2026-10-23T08:34:59.877245Z",
+   "commit": "a61135e07a6e825411e63119529da532d71c2a32"
+  },
+  "X51005746207:items": {
+   "first": {
+    "amounts": [],
+    "items": [
+     {
+      "description": "FRUIT (FP) @2.99 41595",
+      "quantity": "1",
+      "unit_price": "2.99",
+      "amount": "2.99"
+     },
+     {
+      "description": "NANGKA 1 PINGGAN @2.00 FM415000303",
+      "quantity": "1",
+      "unit_price": "2.00",
+      "amount": "2.00"
+     },
+     {
+      "description": "KIMBALL TOMATO PUREE 430G @3.80 9556191030230",
+      "quantity": "1",
+      "unit_price": "3.80",
+      "amount": "3.80"
+     },
+     {
+      "description": "KIMBALL TOMATO PUREE 430G @3.80 9556191030230",
+      "quantity": "1",
+      "unit_price": "3.80",
+      "amount": "3.80"
+     },
+     {
+      "description": "URO MUSHROOM 425G @2.80 9555227500563",
+      "quantity": "1",
+      "unit_price": "2.80",
+      "amount": "2.80"
+     },
+     {
+      "description": "YOUNG CORN 425G (MS) @2.90 9555654400313",
+      "quantity": "1",
+      "unit_price": "2.90",
+      "amount": "2.90"
+     }
+    ],
+    "tax_rows": []
+   },
+   "final": {
+    "amounts": [],
+    "items": [
+     {
+      "description": "FRUIT (FP) @2.99 41595",
+      "quantity": "1",
+      "unit_price": "2.99",
+      "amount": "2.99"
+     },
+     {
+      "description": "NANGKA 1 PINGGAN @2.00 FM415000303",
+      "quantity": "1",
+      "unit_price": "2.00",
+      "amount": "2.00"
+     },
+     {
+      "description": "KIMBALL TOMATO PUREE 430G @3.80 9556191030230",
+      "quantity": "1",
+      "unit_price": "3.80",
+      "amount": "3.80"
+     },
+     {
+      "description": "KIMBALL TOMATO PUREE 430G @3.80 9556191030230",
+      "quantity": "1",
+      "unit_price": "3.80",
+      "amount": "3.80"
+     },
+     {
+      "description": "URO MUSHROOM 425G @2.80 9555227500563",
+      "quantity": "1",
+      "unit_price": "2.80",
+      "amount": "2.80"
+     },
+     {
+      "description": "YOUNG CORN 425G (MS) @2.90 9555654400313",
+      "quantity": "1",
+      "unit_price": "2.90",
+      "amount": "2.90"
+     }
+    ],
+    "tax_rows": []
+   },
+   "matched": true,
+   "answered_at": "2026-10-23T08:40:21.359891Z",
+   "commit": "a61135e07a6e825411e63119529da532d71c2a32"
+  },
+  "X51006332641:amounts:tax": {
+   "first": {
+    "amounts": [
+     "0.00"
+    ],
+    "items": [],
+    "tax_rows": []
+   },
+   "final": {
+    "amounts": [
+     "0.00"
+    ],
+    "items": [],
+    "tax_rows": []
+   },
+   "matched": true,
+   "answered_at": "2026-10-23T08:41:33.670169Z",
+   "commit": "a61135e07a6e825411e63119529da532d71c2a32"
+  },
+  "X51006332641:amounts:discount": {
+   "first": {
+    "amounts": [
+     "0.00"
+    ],
+    "items": [],
+    "tax_rows": []
+   },
+   "final": {
+    "amounts": [
+     "0.00"
+    ],
+    "items": [],
+    "tax_rows": []
+   },
+   "matched": true,
+   "answered_at": "2026-10-23T08:41:50.869808Z",
+   "commit": "a61135e07a6e825411e63119529da532d71c2a32"
+  },
+  "X51005441402:tax_rows": {
+   "first": {
+    "amounts": [],
+    "items": [],
+    "tax_rows": [
+     {
+      "code": "",
+      "rate_percent": "10",
+      "taxable_amount": "150",
+      "tax": "15.00"
+     },
+     {
+      "code": "",
+      "rate_percent": "6",
+      "taxable_amount": "165",
+      "tax": "9.90"
+     }
+    ]
+   },
+   "final": {
+    "amounts": [],
+    "items": [],
+    "tax_rows": [
+     {
+      "code": "",
+      "rate_percent": "10",
+      "taxable_amount": "150",
+      "tax": "15.00"
+     },
+     {
+      "code": "",
+      "rate_percent": "6",
+      "taxable_amount": "165",
+      "tax": "9.90"
+     }
+    ]
+   },
+   "matched": true,
+   "answered_at": "2026-10-23T08:42:24.287274Z",
+   "commit": "a61135e07a6e825411e63119529da532d71c2a32"
+  },
+  "X51006619790:tax_rows": {
+   "first": {
+    "amounts": [],
+    "items": [],
+    "tax_rows": [
+     {
+      "code": "",
+      "rate_percent": "6",
+      "taxable_amount": "13.70",
+      "tax": "0.80"
+     }
+    ]
+   },
+   "final": {
+    "amounts": [],
+    "items": [],
+    "tax_rows": [
+     {
+      "code": "",
+      "rate_percent": "6",
+      "taxable_amount": "13.70",
+      "tax": "0.80"
+     }
+    ]
+   },
+   "matched": true,
+   "answered_at": "2026-10-23T08:43:01.302035Z",
+   "commit": "a61135e07a6e825411e63119529da532d71c2a32"
+  },
+  "X51005663307:amounts:total_including_tax": {
+   "first": {
+    "amounts": [
+     "56.80"
+    ],
+    "items": [],
+    "tax_rows": []
+   },
+   "final": {
+    "amounts": [
+     "56.80"
+    ],
+    "items": [],
+    "tax_rows": []
+   },
+   "matched": true,
+   "answered_at": "2026-10-23T08:43:39.231942Z",
+   "commit": "a61135e07a6e825411e63119529da532d71c2a32"
+  },
+  "X51006856982:amounts:tendered": {
+   "first": {
+    "amounts": [
+     "110.00"
+    ],
+    "items": [],
+    "tax_rows": []
+   },
+   "final": {
+    "amounts": [
+     "110.00"
+    ],
+    "items": [],
+    "tax_rows": []
+   },
+   "matched": true,
+   "answered_at": "2026-10-23T08:44:17.771883Z",
+   "commit": "a61135e07a6e825411e63119529da532d71c2a32"
+  },
+  "X51005442384:amounts:total_including_tax": {
+   "first": {
+    "amounts": [
+     "8.20"
+    ],
+    "items": [],
+    "tax_rows": []
+   },
+   "final": {
+    "amounts": [
+     "8.20"
+    ],
+    "items": [],
+    "tax_rows": []
+   },
+   "matched": true,
+   "answered_at": "2026-10-23T08:44:38.836611Z",
+   "commit": "a61135e07a6e825411e63119529da532d71c2a32"
+  },
+  "X51005719863:amounts:total_due": {
+   "first": {
+    "amounts": [
+     "77.40"
+    ],
+    "items": [],
+    "tax_rows": []
+   },
+   "final": {
+    "amounts": [
+     "77.40"
+    ],
+    "items": [],
+    "tax_rows": []
+   },
+   "matched": true,
+   "answered_at": "2026-10-23T08:44:54.003034Z",
+   "commit": "a61135e07a6e825411e63119529da532d71c2a32"
+  },
+  "X51007231338:tax_rows": {
+   "first": {
+    "amounts": [],
+    "items": [],
+    "tax_rows": [
+     {
+      "code": "",
+      "rate_percent": "6",
+      "taxable_amount": "8.90",
+      "tax": "0.53"
+     }
+    ]
+   },
+   "final": {
+    "amounts": [],
+    "items": [],
+    "tax_rows": [
+     {
+      "code": "",
+      "rate_percent": "6",
+      "taxable_amount": "8.90",
+      "tax": "0.53"
+     }
+    ]
+   },
+   "matched": true,
+   "answered_at": "2026-10-23T08:45:19.106134Z",
+   "commit": "a61135e07a6e825411e63119529da532d71c2a32"
+  },
+  "X51006856982:amounts:total_including_tax": {
+   "first": {
+    "amounts": [
+     "108.21"
+    ],
+    "items": [],
+    "tax_rows": []
+   },
+   "final": {
+    "amounts": [
+     "108.21"
+    ],
+    "items": [],
+    "tax_rows": []
+   },
+   "matched": true,
+   "answered_at": "2026-10-23T08:45:46.903654Z",
+   "commit": "a61135e07a6e825411e63119529da532d71c2a32"
+  },
+  "X51006349083:items": {
+   "first": {
+    "amounts": [],
+    "items": [
+     {
+      "description": "B01 - MUSHROOM BR",
+      "quantity": "1",
+      "unit_price": "12.90",
+      "amount": "12.90"
+     },
+     {
+      "description": "SIZZLING PO",
+      "quantity": "1",
+      "unit_price": "13.90",
+      "amount": "13.90"
+     },
+     {
+      "description": "BLACK SUGAR",
+      "quantity": "1",
+      "unit_price": "11.90",
+      "amount": "11.90"
+     },
+     {
+      "description": "BROWN SUGAR",
+      "quantity": "1",
+      "unit_price": "4.95",
+      "amount": "4.95"
+     }
+    ],
+    "tax_rows": []
+   },
+   "final": {
+    "amounts": [],
+    "items": [
+     {
+      "description": "B01 - MUSHROOM BR",
+      "quantity": "1",
+      "unit_price": "12.90",
+      "amount": "12.90"
+     },
+     {
+      "description": "SIZZLING PO",
+      "quantity": "1",
+      "unit_price": "13.90",
+      "amount": "13.90"
+     },
+     {
+      "description": "BLACK SUGAR",
+      "quantity": "1",
+      "unit_price": "11.90",
+      "amount": "11.90"
+     },
+     {
+      "description": "BROWN SUGAR",
+      "quantity": "1",
+      "unit_price": "4.95",
+      "amount": "4.95"
+     }
+    ],
+    "tax_rows": []
+   },
+   "matched": true,
+   "answered_at": "2026-10-23T08:47:20.204028Z",
+   "commit": "a61135e07a6e825411e63119529da532d71c2a32"
+  },
+  "X51007339166:amounts:tendered": {
+   "first": {
+    "amounts": [
+     "10.00"
+    ],
+    "items": [],
+    "tax_rows": []
+   },
+   "final": {
+    "amounts": [
+     "10.00"
+    ],
+    "items": [],
+    "tax_rows": []
+   },
+   "matched": true,
+   "answered_at": "2026-10-23T08:47:29.303609Z",
+   "commit": "a61135e07a6e825411e63119529da532d71c2a32"
+  },
+  "X51006414485:amounts:total_including_tax": {
+   "first": {
+    "amounts": [
+     "8.20"
+    ],
+    "items": [],
+    "tax_rows": []
+   },
+   "final": {
+    "amounts": [
+     "8.20"
+    ],
+    "items": [],
+    "tax_rows": []
+   },
+   "matched": true,
+   "answered_at": "2026-10-23T08:47:45.587908Z",
+   "commit": "a61135e07a6e825411e63119529da532d71c2a32"
+  },
+  "X51006414733:items": {
+   "first": {
+    "amounts": [],
+    "items": [
+     {
+      "description": "000008541987 SA MIX PLUM",
+      "quantity": "1",
+      "unit_price": "7.00",
+      "amount": "7.00"
+     },
+     {
+      "description": "000002009131 R.GALA APPLE",
+      "quantity": "1",
+      "unit_price": "7.50",
+      "amount": "7.50"
+     },
+     {
+      "description": "000001058621 FOUR SEAS SEAW",
+      "quantity": "1",
+      "unit_price": "9.85",
+      "amount": "9.85"
+     },
+     {
+      "description": "000001038556 CHEK HUP 2IN1 Item promo @12.99",
+      "quantity": "1",
+      "unit_price": "16.50",
+      "amount": "16.50"
+     },
+     {
+      "description": "000007570247 FRANCE GREEN KI",
+      "quantity": "1",
+      "unit_price": "7.50",
+      "amount": "7.50"
+     },
+     {
+      "description": "000004291008 T. CHERRY HONEY",
+      "quantity": "1",
+      "unit_price": "12.50",
+      "amount": "12.50"
+     },
+     {
+      "description": "000000135412 SUSHI SET-PIC",
+      "quantity": "1",
+      "unit_price": "4.80",
+      "amount": "4.80"
+     },
+     {
+      "description": "000000381093 JAMBU AIR MADU",
+      "quantity": "1",
+      "unit_price": "15.90",
+      "amount": "15.90"
+     },
+     {
+      "description": "000000381093 JAMBU AIR MADU",
+      "quantity": "1",
+      "unit_price": "4.33",
+      "amount": "4.33"
+     },
+     {
+      "description": "000000388658 CUT FRUITS 1.99",
+      "quantity": "1",
+      "unit_price": "2.50",
+      "amount": "2.50"
+     },
+     {
+      "description": "000000820868 ZA M/N BEAUTY CAVANDISH BANAN",
+      "quantity": "1",
+      "unit_price": "8.00",
+      "amount": "8.00"
+     },
+     {
+      "description": "000000381000 CAVANDISH BANAN",
+      "quantity": "1",
+      "unit_price": "4.61",
+      "amount": "4.61"
+     },
+     {
+      "description": "0000020003191 BLUEBERRY",
+      "quantity": "1",
+      "unit_price": "10.90",
+      "amount": "10.90"
+     },
+     {
+      "description": "COLESLAW SANDWI",
+      "quantity": "1",
+      "unit_price": "3.90",
+      "amount": "3.90"
+     },
+     {
+      "description": "000000512077 COLESLAW SANDWI",
+      "quantity": "1",
+      "unit_price": "3.00",
+      "amount": "3.00"
+     },
+     {
+      "description": "000008202802 WANDA DRIED FIS",
+      "quantity": "1",
+      "unit_price": "7.50",
+      "amount": "7.50"
+     }
+    ],
+    "tax_rows": []
+   },
+   "final": {
+    "amounts": [],
+    "items": [
+     {
+      "description": "SA MIX PLUM",
+      "quantity": "1",
+      "unit_price": null,
+      "amount": "7.00"
+     },
+     {
+      "description": "R.GALA APPLE",
+      "quantity": "1",
+      "unit_price": null,
+      "amount": "7.50"
+     },
+     {
+      "description": "FOUR SEAS SEAW",
+      "quantity": "1",
+      "unit_price": null,
+      "amount": "9.85"
+     },
+     {
+      "description": "CHEK HUP 2IN1",
+      "quantity": "1",
+      "unit_price": null,
+      "amount": "16.50"
+     },
+     {
+      "description": "ITEM PROMO",
+      "quantity": null,
+      "unit_price": "12.99",
+      "amount": "-3.51"
+     },
+     {
+      "description": "TOMATO AMOROS",
+      "quantity": "1",
+      "unit_price": null,
+      "amount": "7.50"
+     },
+     {
+      "description": "FRANCE GREEN KI",
+      "quantity": "1",
+      "unit_price": null,
+      "amount": "12.50"
+     },
+     {
+      "description": "T. CHERRY HONEY",
+      "quantity": "1",
+      "unit_price": null,
+      "amount": "4.80"
+     },
+     {
+      "description": "SUSHI SET-PTC",
+      "quantity": "1",
+      "unit_price": null,
+      "amount": "15.90"
+     },
+     {
+      "description": "JAMBU AIR MADU",
+      "quantity": "1",
+      "unit_price": null,
+      "amount": "4.33"
+     },
+     {
+      "description": "",
+      "quantity": "1",
+      "unit_price": null,
+      "amount": "2.50"
+     },
+     {
+      "description": "CUT FRUITS",
+      "quantity": null,
+      "unit_price": null,
+      "amount": "1.99"
+     },
+     {
+      "description": "ZA M/N BEAUTY",
+      "quantity": "1",
+      "unit_price": null,
+      "amount": "8.00"
+     },
+     {
+      "description": "CAVANDISH BANAN",
+      "quantity": "1",
+      "unit_price": null,
+      "amount": "4.61"
+     },
+     {
+      "description": "BLUEBERRY",
+      "quantity": "1",
+      "unit_price": null,
+      "amount": "10.90"
+     },
+     {
+      "description": "EGG KANI MAYO",
+      "quantity": "1",
+      "unit_price": null,
+      "amount": "3.90"
+     },
+     {
+      "description": "COLESLAW SANDWI",
+      "quantity": "1",
+      "unit_price": null,
+      "amount": "3.00"
+     },
+     {
+      "description": "WANFA DRIED FIS",
+      "quantity": "1",
+      "unit_price": null,
+      "amount": "7.50"
+     }
+    ],
+    "tax_rows": []
+   },
+   "matched": false,
+   "answered_at": "2026-10-23T09:04:55.542915Z",
+   "commit": "a61135e07a6e825411e63119529da532d71c2a32"
+  },
+  "X51006349083:amounts:tax": {
+   "first": {
+    "amounts": [
+     "2.62"
+    ],
+    "items": [],
+    "tax_rows": []
+   },
+   "final": {
+    "amounts": [
+     "2.62"
+    ],
+    "items": [],
+    "tax_rows": []
+   },
+   "matched": true,
+   "answered_at": "2026-10-23T09:06:14.507929Z",
+   "commit": "a61135e07a6e825411e63119529da532d71c2a32"
+  },
+  "X51005746207:tax_rows": {
+   "first": {
+    "amounts": [],
+    "items": [],
+    "tax_rows": [
+     {
+      "code": "",
+      "rate_percent": "0",
+      "taxable_amount": "4.99",
+      "tax": "0.00"
+     },
+     {
+      "code": "",
+      "rate_percent": "6",
+      "taxable_amount": "12.54",
+      "tax": "0.76"
+     }
+    ]
+   },
+   "final": {
+    "amounts": [],
+    "items": [],
+    "tax_rows": [
+     {
+      "code": "",
+      "rate_percent": "0",
+      "taxable_amount": "4.99",
+      "tax": "0.00"
+     },
+     {
+      "code": "",
+      "rate_percent": "6",
+      "taxable_amount": "12.54",
+      "tax": "0.76"
+     }
+    ]
+   },
+   "matched": true,
+   "answered_at": "2026-10-23T09:06:44.857855Z",
+   "commit": "a61135e07a6e825411e63119529da532d71c2a32"
+  },
+  "X51006389884:amounts:total_due": {
+   "first": {
+    "amounts": [
+     "182.00"
+    ],
+    "items": [],
+    "tax_rows": []
+   },
+   "final": {
+    "amounts": [
+     "182.00"
+    ],
+    "items": [],
+    "tax_rows": []
+   },
+   "matched": true,
+   "answered_at": "2026-10-23T09:07:01.355327Z",
+   "commit": "a61135e07a6e825411e63119529da532d71c2a32"
+  },
+  "X00016469622:amounts:discount": {
+   "first": {
+    "amounts": [
+     "0.00"
+    ],
+    "items": [],
+    "tax_rows": []
+   },
+   "final": {
+    "amounts": [
+     "0.00"
+    ],
+    "items": [],
+    "tax_rows": []
+   },
+   "matched": true,
+   "answered_at": "2026-10-23T09:07:20.442392Z",
+   "commit": "a61135e07a6e825411e63119529da532d71c2a32"
+  },
+  "X51006389884:amounts:change": {
+   "first": {
+    "amounts": [
+     "0.00"
+    ],
+    "items": [],
+    "tax_rows": []
+   },
+   "final": {
+    "amounts": [
+     "0.00"
+    ],
+    "items": [],
+    "tax_rows": []
+   },
+   "matched": true,
+   "answered_at": "2026-10-23T09:07:29.892737Z",
+   "commit": "a61135e07a6e825411e63119529da532d71c2a32"
+  },
+  "X51007103668:items": {
+   "first": {
+    "amounts": [],
+    "items": [
+     {
+      "description": "COTTON MOP *S FZ07 - 20 9068374",
+      "quantity": "1",
+      "unit_price": "8.90",
+      "amount": "8.90"
+     },
+     {
+      "description": "HARD BROOM 484P W/4FT *S WA03 - 12/144 9555221300275",
+      "quantity": "1",
+      "unit_price": "5.90",
+      "amount": "5.90"
+     },
+     {
+      "description": "NYLON BATH BROOM 718 4´ *S WA01 - 6/144 *S 9555221300602",
+      "quantity": "1",
+      "unit_price": "6.20",
+      "amount": "6.20"
+     }
+    ],
+    "tax_rows": []
+   },
+   "final": {
+    "amounts": [],
+    "items": [
+     {
+      "description": "COTTON MOP *S F207 -20",
+      "quantity": "1",
+      "unit_price": "8.90",
+      "amount": "8.910"
+     },
+     {
+      "description": "HARD BROOM 484P W/4FT *S WA03 - 12/144",
+      "quantity": "1",
+      "unit_price": "5.90",
+      "amount": "5.90"
+     },
+     {
+      "description": "NYLON BATH BROOM 718 4 *S WA01 - 6/144",
+      "quantity": "2",
+      "unit_price": "6.20",
+      "amount": "12.40"
+     }
+    ],
+    "tax_rows": []
+   },
+   "matched": false,
+   "answered_at": "2026-10-23T09:10:43.497869Z",
+   "commit": "a61135e07a6e825411e63119529da532d71c2a32"
+  },
+  "X51007339166:amounts:total_due": {
+   "first": {
+    "amounts": [
+     "3.90"
+    ],
+    "items": [],
+    "tax_rows": []
+   },
+   "final": {
+    "amounts": [
+     "3.90"
+    ],
+    "items": [],
+    "tax_rows": []
+   },
+   "matched": false,
+   "answered_at": "2026-10-23T09:11:34.074736Z",
+   "commit": "a61135e07a6e825411e63119529da532d71c2a32"
+  },
+  "X51005441402:amounts:service_charge": {
+   "first": {
+    "amounts": [
+     "15.00"
+    ],
+    "items": [],
+    "tax_rows": []
+   },
+   "final": {
+    "amounts": [
+     "15.00"
+    ],
+    "items": [],
+    "tax_rows": []
+   },
+   "matched": true,
+   "answered_at": "2026-10-23T09:12:17.643454Z",
+   "commit": "a61135e07a6e825411e63119529da532d71c2a32"
+  },
+  "X00016469622:amounts:subtotal": {
+   "first": {
+    "amounts": [
+     "88.91"
+    ],
+    "items": [],
+    "tax_rows": []
+   },
+   "final": {
+    "amounts": [
+     "88.91"
+    ],
+    "items": [],
+    "tax_rows": []
+   },
+   "matched": true,
+   "answered_at": "2026-10-23T09:12:31.626021Z",
+   "commit": "a61135e07a6e825411e63119529da532d71c2a32"
+  },
+  "X51006414485:amounts:subtotal": {
+   "first": {
+    "amounts": [
+     "8.20"
+    ],
+    "items": [],
+    "tax_rows": []
+   },
+   "final": {
+    "amounts": [
+     "8.20"
+    ],
+    "items": [],
+    "tax_rows": []
+   },
+   "matched": true,
+   "answered_at": "2026-10-23T09:13:01.376171Z",
+   "commit": "a61135e07a6e825411e63119529da532d71c2a32"
+  },
+  "X51006349083:amounts:subtotal": {
+   "first": {
+    "amounts": [
+     "43.65"
+    ],
+    "items": [],
+    "tax_rows": []
+   },
+   "final": {
+    "amounts": [
+     "43.65"
+    ],
+    "items": [],
+    "tax_rows": []
+   },
+   "matched": true,
+   "answered_at": "2026-10-23T09:14:04.108925Z",
+   "commit": "a61135e07a6e825411e63119529da532d71c2a32"
+  },
+  "X00016469622:amounts:total_including_tax": {
+   "first": {
+    "amounts": [
+     "88.90"
+    ],
+    "items": [],
+    "tax_rows": []
+   },
+   "final": {
+    "amounts": [
+     "88.90"
+    ],
+    "items": [],
+    "tax_rows": []
+   },
+   "matched": true,
+   "answered_at": "2026-10-23T09:14:25.427910Z",
+   "commit": "a61135e07a6e825411e63119529da532d71c2a32"
+  },
+  "X51005715007:tax_rows": {
+   "first": {
+    "amounts": [],
+    "items": [],
+    "tax_rows": [
+     {
+      "code": "",
+      "rate_percent": "6",
+      "taxable_amount": "17.64",
+      "tax": "1.06"
+     }
+    ]
+   },
+   "final": {
+    "amounts": [],
+    "items": [],
+    "tax_rows": [
+     {
+      "code": "",
+      "rate_percent": "6",
+      "taxable_amount": "17.64",
+      "tax": "1.06"
+     }
+    ]
+   },
+   "matched": true,
+   "answered_at": "2026-10-23T09:15:01.753736Z",
+   "commit": "a61135e07a6e825411e63119529da532d71c2a32"
+  },
+  "X51007231338:amounts:subtotal": {
+   "first": {
+    "amounts": [
+     "8.90"
+    ],
+    "items": [],
+    "tax_rows": []
+   },
+   "final": {
+    "amounts": [
+     "8.90"
+    ],
+    "items": [],
+    "tax_rows": []
+   },
+   "matched": true,
+   "answered_at": "2026-10-23T09:15:14.871099Z",
+   "commit": "a61135e07a6e825411e63119529da532d71c2a32"
+  },
+  "X51006913018:items": {
+   "first": {
+    "amounts": [],
+    "items": [
+     {
+      "description": "000007016592 PHILIPS I/COOKE",
+      "quantity": "1",
+      "unit_price": "369.00",
+      "amount": "369.00"
+     },
+     {
+      "description": "000006991029 C61796 -TEFAL",
+      "quantity": "1",
+      "unit_price": "269.00",
+      "amount": "269.00"
+     }
+    ],
+    "tax_rows": []
+   },
+   "final": {
+    "amounts": [],
+    "items": [
+     {
+      "description": "PHILIPS I/COOKE",
+      "quantity": "1",
+      "unit_price": null,
+      "amount": "369.00"
+     },
+     {
+      "description": "C61796 - TEFAL",
+      "quantity": "1",
+      "unit_price": null,
+      "amount": "269.00"
+     },
+     {
+      "description": "MEMBER DISC @189.00",
+      "quantity": null,
+      "unit_price": null,
+      "amount": "-80.00"
+     },
+     {
+      "description": "AEON CARD DISC @179.55",
+      "quantity": null,
+      "unit_price": null,
+      "amount": "-9.45"
+     }
+    ],
+    "tax_rows": []
+   },
+   "matched": false,
+   "answered_at": "2026-10-23T09:18:34.809136Z",
+   "commit": "a61135e07a6e825411e63119529da532d71c2a32"
+  },
+  "X51005442384:amounts:subtotal": {
+   "first": {
+    "amounts": [
+     "8.20"
+    ],
+    "items": [],
+    "tax_rows": []
+   },
+   "final": {
+    "amounts": [
+     "8.20"
+    ],
+    "items": [],
+    "tax_rows": []
+   },
+   "matched": true,
+   "answered_at": "2026-10-23T09:19:16.271492Z",
+   "commit": "a61135e07a6e825411e63119529da532d71c2a32"
+  },
+  "X51006389884:items": {
+   "first": {
+    "amounts": [],
+    "items": [
+     {
+      "description": "261 HELANG MINYAK MASAK 5KG",
+      "quantity": "2",
+      "unit_price": "24.35",
+      "amount": "48.70"
+     },
+     {
+      "description": "8038 JASMINE SUPER 5 SPECIA",
+      "quantity": "1",
+      "unit_price": "29.90",
+      "amount": "29.90"
+     },
+     {
+      "description": "086 GREENLINK BIOTECH BRIKE",
+      "quantity": "1",
+      "unit_price": "8.40",
+      "amount": "8.40"
+     },
+     {
+      "description": "2829 LIFEBUOY COOL FRESH SO",
+      "quantity": "2",
+      "unit_price": "6.99",
+      "amount": "13.98"
+     },
+     {
+      "description": "820 PIPIT BLEACH 2*1KG TP",
+      "quantity": "1",
+      "unit_price": "4.20",
+      "amount": "4.20"
+     },
+     {
+      "description": "861 FAB PERFECT BAR (B) 130",
+      "quantity": "10",
+      "unit_price": "0.90",
+      "amount": "9.00"
+     },
+     {
+      "description": "551 NESCAFE CLASSIC ARABICA",
+      "quantity": "3",
+      "unit_price": "22.60",
+      "amount": "67.80"
+     }
+    ],
+    "tax_rows": []
+   },
+   "final": {
+    "amounts": [],
+    "items": [
+     {
+      "description": "261 HELANG MINYAK MASAK 5KG",
+      "quantity": "2",
+      "unit_price": "24.35",
+      "amount": "48.70"
+     },
+     {
+      "description": "8038 JASMINE SUPER 5 SPECIA",
+      "quantity": "1",
+      "unit_price": "29.90",
+      "amount": "29.90"
+     },
+     {
+      "description": "086 GREENLINK BIOTECH BRIKE",
+      "quantity": "1",
+      "unit_price": "8.40",
+      "amount": "8.40"
+     },
+     {
+      "description": "2829 LIFEBUOY COOL FRESH SO",
+      "quantity": "2",
+      "unit_price": "6.99",
+      "amount": "13.98"
+     },
+     {
+      "description": "820 PIPIT BLEACH 2*1KG TP",
+      "quantity": "1",
+      "unit_price": "4.20",
+      "amount": "4.20"
+     },
+     {
+      "description": "861 FAB PERFECT BAR (B) 130",
+      "quantity": "10",
+      "unit_price": "0.90",
+      "amount": "9.00"
+     },
+     {
+      "description": "551 NESCAFE CLASSIC ARABICA",
+      "quantity": "3",
+      "unit_price": "22.60",
+      "amount": "67.80"
+     }
+    ],
+    "tax_rows": []
+   },
+   "matched": true,
+   "answered_at": "2026-10-23T09:51:43.594906Z",
+   "commit": "a61135e07a6e825411e63119529da532d71c2a32"
+  },
+  "X51005705760:amounts:subtotal": {
+   "first": {
+    "amounts": [
+     "21.40"
+    ],
+    "items": [],
+    "tax_rows": []
+   },
+   "final": {
+    "amounts": [
+     "21.40"
+    ],
+    "items": [],
+    "tax_rows": []
+   },
+   "matched": true,
+   "answered_at": "2026-10-23T09:51:55.702552Z",
+   "commit": "a61135e07a6e825411e63119529da532d71c2a32"
+  },
+  "X51007846268:tax_rows": {
+   "first": {
+    "amounts": [],
+    "items": [],
+    "tax_rows": [
+     {
+      "code": "",
+      "rate_percent": "0",
+      "taxable_amount": "10.36",
+      "tax": "0.00"
+     }
+    ]
+   },
+   "final": {
+    "amounts": [],
+    "items": [],
+    "tax_rows": [
+     {
+      "code": "",
+      "rate_percent": "0",
+      "taxable_amount": "10.36",
+      "tax": "0.00"
+     }
+    ]
+   },
+   "matched": true,
+   "answered_at": "2026-10-23T09:52:14.602879Z",
+   "commit": "a61135e07a6e825411e63119529da532d71c2a32"
+  },
+  "X51005746207:amounts:total_due": {
+   "first": {
+    "amounts": [
+     "18.30"
+    ],
+    "items": [],
+    "tax_rows": []
+   },
+   "final": {
+    "amounts": [
+     "18.30"
+    ],
+    "items": [],
+    "tax_rows": []
+   },
+   "matched": true,
+   "answered_at": "2026-10-23T09:52:26.934704Z",
+   "commit": "a61135e07a6e825411e63119529da532d71c2a32"
+  },
+  "X51006913018:amounts:tendered": {
+   "first": {
+    "amounts": [
+     "500.00"
+    ],
+    "items": [],
+    "tax_rows": []
+   },
+   "final": {
+    "amounts": [
+     "500.00"
+    ],
+    "items": [],
+    "tax_rows": []
+   },
+   "matched": true,
+   "answered_at": "2026-10-23T09:52:58.669442Z",
+   "commit": "a61135e07a6e825411e63119529da532d71c2a32"
+  },
+  "X51007846268:amounts:subtotal": {
+   "first": {
+    "amounts": [
+     "10.36"
+    ],
+    "items": [],
+    "tax_rows": []
+   },
+   "final": {
+    "amounts": [
+     "10.36"
+    ],
+    "items": [],
+    "tax_rows": []
+   },
+   "matched": true,
+   "answered_at": "2026-10-23T09:53:21.267949Z",
+   "commit": "a61135e07a6e825411e63119529da532d71c2a32"
+  },
+  "X51007339656:amounts:tendered": {
+   "first": {
+    "amounts": [
+     "16.00"
+    ],
+    "items": [],
+    "tax_rows": []
+   },
+   "final": {
+    "amounts": [
+     "16.00"
+    ],
+    "items": [],
+    "tax_rows": []
+   },
+   "matched": true,
+   "answered_at": "2026-10-23T09:53:30.435698Z",
+   "commit": "a61135e07a6e825411e63119529da532d71c2a32"
+  },
+  "X00016469622:amounts:total_due": {
+   "first": {
+    "amounts": [
+     "88.90"
+    ],
+    "items": [],
+    "tax_rows": []
+   },
+   "final": {
+    "amounts": [
+     "88.90"
+    ],
+    "items": [],
+    "tax_rows": []
+   },
+   "matched": true,
+   "answered_at": "2026-10-23T09:53:40.918476Z",
+   "commit": "a61135e07a6e825411e63119529da532d71c2a32"
+  },
+  "X51007339166:tax_rows": {
+   "first": {
+    "amounts": [],
+    "items": [],
+    "tax_rows": [
+     {
+      "code": "",
+      "rate_percent": "6",
+      "taxable_amount": "3.68",
+      "tax": "22"
+     }
+    ]
+   },
+   "final": {
+    "amounts": [],
+    "items": [],
+    "tax_rows": [
+     {
+      "code": "",
+      "rate_percent": "6",
+      "taxable_amount": "3.68",
+      "tax": "0.22"
+     }
+    ]
+   },
+   "matched": false,
+   "answered_at": "2026-10-23T09:54:09.068618Z",
+   "commit": "a61135e07a6e825411e63119529da532d71c2a32"
+  },
+  "X51006414679:amounts:subtotal": {
+   "first": {
+    "amounts": [
+     "21.80"
+    ],
+    "items": [],
+    "tax_rows": []
+   },
+   "final": {
+    "amounts": [
+     "21.80"
+    ],
+    "items": [],
+    "tax_rows": []
+   },
+   "matched": true,
+   "answered_at": "2026-10-23T09:56:14.866670Z",
+   "commit": "a61135e07a6e825411e63119529da532d71c2a32"
+  },
+  "X51006619790:items": {
+   "first": {
+    "amounts": [],
+    "items": [
+     {
+      "description": "6928835430158 HOOK-3015",
+      "quantity": "1",
+      "unit_price": "2.90",
+      "amount": "2.90"
+     },
+     {
+      "description": "6928835430158 HOOK-3015",
+      "quantity": "1",
+      "unit_price": "2.90",
+      "amount": "2.90"
+     },
+     {
+      "description": "9555221301524 TOILET BRUSH-1",
+      "quantity": "1",
+      "unit_price": "2.90",
+      "amount": "2.90"
+     },
+     {
+      "description": "6928835430158 HOOK-3015",
+      "quantity": "1",
+      "unit_price": "2.90",
+      "amount": "2.90"
+     },
+     {
+      "description": "6928835430158 HOOK-3015",
+      "quantity": "1",
+      "unit_price": "2.90",
+      "amount": "2.90"
+     }
+    ],
+    "tax_rows": []
+   },
+   "final": {
+    "amounts": [],
+    "items": [
+     {
+      "description": "6928835430158 HOOK-3015",
+      "quantity": "1",
+      "unit_price": "2.90",
+      "amount": "2.90"
+     },
+     {
+      "description": "6928835430158 HOOK-3015",
+      "quantity": "1",
+      "unit_price": "2.90",
+      "amount": "2.90"
+     },
+     {
+      "description": "9555221301524 TOILET BRUSH-1",
+      "quantity": "1",
+      "unit_price": "2.90",
+      "amount": "2.90"
+     },
+     {
+      "description": "6928835430158 HOOK-3015",
+      "quantity": "1",
+      "unit_price": "2.90",
+      "amount": "2.90"
+     },
+     {
+      "description": "6928835430158 HOOK-3015",
+      "quantity": "1",
+      "unit_price": "2.90",
+      "amount": "2.90"
+     }
+    ],
+    "tax_rows": []
+   },
+   "matched": true,
+   "answered_at": "2026-10-23T09:58:22.364382Z",
+   "commit": "a61135e07a6e825411e63119529da532d71c2a32"
+  },
+  "X51006414679:amounts:total_including_tax": {
+   "first": {
+    "amounts": [
+     "21.80"
+    ],
+    "items": [],
+    "tax_rows": []
+   },
+   "final": {
+    "amounts": [
+     "21.80"
+    ],
+    "items": [],
+    "tax_rows": []
+   },
+   "matched": true,
+   "answered_at": "2026-10-23T09:58:39.349790Z",
+   "commit": "a61135e07a6e825411e63119529da532d71c2a32"
+  },
+  "X51006557213:items": {
+   "first": {
+    "amounts": [],
+    "items": [
+     {
+      "description": "O.C WHITE",
+      "quantity": "3",
+      "unit_price": "2.13",
+      "amount": "6.39"
+     },
+     {
+      "description": "WHOLEMEAL",
+      "quantity": "5",
+      "unit_price": "2.78",
+      "amount": "13.90"
+     },
+     {
+      "description": "O.C JUMBO",
+      "quantity": "5",
+      "unit_price": "2.97",
+      "amount": "14.85"
+     }
+    ],
+    "tax_rows": []
+   },
+   "final": {
+    "amounts": [],
+    "items": [
+     {
+      "description": "O.C WHITE",
+      "quantity": "3",
+      "unit_price": "2.13",
+      "amount": "6.39"
+     },
+     {
+      "description": "WHOLEMEAL",
+      "quantity": "5",
+      "unit_price": "2.78",
+      "amount": "13.90"
+     },
+     {
+      "description": "O.C JUMBO",
+      "quantity": "5",
+      "unit_price": "2.97",
+      "amount": "14.85"
+     }
+    ],
+    "tax_rows": []
+   },
+   "matched": true,
+   "answered_at": "2026-10-23T09:59:54.748842Z",
+   "commit": "a61135e07a6e825411e63119529da532d71c2a32"
+  },
+  "X00016469622:amounts:tendered": {
+   "first": {
+    "amounts": [
+     "100.00"
+    ],
+    "items": [],
+    "tax_rows": []
+   },
+   "final": {
+    "amounts": [
+     "100.00"
+    ],
+    "items": [],
+    "tax_rows": []
+   },
+   "matched": true,
+   "answered_at": "2026-10-23T10:00:03.248162Z",
+   "commit": "a61135e07a6e825411e63119529da532d71c2a32"
+  },
+  "X51007339166:items": {
+   "first": {
+    "amounts": [],
+    "items": [
+     {
+      "description": "1. 2000-0240 CAMPAP CR 36364 A4 10S BRIEF CARD(CAMPAP ARTO))",
+      "quantity": "100",
+      "unit_price": "3.9000",
+      "amount": "390"
+     }
+    ],
+    "tax_rows": []
+   },
+   "final": {
+    "amounts": [],
+    "items": [
+     {
+      "description": "1. 2000-0240 CAMPAP CR 36364 A4 10S BRIEF CARD(CAMPAP ARTO))",
+      "quantity": "100",
+      "unit_price": "3.9000",
+      "amount": "390"
+     }
+    ],
+    "tax_rows": []
+   },
+   "matched": true,
+   "answered_at": "2026-10-23T10:01:42.118417Z",
+   "commit": "a61135e07a6e825411e63119529da532d71c2a32"
+  },
+  "X51007339656:tax_rows": {
+   "first": {
+    "amounts": [],
+    "items": [],
+    "tax_rows": [
+     {
+      "code": "",
+      "rate_percent": "6",
+      "taxable_amount": "15.09",
+      "tax": "0.91"
+     }
+    ]
+   },
+   "final": {
+    "amounts": [],
+    "items": [],
+    "tax_rows": [
+     {
+      "code": "",
+      "rate_percent": "6",
+      "taxable_amount": "15.09",
+      "tax": "0.91"
+     }
+    ]
+   },
+   "matched": true,
+   "answered_at": "2026-10-23T10:02:01.980381Z",
+   "commit": "a61135e07a6e825411e63119529da532d71c2a32"
+  },
+  "X51006856982:amounts:total_due": {
+   "first": {
+    "amounts": [
+     "108.21"
+    ],
+    "items": [],
+    "tax_rows": []
+   },
+   "final": {
+    "amounts": [
+     "108.21"
+    ],
+    "items": [],
+    "tax_rows": []
+   },
+   "matched": true,
+   "answered_at": "2026-10-23T10:02:15.564378Z",
+   "commit": "a61135e07a6e825411e63119529da532d71c2a32"
+  },
+  "X51005441402:items": {
+   "first": {
+    "amounts": [],
+    "items": [
+     {
+      "description": "HH GUINESS 12 GLASSES",
+      "quantity": "1",
+      "unit_price": "150.00",
+      "amount": "150.00"
+     }
+    ],
+    "tax_rows": []
+   },
+   "final": {
+    "amounts": [],
+    "items": [
+     {
+      "description": "HH GUINESS 12 GLASSES",
+      "quantity": "1",
+      "unit_price": "150.00",
+      "amount": "150.00"
+     }
+    ],
+    "tax_rows": []
+   },
+   "matched": true,
+   "answered_at": "2026-10-23T10:02:48.530480Z",
+   "commit": "a61135e07a6e825411e63119529da532d71c2a32"
+  },
+  "X51005705760:items": {
+   "first": {
+    "amounts": [],
+    "items": [
+     {
+      "description": "PARTNER E/LOPE 4.5INX9.5IN W4292",
+      "quantity": "2",
+      "unit_price": "2.60",
+      "amount": "5.20"
+     },
+     {
+      "description": "PLASTIC BAG RMO.20",
+      "quantity": "1",
+      "unit_price": "0.20",
+      "amount": "0.20"
+     },
+     {
+      "description": "TEN Q E/LOPE 15INX10IN TQ-S1015",
+      "quantity": "2",
+      "unit_price": "2.50",
+      "amount": "5.00"
+     },
+     {
+      "description": "UMOE S/NT 100MX75M, N/GRN",
+      "quantity": "1",
+      "unit_price": "3.00",
+      "amount": "3.00"
+     },
+     {
+      "description": "UMOE S/NT 100MX75M, N/YLW",
+      "quantity": "1",
+      "unit_price": "3.00",
+      "amount": "3.00"
+     },
+     {
+      "description": "UMOE S/NT 100MX75M, N/GRN",
+      "quantity": "1",
+      "unit_price": "2.50",
+      "amount": "2.50"
+     },
+     {
+      "description": "UMOE S/NT 100MX75M, N/PINK",
+      "quantity": "1",
+      "unit_price": "2.50",
+      "amount": "2.50"
+     }
+    ],
+    "tax_rows": []
+   },
+   "final": {
+    "amounts": [],
+    "items": [
+     {
+      "description": "PARTNER E/LOPE 4.5INX9.5IN W4292",
+      "quantity": "2",
+      "unit_price": "2.60",
+      "amount": "5.20"
+     },
+     {
+      "description": "PLASTIC BAG RMO.20",
+      "quantity": "1",
+      "unit_price": "0.20",
+      "amount": "0.20"
+     },
+     {
+      "description": "TEN Q E/LOPE 15INX10IN TQ-S1015",
+      "quantity": "2",
+      "unit_price": "2.50",
+      "amount": "5.00"
+     },
+     {
+      "description": "UMOE S/NT 100MX75M, N/GRN",
+      "quantity": "1",
+      "unit_price": "3.00",
+      "amount": "3.00"
+     },
+     {
+      "description": "UMOE S/NT 100MX75M, N/YLW",
+      "quantity": "1",
+      "unit_price": "3.00",
+      "amount": "3.00"
+     },
+     {
+      "description": "UMOE S/NT 100MX75M, N/GRN",
+      "quantity": "1",
+      "unit_price": "2.50",
+      "amount": "2.50"
+     },
+     {
+      "description": "UMOE S/NT 100MX75M, N/PINK",
+      "quantity": "1",
+      "unit_price": "2.50",
+      "amount": "2.50"
+     }
+    ],
+    "tax_rows": []
+   },
+   "matched": true,
+   "answered_at": "2026-10-23T10:06:16.144468Z",
+   "commit": "a61135e07a6e825411e63119529da532d71c2a32"
+  },
+  "X51007846268:amounts:total_including_tax": {
+   "first": {
+    "amounts": [
+     "10.36"
+    ],
+    "items": [],
+    "tax_rows": []
+   },
+   "final": {
+    "amounts": [
+     "10.36"
+    ],
+    "items": [],
+    "tax_rows": []
+   },
+   "matched": true,
+   "answered_at": "2026-10-23T10:06:51.231242Z",
+   "commit": "a61135e07a6e825411e63119529da532d71c2a32"
+  },
+  "X51006332641:amounts:subtotal": {
+   "first": {
+    "amounts": [
+     "18.00"
+    ],
+    "items": [],
+    "tax_rows": []
+   },
+   "final": {
+    "amounts": [
+     "18.00"
+    ],
+    "items": [],
+    "tax_rows": []
+   },
+   "matched": true,
+   "answered_at": "2026-10-23T10:07:06.876901Z",
+   "commit": "a61135e07a6e825411e63119529da532d71c2a32"
+  },
+  "X51007339166:amounts:total_including_tax": {
+   "first": {
+    "amounts": [
+     "3.90"
+    ],
+    "items": [],
+    "tax_rows": []
+   },
+   "final": {
+    "amounts": [
+     "3.90"
+    ],
+    "items": [],
+    "tax_rows": []
+   },
+   "matched": false,
+   "answered_at": "2026-10-23T10:07:33.776927Z",
+   "commit": "a61135e07a6e825411e63119529da532d71c2a32"
+  },
+  "X51006619765:items": {
+   "first": {
+    "amounts": [],
+    "items": [
+     {
+      "description": "CUSHION 43*43CM",
+      "quantity": "1",
+      "unit_price": "14.90",
+      "amount": "14.90"
+     },
+     {
+      "description": "COLANDER 12610#*VS",
+      "quantity": "1",
+      "unit_price": "5.90",
+      "amount": "5.90"
+     },
+     {
+      "description": "S/S SQUARE STAND SSB0775-A#",
+      "quantity": "1",
+      "unit_price": "6.50",
+      "amount": "6.50"
+     },
+     {
+      "description": "POT HOLDER (SQUARE)",
+      "quantity": "5",
+      "unit_price": "2.50",
+      "amount": "12.50"
+     },
+     {
+      "description": "MOSQUITO RACKET 108#",
+      "quantity": "1",
+      "unit_price": "13.50",
+      "amount": "13.50"
+     },
+     {
+      "description": "STEMGLASS ST01-9AW/6WGB-CG 8ST 9oz",
+      "quantity": "1",
+      "unit_price": "24.90",
+      "amount": "24.90"
+     },
+     {
+      "description": "MOSQUITO RACKET 108#",
+      "quantity": "-1",
+      "unit_price": "13.50",
+      "amount": "-13.50"
+     }
+    ],
+    "tax_rows": []
+   },
+   "final": {
+    "amounts": [],
+    "items": [
+     {
+      "description": "CUSHION 43*43CM",
+      "quantity": "1",
+      "unit_price": "14.90",
+      "amount": "14.90"
+     },
+     {
+      "description": "COLANDER 12610#*VS",
+      "quantity": "1",
+      "unit_price": "5.90",
+      "amount": "5.90"
+     },
+     {
+      "description": "S/S SQUARE STAND SSB0775-A#",
+      "quantity": "1",
+      "unit_price": "6.50",
+      "amount": "6.50"
+     },
+     {
+      "description": "POT HOLDER (SQUARE)",
+      "quantity": "5",
+      "unit_price": "2.50",
+      "amount": "12.50"
+     },
+     {
+      "description": "MOSQUITO RACKET 108#",
+      "quantity": "1",
+      "unit_price": "13.50",
+      "amount": "13.50"
+     },
+     {
+      "description": "STEMGLASS ST01-9AW/6WGB-CG 8ST 9oz",
+      "quantity": "1",
+      "unit_price": "24.90",
+      "amount": "24.90"
+     },
+     {
+      "description": "MOSQUITO RACKET 108#",
+      "quantity": "-1",
+      "unit_price": "13.50",
+      "amount": "-13.50"
+     }
+    ],
+    "tax_rows": []
+   },
+   "matched": true,
+   "answered_at": "2026-10-23T10:12:06.441770Z",
+   "commit": "a61135e07a6e825411e63119529da532d71c2a32"
+  },
+  "X51005719863:amounts:tax": {
+   "first": {
+    "amounts": [
+     "4.38"
+    ],
+    "items": [],
+    "tax_rows": []
+   },
+   "final": {
+    "amounts": [
+     "4.38"
+    ],
+    "items": [],
+    "tax_rows": []
+   },
+   "matched": true,
+   "answered_at": "2026-10-23T10:12:18.710520Z",
+   "commit": "a61135e07a6e825411e63119529da532d71c2a32"
+  },
+  "X51005663307:amounts:subtotal": {
+   "first": {
+    "amounts": [
+     "56.80"
+    ],
+    "items": [],
+    "tax_rows": []
+   },
+   "final": {
+    "amounts": [
+     "56.80"
+    ],
+    "items": [],
+    "tax_rows": []
+   },
+   "matched": true,
+   "answered_at": "2026-10-23T10:13:44.029702Z",
+   "commit": "a61135e07a6e825411e63119529da532d71c2a32"
+  },
+  "X51006856982:tax_rows": {
+   "first": {
+    "amounts": [],
+    "items": [],
+    "tax_rows": [
+     {
+      "code": "",
+      "rate_percent": "6",
+      "taxable_amount": "102.08",
+      "tax": "6.13"
+     }
+    ]
+   },
+   "final": {
+    "amounts": [],
+    "items": [],
+    "tax_rows": [
+     {
+      "code": "",
+      "rate_percent": "6",
+      "taxable_amount": "102.08",
+      "tax": "6.13"
+     }
+    ]
+   },
+   "matched": true,
+   "answered_at": "2026-10-23T10:14:01.410932Z",
+   "commit": "a61135e07a6e825411e63119529da532d71c2a32"
+  },
+  "X51005676536:tax_rows": {
+   "first": {
+    "amounts": [],
+    "items": [],
+    "tax_rows": [
+     {
+      "code": "",
+      "rate_percent": "6",
+      "taxable_amount": "87.80",
+      "tax": "5.27"
+     }
+    ]
+   },
+   "final": {
+    "amounts": [],
+    "items": [],
+    "tax_rows": [
+     {
+      "code": "",
+      "rate_percent": "6",
+      "taxable_amount": "87.80",
+      "tax": "5.27"
+     }
+    ]
+   },
+   "matched": true,
+   "answered_at": "2026-10-23T10:14:18.009939Z",
+   "commit": "a61135e07a6e825411e63119529da532d71c2a32"
+  },
+  "X51007231338:items": {
+   "first": {
+    "amounts": [],
+    "items": [
+     {
+      "description": "M03. THAI MILK TEA - CHA YEN",
+      "quantity": "1",
+      "unit_price": "8.90",
+      "amount": "8.90"
+     }
+    ],
+    "tax_rows": []
+   },
+   "final": {
+    "amounts": [],
+    "items": [
+     {
+      "description": "M03. THAI MILK TEA - CHA YEN",
+      "quantity": "1",
+      "unit_price": "8.90",
+      "amount": "8.90"
+     }
+    ],
+    "tax_rows": []
+   },
+   "matched": true,
+   "answered_at": "2026-10-23T10:14:57.544188Z",
+   "commit": "a61135e07a6e825411e63119529da532d71c2a32"
+  },
+  "X51005442384:tax_rows": {
+   "first": {
+    "amounts": [],
+    "items": [],
+    "tax_rows": [
+     {
+      "code": "",
+      "rate_percent": "6",
+      "taxable_amount": "7.74",
+      "tax": "0.46"
+     }
+    ]
+   },
+   "final": {
+    "amounts": [],
+    "items": [],
+    "tax_rows": [
+     {
+      "code": "",
+      "rate_percent": "6",
+      "taxable_amount": "7.74",
+      "tax": "0.46"
+     }
+    ]
+   },
+   "matched": true,
+   "answered_at": "2026-10-23T10:15:17.459177Z",
+   "commit": "a61135e07a6e825411e63119529da532d71c2a32"
+  },
+  "X51006332641:amounts:total_due": {
+   "first": {
+    "amounts": [
+     "18.10"
+    ],
+    "items": [],
+    "tax_rows": []
+   },
+   "final": {
+    "amounts": [
+     "18.10"
+    ],
+    "items": [],
+    "tax_rows": []
+   },
+   "matched": true,
+   "answered_at": "2026-10-23T10:15:29.710425Z",
+   "commit": "a61135e07a6e825411e63119529da532d71c2a32"
+  },
+  "X51005705760:tax_rows": {
+   "first": {
+    "amounts": [],
+    "items": [],
+    "tax_rows": [
+     {
+      "code": "",
+      "rate_percent": "6",
+      "taxable_amount": "20.19",
+      "tax": "1.21"
+     },
+     {
+      "code": "",
+      "rate_percent": "0",
+      "taxable_amount": "0.00",
+      "tax": "0.00"
+     }
+    ]
+   },
+   "final": {
+    "amounts": [],
+    "items": [],
+    "tax_rows": [
+     {
+      "code": "",
+      "rate_percent": "6",
+      "taxable_amount": "20.19",
+      "tax": "1.21"
+     },
+     {
+      "code": "",
+      "rate_percent": "0",
+      "taxable_amount": "0.00",
+      "tax": "0.00"
+     }
+    ]
+   },
+   "matched": true,
+   "answered_at": "2026-10-23T10:15:58.293937Z",
+   "commit": "a61135e07a6e825411e63119529da532d71c2a32"
+  },
+  "X51005715007:amounts:tendered": {
+   "first": {
+    "amounts": [
+     "-20.00"
+    ],
+    "items": [],
+    "tax_rows": []
+   },
+   "final": {
+    "amounts": [
+     "-20.00"
+    ],
+    "items": [],
+    "tax_rows": []
+   },
+   "matched": true,
+   "answered_at": "2026-10-23T10:16:15.842987Z",
+   "commit": "a61135e07a6e825411e63119529da532d71c2a32"
+  },
+  "X00016469622:tax_rows": {
+   "first": {
+    "amounts": [],
+    "items": [],
+    "tax_rows": [
+     {
+      "code": "",
+      "rate_percent": "0",
+      "taxable_amount": "88.91",
+      "tax": "0.00"
+     }
+    ]
+   },
+   "final": {
+    "amounts": [],
+    "items": [],
+    "tax_rows": [
+     {
+      "code": "",
+      "rate_percent": "0",
+      "taxable_amount": "88.91",
+      "tax": "0.00"
+     }
+    ]
+   },
+   "matched": true,
+   "answered_at": "2026-10-23T10:16:29.960529Z",
+   "commit": "a61135e07a6e825411e63119529da532d71c2a32"
+  },
+  "X51005663323:amounts:change": {
+   "first": {
+    "amounts": [
+     "0.00"
+    ],
+    "items": [],
+    "tax_rows": []
+   },
+   "final": {
+    "amounts": [
+     "0.00"
+    ],
+    "items": [],
+    "tax_rows": []
+   },
+   "matched": true,
+   "answered_at": "2026-10-23T10:16:40.858972Z",
+   "commit": "a61135e07a6e825411e63119529da532d71c2a32"
+  },
+  "X51007103668:amounts:total_including_tax": {
+   "first": {
+    "amounts": [
+     "27.20"
+    ],
+    "items": [],
+    "tax_rows": []
+   },
+   "final": {
+    "amounts": [
+     "27.20"
+    ],
+    "items": [],
+    "tax_rows": []
+   },
+   "matched": true,
+   "answered_at": "2026-10-23T10:16:58.225205Z",
+   "commit": "a61135e07a6e825411e63119529da532d71c2a32"
+  },
+  "X00016469622:amounts:change": {
+   "first": {
+    "amounts": [
+     "11.10"
+    ],
+    "items": [],
+    "tax_rows": []
+   },
+   "final": {
+    "amounts": [
+     "11.10"
+    ],
+    "items": [],
+    "tax_rows": []
+   },
+   "matched": true,
+   "answered_at": "2026-10-23T10:17:06.577155Z",
+   "commit": "a61135e07a6e825411e63119529da532d71c2a32"
+  },
+  "X51007339656:amounts:discount": {
+   "first": {
+    "amounts": [
+     "0.00"
+    ],
+    "items": [],
+    "tax_rows": []
+   },
+   "final": {
+    "amounts": [
+     "0.00"
+    ],
+    "items": [],
+    "tax_rows": []
+   },
+   "matched": true,
+   "answered_at": "2026-10-23T10:17:18.943568Z",
+   "commit": "a61135e07a6e825411e63119529da532d71c2a32"
+  },
+  "X51005719863:amounts:total_excluding_tax": {
+   "first": {
+    "amounts": [
+     "73.00"
+    ],
+    "items": [],
+    "tax_rows": []
+   },
+   "final": {
+    "amounts": [
+     "73.00"
+    ],
+    "items": [],
+    "tax_rows": []
+   },
+   "matched": true,
+   "answered_at": "2026-10-23T10:17:30.793655Z",
+   "commit": "a61135e07a6e825411e63119529da532d71c2a32"
+  },
+  "X51005719863:tax_rows": {
+   "first": {
+    "amounts": [],
+    "items": [],
+    "tax_rows": [
+     {
+      "code": "",
+      "rate_percent": "6",
+      "taxable_amount": "73.00",
+      "tax": "4.38"
+     }
+    ]
+   },
+   "final": {
+    "amounts": [],
+    "items": [],
+    "tax_rows": [
+     {
+      "code": "",
+      "rate_percent": "6",
+      "taxable_amount": "73.00",
+      "tax": "4.38"
+     }
+    ]
+   },
+   "matched": true,
+   "answered_at": "2026-10-23T10:18:05.959587Z",
+   "commit": "a61135e07a6e825411e63119529da532d71c2a32"
+  },
+  "X00016469622:items": {
+   "first": {
+    "amounts": [],
+    "items": [
+     {
+      "description": "E8318 ELEGANT SCH TR BAG 15",
+      "quantity": "1",
+      "unit_price": "88.91",
+      "amount": "88.91"
+     }
+    ],
+    "tax_rows": []
+   },
+   "final": {
+    "amounts": [],
+    "items": [
+     {
+      "description": "E8318 ELEGANT SCH TR BAG 15",
+      "quantity": "1",
+      "unit_price": "88.91",
+      "amount": "88.91"
+     }
+    ],
+    "tax_rows": []
+   },
+   "matched": true,
+   "answered_at": "2026-10-23T10:18:43.444788Z",
+   "commit": "a61135e07a6e825411e63119529da532d71c2a32"
+  },
+  "X51005705760:amounts:total_including_tax": {
+   "first": {
+    "amounts": [
+     "21.40"
+    ],
+    "items": [],
+    "tax_rows": []
+   },
+   "final": {
+    "amounts": [
+     "21.40"
+    ],
+    "items": [],
+    "tax_rows": []
+   },
+   "matched": true,
+   "answered_at": "2026-10-23T10:19:00.776432Z",
+   "commit": "a61135e07a6e825411e63119529da532d71c2a32"
+  },
+  "X51006332641:amounts:rounding": {
+   "first": {
+    "amounts": [
+     "0.02"
+    ],
+    "items": [],
+    "tax_rows": []
+   },
+   "final": {
+    "amounts": [
+     "0.02"
+    ],
+    "items": [],
+    "tax_rows": []
+   },
+   "matched": true,
+   "answered_at": "2026-10-23T10:19:20.376907Z",
+   "commit": "a61135e07a6e825411e63119529da532d71c2a32"
+  },
+  "X51007339166:amounts:change": {
+   "first": {
+    "amounts": [
+     "6.10"
+    ],
+    "items": [],
+    "tax_rows": []
+   },
+   "final": {
+    "amounts": [
+     "6.10"
+    ],
+    "items": [],
+    "tax_rows": []
+   },
+   "matched": false,
+   "answered_at": "2026-10-23T10:19:28.641638Z",
+   "commit": "a61135e07a6e825411e63119529da532d71c2a32"
+  },
+  "X51006389884:amounts:rounding": {
+   "first": {
+    "amounts": [
+     "0.02"
+    ],
+    "items": [],
+    "tax_rows": []
+   },
+   "final": {
+    "amounts": [
+     "0.02"
+    ],
+    "items": [],
+    "tax_rows": []
+   },
+   "matched": true,
+   "answered_at": "2026-10-23T10:19:54.008772Z",
+   "commit": "a61135e07a6e825411e63119529da532d71c2a32"
+  }
+ }
+}

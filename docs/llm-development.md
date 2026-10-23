@@ -152,3 +152,35 @@ thinking reads better than no thinking; it reads at least as well, for 1.4 times
 frozen version is also the best of 4 rounds on the receipts it was chosen on, so its 76 is
 higher than a fresh reading would give, as the second reading's 73 shows. Gold set B measures
 it without that advantage.
+
+## Adjudication of gold set B (2026-10-23)
+
+The owner answered the 86 questions of the adjudication
+([ADR-0026](decisions/0026-adjudication-of-items-and-tax-rows.md)) on 2026-10-23 between 10:20 and 12:20
+in one sitting; the answers are in
+[`annotations/findit2/gold-adjudication-b.json`](../annotations/findit2/gold-adjudication-b.json),
+as the page wrote them. This section was written after the last answer and before
+`docfraud llm evaluate-b` computed any metric of gold set B. The gold set B report counts the
+first answers that matched a reading; what the log cannot show is the help given while answering,
+by Claude in the working session:
+
+- Question 1 (`X51005746207`, tendered), before the first answer: the task was not yet clear, and
+  at the owner's request Claude went through that receipt's last lines and named the role of
+  each; the receipt names the card but prints no amount handed over, so the guidelines leave the
+  role empty. This first answer is therefore not an independent reading.
+- Question 5 (`X51005705760`, rounding), before the first answer: what a rounding adjustment is,
+  that it is recorded with its printed sign, and that a printed 0.00 is recorded (as on 12
+  receipts of gold set A). No value of the receipt was named.
+- Question 6 (`X51006557213`, tax summary), after the final answer was saved: how gold set A
+  records the same delivery-note layout (per-rate supply totals are rows without a tax, the GST
+  printed on its own line is the tax amount, a total printed twice is recorded once). The answer
+  was not changed.
+- Item questions: the page refused a first answer whose amounts carried tax codes (`7.00ZR`) and
+  saved nothing; Claude offered a browser-console line that removes the letters and clears
+  descriptions made only of digits, and repeated the guidelines' rules that a unit price is
+  recorded only when printed and that the description is the printed product name without codes
+  and may be left empty.
+- To save time, the owner considered answering item questions by ticking one of the shown
+  readings; Claude advised against it, as that turns the adjudication into a choice among the
+  readers. Every first answer that matched no reading holds at least one value, so no answer has
+  that pattern.
