@@ -184,3 +184,40 @@ by Claude in the working session:
   readings; Claude advised against it, as that turns the adjudication into a choice among the
   readers. Every first answer that matched no reading holds at least one value, so no answer has
   that pattern.
+
+## Gold set B (2026-10-23)
+
+On neither text source does the LLM reader replace parser v2
+([report](../reports/llm/gold-b.md)). From the transcripts, the frozen version read all rule
+inputs exactly on 9 of 30 receipts and parser v2 on 5; 5 receipts were exact for the LLM only
+and 1 for parser v2 only, the paired interval of the difference is +0.000 to +0.300 and the
+exact McNemar test gives p = 0.22. From our OCR, 8 against 5, 4 and 1, an interval of -0.033 to
++0.233 and p = 0.38. The pre-registered rule needed at least 6 receipts exact for the LLM only
+with none the other way, or 8 with one (ADR-0025, decision 5).
+
+The decision does not depend on question 1, the one answer given after Claude went through the
+receipt: answered `18.30` instead of empty, the transcripts give 10 against 5, 6 and 1, p = 0.13,
+still short of the rule.
+
+Reported, not decisive (ADR-0025, decision 6):
+
+- The LLM finds more tax summary rows: recall +0.29 from the transcripts and +0.36 from our OCR,
+  both intervals above zero. It finds more amounts from our OCR (+0.09, interval above zero),
+  not clearly from the transcripts (+0.04), and names the merchant less often (-0.13 and -0.10,
+  intervals including zero).
+- With the LLM's fields, at least one accounting rule fails on 4 (transcripts) and 8 (OCR) of the
+  24 authentic receipts, against 11 and 11 with parser v2 and 3 with the adjudicated gold set.
+- No answer was rejected; the median answer took 2.9 seconds.
+- The owner's final answer differs from the original annotation of gold set B on 22 of the 86
+  questions (17 amounts, 3 item lists, 2 tax summaries).
+
+Gold set A overstated the LLM reader. There it read 44 and 32 of 50 receipts exactly (88 % and
+64 %), on gold set B 9 and 8 of 30 (30 % and 27 %). Parser v2 falls as well, from 19 and 15 of
+50 on gold set A (38 % and 30 %) to 5 and 5 of 30 (17 %), so gold set B is the harder set, but the
+LLM falls further. Three causes are likely, and these data cannot separate them: version 2 quotes
+lines of gold set A (round 2, *Gold set A in the instruction*); the frozen round was the best of
+four on the same receipts (*Freeze and stability*); and gold set A was annotated by Claude and
+never adjudicated, so a Claude reader may share its conventions.
+
+Parser v2 therefore stays the field reader for both text sources; the LLM does not read the 752
+non-test receipts, and Phase 6a ends here. All of Phase 6a cost 3.14 USD.
