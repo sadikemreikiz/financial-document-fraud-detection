@@ -196,7 +196,7 @@ exact McNemar test gives p = 0.22. From our OCR, 8 against 5, 4 and 1, an interv
 with none the other way, or 8 with one (ADR-0025, decision 5).
 
 The decision does not depend on question 1, the one answer given after Claude went through the
-receipt: answered `18.30` instead of empty, the transcripts give 10 against 5, 6 and 1, p = 0.13,
+receipt: answered `18.30` instead of empty, the transcripts give 10 against 5, 6 and 1, p = 0.125,
 still short of the rule.
 
 Reported, not decisive (ADR-0025, decision 6):
@@ -219,5 +219,8 @@ lines of gold set A (round 2, *Gold set A in the instruction*); the frozen round
 four on the same receipts (*Freeze and stability*); and gold set A was annotated by Claude and
 never adjudicated, so a Claude reader may share its conventions.
 
-Parser v2 therefore stays the field reader for both text sources; the LLM does not read the 752
-non-test receipts, and Phase 6a ends here. All of Phase 6a cost 3.14 USD.
+Under ADR-0025, parser v2 therefore stays the field reader for both text sources. After this
+result, [ADR-0027](decisions/0027-llm-reader-judged-by-false-alarms.md) added one more test, of what Phase 6a is
+for: the accounting rules' false alarms with each reader's fields on the 482 training receipts
+outside both gold sets, under a rule fixed before the LLM read any of them. Phase 6a has cost
+3.14 USD so far.
