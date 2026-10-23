@@ -34,6 +34,7 @@ from docfraud.data.local_page import HOST, make_server
 from docfraud.data.models import Label, Split
 from docfraud.data.normalize import load_grayscale
 from docfraud.data.observation_text import PageLanguage
+from docfraud.data.splits import select
 from docfraud.evaluation.extraction import DocumentScore, score_document
 from docfraud.evaluation.runs import changed_since, code_version
 from docfraud.llm.adjudication import (
@@ -48,6 +49,7 @@ from docfraud.llm.claude import ClaudeProvider
 from docfraud.llm.cost import Ledger
 from docfraud.llm.decision import LADDER, ModelStep, decide_reader, model_step
 from docfraud.llm.false_alarms import FIXED_AT, RULES_CODE, judge
+from docfraud.llm.frozen import FrozenReader, SplitReading, save_split_reading
 from docfraud.llm.gold_b import (
     LLM,
     PARSER,
@@ -83,7 +85,7 @@ from docfraud.reading.pipeline import TextSource, read_document
 
 app = typer.Typer(
     help="The LLM field reader: model choice and development on gold set A, measurement on gold "
-    "set B."
+    "set B, and the reading of the validation split for Phase 5."
 )
 
 STORE = Path("artifacts/llm/responses")
@@ -96,6 +98,7 @@ ADJUDICATION = Path("annotations/findit2/gold-adjudication-b.json")
 GOLD_B_REPORT = Path("reports/llm/gold-b.md")
 FALSE_ALARMS_DIR = Path("artifacts/llm/false-alarms")
 FALSE_ALARMS_REPORT = Path("reports/llm/false-alarms.md")
+VALIDATION_READING = Path("reports/llm/validation-reading.json")
 GOLD_A = GOLD_MANIFEST
 GOLD_B = GOLD_B_MANIFEST
 MAX_ROUNDS = 10
@@ -720,6 +723,68 @@ def llm_false_alarms(  # noqa: PLR0913, PLR0917 - one option per input and outpu
         f"{track}: {'LLM' if r.decision.passes else 'parser v2'}" for track, r in results.items()
     )
     console.print(f"[green]written[/green] {output}; {verdicts}")
+
+
+@app.command("read-validation")
+def llm_read_validation(  # noqa: PLR0913, PLR0917 - one option per input and output
+    data_dir: DataDir = Path("data"),
+    cache: Cache = OCR_CACHE,
+    store: Store = STORE,
+    ledger: LedgerPath = LEDGER,
+    frozen: Frozen = FROZEN,
+    record: Annotated[Path, typer.Option(help="Where to record the reading.")] = VALIDATION_READING,
+) -> None:
+    """Read the validation receipts once with the frozen version, for Phase 5 (ADR-0027).
+
+    The frozen version reads every validation receipt from both text sources through the batch
+    service, and the answers are kept in the store, from which Phase 5 takes the fields. Nothing
+    is measured: the record names the version, the commit and the cost, and no field, label or
+    score of a validation receipt is shown. A run that leaves a request unanswered records
+    nothing; running it again sends only what is missing.
+    """
+    if record.exists():
+        console.print(f"[red]{record} exists[/red]: the validation split is read once")
+        raise typer.Exit(1)
+    require_clean_commit()
+    version = _frozen(frozen)
+    _require_unchanged(version.commit, READER_CODE, "the reader changed after it was frozen")
+    documents = sorted(select(findit_documents(data_dir), Split.VAL), key=lambda d: d.doc_id)
+    ocr = cached_ocr(cache)
+    targets = [
+        target(document.doc_id, source, read_document(document, ocr, source).rows)
+        for document in documents
+        for source in TRACKS
+    ]
+    runner = _runner(store, ledger)
+    text = Path(version.instruction).read_text(encoding="utf-8")
+    runner.run(version.settings, text, targets)
+    requests = runner.requests(version.settings, text, targets)
+    missing = runner.store.missing(requests)
+    if missing:
+        console.print(
+            f"[red]{len(missing)} of {len(requests)} requests were not answered[/red]; nothing "
+            "is recorded. Run the command again to send them."
+        )
+        raise typer.Exit(1)
+    reader = FrozenReader(version, text, runner.store)
+    readings = [reader.read(t) for t in targets]  # as Phase 5 will take them
+    reading = SplitReading(
+        split=Split.VAL,
+        version=version,
+        commit=str(code_version().commit),
+        read_at=datetime.now(UTC),
+        receipts=len(documents),
+        requests=len(requests),
+        cost_usd=_spent(runner.ledger, {r.key for r in requests}),
+        without_answer=sum(any(r.field == "answer" for r in got.rejections) for got in readings),
+    )
+    save_split_reading(reading, record)
+    console.print(
+        f"[green]read[/green] {reading.receipts} validation receipts from both text sources: "
+        f"{reading.requests} requests, {reading.cost_usd:.4f} USD, {reading.without_answer} "
+        "without an answer"
+    )
+    console.print("nothing is measured; Phase 5 takes the fields from the store")
 
 
 def _require_unchanged(commit: str, paths: Sequence[str], problem: str) -> None:

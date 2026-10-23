@@ -55,6 +55,7 @@ from docfraud.llm.adjudication import (
 from docfraud.llm.adjudication import save_log as save_adjudication
 from docfraud.llm.decision import ModelStep
 from docfraud.llm.false_alarms import FIXED_AT
+from docfraud.llm.frozen import load_split_reading
 from docfraud.llm.gold_b import load_measurement
 from docfraud.llm.run import COMPARISON_SETTINGS, ForbiddenDocumentsError
 from docfraud.reading.fields import ReceiptFields
@@ -1335,3 +1336,47 @@ def test_llm_false_alarms_need_unchanged_accounting_rules(
         "src/docfraud/detectors/rules.py" in flat(result.output)
     )
     assert not report.exists()
+
+
+def _validation_setup(
+    toy_source: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> tuple[list[str], Path]:
+    """The validation split of the toy dataset is A2; round 1 is frozen."""
+    measure, _ = _gold_b_setup(toy_source, tmp_path, monkeypatch)
+    record = tmp_path / "validation-reading.json"
+    return [*measure[: measure.index("--measurement")], "--record", str(record)], record
+
+
+def test_llm_the_validation_split_is_read_once_and_nothing_is_measured(
+    toy_source: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    arguments, record = _validation_setup(toy_source, tmp_path, monkeypatch)
+    monkeypatch.setattr(cli_llm, "ClaudeProvider", lambda **_: FakeProvider(fail=frozenset({0})))
+    failed = runner.invoke(app, ["llm", "read-validation", *arguments])
+    assert failed.exit_code == 1
+    assert "1 of 2 requests were not answered" in flat(failed.output)
+    assert not record.exists()  # nothing is recorded
+
+    monkeypatch.setattr(cli_llm, "ClaudeProvider", FakeProvider)
+    result = runner.invoke(app, ["llm", "read-validation", *arguments])
+    assert result.exit_code == 0, result.output
+    assert (  # the pilot of each run paid one request at the full price
+        "read 1 validation receipts from both text sources: 2 requests, 0.0004 USD, 0 without "
+        "an answer" in flat(result.output)
+    )
+    reading = load_split_reading(record)
+    assert (reading.split, reading.receipts, reading.commit) == (Split.VAL, 1, "def456")
+    once = runner.invoke(app, ["llm", "read-validation", *arguments])
+    assert once.exit_code == 1
+    assert "the validation split is read once" in flat(once.output)
+
+
+def test_llm_the_validation_split_is_read_only_by_the_frozen_reader(
+    toy_source: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    arguments, record = _validation_setup(toy_source, tmp_path, monkeypatch)
+    monkeypatch.setattr(cli_llm, "changed_since", lambda *_: ["src/docfraud/llm/reader.py"])
+    result = runner.invoke(app, ["llm", "read-validation", *arguments])
+    assert result.exit_code == 1
+    assert "the reader changed after it was frozen at abc123" in flat(result.output)
+    assert not record.exists()
