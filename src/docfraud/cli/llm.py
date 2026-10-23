@@ -31,7 +31,7 @@ from docfraud.cli.common import (
 )
 from docfraud.data.gold import GoldAnnotation, GoldManifest, load_annotations, load_manifest
 from docfraud.data.local_page import HOST, make_server
-from docfraud.data.models import Split
+from docfraud.data.models import Label, Split
 from docfraud.data.normalize import load_grayscale
 from docfraud.data.observation_text import PageLanguage
 from docfraud.evaluation.extraction import DocumentScore, score_document
@@ -47,6 +47,7 @@ from docfraud.llm.adjudication_server import AdjudicationApp
 from docfraud.llm.claude import ClaudeProvider
 from docfraud.llm.cost import Ledger
 from docfraud.llm.decision import LADDER, ModelStep, decide_reader, model_step
+from docfraud.llm.false_alarms import FIXED_AT, RULES_CODE, judge
 from docfraud.llm.gold_b import (
     LLM,
     PARSER,
@@ -67,7 +68,13 @@ from docfraud.llm.gold_b import (
 from docfraud.llm.provider import Request, Settings, Thinking
 from docfraud.llm.reader import LlmReading
 from docfraud.llm.record import FrozenVersion, RoundRecord, best_round
-from docfraud.llm.report import ReaderRun, render_gold_b, render_model_comparison, render_round
+from docfraud.llm.report import (
+    ReaderRun,
+    render_false_alarms,
+    render_gold_b,
+    render_model_comparison,
+    render_round,
+)
 from docfraud.llm.run import COMPARISON_SETTINGS, Runner, Target, check_documents, target
 from docfraud.llm.store import ResponseStore
 from docfraud.reading.fields import Extraction, ReceiptFields
@@ -87,6 +94,8 @@ FROZEN = Path("reports/llm/frozen.json")
 GOLD_B_DIR = Path("artifacts/llm/gold-b")
 ADJUDICATION = Path("annotations/findit2/gold-adjudication-b.json")
 GOLD_B_REPORT = Path("reports/llm/gold-b.md")
+FALSE_ALARMS_DIR = Path("artifacts/llm/false-alarms")
+FALSE_ALARMS_REPORT = Path("reports/llm/false-alarms.md")
 GOLD_A = GOLD_MANIFEST
 GOLD_B = GOLD_B_MANIFEST
 MAX_ROUNDS = 10
@@ -364,16 +373,7 @@ def llm_measure_b(  # noqa: PLR0913, PLR0917 - one option per input and output
         raise typer.Exit(1)
     require_clean_commit()
     version = _frozen(frozen)
-    changed = changed_since(version.commit, READER_CODE)
-    if changed is None:
-        console.print(f"[red]cannot compare with the frozen commit {version.commit[:12]}[/red]")
-        raise typer.Exit(1)
-    if changed:
-        console.print(
-            f"[red]the reader changed after it was frozen[/red] at {version.commit[:12]}: "
-            + ", ".join(changed)
-        )
-        raise typer.Exit(1)
+    _require_unchanged(version.commit, READER_CODE, "the reader changed after it was frozen")
     manifest = load_manifest(GOLD_B)
     gold = load_annotations(GOLD_B.parent, manifest)
     if set(gold) != manifest.doc_ids:
@@ -609,6 +609,132 @@ def llm_evaluate_b(
     )
     verdicts = "; ".join(f"{d.source}: {'LLM' if d.passes else 'parser v2'}" for d in decisions)
     console.print(f"[green]written[/green] {output}; {verdicts}")
+
+
+@app.command("false-alarms")
+def llm_false_alarms(  # noqa: PLR0913, PLR0917 - one option per input and output
+    data_dir: DataDir = Path("data"),
+    cache: Cache = OCR_CACHE,
+    store: Store = STORE,
+    ledger: LedgerPath = LEDGER,
+    frozen: Frozen = FROZEN,
+    measurement: MeasurementPath = FALSE_ALARMS_DIR / "measurement.json",
+    output: Annotated[Path, typer.Option(help="Where to write the report.")] = FALSE_ALARMS_REPORT,
+) -> None:
+    """Read the training receipts outside both gold sets once and apply ADR-0027.
+
+    The frozen version, through the batch service, and parser v2 read every receipt from both
+    text sources; the report decides per text source whether the LLM reader replaces parser v2.
+    A run that leaves a request unanswered keeps nothing; running it again sends only what is
+    missing.
+    """
+    if output.exists():
+        console.print(f"[red]{output} exists[/red]: the test of ADR-0027 runs once")
+        raise typer.Exit(1)
+    require_clean_commit()
+    version = _frozen(frozen)
+    _require_unchanged(version.commit, READER_CODE, "the reader changed after it was frozen")
+    _require_unchanged(FIXED_AT, RULES_CODE, "the accounting rules changed after ADR-0027")
+    excluded = _gold_a_manifest().doc_ids | load_manifest(GOLD_B).doc_ids
+    found = [d for d in findit_documents(data_dir) if d.split is Split.TRAIN]
+    documents = sorted((d for d in found if d.doc_id not in excluded), key=lambda d: d.doc_id)
+    allowed = {d.doc_id for d in found} - excluded
+    check_documents([d.doc_id for d in documents], allowed, "the test of ADR-0027")
+    if any(d.label is None for d in documents):
+        console.print("[red]every receipt must be labelled authentic or forged[/red]")
+        raise typer.Exit(1)
+    forged = {d.doc_id for d in documents if d.label is Label.FORGED}
+    ocr = cached_ocr(cache)
+    reads = [
+        (document.doc_id, source, read_document(document, ocr, source))
+        for document in documents
+        for source in TRACKS
+    ]
+    targets = [target(doc_id, source, reading.rows) for doc_id, source, reading in reads]
+    runner = _runner(store, ledger)
+    text = Path(version.instruction).read_text(encoding="utf-8")
+    llm = runner.run(version.settings, text, targets)
+    requests = runner.requests(version.settings, text, targets)
+    missing = runner.store.missing(requests)
+    if missing:
+        console.print(
+            f"[red]{len(missing)} of {len(requests)} requests were not answered[/red]; nothing "
+            "is kept. Run the command again to send them."
+        )
+        raise typer.Exit(1)
+    outputs = [
+        ReaderOutput(
+            doc_id=doc_id,
+            reader=LLM,
+            source=source,
+            extraction=answered.extraction,
+            rejections=answered.rejections,
+            seconds=_seconds(runner.store, request),
+        )
+        for (doc_id, source, _), answered, request in zip(reads, llm, requests, strict=True)
+    ] + [
+        ReaderOutput(
+            doc_id=doc_id,
+            reader=PARSER,
+            source=source,
+            extraction=Extraction(fields=reading.fields, sources=reading.sources),
+        )
+        for doc_id, source, reading in reads
+    ]
+    measured = Measurement(
+        version=version,
+        commit=str(code_version().commit),
+        measured_at=datetime.now(UTC),
+        receipts=len(documents),
+        cost_usd=_spent(runner.ledger, {r.key for r in requests}),
+        readings=tuple(outputs),
+    )
+    save_measurement(measured, measurement)
+    labels = {d.doc_id: d.doc_id in forged for d in documents}
+    results = {track: judge(track, source, labels, outputs) for source, track in TRACKS.items()}
+    cost = measured.cost_usd
+    header = (
+        "# The LLM reader judged by the accounting rules' false alarms\n\nGenerated by `docfraud "
+        "llm false-alarms`; do not edit by hand.\n\n"
+        f"The frozen version (development round {version.round}, model "
+        f"`{version.settings.model}`, thinking {version.settings.thinking}, effort "
+        f"{version.settings.effort}, instruction `{version.instruction}` with SHA-256 "
+        f"`{version.instruction_sha256[:12]}`, frozen at commit `{version.commit[:12]}`) and "
+        f"parser v2 read the {len(documents)} receipts of the training split outside gold sets A "
+        f"and B ({len(documents) - len(forged)} authentic, {len(forged)} forged) once from the "
+        f"transcripts (T1) and from our OCR (T2), at commit `{measured.commit[:12]}` on "
+        f"{measured.measured_at:%Y-%m-%d}. The LLM's requests cost {cost:.4f} USD, "
+        f"{cost / len(documents):.4f} USD per receipt for both text sources. The rule was fixed "
+        "in [ADR-0027](../../docs/decisions/0027-llm-reader-judged-by-false-alarms.md) at commit "
+        f"`{FIXED_AT[:12]}`, before the LLM read any of these receipts; on gold set B the LLM "
+        "reader did not pass ([report](gold-b.md)).\n\n"
+    )
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text(
+        render_false_alarms(
+            header, results, authentic=len(documents) - len(forged), forged=len(forged)
+        ),
+        encoding="utf-8",
+    )
+    verdicts = "; ".join(
+        f"{track}: {'LLM' if r.decision.passes else 'parser v2'}" for track, r in results.items()
+    )
+    console.print(f"[green]written[/green] {output}; {verdicts}")
+
+
+def _require_unchanged(commit: str, paths: Sequence[str], problem: str) -> None:
+    """Stop if the committed files under ``paths`` differ from ``commit``.
+
+    Raises:
+        typer.Exit: If they changed, or git cannot compare with the commit.
+    """
+    changed = changed_since(commit, paths)
+    if changed is None:
+        console.print(f"[red]cannot compare with commit {commit[:12]}[/red]")
+        raise typer.Exit(1)
+    if changed:
+        console.print(f"[red]{problem}[/red] at {commit[:12]}: " + ", ".join(changed))
+        raise typer.Exit(1)
 
 
 @app.command("spending")

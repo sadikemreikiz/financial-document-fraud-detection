@@ -32,7 +32,8 @@ PARSER = "parser v2"
 READERS = (PARSER, LLM)  # the baseline first
 
 #: The code that turns a receipt's rows into a request and an answer into fields, and the
-#: parser it is compared with. Gold set B is read only while it is as frozen (ADR-0025).
+#: parser it is compared with. Gold set B, and the receipts of ADR-0027, are read only while it
+#: is as frozen (ADR-0025).
 READER_CODE = (
     "src/docfraud/llm/answer.py",
     "src/docfraud/llm/claude.py",
@@ -55,7 +56,7 @@ def reading_name(reader: str, source: TextSource) -> str:
 
 
 class ReaderOutput(_Frozen):
-    """What one reader extracted from one receipt of gold set B on one text source."""
+    """What one reader extracted from one receipt on one text source."""
 
     doc_id: str
     reader: str
@@ -71,7 +72,10 @@ class ReaderOutput(_Frozen):
 
 
 class Measurement(_Frozen):
-    """The one reading of gold set B: the version, the commit, the cost and every output."""
+    """The one reading of a set of receipts: the version, the commit, the cost and every output.
+
+    Used for gold set B (ADR-0025) and for the receipts of ADR-0027.
+    """
 
     version: FrozenVersion
     commit: str

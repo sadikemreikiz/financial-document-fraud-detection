@@ -1,9 +1,10 @@
-"""Generated reports of the LLM reader: model comparison, development rounds and gold set B."""
+"""Generated reports of the LLM reader: comparison, rounds, gold set B and false alarms."""
 
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from decimal import Decimal
 
+from docfraud.evaluation.bootstrap import Estimate
 from docfraud.evaluation.extraction import (
     RULE_INPUTS_EXACT,
     DocumentScore,
@@ -12,6 +13,7 @@ from docfraud.evaluation.extraction import (
 )
 from docfraud.llm.adjudication import Kind
 from docfraud.llm.decision import ModelStep, ReaderDecision
+from docfraud.llm.false_alarms import TrackResult
 from docfraud.llm.gold_b import AdjudicationCounts, Latency
 from docfraud.markdown import Cell, Table, render_table
 
@@ -251,3 +253,98 @@ def render_gold_b(  # noqa: PLR0913 - one argument per part of the report
         + "\n"
         + "\n".join(sections)
     )
+
+
+def _difference(estimate: Estimate) -> str:
+    return f"{estimate.value:+.3f} [{estimate.low:+.3f}, {estimate.high:+.3f}]"
+
+
+def render_false_alarms(
+    header: str, results: Mapping[str, TrackResult], *, authentic: int, forged: int
+) -> str:
+    """The report of ADR-0027: per text source, whether the LLM reader replaces parser v2."""
+    readers = list(next(iter(results.values())).alarms)
+    decision = Table(
+        "Decision",
+        (
+            "Text source",
+            *(f"False alarms: {reader}" for reader in readers),
+            "False-alarm difference [95 % interval]",
+            "Parser v2 only",
+            "LLM only",
+            "McNemar p",
+            *(f"Caught: {reader}" for reader in readers),
+            "Catch difference [95 % interval]",
+            "Catch rate falls by less",
+            "LLM replaces parser v2",
+        ),
+        [
+            (
+                track,
+                *(f"{a.false_alarms} of {authentic}" for a in r.alarms.values()),
+                _difference(r.decision.false_alarms),
+                r.decision.parser_only,
+                r.decision.llm_only,
+                f"{r.decision.p_value:.4f}",
+                *(f"{a.catches} of {forged}" for a in r.alarms.values()),
+                _difference(r.decision.catches),
+                r.decision.catches_hold,
+                r.decision.passes,
+            )
+            for track, r in results.items()
+        ],
+        note="False alarms: authentic receipts on which at least one accounting rule fails; "
+        "caught: forged receipts on which at least one fails. Differences: LLM minus parser v2 in "
+        "the share, paired bootstrap over receipts (10,000 resamples). Parser v2 only, LLM only: "
+        "authentic receipts alarmed with that reader's fields only. The LLM reader replaces "
+        "parser v2 for a text source only if the false-alarm interval lies below zero, the exact "
+        "McNemar test gives p < 0.05, two-sided, in its favour, and its catch rate falls by less "
+        "than its false-alarm rate (ADR-0027).",
+    )
+    separation = Table(
+        "Catch rate minus false-alarm rate",
+        ("Text source", *readers, "Difference [95 % interval]"),
+        [
+            (
+                track,
+                *(
+                    f"{a.catches / forged - a.false_alarms / authentic:+.3f}"
+                    for a in r.alarms.values()
+                ),
+                _difference(r.separation),
+            )
+            for track, r in results.items()
+        ],
+        note="How far apart the rules hold forged and authentic receipts with each reader's "
+        "fields. Difference: LLM minus parser v2, receipts resampled within each class (10,000 "
+        "resamples). Reported, not decisive.",
+    )
+    by_rule = [
+        Table(
+            f"Rules that fail, {track}",
+            (
+                "Rule",
+                *(f"Authentic: {reader}" for reader in readers),
+                *(f"Forged: {reader}" for reader in readers),
+            ),
+            [
+                (
+                    name,
+                    *(r.rules[reader][0][name] for reader in readers),
+                    *(r.rules[reader][1][name] for reader in readers),
+                )
+                for name in r.rules[readers[0]][0]
+            ],
+            note="Receipts on which each rule fails; a receipt can fail several. Reported, not "
+            "decisive.",
+        )
+        for track, r in results.items()
+    ]
+    rejections = Table(
+        "LLM reader: receipts with rejected references",
+        ("Text source", "Receipts"),
+        [(track, r.rejected) for track, r in results.items()],
+        note="Receipts on which at least one reference of the answer did not hold what its field "
+        "needs; such a field is left empty.",
+    )
+    return header + "\n".join(render_table(t) for t in (decision, separation, *by_rule, rejections))

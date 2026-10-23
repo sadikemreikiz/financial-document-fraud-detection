@@ -30,7 +30,8 @@ change of mind is a new record that supersedes the old one.
 | [0022](0022-learned-models.md) | The learned models: architecture, targets, data, training and development round | Accepted; order of document scores extended by 0023 |
 | [0023](0023-learned-score-at-text-scale.md) | The learned models' document score is measured at the scale of the text | Accepted |
 | [0024](0024-llm-extraction-before-fusion.md) | LLM field extraction moves before Phase 5, on a hosted model with a spending limit | Accepted |
-| [0025](0025-llm-extraction-preregistration.md) | How LLM field extraction is developed and measured | Accepted; adjudication of items and tax rows amended by 0026 |
+| [0025](0025-llm-extraction-preregistration.md) | How LLM field extraction is developed and measured | Accepted; adjudication of items and tax rows amended by 0026, decision rule followed by a second test in 0027 |
 | [0026](0026-adjudication-of-items-and-tax-rows.md) | Items and tax rows in dispute are adjudicated as a whole list per receipt | Accepted |
+| [0027](0027-llm-reader-judged-by-false-alarms.md) | The LLM reader is judged once more, by the accounting rules' false alarms | Accepted |
 
 New records copy [template.md](template.md).

@@ -5,9 +5,19 @@ from docfraud.evaluation.extraction import score_document
 from docfraud.llm.adjudication import GOLD as GOLD_READING
 from docfraud.llm.adjudication import Kind
 from docfraud.llm.decision import ModelStep, decide_reader
-from docfraud.llm.gold_b import AdjudicationCounts, Latency
-from docfraud.llm.report import ReaderRun, render_gold_b, render_model_comparison, render_round
-from docfraud.reading.fields import ReceiptFields
+from docfraud.llm.false_alarms import judge
+from docfraud.llm.gold_b import LLM, PARSER, AdjudicationCounts, Latency, ReaderOutput
+from docfraud.llm.report import (
+    ReaderRun,
+    render_false_alarms,
+    render_gold_b,
+    render_model_comparison,
+    render_round,
+)
+from docfraud.reading.fields import AmountRole, Extraction, FieldSources, ReceiptFields
+from docfraud.reading.pipeline import TextSource
+
+D = Decimal
 
 GOLD = ReceiptFields.model_validate({"amounts": {"total_due": ["5.00"]}})
 WRONG = ReceiptFields.model_validate({"amounts": {"total_due": ["5.01"]}})
@@ -87,3 +97,39 @@ def test_the_gold_b_report_leads_with_the_decision_per_text_source() -> None:
     assert "| T2 OCR | 2 | — | — | — |" in text
     assert "## T2 OCR\n\n### Headline metrics" in text
     assert "### Difference LLM - parser v2" in text
+
+
+def test_the_false_alarm_report_leads_with_the_decision_per_text_source() -> None:
+    right = ReceiptFields.model_validate(
+        {"amounts": {"total_due": ["30.00"], "tendered": ["50.00"], "change": ["20.00"]}}
+    )
+    wrong = right.model_copy(update={"amounts": {**right.amounts, AmountRole.TOTAL_DUE: (D(3),)}})
+    forged = {"A1": False, "A2": False, "F1": True}
+
+    def reading(doc_id: str, reader: str, read: ReceiptFields) -> ReaderOutput:
+        return ReaderOutput(
+            doc_id=doc_id,
+            reader=reader,
+            source=TextSource.TRANSCRIPT,
+            extraction=Extraction(fields=read, sources=FieldSources()),
+        )
+
+    readings = [
+        reading("A1", PARSER, wrong),
+        reading("A1", LLM, right),
+        reading("A2", PARSER, right),
+        reading("A2", LLM, right),
+        reading("F1", PARSER, wrong),
+        reading("F1", LLM, wrong),
+    ]
+    result = judge("T1 transcript", TextSource.TRANSCRIPT, forged, readings)
+    text = render_false_alarms(
+        "# False alarms\n\n", {"T1 transcript": result}, authentic=2, forged=1
+    )
+    assert text.startswith("# False alarms\n\n### Decision")
+    assert "| T1 transcript | 1 of 2 | 0 of 2 | -0.500 [" in text
+    assert "| 1 | 0 | 1.0000 | 1 of 1 | 1 of 1 | +0.000 [+0.000, +0.000] | yes | no |" in text
+    assert "| T1 transcript | +0.500 | +1.000 | +0.500 [" in text
+    assert "### Rules that fail, T1 transcript" in text
+    assert "| change_given | 1 | 0 | 1 | 1 |" in text
+    assert "| T1 transcript | 0 |" in text  # no rejected references

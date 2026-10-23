@@ -196,7 +196,7 @@ exact McNemar test gives p = 0.22. From our OCR, 8 against 5, 4 and 1, an interv
 with none the other way, or 8 with one (ADR-0025, decision 5).
 
 The decision does not depend on question 1, the one answer given after Claude went through the
-receipt: answered `18.30` instead of empty, the transcripts give 10 against 5, 6 and 1, p = 0.13,
+receipt: answered `18.30` instead of empty, the transcripts give 10 against 5, 6 and 1, p = 0.125,
 still short of the rule.
 
 Reported, not decisive (ADR-0025, decision 6):
@@ -219,5 +219,49 @@ lines of gold set A (round 2, *Gold set A in the instruction*); the frozen round
 four on the same receipts (*Freeze and stability*); and gold set A was annotated by Claude and
 never adjudicated, so a Claude reader may share its conventions.
 
-Parser v2 therefore stays the field reader for both text sources; the LLM does not read the 752
-non-test receipts, and Phase 6a ends here. All of Phase 6a cost 3.14 USD.
+Under ADR-0025, parser v2 therefore stays the field reader for both text sources. After this
+result, [ADR-0027](decisions/0027-llm-reader-judged-by-false-alarms.md) added one more test, of what Phase 6a is
+for: the accounting rules' false alarms with each reader's fields on the 482 training receipts
+outside both gold sets, under a rule fixed before the LLM read any of them (next section).
+
+## Second test: false alarms (2026-10-23)
+
+Under [ADR-0027](decisions/0027-llm-reader-judged-by-false-alarms.md) the LLM reader replaces
+parser v2 on both text sources ([report](../reports/llm/false-alarms.md)). The frozen version
+and parser v2 read the 482 receipts of the training split outside both gold sets (404 authentic,
+78 forged) once.
+
+| | Transcripts (T1) | Our OCR (T2) |
+|---|---|---|
+| Authentic receipts alarmed, parser v2 → LLM | 151 → 72 of 404 (37 % → 18 %) | 159 → 127 (39 % → 31 %) |
+| Difference [95 % interval] | -0.196 [-0.245, -0.146] | -0.079 [-0.131, -0.027] |
+| Alarmed by one reader only: parser v2 / LLM | 99 / 20, p < 0.0001 | 78 / 46, p = 0.005 |
+| Forged receipts caught, parser v2 → LLM | 42 → 34 of 78 (54 % → 44 %) | 43 → 40 (55 % → 51 %) |
+| Difference [95 % interval] | -0.103 [-0.205, +0.000] | -0.038 [-0.154, +0.077] |
+
+All three conditions hold on both text sources: the false-alarm rate falls, by 20 points from the
+transcripts and 8 from our OCR, and the catch rate falls by less, 10 and 4 points.
+
+What the result shows and what it does not:
+
+- **The LLM's fields are not emptier.** From the transcripts it reads 2,394 amounts, 1,444 items
+  and 487 tax summary rows, against parser v2's 2,285, 1,422 and 392; no reading is empty, and
+  2 receipts have one rejected reference (a date).
+- **Where the false alarms go.** "The items add up to a printed total" fails on 100 authentic
+  receipts with parser v2's fields from the transcripts and on 13 with the LLM's. From our OCR
+  the LLM reads more items and tax rows, and OCR misreads in them show: "quantity times unit
+  price" fails on 59 authentic receipts against 33, and "the tax matches its rate" on 35
+  against 14.
+- **Fewer forged receipts are caught**, as ADR-0027 expected: part of parser v2's catches are its
+  own misreadings. An alarm is more often right: of the receipts alarmed from the transcripts,
+  32 % are forged with the LLM's fields and 22 % with parser v2's (OCR: 24 % and 21 %). But the
+  catch rate minus the false-alarm rate improves by 0.09 from the transcripts and 0.04 from our
+  OCR with intervals that include zero (-0.018 to +0.202, -0.081 to +0.160), so this test does
+  not show that the rules separate forged from authentic receipts better as a whole.
+- **On parser v2's ground.** The training receipts are where parser v2 was developed, so the test
+  favours it; the LLM passes anyway. Gold set B pointed the same way (false alarms 4 and 8
+  against 11 and 11 of 24), and the test split in Phase 7 measures the whole system once.
+
+Phase 5 therefore reads fields with the LLM on both text sources. The frozen version reads the
+validation split next, and the test split in Phase 7. This test cost 3.50 USD; Phase 6a has cost
+6.64 USD in all.
