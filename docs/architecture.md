@@ -93,6 +93,12 @@ How the LLM reads a receipt, and what code guarantees on the way
    the best round is frozen. Gold set B is read once, while the reader code is unchanged since
    the freeze; the values in dispute are decided by the owner on a page that shows no candidate
    before the first answer, and only then is the pre-registered rule applied, per text source.
+6. **Use from Phase 5 on.** The LLM reader passed ADR-0027 on both text sources, so later
+   phases take fields from `FrozenReader` (`docfraud.llm.frozen`). It rebuilds the frozen
+   version's request for a receipt and reads the stored answer; it never sends a request, and a
+   receipt without an answer is an error. The answers are paid for once, by the commands that
+   read a split: the training receipts in Phase 6a, the validation receipts by
+   `read-validation`, the test receipts in Phase 7.
 
 | Command (`docfraud llm …`) | Step |
 |---|---|
@@ -100,6 +106,7 @@ How the LLM reads a receipt, and what code guarantees on the way
 | `develop`, `freeze`, `stability` | Development rounds on gold set A, the frozen version, its run-to-run stability |
 | `measure-b`, `adjudicate`, `evaluate-b` | The one reading of gold set B, its adjudication, the decision report |
 | `false-alarms` | The one reading of the training receipts outside both gold sets, judged by the accounting rules' false alarms ([ADR-0027](decisions/0027-llm-reader-judged-by-false-alarms.md)) |
+| `read-validation` | The one reading of the validation receipts for Phase 5; it records the version, the commit and the cost, and measures nothing |
 | `spending` | What has been spent, against the limit |
 
 ## Package layout

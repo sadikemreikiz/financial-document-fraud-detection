@@ -265,3 +265,19 @@ What the result shows and what it does not:
 Phase 5 therefore reads fields with the LLM on both text sources. The frozen version reads the
 validation split next, and the test split in Phase 7. This test cost 3.50 USD; Phase 6a has cost
 6.64 USD in all.
+
+## Reading the validation split (2026-10-23)
+
+From Phase 5 on, every receipt's fields come from the frozen version through `FrozenReader`
+(`docfraud.llm.frozen`), which reads stored answers only and never sends a request. The 562
+training receipts already had answers from both text sources: gold set A from round 4, the
+frozen round, and gold set B and the 482 other receipts from their one reading.
+`docfraud llm read-validation` read the 190 validation receipts once from both text sources, at
+commit `13d011e`, with the reader code unchanged since the freeze
+([record](../reports/llm/validation-reading.json)): 380 requests, every one answered, for
+1.45 USD, or 0.0076 USD per receipt (the price per request of the second test projected
+1.38 USD). Nothing was measured: the command shows no field, label or score of a validation
+receipt.
+
+The LLM reader has cost 8.09 USD in all. The test split (218 receipts) is read once in Phase 7,
+for about 1.66 USD at the same price per receipt.

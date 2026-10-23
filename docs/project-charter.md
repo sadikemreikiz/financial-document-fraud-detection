@@ -4,7 +4,7 @@
 |---|---|
 | **Project** | docfraud: explainable multimodal detection of forged financial documents |
 | **Origin** | v2 of the M.Sc. thesis *AI-Based Expert System for Detecting Fraud in Financial Documents* (S. E. Ikiz, University of Europe for Applied Sciences, Berlin, 2026) |
-| **Status** | Phases 0 to 4 and 6a complete; Phase 5 next. Phase 6a: the LLM field reader replaces the rule-based parser on both text sources, after a pre-registered test of the accounting rules' false alarms ([ADR-0027](decisions/0027-llm-reader-judged-by-false-alarms.md)) |
+| **Status** | Phases 0 to 4 and 6a complete; Phase 5 in progress. Phase 6a: the LLM field reader replaces the rule-based parser on both text sources, after a pre-registered test of the accounting rules' false alarms ([ADR-0027](decisions/0027-llm-reader-judged-by-false-alarms.md)) |
 | **Last updated** | 2026-10-23 |
 
 ## Problem
