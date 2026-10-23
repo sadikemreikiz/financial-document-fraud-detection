@@ -10,9 +10,8 @@ forgeries.
 
 - **What it does:** detects forged receipts from the evidence they carry: arithmetic on the
   receipt that no longer adds up, and traces of editing in its pixels. An LLM that reads the
-  receipt's fields did not pass its first pre-registered test against the rule-based parser;
-  a second, by the accounting rules' false alarms, decides whether it replaces the parser. An
-  LLM-assisted review is planned.
+  receipt's fields replaced the rule-based parser after a pre-registered test of the accounting
+  rules' false alarms; an LLM-assisted review is planned.
 - **What stands out:** I audited my own thesis, found that data leakage had invalidated its
   results, and rebuilt it under an evaluation protocol fixed before any model was trained. Along
   the way I found a shortcut in the dataset: a rule that looks only at the file format beats the
@@ -23,10 +22,9 @@ forgeries.
   to the edited region on 69 % of them, in a single pre-registered measurement on held-out folds.
 - **Built with:** Python 3.14, PyTorch, scikit-learn, RapidOCR, the Claude API, pytest, mypy in
   strict mode and CI on every pull request.
-- **Status:** Phases 0 to 4 of 8 complete. In Phase 6a an LLM that reads the receipt fields
-  did not pass its pre-registered test against the rule-based parser on a gold set; a second
-  test, by the accounting rules' false alarms on 482 receipts, decides which reader Phase 5
-  uses.
+- **Status:** Phases 0 to 4 and 6a of 8 complete. In Phase 6a an LLM that reads the receipt
+  fields replaced the rule-based parser: with its fields the accounting rules raise fewer false
+  alarms, under a rule fixed in advance. Phase 5, which combines the evidence, is next.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="reports/forensics/figures/clean-precision-dark.svg">
@@ -51,9 +49,11 @@ advance ([ADR-0025](docs/decisions/0025-llm-extraction-preregistration.md)): the
 the numbers in the receipt text and code takes the values, the model and instruction were
 developed on one gold set, and a second gold set, adjudicated by the owner, decided once. The
 LLM did not pass ([report](reports/llm/gold-b.md)). A second test, fixed after that result,
-counts the accounting rules' false alarms with each reader on 482 training receipts and
-decides which reader Phase 5 uses ([ADR-0027](docs/decisions/0027-llm-reader-judged-by-false-alarms.md)). Phase 5 then
-combines the evidence: copy-move detection, linking pixel
+counted the accounting rules' false alarms with each reader on 482 training receipts
+([ADR-0027](docs/decisions/0027-llm-reader-judged-by-false-alarms.md)): with the LLM's fields they fall from 37 % to
+18 % of authentic receipts on the transcripts and from 39 % to 31 % on our OCR, so the LLM reads
+the fields from here on ([report](reports/llm/false-alarms.md)). Phase 5 now combines the
+evidence: copy-move detection, linking pixel
 evidence to the fields it changes, fusion with the accounting rules and a decision policy. The
 test split stays locked until the final evaluation of Phase 7.
 
@@ -89,12 +89,12 @@ test split stays locked until the final evaluation of Phase 7.
   hits the edit on 69 % of the forged receipts, where a random box of the same size hits 3 %,
   and a probe over 28 global properties of the images finds no trace of forgery
   ([Phase 4 results](reports/forensics/README.md)).
-- **The LLM reader looked better on the set it was developed on.** From the transcripts, Claude Sonnet
-  5.5 read every field the accounting rules need exactly on 88 % of the development receipts,
-  but on 30 % of a second, owner-adjudicated set, against 17 % for the rule-based parser. That is too few
-  receipts to pass the rule fixed in advance
-  ([record](docs/llm-development.md#gold-set-b-2026-10-23)); a second pre-registered test, by
-  the accounting rules' false alarms, follows ([ADR-0027](docs/decisions/0027-llm-reader-judged-by-false-alarms.md)).
+- **An LLM reader cuts the rules' false alarms.** With the fields Claude Sonnet 5.5 points to in
+  the transcripts, the accounting rules flag 18 % of 404 authentic receipts, against 37 % with
+  the rule-based parser, and catch 44 % of the forged ones, against 54 %, in one test fixed
+  in advance. A first test, by exact reading on 30 owner-adjudicated receipts, could not
+  tell the two readers apart, and the development set had overstated the LLM: 88 % of receipts
+  read exactly there, 30 % on the adjudicated set ([record](docs/llm-development.md#second-test-false-alarms-2026-10-23)).
 
 ## How the work is done
 
