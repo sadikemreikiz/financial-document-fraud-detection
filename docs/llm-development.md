@@ -152,3 +152,72 @@ thinking reads better than no thinking; it reads at least as well, for 1.4 times
 frozen version is also the best of 4 rounds on the receipts it was chosen on, so its 76 is
 higher than a fresh reading would give, as the second reading's 73 shows. Gold set B measures
 it without that advantage.
+
+## Adjudication of gold set B (2026-10-23)
+
+The owner answered the 86 questions of the adjudication
+([ADR-0026](decisions/0026-adjudication-of-items-and-tax-rows.md)) on 2026-10-23 between 10:20 and 12:20
+in one sitting; the answers are in
+[`annotations/findit2/gold-adjudication-b.json`](../annotations/findit2/gold-adjudication-b.json),
+as the page wrote them. This section was written after the last answer and before
+`docfraud llm evaluate-b` computed any metric of gold set B. The gold set B report counts the
+first answers that matched a reading; what the log cannot show is the help given while answering,
+by Claude in the working session:
+
+- Question 1 (`X51005746207`, tendered), before the first answer: the task was not yet clear, and
+  at the owner's request Claude went through that receipt's last lines and named the role of
+  each; the receipt names the card but prints no amount handed over, so the guidelines leave the
+  role empty. This first answer is therefore not an independent reading.
+- Question 5 (`X51005705760`, rounding), before the first answer: what a rounding adjustment is,
+  that it is recorded with its printed sign, and that a printed 0.00 is recorded (as on 12
+  receipts of gold set A). No value of the receipt was named.
+- Question 6 (`X51006557213`, tax summary), after the final answer was saved: how gold set A
+  records the same delivery-note layout (per-rate supply totals are rows without a tax, the GST
+  printed on its own line is the tax amount, a total printed twice is recorded once). The answer
+  was not changed.
+- Item questions: the page refused a first answer whose amounts carried tax codes (`7.00ZR`) and
+  saved nothing; Claude offered a browser-console line that removes the letters and clears
+  descriptions made only of digits, and repeated the guidelines' rules that a unit price is
+  recorded only when printed and that the description is the printed product name without codes
+  and may be left empty.
+- To save time, the owner considered answering item questions by ticking one of the shown
+  readings; Claude advised against it, as that turns the adjudication into a choice among the
+  readers. Every first answer that matched no reading holds at least one value, so no answer has
+  that pattern.
+
+## Gold set B (2026-10-23)
+
+On neither text source does the LLM reader replace parser v2
+([report](../reports/llm/gold-b.md)). From the transcripts, the frozen version read all rule
+inputs exactly on 9 of 30 receipts and parser v2 on 5; 5 receipts were exact for the LLM only
+and 1 for parser v2 only, the paired interval of the difference is +0.000 to +0.300 and the
+exact McNemar test gives p = 0.22. From our OCR, 8 against 5, 4 and 1, an interval of -0.033 to
++0.233 and p = 0.38. The pre-registered rule needed at least 6 receipts exact for the LLM only
+with none the other way, or 8 with one (ADR-0025, decision 5).
+
+The decision does not depend on question 1, the one answer given after Claude went through the
+receipt: answered `18.30` instead of empty, the transcripts give 10 against 5, 6 and 1, p = 0.13,
+still short of the rule.
+
+Reported, not decisive (ADR-0025, decision 6):
+
+- The LLM finds more tax summary rows: recall +0.29 from the transcripts and +0.36 from our OCR,
+  both intervals above zero. It finds more amounts from our OCR (+0.09, interval above zero),
+  not clearly from the transcripts (+0.04), and names the merchant less often (-0.13 and -0.10,
+  intervals including zero).
+- With the LLM's fields, at least one accounting rule fails on 4 (transcripts) and 8 (OCR) of the
+  24 authentic receipts, against 11 and 11 with parser v2 and 3 with the adjudicated gold set.
+- No answer was rejected; the median answer took 2.9 seconds.
+- The owner's final answer differs from the original annotation of gold set B on 22 of the 86
+  questions (17 amounts, 3 item lists, 2 tax summaries).
+
+Gold set A overstated the LLM reader. There it read 44 and 32 of 50 receipts exactly (88 % and
+64 %), on gold set B 9 and 8 of 30 (30 % and 27 %). Parser v2 falls as well, from 19 and 15 of
+50 on gold set A (38 % and 30 %) to 5 and 5 of 30 (17 %), so gold set B is the harder set, but the
+LLM falls further. Three causes are likely, and these data cannot separate them: version 2 quotes
+lines of gold set A (round 2, *Gold set A in the instruction*); the frozen round was the best of
+four on the same receipts (*Freeze and stability*); and gold set A was annotated by Claude and
+never adjudicated, so a Claude reader may share its conventions.
+
+Parser v2 therefore stays the field reader for both text sources; the LLM does not read the 752
+non-test receipts, and Phase 6a ends here. All of Phase 6a cost 3.14 USD.
