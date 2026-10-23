@@ -136,5 +136,5 @@ Modules are created when their phase starts, not before.
 | A dataset | A dataset adapter that yields `Document`s | Detectors only see `Document`s; documents without transcripts are read by OCR |
 | An accounting rule | A rule function with tests | The rule engine collects rules from a registry |
 | A document type (e.g. invoices) | A field schema and parser profile | Rules operate on structured fields |
-| A detector | The detector interface, emitting `Finding`s | Fusion learns the new evidence's weight on validation |
+| A detector | The detector interface, emitting `Finding`s | Fusion learns the new evidence's weight on the training split, from out-of-fold scores ([ADR-0028](decisions/0028-fusion-fitted-on-the-training-split.md)) |
 | An OCR engine or LLM provider | The respective interface | Callers depend on the interface only |

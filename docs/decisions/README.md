@@ -10,7 +10,7 @@ change of mind is a new record that supersedes the old one.
 | [0002](0002-primary-dataset.md) | Find-it-again as the primary dataset | Accepted |
 | [0003](0003-content-only-headline.md) | Content-only headline results, file metadata as a separate track | Accepted |
 | [0004](0004-locked-test-set.md) | Locked test set and pre-registered evaluation protocol | Accepted |
-| [0005](0005-evidence-based-architecture.md) | Evidence-based architecture instead of score-only late fusion | Accepted |
+| [0005](0005-evidence-based-architecture.md) | Evidence-based architecture instead of score-only late fusion | Accepted; step 4 amended by 0028 |
 | [0006](0006-llm-placement.md) | Where LLMs are used, and where they are not | Accepted; provider and timing of field extraction decided by 0024 |
 | [0007](0007-python-and-tooling.md) | Python 3.14, uv and the quality toolchain | Accepted |
 | [0008](0008-ocr-engine.md) | RapidOCR (PP-OCRv6 small) as the OCR engine | Accepted |
@@ -33,5 +33,6 @@ change of mind is a new record that supersedes the old one.
 | [0025](0025-llm-extraction-preregistration.md) | How LLM field extraction is developed and measured | Accepted; adjudication of items and tax rows amended by 0026, decision rule followed by a second test in 0027 |
 | [0026](0026-adjudication-of-items-and-tax-rows.md) | Items and tax rows in dispute are adjudicated as a whole list per receipt | Accepted |
 | [0027](0027-llm-reader-judged-by-false-alarms.md) | The LLM reader is judged once more, by the accounting rules' false alarms | Accepted |
+| [0028](0028-fusion-fitted-on-the-training-split.md) | Fusion is fitted on the training split, as the evaluation protocol defines | Accepted |
 
 New records copy [template.md](template.md).
