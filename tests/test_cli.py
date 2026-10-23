@@ -2,6 +2,7 @@ import hashlib
 import json
 import shutil
 import zipfile
+from collections.abc import Sequence
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from pathlib import Path
@@ -53,6 +54,8 @@ from docfraud.llm.adjudication import (
 )
 from docfraud.llm.adjudication import save_log as save_adjudication
 from docfraud.llm.decision import ModelStep
+from docfraud.llm.false_alarms import FIXED_AT
+from docfraud.llm.gold_b import load_measurement
 from docfraud.llm.run import COMPARISON_SETTINGS, ForbiddenDocumentsError
 from docfraud.reading.fields import ReceiptFields
 from docfraud.reading.ocr import OcrResult
@@ -1261,7 +1264,7 @@ def test_llm_gold_set_b_is_read_only_by_the_frozen_reader(
     monkeypatch.setattr(cli_llm, "changed_since", lambda *_: None)
     unknown = runner.invoke(app, ["llm", "measure-b", *measure])
     assert unknown.exit_code == 1
-    assert "cannot compare with the frozen commit" in flat(unknown.output)
+    assert "cannot compare with commit abc123" in flat(unknown.output)
 
     monkeypatch.setattr(cli_llm, "changed_since", lambda *_: [])
     (tmp_path / "gold-b" / "F1.json").rename(tmp_path / "F1.json")
@@ -1273,3 +1276,62 @@ def test_llm_gold_set_b_is_read_only_by_the_frozen_reader(
     result = runner.invoke(app, ["llm", "measure-b", *measure])
     assert isinstance(result.exception, ForbiddenDocumentsError)
     assert not directory.exists()
+
+
+def _false_alarms_setup(
+    toy_source: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> tuple[list[str], Path]:
+    """Gold set A is F2 and gold set B is empty, so the test reads A1 (authentic) and F1."""
+    measure, _ = _gold_b_setup(toy_source, tmp_path, monkeypatch)
+    monkeypatch.setattr(cli_llm, "GOLD_B", _write_gold_set(tmp_path / "empty-b", (), ()))
+    report = tmp_path / "false-alarms.md"
+    common = measure[: measure.index("--measurement")]
+    return [*common, "--measurement", str(tmp_path / "fa" / "m.json"), "--output", str(report)], (
+        report
+    )
+
+
+def test_llm_false_alarms_are_counted_once_outside_the_gold_sets(
+    toy_source: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    arguments, report = _false_alarms_setup(toy_source, tmp_path, monkeypatch)
+    monkeypatch.setattr(cli_llm, "ClaudeProvider", lambda **_: FakeProvider(fail=frozenset({0})))
+    failed = runner.invoke(app, ["llm", "false-alarms", *arguments])
+    assert failed.exit_code == 1
+    assert "1 of 4 requests were not answered" in flat(failed.output)
+    assert not report.exists()
+    assert not (tmp_path / "fa").exists()  # nothing is kept
+
+    monkeypatch.setattr(cli_llm, "ClaudeProvider", FakeProvider)
+    result = runner.invoke(app, ["llm", "false-alarms", *arguments])
+    assert result.exit_code == 0, result.output
+    assert "T1 transcript: parser v2; T2 OCR: parser v2" in flat(result.output)
+    text = report.read_text(encoding="utf-8")
+    assert (
+        "read the 2 receipts of the training split outside gold sets A and B (1 authentic, "
+        "1 forged)" in text
+    )
+    assert "| T1 transcript | 0 of 1 | 0 of 1 | +0.000 [+0.000, +0.000] | 0 | 0 | 1.0000 |" in text
+    assert "### Rules that fail, T2 OCR" in text
+    assert load_measurement(tmp_path / "fa" / "m.json").receipts == 2
+    once = runner.invoke(app, ["llm", "false-alarms", *arguments])
+    assert once.exit_code == 1
+    assert "runs once" in flat(once.output)
+
+
+def test_llm_false_alarms_need_unchanged_accounting_rules(
+    toy_source: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    arguments, report = _false_alarms_setup(toy_source, tmp_path, monkeypatch)
+
+    def changed(commit: str, paths: Sequence[str]) -> list[str]:
+        return list(paths) if commit == FIXED_AT else []
+
+    monkeypatch.setattr(cli_llm, "changed_since", changed)
+    result = runner.invoke(app, ["llm", "false-alarms", *arguments])
+    assert result.exit_code == 1
+    assert (
+        "the accounting rules changed after ADR-0027 at 888aeb65c1d0: "
+        "src/docfraud/detectors/rules.py" in flat(result.output)
+    )
+    assert not report.exists()

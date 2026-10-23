@@ -99,6 +99,7 @@ How the LLM reads a receipt, and what code guarantees on the way
 | `compare-models` | Model choice on gold set A, from the cheapest up |
 | `develop`, `freeze`, `stability` | Development rounds on gold set A, the frozen version, its run-to-run stability |
 | `measure-b`, `adjudicate`, `evaluate-b` | The one reading of gold set B, its adjudication, the decision report |
+| `false-alarms` | The one reading of the training receipts outside both gold sets, judged by the accounting rules' false alarms ([ADR-0027](decisions/0027-llm-reader-judged-by-false-alarms.md)) |
 | `spending` | What has been spent, against the limit |
 
 ## Package layout
