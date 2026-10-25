@@ -1,6 +1,7 @@
 # 0005. Evidence-based architecture instead of score-only late fusion
 
-- **Status**: Accepted
+- **Status**: Accepted; step 4 amended by [0028](0028-fusion-fitted-on-the-training-split.md)
+  (fusion is fitted on the training split)
 - **Date**: 2026-10-06
 
 ## Context
