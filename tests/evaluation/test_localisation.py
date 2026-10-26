@@ -9,6 +9,7 @@ from docfraud.evaluation.localisation import (
     BASELINE_DRAWS,
     THRESHOLD_SAMPLE,
     annotated_rectangles,
+    any_box_baseline,
     baseline_hit_rate,
     choose_pixel_threshold,
     edit_average_precisions,
@@ -102,6 +103,21 @@ def test_the_baseline_is_reproducible_per_receipt() -> None:
     assert baseline_hit_rate(*args, receipt_rng("X1")) != baseline_hit_rate(
         *args, receipt_rng("X2")
     )
+
+
+def test_the_baseline_of_several_boxes_places_each_independently() -> None:
+    words = [box(0, 0, 100, 60)]
+    left, right = [box(0, 0, 50, 60)], [box(50, 0, 50, 60)]
+    one = baseline_hit_rate(box(0, 0, 2, 2), PAGE, words, left, receipt_rng("X1"))
+    assert any_box_baseline([box(0, 0, 2, 2)], PAGE, words, left, receipt_rng("X1")) == one
+    two = any_box_baseline([box(0, 0, 2, 2)] * 2, PAGE, words, left, receipt_rng("X1"))
+    assert 0.7 < two < 0.8  # 1 - 0.5 x 0.5 for independent boxes; equal boxes would give 0.5
+    both_halves = any_box_baseline(
+        [box(0, 0, 2, 2)] * 2, PAGE, words, left + right, receipt_rng("X1")
+    )
+    assert both_halves == 1.0
+    with pytest.raises(ValueError, match="without a region"):
+        any_box_baseline([], PAGE, words, left, receipt_rng("X1"))
 
 
 def test_the_baseline_needs_text_and_a_region_that_fits() -> None:

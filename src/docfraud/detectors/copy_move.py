@@ -4,7 +4,8 @@ A receipt is a lossless PNG file, so characters copied and pasted inside it keep
 of their source, scan noise included, while a character printed twice differs by that noise.
 The detector therefore looks for duplicates that are too exact to have been printed: it hashes
 every square block of the page, at every position, and finds equal hashes at positions at least
-one block apart (the exact-match search of Fridrich, Soukal and Lukáš, 2003).
+one block apart (the exact-match search of Fridrich, Soukal and Lukáš, 2003). Every match is then
+compared pixel by pixel, so a collision of the hash cannot make one.
 
 - **Block side.** A quarter of the receipt's text height (the median height of its OCR words),
   so that a pasted character holds many blocks.
@@ -103,7 +104,8 @@ def block_sums(values: npt.NDArray[np.int64], side: int) -> npt.NDArray[np.int64
 def block_hashes(page: Page, side: int) -> npt.NDArray[np.uint64]:
     """A 64-bit polynomial hash of the block starting at every position.
 
-    Equal blocks have equal hashes; unequal blocks collide with probability about 2^-64.
+    Equal blocks have equal hashes. Unequal blocks rarely share one, but a polynomial hash with
+    fixed bases is not random, so :func:`duplicate_pair` confirms every match on the pixels.
     """
     pixels = page.astype(np.uint64)
     height, width = pixels.shape
@@ -137,7 +139,7 @@ def informative_blocks(
 
 
 def _offset_matches(
-    hashes: npt.NDArray[np.uint64], keep: npt.NDArray[np.bool_], side: int
+    page: Page, hashes: npt.NDArray[np.uint64], keep: npt.NDArray[np.bool_], side: int
 ) -> dict[tuple[int, int], list[tuple[int, int]]]:
     """Positions of the upper block of each duplicated pair, by offset to the other block.
 
@@ -157,6 +159,10 @@ def _offset_matches(
             for j in range(i + 1, end):
                 dy, dx = int(rows[j] - rows[i]), int(columns[j] - columns[i])
                 if max(abs(dy), abs(dx)) < side:  # overlapping blocks of one region
+                    continue
+                first = page[rows[i] : rows[i] + side, columns[i] : columns[i] + side]
+                second = page[rows[j] : rows[j] + side, columns[j] : columns[j] + side]
+                if not np.array_equal(first, second):  # the hash collided
                     continue
                 matches[(dy, dx)].append((int(rows[i]), int(columns[i])))
     return matches
@@ -208,7 +214,7 @@ def duplicate_pair(
         msg = f"a page of {page.shape} holds no block of side {side}"
         raise ValueError(msg)
     keep = informative_blocks(page, side, contrast=contrast, unsaturated_share=unsaturated_share)
-    matches = _offset_matches(block_hashes(page, side), keep, side)
+    matches = _offset_matches(page, block_hashes(page, side), keep, side)
     pairs = [_largest_group(positions, offset, side) for offset, positions in matches.items()]
     return max(pairs, key=lambda p: (p.area, p.blocks), default=None)
 
