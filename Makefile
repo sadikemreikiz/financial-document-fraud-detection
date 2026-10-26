@@ -63,6 +63,7 @@ reports:  ## Regenerate every report that the current code produces
 		--output reports/reading/gold-verification-b.md
 	uv run docfraud baseline report
 	uv run docfraud rules report
+	uv run docfraud copy-move report
 
 check-reports: reports  ## Fail if a committed report differs from its regeneration
 	git diff --exit-code -- reports

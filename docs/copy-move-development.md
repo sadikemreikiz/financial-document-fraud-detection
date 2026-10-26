@@ -124,3 +124,18 @@ With this record merged, copy-move is frozen: no further variant is tried on the
 and later changes are limited to defects (ADR-0014, decision 3), each reported with both
 results. Its single measurement on the clean folds follows, by the rules of ADR-0029
 (section 4) as ADR-0030 amends them.
+
+## Measured on the clean folds (2026-10-26)
+
+`docfraud copy-move measure` scored the 449 clean-fold receipts once, from commit `42e2e7d`
+([report](../reports/fusion/copy-move-clean.md), run record `copy-move-clean`): average
+precision 0.860 (0.789 to 0.922) at a chance level of 0.167; the pair hits an edit or a copy
+source on 0.811 of the 74 forged receipts with regions, against a random baseline of 0.053; and
+on 0.826 of the 46 receipts with an annotated source, one region lies on an edit and the other
+on a source. Three details that ADR-0029 and ADR-0030 leave open were fixed in the measurement
+code before it ran: a receipt without a pair counts as a miss with a baseline of 0, as a report
+without a located finding does (ADR-0029, section 12), and the guard is also given on the
+receipts with a pair; the pair hit rate pairs any modified rectangle with any source of the
+receipt, because the annotations do not say which source belongs to which copy; and F1 is not
+reported, because its threshold would come from the validation split, which ADR-0029 (section 1)
+keeps for the frozen system.

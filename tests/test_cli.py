@@ -13,12 +13,14 @@ import numpy as np
 import numpy.typing as npt
 import pytest
 import typer
+from PIL import Image
 from typer.testing import CliRunner
 
 from docfraud import __version__
 from docfraud.cli import app
 from docfraud.cli import baseline as cli_baseline
 from docfraud.cli import common as cli_common
+from docfraud.cli import copy_move as cli_copy_move
 from docfraud.cli import data as cli_data
 from docfraud.cli import forensics as cli_forensics
 from docfraud.cli import llm as cli_llm
@@ -70,6 +72,7 @@ from docfraud.synthesis.statistics import RoundStatistics, Template
 from tests.baselines.test_bow import corpus
 from tests.data.test_benign_marks import HAND, PLAIN, check_log, mark, mark_log, marks_documents
 from tests.data.test_observation import observation_documents, receipt_answers
+from tests.detectors.test_copy_move_measurement import measured
 from tests.evaluation.test_folds import documents as fold_documents
 from tests.fixtures.findit import load_toy
 from tests.fixtures.llm import FakeProvider
@@ -591,6 +594,51 @@ def test_rules_validation_runs_once_from_a_clean_commit(
     again = runner.invoke(app, command)
     assert again.exit_code == 1
     assert "refusing to run again" in again.output
+
+
+def test_copy_move_is_measured_once_on_the_clean_folds_from_a_clean_commit(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    docs = [d for d in corpus(tmp_path / "corpus") if d.split is Split.TRAIN]
+    for document in docs:
+        Image.new("L", (40, 30), 200).save(document.image_path)
+    folds = tmp_path / "folds.json"
+    save_folds(assign_folds(docs), folds)
+    assignment = load_folds(folds).folds
+    seen: list[str] = []
+
+    def fake_measure(document: Any, *_: Any) -> Any:
+        seen.append(document.doc_id)
+        forged = document.label is Label.FORGED
+        return measured(forged=forged, score=1.0 if forged else 0.1, hit=forged)
+
+    monkeypatch.setattr(cli_common, "load_findit2", lambda _: tuple(docs))
+    monkeypatch.setattr(cli_common, "RapidOcrEngine", FakeOcr)
+    monkeypatch.setattr(cli_copy_move, "measure", fake_measure)
+    report = tmp_path / "copy-move.md"
+    runs = tmp_path / "runs"
+    options = ["--runs", str(runs), "--folds", str(folds), "--cache", str(tmp_path / "ocr")]
+    command = ["copy-move", "measure", *options, "--output", str(report)]
+    monkeypatch.setattr(cli_common, "code_version", lambda: CodeVersion(commit="a", dirty=True))
+    assert "commit all changes first" in runner.invoke(app, command).output
+    monkeypatch.setattr(cli_common, "code_version", lambda: CodeVersion(commit="a", dirty=False))
+    result = runner.invoke(app, command)
+    assert result.exit_code == 0, result.output
+    assert seen
+    assert all(assignment[doc_id] in CLEAN_FOLDS for doc_id in seen)
+    assert {d.doc_id for d in docs if assignment[d.doc_id] in CLEAN_FOLDS} == set(seen)
+    (record,) = JsonRunStore(runs).records("copy-move-clean")
+    assert record.results["guard"]["all"]["detects"]
+    assert "Localisation guard of the pair" in report.read_text(encoding="utf-8")
+    again = runner.invoke(app, command)
+    assert again.exit_code == 1
+    assert "refusing to run again" in again.output
+    rendered = tmp_path / "again.md"
+    args = ["copy-move", "report", "--runs", str(runs), "--output", str(rendered)]
+    assert runner.invoke(app, args).exit_code == 0
+    assert rendered.read_text(encoding="utf-8") == report.read_text(encoding="utf-8")
+    empty = ["copy-move", "report", "--runs", str(tmp_path / "none"), "--output", str(rendered)]
+    assert "no copy-move-clean record" in runner.invoke(app, empty).output
 
 
 def test_rules_need_the_baseline_runs(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
