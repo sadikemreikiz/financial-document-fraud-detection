@@ -329,3 +329,19 @@ only a comment of that code. No further variant is tried on the design fold, and
 are limited to defects (ADR-0014, decision 3), each reported with both results. Every round of
 the clean measurement trains its nine runs with this code and measures them once, together with
 the other systems ([ADR-0020](decisions/0020-clean-folds-measured-together.md)).
+
+## System 2 on the whole training split (Phase 5, 2026-10-26)
+
+Validation and test receipts are scored by models trained on the whole training split
+(evaluation protocol, section 4; [ADR-0029](decisions/0029-fusion-preregistration.md),
+section 2). Round 5 is the round that holds out no fold (`WHOLE_TRAINING`): its synthetic
+forgeries come from all authentic training receipts and its statistics from all five folds.
+`make whole-training` trained system 2 with seeds 0, 1 and 2 from commit `6ea4497`. Since
+`2a8998f`, the code that trained the rounds of the clean measurement, the training code differs
+only by the two changes that let a round hold out no fold (`WHOLE_RUNS` and
+`training_documents`); the network, the sampler, the engine and the document score are those of
+section 4.
+
+All three runs finished their 6,000 steps, in 1.08, 1.00 and 0.99 hours, and pass the failure
+rule. They score the validation split once the system is frozen (ADR-0029, section 14, step 5)
+and the test split in Phase 7; until then nothing is measured with them.
