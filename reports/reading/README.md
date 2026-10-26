@@ -76,8 +76,11 @@ because no unseen gold receipts remain to measure a change.
   next line as `subtotal` (`X51007231338`).
 - **Tax summary rows** are found less often than other fields (recall 0.53 on transcripts,
   0.40 on OCR, gold set B).
-- **Field values do not yet point to their source boxes.** Rows keep their positions, but
-  `ReceiptFields` stores values only. Linking a value to its region is Phase 5 work.
+- **Field values did not point to their source boxes.** Rows kept their positions, but
+  `ReceiptFields` stored values only. *(Lifted in Phase 6a: the parser also records where each
+  value is printed (`FieldSources`), with the values of parser v2 unchanged; see the
+  [architecture](../../docs/architecture.md). Linking a value to a suspicious region is Phase 5
+  work, [ADR-0029](../../docs/decisions/0029-fusion-preregistration.md), section 5.)*
 
 Phase 3 measures what these errors cost: an extraction error on an authentic receipt can turn
 into a false alarm of an accounting rule.
