@@ -10,6 +10,7 @@ from docfraud.cli import (
     copy_move,
     data,
     forensics,
+    fusion,
     llm,
     marks,
     observation,
@@ -34,6 +35,7 @@ app.add_typer(forensics.app, name="forensics")
 app.add_typer(synthesis.app, name="synthesis")
 app.add_typer(llm.app, name="llm")
 app.add_typer(copy_move.app, name="copy-move")
+app.add_typer(fusion.app, name="fusion")
 
 
 def _print_version(value: bool) -> None:
