@@ -25,6 +25,7 @@ from docfraud.forensics.learned.rounds import run_directory
 from docfraud.forensics.learned.sampler import System
 from docfraud.fusion.evidence import SystemTwo, receipt_evidence
 from docfraud.fusion.inputs import PRACTICAL
+from docfraud.linking.values import LocatedValue, located_values
 from docfraud.reading.fields import FieldSources
 
 RUN_NAME = "fusion-training-inputs"
@@ -41,6 +42,7 @@ class ReceiptInputs(BaseModel):
     seed: int
     inputs: dict[str, float]  # those of track T3; tracks T1 and T2 take all but the last
     findings: tuple[Finding, ...]
+    values: tuple[LocatedValue, ...] = ()  # the read values links relate regions to
 
 
 class InputsTable(BaseModel):
@@ -124,7 +126,12 @@ def training_inputs(  # noqa: PLR0913 - the receipts, their folds, readings and 
                 )
                 rows.append(
                     ReceiptInputs(
-                        receipt=receipt, track=track, seed=seed, inputs=inputs, findings=findings
+                        receipt=receipt,
+                        track=track,
+                        seed=seed,
+                        inputs=inputs,
+                        findings=findings,
+                        values=located_values(sources),
                     )
                 )
     return InputsTable(receipts=tuple(rows))
