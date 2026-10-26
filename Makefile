@@ -1,5 +1,5 @@
 .DEFAULT_GOAL := help
-.PHONY: help install lint format typecheck test test-data check data audit reports check-reports bench-ocr bench-synthesis trufor learned clean-measurement figures encoder-check fusion-preregistration clean
+.PHONY: help install lint format typecheck test test-data check data audit reports check-reports bench-ocr bench-synthesis trufor learned clean-measurement whole-training figures encoder-check fusion-preregistration clean
 
 help:  ## Show available targets
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*## "}; {printf "  %-18s %s\n", $$1, $$2}'
@@ -102,6 +102,11 @@ learned:  ## Development round of systems 2 to 4 on the design fold, about 11 ho
 # The single measurement of every system on the clean folds (ADR-0020, docs/clean-measurement.md):
 # the 36 runs of systems 2 to 4 first, then every system's predictions, then the report. Every
 # step resumes or skips what it has done; rerun the target from the same commit after a stop.
+whole-training:  ## System 2 on the whole training split, seeds 0 to 2, about 3 hours (resumes)
+	uv run docfraud forensics download-resnet
+	uv run docfraud synthesis download-fonts
+	$(KEEP_AWAKE) uv run docfraud forensics train-whole
+
 clean-measurement:  ## Clean measurement of every Phase 4 system, about 42 hours (resumes)
 	uv run docfraud forensics download-resnet
 	uv run docfraud synthesis download-fonts
