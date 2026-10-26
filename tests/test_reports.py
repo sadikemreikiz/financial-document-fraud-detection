@@ -12,6 +12,8 @@ from typer.testing import CliRunner
 
 from docfraud.baselines.report import render_report
 from docfraud.cli import app
+from docfraud.detectors.copy_move_measurement import RUN_NAME as COPY_MOVE_RUN
+from docfraud.detectors.copy_move_measurement import render_report as render_copy_move
 from docfraud.detectors.report import render_rules_report
 from docfraud.evaluation.runs import JsonRunStore, RunRecord
 
@@ -41,6 +43,13 @@ def test_rules_report_matches_its_run_records() -> None:
     )
     committed = (ROOT / "reports" / "rules" / "accounting-rules.md").read_text(encoding="utf-8")
     assert committed == expected, "run `docfraud rules report`"
+
+
+def test_copy_move_report_matches_its_run_record() -> None:
+    record = latest(COPY_MOVE_RUN)
+    expected = render_copy_move(record.results, record.code.commit)
+    committed = (ROOT / "reports" / "fusion" / "copy-move-clean.md").read_text(encoding="utf-8")
+    assert committed == expected, "run `docfraud copy-move report`"
 
 
 @pytest.mark.parametrize(

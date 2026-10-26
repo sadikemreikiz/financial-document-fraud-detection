@@ -267,6 +267,13 @@ def _interval(e: Mapping[str, float]) -> str:
 def render_report(record_results: Mapping[str, Any], commit: str | None) -> str:
     """The report of the clean measurement, from its run record."""
     detection = record_results["detection"]
+    ceilings = ", ".join(
+        f"{min(1.0, 0.10 * d['receipts'] / d['forged']):.3f} for {label}"
+        for label, d in (
+            ("all receipts", detection["all"]),
+            ("copy-paste inside against authentic", detection["copy_paste_inside"]),
+        )
+    )
     detection_table = Table(
         "Detection on the clean folds",
         ("Receipts", "Receipts (forged)", "Chance", *METRIC_NAMES.values()),
@@ -286,8 +293,9 @@ def render_report(record_results: Mapping[str, Any], commit: str | None) -> str:
         note="The document score pooled over the four clean folds, with stratified bootstrap "
         "intervals (10,000 resamples, seed 0). Chance: the share of forged receipts for average "
         "precision, 0.5 for ROC-AUC, the budget for recall. Without earlier contact: the "
-        "receipts viewed before ADR-0014 are left out (decision 1). F1 needs a threshold chosen "
-        "on the validation split and is not reported (ADR-0029, section 1).",
+        "receipts viewed before ADR-0014 are left out (decision 1). A budget limits recall: at "
+        f"10 % it cannot exceed {ceilings}. F1 needs a threshold chosen on the validation split "
+        "and is not reported (ADR-0029, section 1).",
     )
     pairs = record_results["pairs"]
     guard_rows: list[list[Cell]] = []

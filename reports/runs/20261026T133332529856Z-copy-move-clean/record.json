@@ -1,0 +1,287 @@
+{
+  "run_id": "20261026T133332529856Z-copy-move-clean",
+  "name": "copy-move-clean",
+  "started": "2026-10-26T13:33:32.529856Z",
+  "finished": "2026-10-26T13:39:01.259091Z",
+  "code": {
+    "commit": "42e2e7ded510d886e16e17aeef5714ce98421387",
+    "dirty": false
+  },
+  "environment": {
+    "python": "3.14.8",
+    "docfraud": "2.0.0.dev0",
+    "packages": {
+      "annotated-doc": "0.0.5",
+      "annotated-types": "0.8.0",
+      "anthropic": "2.1.0",
+      "antlr4-python3-runtime": "4.9.3",
+      "anyio": "4.15.1",
+      "ast_serialize": "0.12.1",
+      "certifi": "2026.7.22",
+      "cfgv": "3.5.0",
+      "charset-normalizer": "3.5.2",
+      "cloudpickle": "3.1.2",
+      "colorlog": "6.12.0",
+      "coverage": "7.16.2",
+      "distlib": "0.4.3",
+      "docfraud": "2.0.0.dev0",
+      "docstring_parser": "0.18.0",
+      "filelock": "4.0.12",
+      "flatbuffers": "25.12.19",
+      "fsspec": "2026.9.0",
+      "h11": "0.16.0",
+      "httpcore2": "2.16.0",
+      "httpx2": "2.16.0",
+      "identify": "2.6.20",
+      "idna": "3.20",
+      "iniconfig": "2.3.0",
+      "jinja2": "3.1.6",
+      "jiter": "0.17.0",
+      "joblib": "1.6.0",
+      "librt": "0.16.0",
+      "markdown-it-py": "4.2.0",
+      "markupsafe": "3.0.4",
+      "mdurl": "0.1.2",
+      "mpmath": "1.3.0",
+      "mypy": "2.4.0",
+      "mypy_extensions": "1.1.0",
+      "narwhals": "2.26.0",
+      "networkx": "3.7",
+      "nodeenv": "1.11.0",
+      "numpy": "2.5.3",
+      "omegaconf": "2.3.1",
+      "onnxruntime": "1.30.0",
+      "opencv-python": "5.0.0.93",
+      "opentelemetry-api": "1.45.1",
+      "packaging": "26.3",
+      "pathspec": "1.1.1",
+      "pillow": "12.3.0",
+      "platformdirs": "4.12.3",
+      "pluggy": "1.6.0",
+      "pre_commit": "4.6.2",
+      "protobuf": "7.36.2",
+      "pyclipper": "1.4.0",
+      "pydantic": "2.13.5",
+      "pydantic_core": "2.46.5",
+      "pygments": "2.21.0",
+      "pytest": "9.1.1",
+      "pytest-cov": "7.1.0",
+      "python-discovery": "1.6.1",
+      "pyyaml": "6.0.3",
+      "rapidocr": "3.9.2",
+      "requests": "2.34.2",
+      "rich": "15.0.0",
+      "ruff": "0.16.10",
+      "scikit-learn": "1.9.1",
+      "scipy": "1.18.1",
+      "setuptools": "84.0.0",
+      "shapely": "2.1.2",
+      "shellingham": "1.5.4",
+      "six": "1.17.0",
+      "sniffio": "1.3.1",
+      "sympy": "1.14.0",
+      "threadpoolctl": "3.7.0",
+      "torch": "2.14.1",
+      "tqdm": "4.70.1",
+      "truststore": "0.10.5",
+      "typer": "0.27.2",
+      "typing-inspection": "0.4.4",
+      "typing_extensions": "4.16.0",
+      "urllib3": "2.8.0",
+      "virtualenv": "21.14.5"
+    },
+    "platform": "macOS-15.7.7-arm64-arm-64bit-Mach-O",
+    "machine": "arm64",
+    "processor": "arm",
+    "cpu_count": 10,
+    "memory_bytes": 17179869184
+  },
+  "config": {
+    "detector": "docfraud.detectors.copy_move",
+    "block_divisor": 4,
+    "min_block": 4,
+    "ink_contrast": 60,
+    "unsaturated_share": 0.25,
+    "max_group": 16
+  },
+  "config_hash": "a58e7d99c13fee7097d8af72aa13594bf5e6bfbe4776ca7efa16a814adb391a9",
+  "dataset_sha256": {
+    "findit2": "6f8c6f134951956627edcc06c7e8fc298abb9e984073ab193174aee204d46261"
+  },
+  "seeds": {
+    "bootstrap": 0,
+    "baseline": 0
+  },
+  "test_unlocks": [],
+  "results": {
+    "detection": {
+      "all": {
+        "average_precision": {
+          "value": 0.8596742007763641,
+          "low": 0.7894850128307553,
+          "high": 0.9223764712547474
+        },
+        "roc_auc": {
+          "value": 0.9050980392156863,
+          "low": 0.8509621212121212,
+          "high": 0.952156862745098
+        },
+        "recall_at_10pct_review": {
+          "value": 0.5986666666666668,
+          "low": 0.5853333333333334,
+          "high": 0.5986666666666668
+        },
+        "recall_at_20pct_review": {
+          "value": 0.8133333333333334,
+          "low": 0.7466666666666667,
+          "high": 0.9040000000000001
+        },
+        "receipts": 449,
+        "forged": 75,
+        "chance": 0.16703786191536749
+      },
+      "copy_paste_inside": {
+        "average_precision": {
+          "value": 0.9696237951706,
+          "low": 0.9424290587423894,
+          "high": 0.9902839258778506
+        },
+        "roc_auc": {
+          "value": 0.993791353213088,
+          "low": 0.987492069246805,
+          "high": 0.9981872564125804
+        },
+        "recall_at_10pct_review": {
+          "value": 0.7338983050847459,
+          "low": 0.7000000000000001,
+          "high": 0.7338983050847459
+        },
+        "recall_at_20pct_review": {
+          "value": 0.9661016949152542,
+          "low": 0.9152542372881356,
+          "high": 1.0
+        },
+        "receipts": 433,
+        "forged": 59,
+        "chance": 0.13625866050808313
+      },
+      "without_earlier_contact": {
+        "average_precision": {
+          "value": 0.8469596480398712,
+          "low": 0.7636219415661242,
+          "high": 0.9224235602510326
+        },
+        "roc_auc": {
+          "value": 0.8919781750638496,
+          "low": 0.8269662758300441,
+          "high": 0.9504295333178546
+        },
+        "recall_at_10pct_review": {
+          "value": 0.5949152542372882,
+          "low": 0.5610169491525424,
+          "high": 0.5949152542372882
+        },
+        "recall_at_20pct_review": {
+          "value": 0.8135593220338984,
+          "low": 0.7288135593220338,
+          "high": 0.9152542372881356
+        },
+        "receipts": 351,
+        "forged": 59,
+        "chance": 0.16809116809116809
+      }
+    },
+    "pairs": {
+      "authentic": 122,
+      "authentic_receipts": 374,
+      "forged": 65,
+      "forged_receipts": 75
+    },
+    "guard": {
+      "all": {
+        "receipts": 74,
+        "hit_rate": {
+          "value": 0.8108108108108109,
+          "low": 0.7162162162162162,
+          "high": 0.8918918918918919
+        },
+        "baseline": 0.05282432432432432,
+        "detects": true
+      },
+      "with_a_pair": {
+        "receipts": 64,
+        "hit_rate": {
+          "value": 0.9375,
+          "low": 0.875,
+          "high": 0.984375
+        },
+        "baseline": 0.061078125,
+        "detects": true
+      },
+      "without_large_rectangles": {
+        "receipts": 71,
+        "hit_rate": {
+          "value": 0.8169014084507042,
+          "low": 0.7183098591549296,
+          "high": 0.9014084507042254
+        },
+        "baseline": 0.043323943661971835,
+        "detects": true
+      },
+      "without_earlier_contact": {
+        "receipts": 59,
+        "hit_rate": {
+          "value": 0.7966101694915254,
+          "low": 0.6949152542372882,
+          "high": 0.8983050847457628
+        },
+        "baseline": 0.041966101694915256,
+        "detects": true
+      }
+    },
+    "copy_sources": {
+      "either_region": {
+        "receipts": 46,
+        "rate": {
+          "value": 0.8260869565217391,
+          "low": 0.717391304347826,
+          "high": 0.9347826086956522
+        },
+        "baseline": 0.02432608695652174,
+        "above_baseline": true
+      },
+      "pair": {
+        "receipts": 46,
+        "rate": {
+          "value": 0.8260869565217391,
+          "low": 0.717391304347826,
+          "high": 0.9347826086956522
+        },
+        "baseline": 0.0007391304347826087,
+        "above_baseline": true
+      }
+    },
+    "by_technique": {
+      "cpi": {
+        "receipts": 59,
+        "hits": 57
+      },
+      "cpo": {
+        "receipts": 3,
+        "hits": 0
+      },
+      "imi": {
+        "receipts": 6,
+        "hits": 2
+      },
+      "cut": {
+        "receipts": 11,
+        "hits": 8
+      },
+      "pix": {
+        "receipts": 11,
+        "hits": 7
+      }
+    }
+  }
+}
