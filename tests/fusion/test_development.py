@@ -1,3 +1,5 @@
+from typing import Any
+
 import numpy as np
 import pytest
 
@@ -51,6 +53,7 @@ def test_the_track_results_hold_every_row_comparison_seed_and_subset() -> None:
     assert results["subsets"] == {"without fold 0": int((fold_of != 0).sum())}
     assert set(results["sensitivity"]["without fold 0"]) == {v.name for v in VARIANTS}
     assert np.isfinite(results["calibration_slope"])
+    assert np.isfinite(results["calibration_slope_unpenalised"])
     assert isinstance(results["fusion_beats_every_single_source"], bool)
     assert set(scored) == {v.name for v in VARIANTS}
 
@@ -76,7 +79,8 @@ def test_rq3_and_rq4_come_from_each_receipts_fold_model() -> None:
     assert set(practical) == {"file metadata alone", "fusion of track T3"}
 
 
-def test_the_report_renders_every_section_from_the_results() -> None:
+def report_record() -> dict[str, Any]:
+    """The results of a run of `docfraud fusion training-oof` on a small made-up table."""
     rows_by_seed, y, fold_of = setup()
     results, scored = track_results(
         rows_by_seed, y, fold_of, subsets={"all": np.ones(N, bool)}, resamples=50
@@ -96,18 +100,22 @@ def test_the_report_renders_every_section_from_the_results() -> None:
         "by_technique": {"CPI": {"receipts": 8, "hits": 5}},
         "by_entity": {"total_payment": {"receipts": 6, "hits": 4}},
     }
-    record = {
+    return {
         "transcript": results,
         "ocr": results,
         "T3": {"fusion of track T2": results["table"]["fusion"]},
         "rq3": {"transcript": rq, "ocr": rq},
         "rq4": {"transcript": rq4, "ocr": rq4},
     }
-    text = render_report(record, "0123456789")
+
+
+def test_the_report_renders_every_section_from_the_results() -> None:
+    text = render_report(report_record(), "0123456789")
     for title in (
         "Ablation table, T1 (transcripts)",
         "Comparisons of section 8, T2 (OCR)",
         "Fusion by system 2 seed",
+        "Slope without the penalty",
         "Track T3",
         "RQ3 by technique, T1 (transcripts)",
         "RQ4: the report's first region",

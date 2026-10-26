@@ -20,6 +20,8 @@ from typing import Any
 
 import numpy as np
 import numpy.typing as npt
+from sklearn.linear_model import LogisticRegression
+from sklearn.preprocessing import StandardScaler
 
 from docfraud.data.models import BBox
 from docfraud.detectors.finding import COPY_MOVE, LINKING, RULES, SYSTEM_1, SYSTEM_2
@@ -166,6 +168,24 @@ def difference(
     return _estimate(estimate) | {"above_zero": estimate.low > 0}
 
 
+def unpenalised_slope(
+    x: npt.NDArray[np.float64], y: Labels, fold_of: npt.NDArray[np.int_]
+) -> float:
+    """The calibration slope of the same inputs fitted without the L2 penalty: a diagnostic.
+
+    The expected slope of section 7 (a), Riley's shrinkage, assumes a maximum-likelihood fit;
+    the fusion model keeps scikit-learn's default L2 penalty, which shrinks its log-odds further.
+    This slope shows what the penalty does. It was not pre-registered and enters no claim.
+    """
+    log_odds = np.zeros(len(y))
+    for fold in np.unique(fold_of):
+        held = fold_of == fold
+        scaler = StandardScaler().fit(x[~held])
+        model = LogisticRegression(C=np.inf).fit(scaler.transform(x[~held]), y[~held])
+        log_odds[held] = model.decision_function(scaler.transform(x[held]))
+    return calibration_slope(y, probabilities(log_odds))
+
+
 @dataclass(frozen=True, slots=True)
 class Scored:
     """A row's out-of-fold probabilities and the models of its folds."""
@@ -229,6 +249,7 @@ def track_results(  # noqa: PLR0913 - the rows of each seed, labels, folds and s
         "subsets": {name: int(keep.sum()) for name, keep in subsets.items()},
         "sensitivity": sensitivity,
         "calibration_slope": calibration_slope(y, fusion),
+        "calibration_slope_unpenalised": unpenalised_slope(matrix(rows, VARIANTS[-1]), y, fold_of),
     }, scored
 
 

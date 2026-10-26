@@ -45,7 +45,7 @@ from docfraud.data.splits import TestSetLockedError
 from docfraud.evaluation.bootstrap import Estimate
 from docfraud.evaluation.design_fold import CLEAN_FOLDS, DESIGN_FOLD
 from docfraud.evaluation.folds import assign_folds, load_folds, save_folds
-from docfraud.evaluation.runs import CodeVersion, JsonRunStore
+from docfraud.evaluation.runs import CodeVersion, JsonRunStore, run
 from docfraud.forensics.learned.pretrained import IMAGENET_WEIGHTS
 from docfraud.forensics.trufor import TRUFOR_CODE, TRUFOR_WEIGHTS
 from docfraud.llm.adjudication import (
@@ -76,6 +76,7 @@ from tests.detectors.test_copy_move_measurement import measured
 from tests.evaluation.test_folds import documents as fold_documents
 from tests.fixtures.findit import load_toy
 from tests.fixtures.llm import FakeProvider
+from tests.fusion.test_development import report_record
 from tests.synthesis.pages import documents as synthesis_documents
 from tests.synthesis.pages import font as synthesis_font
 from tests.synthesis.pages import receipt as synthesis_receipt
@@ -639,6 +640,20 @@ def test_copy_move_is_measured_once_on_the_clean_folds_from_a_clean_commit(
     assert rendered.read_text(encoding="utf-8") == report.read_text(encoding="utf-8")
     empty = ["copy-move", "report", "--runs", str(tmp_path / "none"), "--output", str(rendered)]
     assert "no copy-move-clean record" in runner.invoke(app, empty).output
+
+
+def test_the_training_report_renders_from_its_latest_run_record(tmp_path: Path) -> None:
+    runs = tmp_path / "runs"
+    store = JsonRunStore(runs)
+    with run("fusion-training-oof", store=store, config={}, seeds={}, dataset_sha256={}) as current:
+        for key, value in report_record().items():
+            current.log(key, value)
+    output = tmp_path / "training-oof.md"
+    args = ["fusion", "training-report", "--runs", str(runs), "--output", str(output)]
+    assert runner.invoke(app, args).exit_code == 0
+    assert "RQ4: the report's first region" in output.read_text(encoding="utf-8")
+    empty = ["fusion", "training-report", "--runs", str(tmp_path / "none"), "--output", str(output)]
+    assert "no fusion-training-oof record" in runner.invoke(app, empty).output
 
 
 def test_rules_need_the_baseline_runs(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:

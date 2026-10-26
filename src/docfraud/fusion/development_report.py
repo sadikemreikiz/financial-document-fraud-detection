@@ -89,7 +89,13 @@ def _seeds_and_more(results: Mapping[str, Any]) -> list[Table]:
         mean = sum(values) / len(values)
         sd = (sum((v - mean) ** 2 for v in values) / (len(values) - 1)) ** 0.5
         seed_rows.append(
-            [name, *values, f"{mean:.3f} ± {sd:.3f}", results[track]["calibration_slope"]]
+            [
+                name,
+                *values,
+                f"{mean:.3f} ± {sd:.3f}",
+                results[track]["calibration_slope"],
+                results[track]["calibration_slope_unpenalised"],
+            ]
         )
     subset_rows: list[list[Cell]] = []
     for track, name in TRACK_NAMES.items():
@@ -101,10 +107,22 @@ def _seeds_and_more(results: Mapping[str, Any]) -> list[Table]:
     return [
         Table(
             "Fusion by system 2 seed, and the overfitting check",
-            ("Track", "AP, seed 0", "AP, seed 1", "AP, seed 2", "Mean ± sd", "Calibration slope"),
+            (
+                "Track",
+                "AP, seed 0",
+                "AP, seed 1",
+                "AP, seed 2",
+                "Mean ± sd",
+                "Calibration slope",
+                "Slope without the penalty*",
+            ),
             seed_rows,
             note="The calibration slope of the fusion model's out-of-fold probabilities (section 7 "
-            "(a)): about 0.94 expected; below 0.9 would be overfitting.",
+            "(a)): about 0.94 expected; below 0.9 would be overfitting, and above 1 the "
+            "probabilities are more moderate than the outcomes, which Platt scaling on the "
+            "validation split rescales. *The same inputs fitted out of fold without "
+            "scikit-learn's default L2 penalty, the maximum-likelihood fit that the expected 0.94 "
+            "assumes: a diagnostic outside the pre-registration, showing what the penalty does.",
         ),
         Table(
             "Average precision without the receipts shaped in development",

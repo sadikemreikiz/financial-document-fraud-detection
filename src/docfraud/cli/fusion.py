@@ -132,8 +132,8 @@ TRAINING_REPORT = Path("reports/fusion/training-oof.md")
 REPORT_RUN = "fusion-training-oof"
 
 
-@app.command("training-report")
-def training_report_command(  # pragma: no cover - needs the dataset and the inputs table
+@app.command("training-oof")
+def training_oof_command(  # pragma: no cover - needs the dataset and the inputs table
     data_dir: DataDir = Path("data"),
     runs: Annotated[Path, typer.Option(help="Where reported run records are kept.")] = (
         REPORTED_RUNS
@@ -199,9 +199,23 @@ def training_report_command(  # pragma: no cover - needs the dataset and the inp
             },
         )
         current.log("rq4", _rq4(train, table, scored, fold_of, receipts))
-    record = JsonRunStore(runs).records(REPORT_RUN)[-1]
+    training_report_command(runs, output)
+
+
+@app.command("training-report")
+def training_report_command(
+    runs: Annotated[Path, typer.Option(help="Where reported run records are kept.")] = (
+        REPORTED_RUNS
+    ),
+    output: Annotated[Path, typer.Option(help="Where to write the report.")] = TRAINING_REPORT,
+) -> None:
+    """Render the training-split report of Phase 5 from its latest run record."""
+    records = JsonRunStore(runs).records(REPORT_RUN)
+    if not records:
+        console.print(f"[red]no {REPORT_RUN} record in {runs}[/red]")
+        raise typer.Exit(1)
     output.parent.mkdir(parents=True, exist_ok=True)
-    output.write_text(render_report(record.results, record.code.commit), encoding="utf-8")
+    output.write_text(render_report(records[-1].results, records[-1].code.commit), encoding="utf-8")
     console.print(f"[green]written[/green] {output}")
 
 

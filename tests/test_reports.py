@@ -16,6 +16,7 @@ from docfraud.detectors.copy_move_measurement import RUN_NAME as COPY_MOVE_RUN
 from docfraud.detectors.copy_move_measurement import render_report as render_copy_move
 from docfraud.detectors.report import render_rules_report
 from docfraud.evaluation.runs import JsonRunStore, RunRecord
+from docfraud.fusion.development_report import render_report as render_training
 
 ROOT = Path(__file__).resolve().parents[1]
 RUNS = JsonRunStore(ROOT / "reports" / "runs")
@@ -50,6 +51,13 @@ def test_copy_move_report_matches_its_run_record() -> None:
     expected = render_copy_move(record.results, record.code.commit)
     committed = (ROOT / "reports" / "fusion" / "copy-move-clean.md").read_text(encoding="utf-8")
     assert committed == expected, "run `docfraud copy-move report`"
+
+
+def test_training_report_matches_its_run_record() -> None:
+    record = latest("fusion-training-oof")
+    expected = render_training(record.results, record.code.commit)
+    committed = (ROOT / "reports" / "fusion" / "training-oof.md").read_text(encoding="utf-8")
+    assert committed == expected, "run `docfraud fusion training-report`"
 
 
 @pytest.mark.parametrize(
