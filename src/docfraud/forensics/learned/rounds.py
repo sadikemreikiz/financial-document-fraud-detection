@@ -82,6 +82,10 @@ SEEDS = (0, 1, 2)
 RUNS: tuple[tuple[System, int], ...] = tuple((system, seed) for seed in SEEDS for system in System)
 """The runs of a round in the order they are trained: every system's seed 0 first."""
 
+WHOLE_RUNS: tuple[tuple[System, int], ...] = tuple((System.SYNTHETIC, seed) for seed in SEEDS)
+"""The runs of the whole-training round: system 2 only, the learned system that fusion takes
+(ADR-0029, section 3), with each of its seeds."""
+
 TRIAL = Settings(steps=20, warmup=2, checkpoint_every=10, failure_window=10)
 """Runs of a few steps, to try the commands before the clean measurement; it never measures them."""
 

@@ -5,6 +5,7 @@ import numpy.typing as npt
 import pytest
 
 from docfraud.data.models import BBox, Document, Entity, Region, RegionRole, Technique
+from docfraud.evaluation.design_fold import WHOLE_TRAINING
 from docfraud.reading.ocr import OcrResult
 from docfraud.synthesis.statistics import (
     character_width,
@@ -30,8 +31,10 @@ def _with_regions(document: Document, *regions: Region) -> Document:
 def test_a_round_reads_only_its_training_folds(tmp_path: Path) -> None:
     docs, folds = documents(tmp_path)
     assert {folds.folds[d.doc_id] for d in training_documents(docs, folds, 1)} == {0, 2, 3, 4}
+    whole = training_documents(docs, folds, WHOLE_TRAINING)  # holds out no fold
+    assert {d.doc_id for d in whole} == {d.doc_id for d in docs if d.doc_id in folds.folds}
     with pytest.raises(ValueError, match="no fold"):
-        training_documents(docs, folds, 5)
+        training_documents(docs, folds, WHOLE_TRAINING + 1)
     first = round_statistics(docs, folds, 1, FakeOcr())
     changed = [
         _with_regions(

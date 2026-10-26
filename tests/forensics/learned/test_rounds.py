@@ -10,8 +10,8 @@ import pytest
 import torch
 from torch import Tensor, nn
 
-from docfraud.data.models import Document, Entity, Split, Technique
-from docfraud.evaluation.design_fold import CLEAN_FOLDS, DESIGN_FOLD
+from docfraud.data.models import Document, Entity, Label, Split, Technique
+from docfraud.evaluation.design_fold import CLEAN_FOLDS, DESIGN_FOLD, WHOLE_TRAINING
 from docfraud.evaluation.folds import FoldAssignment
 from docfraud.evaluation.runs import CodeVersion
 from docfraud.forensics import trufor
@@ -22,6 +22,7 @@ from docfraud.forensics.learned.rounds import (
     REPEATABILITY,
     RUNS,
     TRIAL,
+    WHOLE_RUNS,
     Repeatability,
     RoundOutcome,
     RoundSetup,
@@ -192,6 +193,42 @@ def test_a_round_trains_its_runs_in_order_each_in_its_directory(toy: Toy, tmp_pa
         sampler = TileSampler(toy.setup.material, toy.pages, system, seed, toy.forger)
         assert record.prior == forged_share(sampler)
     assert stored_record(tmp_path / "rounds", DESIGN_FOLD, System.BOTH, 0) is None
+
+
+@pytest.mark.usefixtures("learning")
+def test_the_whole_training_round_trains_system_2_on_every_training_receipt(
+    toy: Toy, tmp_path: Path
+) -> None:
+    assert tuple((System.SYNTHETIC, seed) for seed in (0, 1, 2)) == WHOLE_RUNS
+    train_docs = [d for d in toy.documents if d.split is Split.TRAIN]
+    material = round_material(train_docs, toy.folds, WHOLE_TRAINING, toy.pages, FakeOcr())
+    authentic = {d.doc_id for d in train_docs if d.label is Label.AUTHENTIC}
+    assert set(material.authentic) == authentic  # every fold, the design fold included
+    forger = RoundForger(
+        statistics(WHOLE_TRAINING),
+        train_docs,
+        toy.folds,
+        CachedReceipts(toy.pages, material.words),
+        tmp_path / "fonts",
+    )
+    setup = RoundSetup(
+        material, toy.pages, forger, lambda _held_out, seed, prior: Tiny(seed, prior)
+    )
+    outcome = train_round(
+        setup,
+        tmp_path / "rounds",
+        code=CODE,
+        environment=ENVIRONMENT,
+        runs=WHOLE_RUNS[:1],
+        settings=SETTINGS,
+        device=CPU,
+    )
+    assert outcome.failed is None
+    (record,) = outcome.records
+    assert (record.held_out, record.system, record.seed) == (WHOLE_TRAINING, 2, 0)
+    directory = run_directory(tmp_path / "rounds", WHOLE_TRAINING, System.SYNTHETIC, 0)
+    assert directory == tmp_path / "rounds" / "round-5" / "system-2" / "seed-0"
+    assert (directory / MODEL).is_file()
 
 
 @pytest.mark.usefixtures("learning")

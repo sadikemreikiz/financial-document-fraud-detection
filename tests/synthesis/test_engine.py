@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 
 from docfraud.data.models import BBox, Document, Entity, Technique
-from docfraud.evaluation.design_fold import DESIGN_FOLD
+from docfraud.evaluation.design_fold import DESIGN_FOLD, WHOLE_TRAINING
 from docfraud.evaluation.folds import FoldAssignment
 from docfraud.synthesis.engine import (
     ENGINE_VERSION,
@@ -64,6 +64,21 @@ def test_bases_are_the_authentic_receipts_of_the_training_folds(
     assert made.pools[Stream.DEVELOPMENT] == ()  # only the round that holds out the design fold
     with pytest.raises(RefusedBaseError):
         made.forge(training[0], 0, Stream.DEVELOPMENT)
+
+
+def test_the_whole_training_round_uses_every_authentic_training_receipt(
+    setup: tuple[list[Document], FoldAssignment],
+) -> None:
+    docs, folds = setup
+    made = engine(setup, Technique.CPI, held_out=WHOLE_TRAINING)
+    authentic = {
+        d.doc_id
+        for d in docs
+        if d.label and d.label.value == "authentic" and d.doc_id in folds.folds
+    }
+    assert set(made.pools[Stream.TRAINING]) == authentic
+    assert made.pools[Stream.DEVELOPMENT] == ()
+    assert made.forge(made.pools[Stream.TRAINING][0], 0).record.held_out == WHOLE_TRAINING
 
 
 def test_the_development_stream_uses_only_the_held_out_design_fold(

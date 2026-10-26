@@ -25,7 +25,12 @@ from docfraud.cli.common import (
 from docfraud.cli.synthesis import FONTS_DIR
 from docfraud.data.download import safe_extract
 from docfraud.data.models import Document, Split
-from docfraud.evaluation.design_fold import CLEAN_FOLDS, DESIGN_FOLD, DESIGN_FOLD_IDS
+from docfraud.evaluation.design_fold import (
+    CLEAN_FOLDS,
+    DESIGN_FOLD,
+    DESIGN_FOLD_IDS,
+    WHOLE_TRAINING,
+)
 from docfraud.evaluation.folds import FoldAssignment, load_folds
 from docfraud.evaluation.runs import code_version, environment
 from docfraud.forensics.learned.pages import PageCache
@@ -375,6 +380,47 @@ def train_clean_command(  # pragma: no cover - needs the dataset, fonts and pret
         )
         raise typer.Exit(1)
     console.print(f"[green]rounds {', '.join(map(str, rounds))} trained[/green]: {directory}")
+
+
+@app.command("train-whole")
+def train_whole_command(  # pragma: no cover - needs the dataset, fonts and pretrained weights
+    data_dir: DataDir = Path("data"), directory: RoundsDir = ROUNDS_DIR
+) -> None:
+    """Train system 2 on the whole training split, seeds 0 to 2 (ADR-0029, section 2).
+
+    The round that holds out no fold, with the code and settings of every other round: its
+    synthetic forgeries come from all authentic training receipts. Its models score the
+    validation split once the system is frozen, and the test split in Phase 7. Runs resume from
+    their last checkpoint, finished runs are skipped, and the round continues only at the commit
+    it started from. About an hour per run on the reference machine, which must stay awake, on
+    power and with its lid open.
+    """
+    require_clean_commit()
+    from docfraud.forensics.learned.rounds import WHOLE_RUNS, train_round  # noqa: PLC0415
+    from docfraud.forensics.learned.training import Settings  # noqa: PLC0415 - imports PyTorch
+
+    setup = _round_setups(data_dir)(WHOLE_TRAINING)
+    columns = (BarColumn(), MofNCompleteColumn(), TimeRemainingColumn())
+    with Progress("{task.description}", *columns, console=console) as progress:
+        tracker = _TrainingProgress(progress, directory, Settings().steps)
+        tracker.round(WHOLE_TRAINING)
+        outcome = train_round(
+            setup,
+            directory,
+            code=code_version(),
+            environment=environment(),
+            runs=WHOLE_RUNS,
+            on_run=tracker.run,
+            on_step=tracker.step,
+        )
+    _print_records(outcome.records)
+    if outcome.failed is not None:
+        system, seed, reason = outcome.failed
+        console.print(f"[red]system {int(system)}, seed {seed} {reason}[/red]: the round stops")
+        raise typer.Exit(1)
+    console.print(
+        f"[green]round {WHOLE_TRAINING} (whole training split) trained[/green]: {directory}"
+    )
 
 
 @app.command("measure-clean")
