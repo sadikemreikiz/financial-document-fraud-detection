@@ -35,6 +35,7 @@ from docfraud.cli.llm import FROZEN, STORE
 from docfraud.data.findit import load_findit2
 from docfraud.data.models import BBox, Document, Entity, Label, RegionRole, Split, Technique
 from docfraud.data.splits import select
+from docfraud.detectors.metadata import TRAITS
 from docfraud.detectors.rules import Status, check
 from docfraud.detectors.scoring import any_fail, features, out_of_fold
 from docfraud.evaluation.breakdowns import rules_blind
@@ -394,17 +395,6 @@ def policy_table(runs: Mapping[int, tuple[Labels, Scores]]) -> Table:
         "chosen on these same scores, so its row is optimistic.",
     )
 
-
-TRAITS: dict[str, Callable[[Image.Image], bool]] = {
-    "alpha channel": lambda im: im.mode in {"LA", "RGBA", "PA"} or "transparency" in im.info,
-    "ICC colour profile": lambda im: "icc_profile" in im.info,
-    "EXIF": lambda im: "exif" in im.info or "Raw profile type exif" in im.info,
-    "XMP": lambda im: any(
-        k in im.info for k in ("xmp", "XML:com.adobe.xmp", "Raw profile type xmp")
-    ),
-    "creation date": lambda im: "date:create" in im.info,
-}
-"""Traits an editing program leaves in a PNG file, as the metadata check of track T3 reads them."""
 
 OTHER_PROPERTIES: dict[str, Callable[[Image.Image], bool]] = {
     "no gamma chunk": lambda im: "gamma" not in im.info,
