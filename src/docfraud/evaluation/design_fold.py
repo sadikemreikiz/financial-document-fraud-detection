@@ -22,6 +22,11 @@ DESIGN_FOLD = 2
 CLEAN_FOLDS = (0, 1, 3, 4)
 """The other four folds, in the order of their rounds, which measure each system once (ADR-0020)."""
 
+WHOLE_TRAINING = 5
+"""The round that holds out no fold: it trains on the whole training split, and its models score
+the validation and test splits (evaluation protocol, section 4; ADR-0029, section 2). It is the
+number of folds, so no receipt belongs to it."""
+
 DESIGN_FOLD_IDS: frozenset[str] = frozenset(
     {
         "X00016469670",

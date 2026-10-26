@@ -51,10 +51,13 @@ def training_documents(
 ) -> list[Document]:
     """The training documents of a round: those in the training split outside its held-out fold.
 
+    ``held_out`` equal to the number of folds holds out none, so the round trains on the whole
+    training split (:data:`~docfraud.evaluation.design_fold.WHOLE_TRAINING`).
+
     Raises:
-        ValueError: If the fold does not exist.
+        ValueError: If the fold does not exist and is not the number of folds.
     """
-    if not 0 <= held_out < folds.n_folds:
+    if not 0 <= held_out <= folds.n_folds:
         msg = f"there is no fold {held_out}"
         raise ValueError(msg)
     return [
