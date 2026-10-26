@@ -1,7 +1,8 @@
 # 0005. Evidence-based architecture instead of score-only late fusion
 
 - **Status**: Accepted; step 4 amended by [0028](0028-fusion-fitted-on-the-training-split.md)
-  (fusion is fitted on the training split)
+  (fusion is fitted on the training split), step 5 by [0029](0029-fusion-preregistration.md)
+  (the policy accepts or sends to review; rejection is not automatic)
 - **Date**: 2026-10-06
 
 ## Context
