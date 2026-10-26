@@ -22,6 +22,7 @@ from docfraud.fusion.training_inputs import (
     summary,
     training_inputs,
 )
+from docfraud.linking.values import LocatedValue
 from docfraud.reading.fields import AmountRole, FieldSources, Source
 from tests.detectors.test_copy_move import ink_patch, noisy_page
 
@@ -121,6 +122,7 @@ def test_the_table_round_trips_and_summarises_without_receipts(tmp_path: Path) -
     path = tmp_path / "inputs.json"
     save_table(built, path)
     assert load_table(path) == built
+    assert built.receipts[0].values == (LocatedValue("total_due", DUE_BOX),)
     aggregates = summary(built)
     assert set(aggregates) == {"ocr, seed 0", "transcript, seed 0"}
     assert aggregates["ocr, seed 0"]["receipts"] == 10

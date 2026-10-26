@@ -85,10 +85,18 @@ class Assessment(_Frozen):
 
         Empty if no evidence with a positive contribution has one; RQ4 counts that as a miss.
         """
-        for item in self.evidence:
-            if item.contribution > 0 and item.boxes:
-                return item.boxes
-        return ()
+        return first_region(self.evidence)
+
+
+def first_region(evidence: Sequence[Evidence]) -> tuple[BBox, ...]:
+    """The boxes of the first evidence, in order, that pushes towards forgery and has a location.
+
+    Empty if there is none.
+    """
+    for item in evidence:
+        if item.contribution > 0 and item.boxes:
+            return item.boxes
+    return ()
 
 
 def score_finding(inputs: Sequence[str], values: Mapping[str, float]) -> Finding:
@@ -118,12 +126,35 @@ def assess(  # noqa: PLR0913 - the receipt, its inputs and findings, and the fit
     Raises:
         ValueError: If the inputs are not the model's.
     """
+    evidence = gather_evidence(inputs, findings, model)  # checks that the inputs are the model's
+    x = np.array([[inputs[name] for name in model.names]], dtype=float)
+    probability = float(platt.probabilities(model.log_odds(x))[0])
+    return Assessment(
+        receipt=receipt,
+        track=track,
+        probability=probability,
+        decision=policy.decide(probability),
+        budget=policy.budget,
+        threshold=policy.threshold,
+        evidence=evidence,
+    )
+
+
+def gather_evidence(
+    inputs: Mapping[str, float], findings: Sequence[Finding], model: FusionModel
+) -> tuple[Evidence, ...]:
+    """A receipt's evidence grouped by the model's inputs, the strongest push towards forgery first.
+
+    It needs no calibration, so it also serves the out-of-fold models of the training split.
+
+    Raises:
+        ValueError: If the inputs are not the model's.
+    """
     if list(inputs) != list(model.names):
         msg = f"inputs {tuple(inputs)} are not the model's {model.names}"
         raise ValueError(msg)
     x = np.array([[inputs[name] for name in model.names]], dtype=float)
     terms = dict(zip(model.names, model.contributions(x)[0], strict=True))
-    probability = float(platt.probabilities(model.log_odds(x))[0])
     evidence = []
     for group, (detector, kind) in GROUPS.items():
         if not set(group) <= set(model.names):
@@ -139,12 +170,4 @@ def assess(  # noqa: PLR0913 - the receipt, its inputs and findings, and the fit
             )
         )
     evidence.sort(key=lambda e: -e.contribution)
-    return Assessment(
-        receipt=receipt,
-        track=track,
-        probability=probability,
-        decision=policy.decide(probability),
-        budget=policy.budget,
-        threshold=policy.threshold,
-        evidence=tuple(evidence),
-    )
+    return tuple(evidence)
