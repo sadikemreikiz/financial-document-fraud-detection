@@ -1,6 +1,7 @@
 # 0029. How Phase 5 builds and measures copy-move, linking, fusion, the decision policy and the audit report
 
-- **Status**: Accepted
+- **Status**: Accepted; sections 4, 5, 9 and 12 amended by
+  [0030](0030-copy-move-reports-a-pair.md) (copy-move reports a pair of regions)
 - **Date**: 2026-10-26 (before any Phase 5 component exists, before any fusion input of a
   validation receipt is computed and before any fusion model is fitted; earlier contacts with
   the data are listed under Disclosures)

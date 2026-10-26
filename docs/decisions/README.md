@@ -34,6 +34,7 @@ change of mind is a new record that supersedes the old one.
 | [0026](0026-adjudication-of-items-and-tax-rows.md) | Items and tax rows in dispute are adjudicated as a whole list per receipt | Accepted |
 | [0027](0027-llm-reader-judged-by-false-alarms.md) | The LLM reader is judged once more, by the accounting rules' false alarms | Accepted |
 | [0028](0028-fusion-fitted-on-the-training-split.md) | Fusion is fitted on the training split, as the evaluation protocol defines | Accepted |
-| [0029](0029-fusion-preregistration.md) | How Phase 5 builds and measures copy-move, linking, fusion, the decision policy and the audit report | Accepted |
+| [0029](0029-fusion-preregistration.md) | How Phase 5 builds and measures copy-move, linking, fusion, the decision policy and the audit report | Accepted; sections 4, 5, 9 and 12 amended by 0030 |
+| [0030](0030-copy-move-reports-a-pair.md) | Copy-move reports a pair of regions, not a copy and its source | Accepted |
 
 New records copy [template.md](template.md).
