@@ -14,7 +14,8 @@ copy-paste inside. Copy-move is measured once on the clean folds.
 
 - **Exact duplicates, found by hashing.** Every square block of the page is hashed at every
   position, and equal hashes at positions at least one block apart are duplicates (the
-  exact-match search of Fridrich, Soukal and Lukáš, 2003). Receipts are lossless PNG files, so
+  exact-match search of Fridrich, Soukal and Lukáš, 2003), each confirmed pixel by pixel
+  (section 7). Receipts are lossless PNG files, so
   a copy pasted as a rectangle keeps its source's grey levels exactly, scan noise included; the
   feasibility check found 9 of 14 annotated copies exact and 3 more nearly so, while natural
   twins of a character on authentic receipts share at most 34 % of their ink pixels. A copy
@@ -59,7 +60,7 @@ tones, the texture of compressed paper. A block counts only if it could not repe
   runs it.
 - **Benign marks.** Of the 50 flagged authentic receipts, 11 have a pair and on 1 of them
   (X51005453804, the 8th highest authentic score) a region lies on a mark, where random boxes
-  of the same sizes would overlap one 13.7 % of the time on average
+  of the same sizes would overlap one 13.9 % of the time on average
   ([benign marks guide](benign-marks-guide.md)).
 
 ## 3. A pair, not a copy and its source (2026-10-26)
@@ -100,6 +101,22 @@ copies, 0 of 30 ink-only copies scaled or rotated.
 The ink contrast of 60 grey levels (taken from the feasibility check), the unsaturated share
 of a quarter, the limit of 16 positions per hash, eight-connected groups and the two hash
 constants.
+
+## 7. Found in review, after the code was merged (2026-10-26)
+
+A review of the merged code, before any receipt of the clean folds was scored, found two
+defects. Both are fixed as ADR-0014 (decision 3) allows, with both results stated.
+
+- **A match rested on the hash alone.** Equal blocks have equal hashes, but a polynomial hash
+  with fixed bases is not random, so two different blocks could share one. Every match is now
+  compared pixel by pixel, and a test forces a collision to show that it no longer counts. On
+  the design fold every match was an exact duplicate before the fix, so no number changed.
+- **The benign-mark baseline did not follow ADR-0030.** It combined the two regions' baselines
+  as if their random boxes were independent, but drew both from the same random centres. The
+  baseline now places one box per region independently
+  (`docfraud.evaluation.localisation.any_box_baseline`, which the clean measurement uses too).
+  The mean baseline of the flagged authentic receipts with a pair moves from 13.7 % to 13.9 %,
+  and of the forged ones from 11.0 % to 10.4 %; nothing else in the report changes.
 
 ## Copy-move is frozen
 

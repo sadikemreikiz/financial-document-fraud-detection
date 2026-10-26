@@ -46,8 +46,7 @@ from docfraud.detectors.copy_move import (
 from docfraud.evaluation.design_fold import DESIGN_FOLD, DESIGN_FOLD_IDS, require_design_fold
 from docfraud.evaluation.detection import average_precision, roc_auc
 from docfraud.evaluation.folds import load_folds
-from docfraud.evaluation.localisation import size_dependence
-from docfraud.evaluation.mark_alarms import check_marks
+from docfraud.evaluation.localisation import any_box_baseline, receipt_rng, size_dependence
 from docfraud.forensics.learned.text_scale import text_height
 from docfraud.markdown import Cell, Table, render_table
 from docfraud.synthesis.engine import Stream, SyntheticRegion
@@ -405,22 +404,15 @@ def marks_table(
             if pair is None:
                 continue
             page = BBox(x=0, y=0, width=r.page.shape[1], height=r.page.shape[0])
-            checks = [
-                check_marks(
-                    r.document.doc_id,
-                    label,
-                    region,
-                    page,
-                    r.words,
-                    marks[r.document.doc_id],
-                    evidence=True,
-                    score=f.score,
-                )
-                for region in (pair.first, pair.second)
-            ]
-            hit = any(c.on_mark for c in checks)
+            boxes = [m.box for m in marks[r.document.doc_id]]
+            regions = [pair.first, pair.second]
+            hit = any(region.overlaps(b) for region in regions for b in boxes)
             on_mark += hit
-            baselines.append(1 - (1 - checks[0].baseline) * (1 - checks[1].baseline))
+            baselines.append(
+                any_box_baseline(regions, page, r.words, boxes, receipt_rng(r.document.doc_id))
+                if boxes
+                else 0.0
+            )
             if hit and label is Label.AUTHENTIC:
                 rank = len(authentic) - authentic.index(f.score)
                 listed.append(f"{r.document.doc_id} (score {f.score:.3f}, rank {rank})")
@@ -439,9 +431,9 @@ def marks_table(
         rows,
         note="Flagged: the dataset marks a handwritten or digital annotation. On a mark: either "
         "region of the pair shares a pixel with a final box of the benign marks guide. Receipts "
-        "without a pair have no region. Baseline: for each region, the share of 1,000 boxes of "
-        "its size centred on OCR text that overlap a mark (ADR-0015), combined as the chance "
-        "that either does (ADR-0030). Authentic receipts on a mark, with their rank among "
+        "without a pair have no region. Baseline: the share of 1,000 draws in which a box of "
+        "either region's size, each placed independently and centred on OCR text, overlaps a "
+        "mark (ADR-0015, ADR-0030). Authentic receipts on a mark, with their rank among "
         f"{len(authentic)} authentic scores: " + (", ".join(listed) or "none") + ".",
     )
 
