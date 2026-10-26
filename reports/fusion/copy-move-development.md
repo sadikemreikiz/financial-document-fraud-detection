@@ -72,10 +72,10 @@ The first region is the upper one (on the same row, the left one). Seam: the mea
 
 | Flagged receipts | Count | With a pair | A region on a mark | Mean random baseline |
 |---|---|---|---|---|
-| authentic | 50 | 11 | 1 | 0.137 |
-| forged | 8 | 5 | 0 | 0.110 |
+| authentic | 50 | 11 | 1 | 0.139 |
+| forged | 8 | 5 | 0 | 0.104 |
 
-Flagged: the dataset marks a handwritten or digital annotation. On a mark: either region of the pair shares a pixel with a final box of the benign marks guide. Receipts without a pair have no region. Baseline: for each region, the share of 1,000 boxes of its size centred on OCR text that overlap a mark (ADR-0015), combined as the chance that either does (ADR-0030). Authentic receipts on a mark, with their rank among 94 authentic scores: X51005453804 (score 0.109, rank 8).
+Flagged: the dataset marks a handwritten or digital annotation. On a mark: either region of the pair shares a pixel with a final box of the benign marks guide. Receipts without a pair have no region. Baseline: the share of 1,000 draws in which a box of either region's size, each placed independently and centred on OCR text, overlaps a mark (ADR-0015, ADR-0030). Authentic receipts on a mark, with their rank among 94 authentic scores: X51005453804 (score 0.109, rank 8).
 
 ### Synthetic forgeries with copy-paste inside, chosen detector
 

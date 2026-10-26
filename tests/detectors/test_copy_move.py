@@ -3,6 +3,7 @@ import numpy.typing as npt
 import pytest
 
 from docfraud.data.models import BBox
+from docfraud.detectors import copy_move
 from docfraud.detectors.copy_move import (
     MAX_GROUP,
     MIN_BLOCK,
@@ -115,6 +116,21 @@ def test_a_pattern_repeating_within_one_block_is_not_a_copy() -> None:
     page = noisy_page()
     stripes = ink_patch(12, 2)
     page[60:72, 100:109] = np.tile(stripes, (1, 5))[:, :9]  # repeats every 2 px over 9 px
+    assert duplicate_pair(page, 6) is None
+
+
+def test_a_collision_of_the_hash_is_not_a_match(monkeypatch: pytest.MonkeyPatch) -> None:
+    page = noisy_page()
+    for row in range(0, 150, 10):  # ink everywhere, so that every block is informative
+        page[row : row + 3, :] = 30
+
+    def colliding(page: Page, side: int) -> npt.NDArray[np.uint64]:
+        """Blocks ten rows apart in the same column share a hash although they differ."""
+        rows, columns = page.shape[0] - side + 1, page.shape[1] - side + 1
+        keys = np.add.outer(np.arange(rows) % 10 * 1000, np.arange(columns))
+        return np.asarray(keys, dtype=np.uint64)
+
+    monkeypatch.setattr(copy_move, "block_hashes", colliding)
     assert duplicate_pair(page, 6) is None
 
 

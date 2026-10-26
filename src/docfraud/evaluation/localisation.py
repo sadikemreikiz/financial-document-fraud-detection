@@ -158,6 +158,34 @@ def baseline_hit_rate(
     return float(overlapping(x, y, region, rectangles).mean())
 
 
+def any_box_baseline(
+    regions: Sequence[BBox],
+    page: BBox,
+    word_boxes: Sequence[BBox],
+    rectangles: Sequence[BBox],
+    rng: np.random.Generator,
+) -> float:
+    """The share of draws in which a random box of any region's size hits a rectangle.
+
+    The baseline of a finding located by several boxes (ADR-0030): in each of
+    :data:`BASELINE_DRAWS` draws, one box of each region's size is placed by
+    :func:`random_boxes`, independently of the others, and the draw hits if any box does. With
+    one region it equals :func:`baseline_hit_rate` from the same generator.
+
+    Raises:
+        ValueError: If there is no region, a region does not fit on the page or there is no
+            word box.
+    """
+    if not regions:
+        msg = "a finding without a region has no random baseline"
+        raise ValueError(msg)
+    hit = np.zeros(BASELINE_DRAWS, dtype=bool)
+    for region in regions:
+        x, y = random_boxes(region, page, word_boxes, rng, BASELINE_DRAWS)
+        hit |= overlapping(x, y, region, rectangles)
+    return float(hit.mean())
+
+
 def overlapping(
     x: npt.NDArray[np.intp], y: npt.NDArray[np.intp], size: BBox, rectangles: Iterable[BBox]
 ) -> npt.NDArray[np.bool_]:
