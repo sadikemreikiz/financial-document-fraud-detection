@@ -1,5 +1,5 @@
 .DEFAULT_GOAL := help
-.PHONY: help install lint format typecheck test test-data check data audit reports check-reports bench-ocr bench-synthesis trufor learned clean-measurement whole-training figures encoder-check fusion-preregistration clean
+.PHONY: help install lint format typecheck test test-data check data audit reports check-reports bench-ocr bench-synthesis trufor learned clean-measurement whole-training figures encoder-check fusion-preregistration fusion-diagnostics clean
 
 help:  ## Show available targets
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*## "}; {printf "  %-18s %s\n", $$1, $$2}'
@@ -65,6 +65,7 @@ reports:  ## Regenerate every report that the current code produces
 	uv run docfraud rules report
 	uv run docfraud copy-move report
 	uv run docfraud fusion training-report
+	uv run docfraud fusion input-shift-report
 
 check-reports: reports  ## Fail if a committed report differs from its regeneration
 	git diff --exit-code -- reports
@@ -73,6 +74,9 @@ fusion-preregistration:  ## Data behind ADR-0029 (needs artifacts/llm, artifacts
 	uv run python experiments/fusion_preregistration.py
 	uv run python experiments/copy_move_feasibility.py
 	uv run python experiments/input_shift_method.py
+
+fusion-diagnostics:  ## Diagnostics of Phase 5's records (needs artifacts/llm and artifacts/fusion)
+	uv run python experiments/input_shift_rules.py
 
 bench-ocr:  ## Compare OCR engines on training receipts (downloads docTR and PyTorch)
 	uv run --with "python-doctr[torch]>=1.1.0" --with "torch>=2.14.1" --with "torchvision>=0.29.1" \

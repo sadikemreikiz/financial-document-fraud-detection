@@ -1,0 +1,543 @@
+{
+  "run_id": "20261027T095918229926Z-fusion-input-shift",
+  "name": "fusion-input-shift",
+  "started": "2026-10-27T09:59:18.229926Z",
+  "finished": "2026-10-27T09:59:20.270506Z",
+  "code": {
+    "commit": "fbb2d8016798f856b7292cf88b32fb3c2c2d3bec",
+    "dirty": false
+  },
+  "environment": {
+    "python": "3.14.8",
+    "docfraud": "2.0.0.dev0",
+    "packages": {
+      "annotated-doc": "0.0.5",
+      "annotated-types": "0.8.0",
+      "anthropic": "2.1.0",
+      "antlr4-python3-runtime": "4.9.3",
+      "anyio": "4.15.1",
+      "ast_serialize": "0.12.1",
+      "certifi": "2026.7.22",
+      "cfgv": "3.5.0",
+      "charset-normalizer": "3.5.2",
+      "cloudpickle": "3.1.2",
+      "colorlog": "6.12.0",
+      "coverage": "7.16.2",
+      "distlib": "0.4.3",
+      "docfraud": "2.0.0.dev0",
+      "docstring_parser": "0.18.0",
+      "filelock": "4.0.12",
+      "flatbuffers": "25.12.19",
+      "fsspec": "2026.9.0",
+      "h11": "0.16.0",
+      "httpcore2": "2.16.0",
+      "httpx2": "2.16.0",
+      "identify": "2.6.20",
+      "idna": "3.20",
+      "iniconfig": "2.3.0",
+      "jinja2": "3.1.6",
+      "jiter": "0.17.0",
+      "joblib": "1.6.0",
+      "librt": "0.16.0",
+      "markdown-it-py": "4.2.0",
+      "markupsafe": "3.0.4",
+      "mdurl": "0.1.2",
+      "mpmath": "1.3.0",
+      "mypy": "2.4.0",
+      "mypy_extensions": "1.1.0",
+      "narwhals": "2.26.0",
+      "networkx": "3.7",
+      "nodeenv": "1.11.0",
+      "numpy": "2.5.3",
+      "omegaconf": "2.3.1",
+      "onnxruntime": "1.30.0",
+      "opencv-python": "5.0.0.93",
+      "opentelemetry-api": "1.45.1",
+      "packaging": "26.3",
+      "pathspec": "1.1.1",
+      "pillow": "12.3.0",
+      "platformdirs": "4.12.3",
+      "pluggy": "1.6.0",
+      "pre_commit": "4.6.2",
+      "protobuf": "7.36.2",
+      "pyclipper": "1.4.0",
+      "pydantic": "2.13.5",
+      "pydantic_core": "2.46.5",
+      "pygments": "2.21.0",
+      "pytest": "9.1.1",
+      "pytest-cov": "7.1.0",
+      "python-discovery": "1.6.1",
+      "pyyaml": "6.0.3",
+      "rapidocr": "3.9.2",
+      "requests": "2.34.2",
+      "rich": "15.0.0",
+      "ruff": "0.16.10",
+      "scikit-learn": "1.9.1",
+      "scipy": "1.18.1",
+      "setuptools": "84.0.0",
+      "shapely": "2.1.2",
+      "shellingham": "1.5.4",
+      "six": "1.17.0",
+      "sniffio": "1.3.1",
+      "sympy": "1.14.0",
+      "threadpoolctl": "3.7.0",
+      "torch": "2.14.1",
+      "tqdm": "4.70.1",
+      "truststore": "0.10.5",
+      "typer": "0.27.2",
+      "typing-inspection": "0.4.4",
+      "typing_extensions": "4.16.0",
+      "urllib3": "2.8.0",
+      "virtualenv": "21.14.5"
+    },
+    "platform": "macOS-15.7.7-arm64-arm-64bit-Mach-O",
+    "machine": "arm64",
+    "processor": "arm",
+    "cpu_count": 10,
+    "memory_bytes": 17179869184
+  },
+  "config": {
+    "decision": "ADR-0029",
+    "training_inputs": "20261026T182033501990Z-fusion-training-inputs",
+    "validation_inputs": "20261027T094024449259Z-fusion-validation-inputs",
+    "validation_sha256": "5a33cf33bd96479717342f02659cfdbf7daaf4d5e856e36171840df5f8a36b9b"
+  },
+  "config_hash": "55dabb2d80231597ce1b94d21e6a83811e13e74e34d0af514ae2557086674998",
+  "dataset_sha256": {
+    "findit2": "6f8c6f134951956627edcc06c7e8fc298abb9e984073ab193174aee204d46261"
+  },
+  "seeds": {
+    "permutation": 0
+  },
+  "test_unlocks": [],
+  "results": {
+    "receipts": {
+      "training": 562,
+      "validation": 190
+    },
+    "permutations": 10000,
+    "comparisons": [
+      {
+        "input": "rules",
+        "track": "transcript",
+        "seed": null,
+        "training": {
+          "mean": 0.16849587644219463,
+          "zeros": 0.0,
+          "median": 0.12781942077748615,
+          "q90": 0.258295447802189
+        },
+        "validation": {
+          "mean": 0.18299994111572018,
+          "zeros": 0.0,
+          "median": 0.13555302702364053,
+          "q90": 0.3234430214812038
+        },
+        "distance": 0.1446525566585503,
+        "p_value": 0.0029997000299970002,
+        "critical": 0.10809140288443525
+      },
+      {
+        "input": "rules",
+        "track": "ocr",
+        "seed": null,
+        "training": {
+          "mean": 0.17088102297678717,
+          "zeros": 0.0,
+          "median": 0.14316802525274078,
+          "q90": 0.2665699128791615
+        },
+        "validation": {
+          "mean": 0.16491320220427116,
+          "zeros": 0.0,
+          "median": 0.132253850382735,
+          "q90": 0.2546056413991183
+        },
+        "distance": 0.15407379659112191,
+        "p_value": 0.000999900009999,
+        "critical": 0.10919928825622775
+      },
+      {
+        "input": "system 2",
+        "track": null,
+        "seed": 0,
+        "training": {
+          "mean": 0.3667488566104638,
+          "zeros": 0.0,
+          "median": 0.24541983329289196,
+          "q90": 0.9422413603380968
+        },
+        "validation": {
+          "mean": 0.36021000081367793,
+          "zeros": 0.0,
+          "median": 0.25475165454524884,
+          "q90": 0.9381959209030226
+        },
+        "distance": 0.0901854279827683,
+        "p_value": 0.1835816418358164,
+        "critical": 0.11187581944184309
+      },
+      {
+        "input": "system 2",
+        "track": null,
+        "seed": 1,
+        "training": {
+          "mean": 0.3623129863698597,
+          "zeros": 0.0,
+          "median": 0.23348505839796552,
+          "q90": 0.9597982396542987
+        },
+        "validation": {
+          "mean": 0.3398845554789484,
+          "zeros": 0.0,
+          "median": 0.22374713850266337,
+          "q90": 0.8699581141979503
+        },
+        "distance": 0.06134107510769804,
+        "p_value": 0.628937106289371,
+        "critical": 0.1119310732346881
+      },
+      {
+        "input": "system 2",
+        "track": null,
+        "seed": 2,
+        "training": {
+          "mean": 0.37021853541327454,
+          "zeros": 0.0,
+          "median": 0.2688038164903839,
+          "q90": 0.9415055569649685
+        },
+        "validation": {
+          "mean": 0.3191206472627798,
+          "zeros": 0.0,
+          "median": 0.22531744876516707,
+          "q90": 0.8018614891744649
+        },
+        "distance": 0.09273272148342382,
+        "p_value": 0.1618838116188381,
+        "critical": 0.11258943622401195
+      },
+      {
+        "input": "system 1",
+        "track": null,
+        "seed": null,
+        "training": {
+          "mean": 0.2309963589410459,
+          "zeros": 0.3718861209964413,
+          "median": 0.14821961308752385,
+          "q90": 0.6571859970164894
+        },
+        "validation": {
+          "mean": 0.24536694667935843,
+          "zeros": 0.29473684210526313,
+          "median": 0.17643112491246538,
+          "q90": 0.6233270977873372
+        },
+        "distance": 0.07714927889117817,
+        "p_value": 0.29217078292170784,
+        "critical": 0.1103399513017419
+      },
+      {
+        "input": "system 1 evidence",
+        "track": null,
+        "seed": null,
+        "training": {
+          "mean": 0.6281138790035588,
+          "zeros": 0.3718861209964413,
+          "median": 1.0,
+          "q90": 1.0
+        },
+        "validation": {
+          "mean": 0.7052631578947368,
+          "zeros": 0.29473684210526313,
+          "median": 1.0,
+          "q90": 1.0
+        },
+        "distance": 0.07714927889117817,
+        "p_value": 0.06509349065093491,
+        "critical": 0.07778610226634203
+      },
+      {
+        "input": "copy-move",
+        "track": null,
+        "seed": null,
+        "training": {
+          "mean": 0.12310575332054001,
+          "zeros": 0.597864768683274,
+          "median": 0.0,
+          "q90": 0.32817006865590764
+        },
+        "validation": {
+          "mean": 0.10462215048483603,
+          "zeros": 0.5631578947368421,
+          "median": 0.0,
+          "q90": 0.2379635108481262
+        },
+        "distance": 0.06978834987825433,
+        "p_value": 0.2576742325767423,
+        "critical": 0.09923862146469362
+      },
+      {
+        "input": "link 1",
+        "track": "transcript",
+        "seed": 0,
+        "training": {
+          "mean": 0.5871886120996441,
+          "zeros": 0.4128113879003559,
+          "median": 1.0,
+          "q90": 1.0
+        },
+        "validation": {
+          "mean": 0.6105263157894737,
+          "zeros": 0.3894736842105263,
+          "median": 1.0,
+          "q90": 1.0
+        },
+        "distance": 0.02333770368982957,
+        "p_value": 0.6097390260973903,
+        "critical": 0.08230005619029784
+      },
+      {
+        "input": "link 1",
+        "track": "transcript",
+        "seed": 1,
+        "training": {
+          "mean": 0.5320284697508897,
+          "zeros": 0.4679715302491103,
+          "median": 1.0,
+          "q90": 1.0
+        },
+        "validation": {
+          "mean": 0.5736842105263158,
+          "zeros": 0.4263157894736842,
+          "median": 1.0,
+          "q90": 1.0
+        },
+        "distance": 0.04165574077542611,
+        "p_value": 0.35936406359364065,
+        "critical": 0.08391084472747706
+      },
+      {
+        "input": "link 1",
+        "track": "transcript",
+        "seed": 2,
+        "training": {
+          "mean": 0.5711743772241993,
+          "zeros": 0.4288256227758007,
+          "median": 1.0,
+          "q90": 1.0
+        },
+        "validation": {
+          "mean": 0.5894736842105263,
+          "zeros": 0.4105263157894737,
+          "median": 1.0,
+          "q90": 1.0
+        },
+        "distance": 0.018299306986327035,
+        "p_value": 0.6752324767523248,
+        "critical": 0.08168196291440344
+      },
+      {
+        "input": "link 1",
+        "track": "ocr",
+        "seed": 0,
+        "training": {
+          "mean": 0.5747330960854092,
+          "zeros": 0.42526690391459077,
+          "median": 1.0,
+          "q90": 1.0
+        },
+        "validation": {
+          "mean": 0.5947368421052631,
+          "zeros": 0.4052631578947368,
+          "median": 1.0,
+          "q90": 1.0
+        },
+        "distance": 0.02000374601985394,
+        "p_value": 0.671032896710329,
+        "critical": 0.08338640194793034
+      },
+      {
+        "input": "link 1",
+        "track": "ocr",
+        "seed": 1,
+        "training": {
+          "mean": 0.5284697508896797,
+          "zeros": 0.47153024911032027,
+          "median": 1.0,
+          "q90": 1.0
+        },
+        "validation": {
+          "mean": 0.5789473684210527,
+          "zeros": 0.42105263157894735,
+          "median": 1.0,
+          "q90": 1.0
+        },
+        "distance": 0.05047761753137292,
+        "p_value": 0.24327567243275672,
+        "critical": 0.0786476868327402
+      },
+      {
+        "input": "link 1",
+        "track": "ocr",
+        "seed": 2,
+        "training": {
+          "mean": 0.5693950177935944,
+          "zeros": 0.4306049822064057,
+          "median": 1.0,
+          "q90": 1.0
+        },
+        "validation": {
+          "mean": 0.5894736842105263,
+          "zeros": 0.4105263157894737,
+          "median": 1.0,
+          "q90": 1.0
+        },
+        "distance": 0.02007866641693201,
+        "p_value": 0.6782321767823217,
+        "critical": 0.08346132234500842
+      },
+      {
+        "input": "link 2",
+        "track": "transcript",
+        "seed": 0,
+        "training": {
+          "mean": 0.06583629893238434,
+          "zeros": 0.9341637010676157,
+          "median": 0.0,
+          "q90": 0.0
+        },
+        "validation": {
+          "mean": 0.07368421052631578,
+          "zeros": 0.9263157894736842,
+          "median": 0.0,
+          "q90": 0.0
+        },
+        "distance": 0.0078479115939315,
+        "p_value": 0.7376262373762624,
+        "critical": 0.04144970968346129
+      },
+      {
+        "input": "link 2",
+        "track": "transcript",
+        "seed": 1,
+        "training": {
+          "mean": 0.07473309608540925,
+          "zeros": 0.9252669039145908,
+          "median": 0.0,
+          "q90": 0.0
+        },
+        "validation": {
+          "mean": 0.07894736842105263,
+          "zeros": 0.9210526315789473,
+          "median": 0.0,
+          "q90": 0.0
+        },
+        "distance": 0.004214272335643421,
+        "p_value": 0.8756124387561244,
+        "critical": 0.04508334894174937
+      },
+      {
+        "input": "link 2",
+        "track": "transcript",
+        "seed": 2,
+        "training": {
+          "mean": 0.051601423487544484,
+          "zeros": 0.9483985765124555,
+          "median": 0.0,
+          "q90": 0.0
+        },
+        "validation": {
+          "mean": 0.06842105263157895,
+          "zeros": 0.9315789473684211,
+          "median": 0.0,
+          "q90": 0.0
+        },
+        "distance": 0.016819629144034454,
+        "p_value": 0.46885311468853114,
+        "critical": 0.037947181120060014
+      },
+      {
+        "input": "link 2",
+        "track": "ocr",
+        "seed": 0,
+        "training": {
+          "mean": 0.08540925266903915,
+          "zeros": 0.9145907473309609,
+          "median": 0.0,
+          "q90": 0.0
+        },
+        "validation": {
+          "mean": 0.10526315789473684,
+          "zeros": 0.8947368421052632,
+          "median": 0.0,
+          "q90": 1.0
+        },
+        "distance": 0.019853905225697743,
+        "p_value": 0.461053894610539,
+        "critical": 0.04802397452706497
+      },
+      {
+        "input": "link 2",
+        "track": "ocr",
+        "seed": 1,
+        "training": {
+          "mean": 0.10854092526690391,
+          "zeros": 0.891459074733096,
+          "median": 0.0,
+          "q90": 1.0
+        },
+        "validation": {
+          "mean": 0.10526315789473684,
+          "zeros": 0.8947368421052632,
+          "median": 0.0,
+          "q90": 1.0
+        },
+        "distance": 0.0032777673721671174,
+        "p_value": 1.0,
+        "critical": 0.05257538864955991
+      },
+      {
+        "input": "link 2",
+        "track": "ocr",
+        "seed": 2,
+        "training": {
+          "mean": 0.08540925266903915,
+          "zeros": 0.9145907473309609,
+          "median": 0.0,
+          "q90": 0.0
+        },
+        "validation": {
+          "mean": 0.11578947368421053,
+          "zeros": 0.8842105263157894,
+          "median": 0.0,
+          "q90": 1.0
+        },
+        "distance": 0.03038022101517146,
+        "p_value": 0.24957504249575044,
+        "critical": 0.04708746956358878
+      },
+      {
+        "input": "file metadata",
+        "track": null,
+        "seed": null,
+        "training": {
+          "mean": 0.1583629893238434,
+          "zeros": 0.8416370106761566,
+          "median": 0.0,
+          "q90": 1.0
+        },
+        "validation": {
+          "mean": 0.1631578947368421,
+          "zeros": 0.8368421052631579,
+          "median": 0.0,
+          "q90": 1.0
+        },
+        "distance": 0.004794905412998651,
+        "p_value": 0.9086091390860914,
+        "critical": 0.06113504401573322
+      }
+    ],
+    "below_0_05": 2
+  }
+}

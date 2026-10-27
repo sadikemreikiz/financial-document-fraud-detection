@@ -17,6 +17,7 @@ from docfraud.detectors.copy_move_measurement import render_report as render_cop
 from docfraud.detectors.report import render_rules_report
 from docfraud.evaluation.runs import JsonRunStore, RunRecord
 from docfraud.fusion.development_report import render_report as render_training
+from docfraud.fusion.shift_report import render_report as render_shift
 
 ROOT = Path(__file__).resolve().parents[1]
 RUNS = JsonRunStore(ROOT / "reports" / "runs")
@@ -58,6 +59,13 @@ def test_training_report_matches_its_run_record() -> None:
     expected = render_training(record.results, record.code.commit)
     committed = (ROOT / "reports" / "fusion" / "training-oof.md").read_text(encoding="utf-8")
     assert committed == expected, "run `docfraud fusion training-report`"
+
+
+def test_input_shift_report_matches_its_run_record() -> None:
+    record = latest("fusion-input-shift")
+    expected = render_shift(record.results, record.code.commit)
+    committed = (ROOT / "reports" / "fusion" / "input-shift.md").read_text(encoding="utf-8")
+    assert committed == expected, "run `docfraud fusion input-shift-report`"
 
 
 @pytest.mark.parametrize(
