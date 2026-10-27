@@ -20,7 +20,7 @@ The development reference of [ADR-0029](../../docs/decisions/0029-fusion-preregi
 | score-level baseline | 0.909 (0.866 to 0.946) | 0.963 (0.936 to 0.983) | 0.598 (0.587 to 0.598) | 0.855 (0.787 to 0.909) | 0.834 | 0.043 | 0.025 |
 | fusion | 0.906 (0.862 to 0.944) | 0.961 (0.935 to 0.982) | 0.598 (0.598 to 0.598) | 0.845 (0.781 to 0.904) | 0.841 | 0.042 | 0.021 |
 
-562 training receipts, 94 forged, out of fold; system 2 seed 0. Intervals: stratified bootstrap, 10,000 resamples, seed 0. The floor row gives chance for each ranking metric and the F1 of flagging every receipt. *F1 at the threshold that maximises it on the same scores, Brier score and ECE of the models' own probabilities before Platt scaling: optimistic.
+562 training receipts, 94 forged, out of fold; system 2 seed 0. Intervals: stratified bootstrap, 10,000 resamples, seed 0. The floor row gives chance for each ranking metric and the F1 of flagging every receipt. *F1 at the threshold that maximises it on the same scores, Brier score and ECE of the models' own probabilities before Platt scaling: optimistic. At most 56.2 receipts fit in a 10 % budget and 94 are forged, so recall there cannot exceed 0.598.
 
 ### Comparisons of section 8, T1 (transcripts)
 
@@ -49,7 +49,7 @@ Paired bootstrap of the evaluation protocol. On this split the comparisons are a
 | score-level baseline | 0.906 (0.862 to 0.944) | 0.963 (0.938 to 0.983) | 0.598 (0.566 to 0.598) | 0.862 (0.791 to 0.915) | 0.829 | 0.044 | 0.019 |
 | fusion | 0.905 (0.860 to 0.943) | 0.962 (0.937 to 0.982) | 0.598 (0.598 to 0.598) | 0.819 (0.755 to 0.894) | 0.836 | 0.044 | 0.031 |
 
-562 training receipts, 94 forged, out of fold; system 2 seed 0. Intervals: stratified bootstrap, 10,000 resamples, seed 0. The floor row gives chance for each ranking metric and the F1 of flagging every receipt. *F1 at the threshold that maximises it on the same scores, Brier score and ECE of the models' own probabilities before Platt scaling: optimistic.
+562 training receipts, 94 forged, out of fold; system 2 seed 0. Intervals: stratified bootstrap, 10,000 resamples, seed 0. The floor row gives chance for each ranking metric and the F1 of flagging every receipt. *F1 at the threshold that maximises it on the same scores, Brier score and ECE of the models' own probabilities before Platt scaling: optimistic. At most 56.2 receipts fit in a 10 % budget and 94 are forged, so recall there cannot exceed 0.598.
 
 ### Comparisons of section 8, T2 (OCR)
 

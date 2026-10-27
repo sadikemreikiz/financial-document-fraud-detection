@@ -237,3 +237,14 @@ def test_the_report_renders_every_section_and_marks_uncalibrated_rows() -> None:
     assert "Every grounding violation" not in text
     results["grounding"]["ocr"]["violations"] = ["V01: 0.123"]
     assert "V01: 0.123" in render_report(results, None)
+
+
+def test_the_report_notes_ceilings_tiny_bounds_and_shares_of_one() -> None:
+    results = check_results()
+    results["ocr"]["comparisons"]["copy-move"] |= {"low": 0.00018, "above_zero": True}
+    policy = results["policy"]["transcript"]["10 %"]
+    policy |= {"reviewed": 3, "forged_reviewed": 3}
+    text = render_report(results, None)
+    assert "(0.0002 to" in text
+    assert "At most 3 receipts fit in a 10 % budget and 10 are forged" in text
+    assert "T1 (transcripts) at 10 %, precision 3 of 3: 0.292 to 1.000" in text

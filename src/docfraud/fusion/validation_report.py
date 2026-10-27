@@ -116,8 +116,36 @@ def _policy(policy: Mapping[str, Any]) -> Table:
         f"{' and '.join(ranks)}, set without labels (ADR-0029, section 11), and Phase 7 applies "
         "it unchanged; the first budget is the policy, the second the alternative setting. "
         "Intervals: bootstrap over receipts with the threshold held fixed, 10,000 resamples, "
-        "seed 0.",
+        f"seed 0.{_exact(policy)}",
     )
+
+
+def _exact(policy: Mapping[str, Any]) -> str:
+    """Exact intervals for shares of 0 or 1, whose bootstrap interval cannot vary."""
+    found = []
+    for track, name in TRACK_NAMES.items():
+        for budget, p in policy[track].items():
+            for share, x, n in (
+                ("precision", p["forged_reviewed"], p["reviewed"]),
+                ("recall", p["forged_reviewed"], p["forged"]),
+            ):
+                if n and x in {0, n}:
+                    low, high = _clopper_pearson(x, n)
+                    found.append(f"{name} at {budget}, {share} {x} of {n}: {low:.3f} to {high:.3f}")
+    if not found:
+        return ""
+    return (
+        " A share of 0 or 1 on these receipts is the same in every resample, so its bootstrap "
+        "interval collapses to a point; the exact (Clopper-Pearson) 95 % intervals are: "
+        + "; ".join(found)
+        + "."
+    )
+
+
+def _clopper_pearson(x: int, n: int) -> tuple[float, float]:
+    """The exact 95 % interval of a share of 0 or 1 out of ``n``, in closed form."""
+    edge = 0.025 ** (1 / n)
+    return (edge, 1.0) if x == n else (0.0, 1 - edge)
 
 
 def _ordinal(n: int) -> str:
