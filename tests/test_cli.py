@@ -5,6 +5,7 @@ import zipfile
 from collections.abc import Sequence
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
+from functools import partial
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
@@ -23,6 +24,7 @@ from docfraud.cli import common as cli_common
 from docfraud.cli import copy_move as cli_copy_move
 from docfraud.cli import data as cli_data
 from docfraud.cli import forensics as cli_forensics
+from docfraud.cli import fusion as cli_fusion
 from docfraud.cli import llm as cli_llm
 from docfraud.cli import marks as cli_marks
 from docfraud.cli import observation as cli_observation
@@ -32,7 +34,7 @@ from docfraud.cli import synthesis as cli_synthesis
 from docfraud.data.benign_marks import ReceiptMarks, load_mark_log, marks_plan, round_path
 from docfraud.data.download import SOURCES, PinnedFile
 from docfraud.data.gold import GoldManifest, load_manifest
-from docfraud.data.models import Entity, Label, Split, Technique
+from docfraud.data.models import Document, Entity, Label, Split, Technique
 from docfraud.data.observation import (
     ASSISTANT,
     ObservationLog,
@@ -42,12 +44,15 @@ from docfraud.data.observation import (
     seal,
 )
 from docfraud.data.splits import TestSetLockedError
+from docfraud.evaluation import runs as runs_module
 from docfraud.evaluation.bootstrap import Estimate
 from docfraud.evaluation.design_fold import CLEAN_FOLDS, DESIGN_FOLD
 from docfraud.evaluation.folds import assign_folds, load_folds, save_folds
 from docfraud.evaluation.runs import CodeVersion, JsonRunStore, run
 from docfraud.forensics.learned.pretrained import IMAGENET_WEIGHTS
 from docfraud.forensics.trufor import TRUFOR_CODE, TRUFOR_WEIGHTS
+from docfraud.fusion.training_inputs import save_table, summary
+from docfraud.fusion.validation import validation_check
 from docfraud.llm.adjudication import (
     AdjudicationLog,
     Listing,
@@ -77,6 +82,7 @@ from tests.evaluation.test_folds import documents as fold_documents
 from tests.fixtures.findit import load_toy
 from tests.fixtures.llm import FakeProvider
 from tests.fusion.test_development import report_record
+from tests.fusion.test_validation import N_TRAIN, pages, tables
 from tests.synthesis.pages import documents as synthesis_documents
 from tests.synthesis.pages import font as synthesis_font
 from tests.synthesis.pages import receipt as synthesis_receipt
@@ -656,6 +662,111 @@ def test_the_training_report_renders_from_its_latest_run_record(tmp_path: Path) 
     assert "no fusion-training-oof record" in runner.invoke(app, empty).output
 
 
+def test_the_validation_check_runs_once_on_the_tables_its_records_describe(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    training, y_train, validation, checked = tables()
+    train = [
+        Document(
+            dataset="toy",
+            doc_id=f"R{i:02d}",
+            source_id=f"R{i:02d}",
+            split=Split.TRAIN,
+            label=Label.FORGED if forged else Label.AUTHENTIC,
+            image_path=tmp_path / f"R{i:02d}.png",
+        )
+        for i, forged in enumerate(y_train)
+    ]
+    assert len(train) == N_TRAIN
+    paths = {"training": tmp_path / "training.json", "validation": tmp_path / "validation.json"}
+    save_table(training, paths["training"])
+    save_table(validation, paths["validation"])
+    clean = CodeVersion(commit="a" * 40, dirty=False)
+    monkeypatch.setattr(runs_module, "code_version", lambda repo=None: clean)  # noqa: ARG005
+    runs = tmp_path / "runs"
+    store = JsonRunStore(runs)
+    record = {"store": store, "config": {}, "seeds": {}, "dataset_sha256": {}}
+    with run("fusion-training-inputs", **record) as current:  # type: ignore[arg-type]
+        current.log("summary", summary(training))
+    (training_run,) = store.records("fusion-training-inputs")
+    with run(
+        "fusion-validation-inputs",
+        store=store,
+        config={"training_inputs": training_run.run_id},
+        seeds={},
+        dataset_sha256={},
+    ) as current:
+        current.log("sha256", hashlib.sha256(paths["validation"].read_bytes()).hexdigest())
+    monkeypatch.setattr(cli_common, "load_findit2", lambda _: (*train, *checked))
+    monkeypatch.setattr(cli_common, "code_version", lambda: clean)
+    monkeypatch.setattr(cli_fusion, "_pages", lambda documents: pages(list(documents)))
+    monkeypatch.setattr(cli_fusion, "validation_check", partial(validation_check, resamples=50))
+    report = tmp_path / "check.md"
+
+    def said(result: Any) -> str:
+        """The command's output with the console's line wrapping undone."""
+        return " ".join(result.output.split())
+
+    def check(**options: Path) -> Any:
+        given = paths | options
+        return runner.invoke(
+            app,
+            [
+                *("fusion", "validation-check", "--runs", str(given.get("runs", runs))),
+                *("--training", str(given["training"]), "--validation", str(given["validation"])),
+                *("--output", str(report)),
+            ],
+        )
+
+    assert "no fusion-validation-inputs record" in said(check(runs=tmp_path / "none"))
+    monkeypatch.setattr(cli_common, "changed_since", lambda *_: ["src/docfraud/fusion/model.py"])
+    assert "the code changed since the validation inputs were made" in said(check())
+    monkeypatch.setattr(cli_common, "changed_since", lambda *_: [])
+    other = tmp_path / "other.json"
+    save_table(table_of_seeds(training, (0, 1)), other)
+    assert "is not the table" in said(check(training=other))
+    other.write_text(paths["validation"].read_text(encoding="utf-8") + "\n", encoding="utf-8")
+    assert "is not the table" in said(check(validation=other))
+    assert not store.records("fusion-validation-check")
+    result = check()
+    assert result.exit_code == 0, result.output
+    (made,) = store.records("fusion-validation-check")
+    assert made.config["training_inputs"] == training_run.run_id
+    assert made.test_unlocks == ()
+    assert set(made.results) >= {"transcript", "ocr", "policy", "grounding", "rq4"}
+    text = report.read_text(encoding="utf-8")
+    assert "What Phase 7 applies to the test split" in text
+    again = check()
+    assert again.exit_code == 1
+    assert "refusing to run again" in said(again)
+    rendered = tmp_path / "again.md"
+    args = ["fusion", "validation-report", "--runs", str(runs), "--output", str(rendered)]
+    assert runner.invoke(app, args).exit_code == 0
+    assert rendered.read_text(encoding="utf-8") == text
+
+
+def test_validation_receipts_are_read_without_their_labels_and_annotations() -> None:
+    forged = next(d for d in tables()[3] if d.label is Label.FORGED)
+    assert (bool(forged.regions), forged.editing_software) == (True, "gimp")
+    plain = cli_fusion.unlabelled(forged)
+    assert (plain.label, plain.regions, plain.editing_software) == (None, (), None)
+    assert (plain.has_region_annotations, plain.handwritten_annotation) == (False, False)
+    assert plain.digital_annotation is False
+    assert (plain.doc_id, plain.image_path, plain.split) == (
+        forged.doc_id,
+        forged.image_path,
+        forged.split,
+    )
+    assert Document.model_validate(plain.model_dump()) == plain
+
+
+def table_of_seeds(table: Any, seeds: Sequence[int]) -> Any:
+    """The same table with the rows of some seeds only."""
+    return table.model_copy(
+        update={"receipts": tuple(r for r in table.receipts if r.seed in seeds)}
+    )
+
+
 def test_rules_need_the_baseline_runs(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     options = rules_setup(tmp_path, monkeypatch)
     for record in (tmp_path / "runs").iterdir():
@@ -1190,7 +1301,7 @@ def _gold_b_setup(
     monkeypatch.setattr(cli_llm, "GOLD_B", _write_gold_set(tmp_path / "gold-b", ("A1",), ("F1",)))
     monkeypatch.setattr(cli_llm, "require_clean_commit", lambda: None)
     monkeypatch.setattr(cli_llm, "code_version", lambda: CodeVersion(commit="def456", dirty=False))
-    monkeypatch.setattr(cli_llm, "changed_since", lambda *_: [])
+    monkeypatch.setattr(cli_common, "changed_since", lambda *_: [])
     instruction = Path(common[1])
     frozen = tmp_path / "frozen.json"
     frozen.write_text(
@@ -1319,18 +1430,18 @@ def test_llm_gold_set_b_is_read_only_by_the_frozen_reader(
     toy_source: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     measure, directory = _gold_b_setup(toy_source, tmp_path, monkeypatch)
-    monkeypatch.setattr(cli_llm, "changed_since", lambda *_: ["src/docfraud/llm/reader.py"])
+    monkeypatch.setattr(cli_common, "changed_since", lambda *_: ["src/docfraud/llm/reader.py"])
     changed = runner.invoke(app, ["llm", "measure-b", *measure])
     assert changed.exit_code == 1
     assert "the reader changed after it was frozen at abc123: src/docfraud/llm/reader.py" in flat(
         changed.output
     )
-    monkeypatch.setattr(cli_llm, "changed_since", lambda *_: None)
+    monkeypatch.setattr(cli_common, "changed_since", lambda *_: None)
     unknown = runner.invoke(app, ["llm", "measure-b", *measure])
     assert unknown.exit_code == 1
     assert "cannot compare with commit abc123" in flat(unknown.output)
 
-    monkeypatch.setattr(cli_llm, "changed_since", lambda *_: [])
+    monkeypatch.setattr(cli_common, "changed_since", lambda *_: [])
     (tmp_path / "gold-b" / "F1.json").rename(tmp_path / "F1.json")
     unannotated = runner.invoke(app, ["llm", "measure-b", *measure])
     assert unannotated.exit_code == 1
@@ -1391,7 +1502,7 @@ def test_llm_false_alarms_need_unchanged_accounting_rules(
     def changed(commit: str, paths: Sequence[str]) -> list[str]:
         return list(paths) if commit == FIXED_AT else []
 
-    monkeypatch.setattr(cli_llm, "changed_since", changed)
+    monkeypatch.setattr(cli_common, "changed_since", changed)
     result = runner.invoke(app, ["llm", "false-alarms", *arguments])
     assert result.exit_code == 1
     assert (
@@ -1438,7 +1549,7 @@ def test_llm_the_validation_split_is_read_only_by_the_frozen_reader(
     toy_source: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     arguments, record = _validation_setup(toy_source, tmp_path, monkeypatch)
-    monkeypatch.setattr(cli_llm, "changed_since", lambda *_: ["src/docfraud/llm/reader.py"])
+    monkeypatch.setattr(cli_common, "changed_since", lambda *_: ["src/docfraud/llm/reader.py"])
     result = runner.invoke(app, ["llm", "read-validation", *arguments])
     assert result.exit_code == 1
     assert "the reader changed after it was frozen at abc123" in flat(result.output)

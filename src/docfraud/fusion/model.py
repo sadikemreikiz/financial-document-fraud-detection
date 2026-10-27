@@ -92,6 +92,10 @@ def _logit(p: Vector) -> Vector:
     return np.asarray(np.log(q / (1 - q)), dtype=float)
 
 
+class ReversedOrderError(ValueError):
+    """Platt scaling would reverse the order of the scores."""
+
+
 @dataclass(frozen=True, slots=True)
 class Platt:
     """A logistic map from log-odds to calibrated probabilities."""
@@ -104,13 +108,13 @@ class Platt:
         """Fit by maximum likelihood on these receipts (the validation split).
 
         Raises:
-            ValueError: If the fitted slope is not positive, which would reverse the order.
+            ReversedOrderError: If the fitted slope is not positive, which would reverse the order.
         """
         model = LogisticRegression(C=np.inf).fit(log_odds[:, None], y)
         slope, offset = float(model.coef_[0][0]), float(model.intercept_[0])
         if slope <= 0:
             msg = f"Platt scaling would reverse the order of the scores (slope {slope:.3f})"
-            raise ValueError(msg)
+            raise ReversedOrderError(msg)
         return cls(slope, offset)
 
     def probabilities(self, log_odds: Vector) -> Vector:

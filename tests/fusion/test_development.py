@@ -4,12 +4,16 @@ import numpy as np
 import pytest
 
 from docfraud.fusion.development import (
+    CATCHERS,
     PRACTICAL_VARIANTS,
     SINGLE_SOURCES,
     VARIANTS,
+    Scored,
     contribution_groups,
     first_regions,
+    fold_models,
     group_contributions,
+    in_budget,
     metrics,
     rq3,
     score,
@@ -29,6 +33,10 @@ def setup() -> tuple[dict[int, list[ReceiptInputs]], np.ndarray, np.ndarray]:
     rows_by_seed = {seed: built.rows("transcript", seed) for seed in (0, 1, 2)}
     y = np.array([i % 4 == 0 for i in range(N)])
     return rows_by_seed, y, np.arange(N) % 5
+
+
+def probabilities(scored: dict[str, Scored]) -> dict[str, np.ndarray]:
+    return {name: scored[name].probabilities for name in CATCHERS}
 
 
 def test_leaving_a_source_out_recomputes_the_links_from_the_others() -> None:
@@ -62,16 +70,20 @@ def test_rq3_and_rq4_come_from_each_receipts_fold_model() -> None:
     rows_by_seed, y, fold_of = setup()
     _, scored = track_results(rows_by_seed, y, fold_of, subsets={}, resamples=50)
     rows = rows_by_seed[0]
-    contributions = group_contributions(rows, scored["fusion"], fold_of)
+    models = fold_models(scored["fusion"], fold_of)
+    assert [m is scored["fusion"].models[f] for m, f in zip(models, fold_of, strict=True)] == [
+        True
+    ] * N
+    contributions = group_contributions(rows, models)
     assert contributions.shape == (N, len(contribution_groups()))
     groups = {"technique": {"CPI": y.copy(), "none": np.zeros(N, dtype=bool)}}
-    found = rq3(contributions, scored, [r.receipt for r in rows], groups)
+    found = rq3(contributions, probabilities(scored), [r.receipt for r in rows], groups)
     cpi = found["technique"]["CPI"]
     assert "none" not in found["technique"]
     assert cpi["receipts"] == int(y.sum())
     assert sum(cpi["largest"].values()) == int(y.sum())
     assert cpi["caught"]["accounting rules"] == pytest.approx(4.0)  # 10 % of 40 receipts
-    regions = first_regions(rows, scored["fusion"], fold_of)
+    regions = first_regions(rows, models)
     assert len(regions) == N
     practical = {
         v.name: metrics(y, score(rows, v, y, fold_of).probabilities, 50) for v in PRACTICAL_VARIANTS
@@ -85,9 +97,9 @@ def report_record() -> dict[str, Any]:
     results, scored = track_results(
         rows_by_seed, y, fold_of, subsets={"all": np.ones(N, bool)}, resamples=50
     )
-    contributions = group_contributions(rows_by_seed[0], scored["fusion"], fold_of)
+    contributions = group_contributions(rows_by_seed[0], fold_models(scored["fusion"], fold_of))
     groups = {"technique": {"CPI": y.copy()}}
-    rq = rq3(contributions, scored, [r.receipt for r in rows_by_seed[0]], groups)
+    rq = rq3(contributions, probabilities(scored), [r.receipt for r in rows_by_seed[0]], groups)
     estimate = {"value": 0.5, "low": 0.4, "high": 0.6}
     rq4 = {
         "receipts": 10,
@@ -100,11 +112,13 @@ def report_record() -> dict[str, Any]:
         "by_technique": {"CPI": {"receipts": 8, "hits": 5}},
         "by_entity": {"total_payment": {"receipts": 6, "hits": 4}},
     }
+    alarms = {name: {"handwritten": {"receipts": 3.0, "flagged": 1.0}} for name in CATCHERS}
     return {
         "transcript": results,
         "ocr": results,
         "T3": {"fusion of track T2": results["table"]["fusion"]},
         "rq3": {"transcript": rq, "ocr": rq},
+        "false_alarms": {"transcript": alarms, "ocr": alarms},
         "rq4": {"transcript": rq4, "ocr": rq4},
     }
 
@@ -118,9 +132,22 @@ def test_the_report_renders_every_section_from_the_results() -> None:
         "Slope without the penalty",
         "Track T3",
         "RQ3 by technique, T1 (transcripts)",
+        "False alarms on authentic receipts, by benign mark",
         "RQ4: the report's first region",
         "RQ4 by entity",
     ):
         assert title in text
     assert "`0123456`" in text
     assert "points at forgeries" in text
+
+
+def test_in_budget_marks_the_highest_tenth_and_ties_reviewed_more_often_than_not() -> None:
+    receipts = [f"R{i:02d}" for i in range(20)]
+    scores = np.linspace(0, 1, 20)
+    assert in_budget(receipts, scores) == [False] * 18 + [True] * 2
+    top = scores.copy()
+    top[17:] = 1.0  # three tied for the two places: each reviewed with 2/3
+    assert in_budget(receipts, top)[16:] == [False, True, True, True]
+    last = scores.copy()
+    last[16:19] = last[18]  # three tied for the last place: each reviewed with 1/3
+    assert in_budget(receipts, last)[16:] == [False, False, False, True]

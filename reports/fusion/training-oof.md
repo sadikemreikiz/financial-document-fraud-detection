@@ -2,7 +2,7 @@
 
 > Generated from the run record `fusion-training-oof` by `docfraud fusion training-report`. Do not edit by hand.
 
-The development reference of [ADR-0029](../../docs/decisions/0029-fusion-preregistration.md) (section 1), at commit `bdfdd40`: every number is out of fold on the 562 training receipts and optimistic. The validation split, scored once when the system is frozen, is the check; the test split, in Phase 7, carries the claims.
+The development reference of [ADR-0029](../../docs/decisions/0029-fusion-preregistration.md) (section 1), at commit `bd33e1b`: every number is out of fold on the 562 training receipts and optimistic. The validation split, scored once when the system is frozen, is the check; the test split, in Phase 7, carries the claims.
 
 ### Ablation table, T1 (transcripts)
 
@@ -219,6 +219,21 @@ Per evidence: the mean contribution to the log-odds of the fusion model of each 
 | paint3d | 7 | +0.29 (0) | +0.79 (1) | +0.54 (0) | +3.32 (6) | +0.25 (0) | +0.47 (0) | 3.0 of 7 | 1.0 of 7 | 5.2 of 7 | 5.0 of 7 |
 
 Per evidence: the mean contribution to the log-odds of the fusion model of each receipt's fold, and in brackets on how many receipts it contributes most. Caught: forged receipts among the highest 10 % of the training receipts (expected counts where scores tie). Descriptive; groups are small.
+
+### False alarms on authentic receipts, by benign mark
+
+| Track | Marks | Authentic | flagged by accounting rules | flagged by pixel evidence | flagged by copy-move | flagged by fusion |
+|---|---|---|---|---|---|---|
+| T1 (transcripts) | digital | 10 | 1.0 of 10 | 4.0 of 10 | 0.0 of 10 | 0.0 of 10 |
+| T1 (transcripts) | handwritten | 233 | 14.0 of 233 | 5.0 of 233 | 0.0 of 233 | 0.0 of 233 |
+| T1 (transcripts) | handwritten and digital | 18 | 1.0 of 18 | 6.0 of 18 | 0.0 of 18 | 0.0 of 18 |
+| T1 (transcripts) | none | 207 | 14.0 of 207 | 0.2 of 207 | 0.0 of 207 | 0.0 of 207 |
+| T2 (OCR) | digital | 10 | 0.0 of 10 | 4.0 of 10 | 0.0 of 10 | 0.0 of 10 |
+| T2 (OCR) | handwritten | 233 | 20.0 of 233 | 5.0 of 233 | 0.0 of 233 | 0.0 of 233 |
+| T2 (OCR) | handwritten and digital | 18 | 1.0 of 18 | 6.0 of 18 | 0.0 of 18 | 0.0 of 18 |
+| T2 (OCR) | none | 207 | 21.0 of 207 | 0.2 of 207 | 0.0 of 207 | 0.0 of 207 |
+
+Authentic receipts by whether the dataset flags handwritten or digital marks on them (evaluation protocol, section 7), and how many each row flags among the highest 10 % of the training receipts (expected counts where scores tie). Descriptive; groups are small.
 
 ### RQ4: the report's first region
 

@@ -8,11 +8,13 @@ from docfraud.markdown import Cell, Table, render_table
 TRACK_NAMES = {"transcript": "T1 (transcripts)", "ocr": "T2 (OCR)"}
 
 
-def _ci(e: Mapping[str, float]) -> str:
+def ci(e: Mapping[str, float]) -> str:
+    """An estimate with its interval, as reports write it."""
     return f"{e['value']:.3f} ({e['low']:.3f} to {e['high']:.3f})"
 
 
-def _ablation(name: str, track: Mapping[str, Any]) -> Table:
+def ablation(name: str, track: Mapping[str, Any], *, note: str | None = None) -> Table:
+    """The ablation table of a track, with the floors; ``note`` replaces the training split's."""
     p = track["forged"] / track["receipts"]
     rows: list[list[Cell]] = [
         [
@@ -30,10 +32,10 @@ def _ablation(name: str, track: Mapping[str, Any]) -> Table:
         rows.append(
             [
                 row,
-                _ci(m["average_precision"]),
-                _ci(m["roc_auc"]),
-                _ci(m["recall_at_10pct"]),
-                _ci(m["recall_at_20pct"]),
+                ci(m["average_precision"]),
+                ci(m["roc_auc"]),
+                ci(m["recall_at_10pct"]),
+                ci(m["recall_at_20pct"]),
                 m["f1"],
                 m["brier"],
                 m["ece"],
@@ -52,7 +54,8 @@ def _ablation(name: str, track: Mapping[str, Any]) -> Table:
             "ECE*",
         ),
         rows,
-        note=f"{track['receipts']} training receipts, {track['forged']} forged, out of fold; "
+        note=note
+        or f"{track['receipts']} training receipts, {track['forged']} forged, out of fold; "
         "system 2 seed 0. Intervals: stratified bootstrap, 10,000 resamples, seed 0. The floor "
         "row gives chance for each ranking metric and the F1 of flagging every receipt. *F1 at "
         "the threshold "
@@ -61,9 +64,10 @@ def _ablation(name: str, track: Mapping[str, Any]) -> Table:
     )
 
 
-def _comparisons(name: str, track: Mapping[str, Any]) -> Table:
+def comparisons(name: str, track: Mapping[str, Any], *, where: str | None = None) -> Table:
+    """The comparisons of section 8; ``where`` replaces the training split's first sentences."""
     rows: list[list[Cell]] = [
-        [other, _ci(d), "yes" if d["above_zero"] else "no"]
+        [other, ci(d), "yes" if d["above_zero"] else "no"]
         for other, d in track["comparisons"].items()
     ]
     verdict = "would hold" if track["fusion_beats_every_single_source"] else "would not hold"
@@ -75,8 +79,12 @@ def _comparisons(name: str, track: Mapping[str, Any]) -> Table:
             "Interval above zero",
         ),
         rows,
-        note="Paired bootstrap of the evaluation protocol. On this split the comparisons are a "
-        f"reference; the claims are made on the test split in Phase 7. RQ2's rule {verdict} here: "
+        note=(
+            where
+            or "Paired bootstrap of the evaluation protocol. On this split the comparisons are a "
+            "reference; the claims are made on the test split in Phase 7."
+        )
+        + f" RQ2's rule {verdict} here: "
         "it needs every single-source interval above zero (intersection-union test). The "
         "comparison with the score-level baseline is the secondary test of linking.",
     )
@@ -135,9 +143,10 @@ def _seeds_and_more(results: Mapping[str, Any]) -> list[Table]:
     ]
 
 
-def _practical(t3: Mapping[str, Any]) -> Table:
+def practical_table(t3: Mapping[str, Any]) -> Table:
+    """Track T3 next to the fusion model of T2."""
     rows: list[list[Cell]] = [
-        [row, _ci(m["average_precision"]), _ci(m["roc_auc"]), _ci(m["recall_at_10pct"])]
+        [row, ci(m["average_precision"]), ci(m["roc_auc"]), ci(m["recall_at_10pct"])]
         for row, m in t3.items()
     ]
     return Table(
@@ -149,7 +158,8 @@ def _practical(t3: Mapping[str, Any]) -> Table:
     )
 
 
-def _rq3(name: str, groups: Mapping[str, Any]) -> list[Table]:
+def rq3_tables(name: str, groups: Mapping[str, Any], *, where: str | None = None) -> list[Table]:
+    """The tables of RQ3; ``where`` replaces the training split's description of the scores."""
     tables = []
     for kind, members in groups.items():
         if not members:
@@ -173,7 +183,8 @@ def _rq3(name: str, groups: Mapping[str, Any]) -> list[Table]:
                 f"RQ3 by {kind}, {name}",
                 ("Group", "Forged", *evidence, *(f"caught by {c}" for c in catchers)),
                 rows,
-                note="Per evidence: the mean contribution to the log-odds of the fusion model of "
+                note=where
+                or "Per evidence: the mean contribution to the log-odds of the fusion model of "
                 "each receipt's fold, and in brackets on how many receipts it contributes most. "
                 "Caught: forged receipts among the highest 10 % of the training receipts "
                 "(expected counts where scores tie). Descriptive; groups are small.",
@@ -182,7 +193,10 @@ def _rq3(name: str, groups: Mapping[str, Any]) -> list[Table]:
     return tables
 
 
-def _rq4(rq4: Mapping[str, Any]) -> list[Table]:
+def rq4_tables(
+    rq4: Mapping[str, Any], *, review: str = "Hits among the highest 10 %"
+) -> list[Table]:
+    """The tables of RQ4; ``review`` names the column of the receipts sent to review."""
     rows: list[list[Cell]] = []
     for track, name in TRACK_NAMES.items():
         g = rq4[track]
@@ -192,7 +206,7 @@ def _rq4(rq4: Mapping[str, Any]) -> list[Table]:
                 name,
                 g["receipts"],
                 g["located"],
-                _ci(g["hit_rate"]),
+                ci(g["hit_rate"]),
                 g["baseline"],
                 verdict,
                 f"{g['in_review_hits']} of {g['in_review']}",
@@ -208,7 +222,7 @@ def _rq4(rq4: Mapping[str, Any]) -> list[Table]:
                 "Hit rate (95 % interval)",
                 "Random baseline",
                 "Verdict",
-                "Hits among the highest 10 %",
+                review,
             ),
             rows,
             note="The first region is the location of the evidence with the largest positive "
@@ -232,16 +246,48 @@ def _rq4(rq4: Mapping[str, Any]) -> list[Table]:
     return tables
 
 
+def false_alarm_table(alarms: Mapping[str, Any], *, where: str) -> Table:
+    """Authentic receipts each catcher flags, by benign mark (ADR-0029, section 10)."""
+    rows: list[list[Cell]] = []
+    for track, name in TRACK_NAMES.items():
+        catchers = alarms[track]
+        groups = next(iter(catchers.values()))
+        for group, g in groups.items():
+            n = int(g["receipts"])
+            rows.append(
+                [
+                    name,
+                    group,
+                    n,
+                    *(f"{c[group]['flagged']:.1f} of {n}" for c in catchers.values()),
+                ]
+            )
+    first = next(iter(alarms.values()))
+    return Table(
+        "False alarms on authentic receipts, by benign mark",
+        ("Track", "Marks", "Authentic", *(f"flagged by {c}" for c in first)),
+        rows,
+        note="Authentic receipts by whether the dataset flags handwritten or digital marks on "
+        f"them (evaluation protocol, section 7), and how many each row flags among {where} "
+        "(expected counts where scores tie). Descriptive; groups are small.",
+    )
+
+
 def render_report(results: Mapping[str, Any], commit: str | None) -> str:
     """The training-split report of Phase 5."""
     tables: list[Table] = []
     for track, name in TRACK_NAMES.items():
-        tables += [_ablation(name, results[track]), _comparisons(name, results[track])]
+        tables += [ablation(name, results[track]), comparisons(name, results[track])]
     tables += _seeds_and_more(results)
-    tables.append(_practical(results["T3"]))
+    tables.append(practical_table(results["T3"]))
     for track, name in TRACK_NAMES.items():
-        tables += _rq3(name, results["rq3"][track])
-    tables += _rq4(results["rq4"])
+        tables += rq3_tables(name, results["rq3"][track])
+    tables.append(
+        false_alarm_table(
+            results["false_alarms"], where="the highest 10 % of the training receipts"
+        )
+    )
+    tables += rq4_tables(results["rq4"])
     header = (
         "# Phase 5 on the training split\n\n"
         "> Generated from the run record `fusion-training-oof` by `docfraud fusion "
