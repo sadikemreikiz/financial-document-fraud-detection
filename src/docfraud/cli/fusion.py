@@ -7,7 +7,7 @@ from typing import Annotated
 
 import numpy as np
 import typer
-from rich.progress import track
+from rich.progress import track as with_progress
 
 from docfraud.cli.common import (
     CV_FOLDS_PATH,
@@ -390,7 +390,9 @@ def validation_inputs_command(  # pragma: no cover - needs the dataset, LLM answ
         page: list[tuple[Finding, ...]] = []
         system_2: dict[int, dict[str, SystemTwo]] = {seed: {} for seed in SEEDS}
         readings: dict[str, list[Reading]] = {t.value: [] for t in TRACKS}
-        for document in track(validation, description="validation receipts", console=console):
+        for document in with_progress(
+            validation, description="validation receipts", console=console
+        ):
             image = load_grayscale(document.image_path)
             words = _words(ocr, image)
             page.append(page_findings(image, words, editing_traits(document.image_path)))

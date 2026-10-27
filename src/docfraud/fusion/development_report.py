@@ -253,13 +253,13 @@ def false_alarm_table(alarms: Mapping[str, Any], *, where: str) -> Table:
         catchers = alarms[track]
         groups = next(iter(catchers.values()))
         for group, g in groups.items():
-            n = g["receipts"]
+            n = int(g["receipts"])
             rows.append(
                 [
                     name,
                     group,
                     n,
-                    *(f"{c[group]['flagged']:.1f} of {n:.0f}" for c in catchers.values()),
+                    *(f"{c[group]['flagged']:.1f} of {n}" for c in catchers.values()),
                 ]
             )
     first = next(iter(alarms.values()))
