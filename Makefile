@@ -125,8 +125,8 @@ clean-measurement:  ## Clean measurement of every Phase 4 system, about 42 hours
 	$(KEEP_AWAKE) $(WITH_TRUFOR) docfraud forensics measure-trufor
 	uv run python -I experiments/clean_measurement.py
 
-figures:  ## Figures of the clean measurement (reports/forensics/figures; needs its runs)
-	uv run --with matplotlib==3.10.7 python -I experiments/clean_figures.py
+figures:  ## Figures of the clean measurement and the validation check (needs their runs)
+	uv run --with matplotlib==3.10.7 python -I experiments/figures.py
 
 encoder-check:  ## One-time check that the learned models' encoder is torchvision's ResNet-18
 	uv run docfraud forensics download-resnet
