@@ -19,7 +19,7 @@ and [ADR-0006](decisions/0006-llm-placement.md).
 | Findings, linking, file-metadata check (Phase 5) | Built: the `Finding` contract and each detector's findings ([`finding.py`](../src/docfraud/detectors/finding.py)), the two kinds of link ([`docfraud.linking`](../src/docfraud/linking/)) and the check of track T3 ([`metadata.py`](../src/docfraud/detectors/metadata.py)) |
 | Fusion and decision policy (Phase 5) | Built ([`docfraud.fusion`](../src/docfraud/fusion/), [`decision.py`](../src/docfraud/decision.py)) and measured out of fold on the training split, the development reference ([report](../reports/fusion/training-oof.md)); the validation inputs were computed once from frozen commit `eb542ea` by the components trained on the whole training split (`docfraud fusion validation-inputs`) and compared with the training inputs without labels ([report](../reports/fusion/input-shift.md), [method](../reports/fusion/input-shift-method.md), [the rules' shift](../reports/fusion/input-shift-rules.md)); the one-time validation check was made at `2bbf24e` ([report](../reports/fusion/validation-check.md)) and keeps what Phase 7 applies to the test split |
 | Reporting (Phase 5) | Built: the assessment with evidence ordered by contribution, the template report and overlay, the independent grounding check and the report's first region for RQ4 ([`docfraud.reporting`](../src/docfraud/reporting/)); RQ4 measured out of fold on the training split and on the validation split, where every audit report was grounded |
-| Investigation agent | Not started (Phase 6b) |
+| Investigation agent and LLM detector (Phase 6b) | Pre-registered ([ADR-0031](decisions/0031-llm-detector-and-agent.md)); not built |
 
 ## Overview
 
