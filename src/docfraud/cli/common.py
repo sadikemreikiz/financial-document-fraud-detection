@@ -1,9 +1,11 @@
 """Paths, options and helpers shared by the command groups.
 
-Loading the dataset, building the OCR engine and checking for a clean commit each happen in one
-place here, so that every command does them the same way and tests replace them in one place.
+Loading the dataset, building the OCR engine and checking for a clean commit or for unchanged
+code each happen in one place here, so that every command does them the same way and tests
+replace them in one place.
 """
 
+from collections.abc import Sequence
 from enum import StrEnum
 from pathlib import Path
 from typing import Annotated, Any
@@ -15,7 +17,7 @@ from rich.progress import BarColumn, DownloadColumn, Progress, TransferSpeedColu
 from docfraud.data.download import SOURCES, PinnedFile, download
 from docfraud.data.findit import load_findit2
 from docfraud.data.models import Document
-from docfraud.evaluation.runs import code_version
+from docfraud.evaluation.runs import changed_since, code_version
 from docfraud.reading.ocr import CachedOcr, RapidOcrEngine
 from docfraud.reading.pipeline import TextSource
 
@@ -71,4 +73,19 @@ def require_clean_commit() -> None:
     """
     if code_version().dirty is not False:
         console.print("[red]commit all changes first[/red]: this run must name a clean commit")
+        raise typer.Exit(1)
+
+
+def require_unchanged(commit: str, paths: Sequence[str], problem: str) -> None:
+    """Stop if the committed files under ``paths`` differ from ``commit``.
+
+    Raises:
+        typer.Exit: If they changed, or git cannot compare with the commit.
+    """
+    changed = changed_since(commit, paths)
+    if changed is None:
+        console.print(f"[red]cannot compare with commit {commit[:12]}[/red]")
+        raise typer.Exit(1)
+    if changed:
+        console.print(f"[red]{problem}[/red] at {commit[:12]}: " + ", ".join(changed))
         raise typer.Exit(1)

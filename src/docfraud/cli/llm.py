@@ -28,6 +28,7 @@ from docfraud.cli.common import (
     console,
     findit_documents,
     require_clean_commit,
+    require_unchanged,
 )
 from docfraud.data.gold import GoldAnnotation, GoldManifest, load_annotations, load_manifest
 from docfraud.data.local_page import HOST, make_server
@@ -36,7 +37,7 @@ from docfraud.data.normalize import load_grayscale
 from docfraud.data.observation_text import PageLanguage
 from docfraud.data.splits import select
 from docfraud.evaluation.extraction import DocumentScore, score_document
-from docfraud.evaluation.runs import changed_since, code_version
+from docfraud.evaluation.runs import code_version
 from docfraud.llm.adjudication import (
     GOLD,
     in_order,
@@ -376,7 +377,7 @@ def llm_measure_b(  # noqa: PLR0913, PLR0917 - one option per input and output
         raise typer.Exit(1)
     require_clean_commit()
     version = _frozen(frozen)
-    _require_unchanged(version.commit, READER_CODE, "the reader changed after it was frozen")
+    require_unchanged(version.commit, READER_CODE, "the reader changed after it was frozen")
     manifest = load_manifest(GOLD_B)
     gold = load_annotations(GOLD_B.parent, manifest)
     if set(gold) != manifest.doc_ids:
@@ -636,8 +637,8 @@ def llm_false_alarms(  # noqa: PLR0913, PLR0917 - one option per input and outpu
         raise typer.Exit(1)
     require_clean_commit()
     version = _frozen(frozen)
-    _require_unchanged(version.commit, READER_CODE, "the reader changed after it was frozen")
-    _require_unchanged(FIXED_AT, RULES_CODE, "the accounting rules changed after ADR-0027")
+    require_unchanged(version.commit, READER_CODE, "the reader changed after it was frozen")
+    require_unchanged(FIXED_AT, RULES_CODE, "the accounting rules changed after ADR-0027")
     excluded = _gold_a_manifest().doc_ids | load_manifest(GOLD_B).doc_ids
     found = [d for d in findit_documents(data_dir) if d.split is Split.TRAIN]
     documents = sorted((d for d in found if d.doc_id not in excluded), key=lambda d: d.doc_id)
@@ -747,7 +748,7 @@ def llm_read_validation(  # noqa: PLR0913, PLR0917 - one option per input and ou
         raise typer.Exit(1)
     require_clean_commit()
     version = _frozen(frozen)
-    _require_unchanged(version.commit, READER_CODE, "the reader changed after it was frozen")
+    require_unchanged(version.commit, READER_CODE, "the reader changed after it was frozen")
     documents = sorted(select(findit_documents(data_dir), Split.VAL), key=lambda d: d.doc_id)
     ocr = cached_ocr(cache)
     targets = [
@@ -785,21 +786,6 @@ def llm_read_validation(  # noqa: PLR0913, PLR0917 - one option per input and ou
         "without an answer"
     )
     console.print("nothing is measured; Phase 5 takes the fields from the store")
-
-
-def _require_unchanged(commit: str, paths: Sequence[str], problem: str) -> None:
-    """Stop if the committed files under ``paths`` differ from ``commit``.
-
-    Raises:
-        typer.Exit: If they changed, or git cannot compare with the commit.
-    """
-    changed = changed_since(commit, paths)
-    if changed is None:
-        console.print(f"[red]cannot compare with commit {commit[:12]}[/red]")
-        raise typer.Exit(1)
-    if changed:
-        console.print(f"[red]{problem}[/red] at {commit[:12]}: " + ", ".join(changed))
-        raise typer.Exit(1)
 
 
 @app.command("spending")
