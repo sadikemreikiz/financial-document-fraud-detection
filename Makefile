@@ -69,9 +69,10 @@ reports:  ## Regenerate every report that the current code produces
 check-reports: reports  ## Fail if a committed report differs from its regeneration
 	git diff --exit-code -- reports
 
-fusion-preregistration:  ## Data behind ADR-0029 (needs artifacts/llm and artifacts/learned/rounds)
+fusion-preregistration:  ## Data behind ADR-0029 (needs artifacts/llm, artifacts/learned/rounds, artifacts/fusion)
 	uv run python experiments/fusion_preregistration.py
 	uv run python experiments/copy_move_feasibility.py
+	uv run python experiments/input_shift_method.py
 
 bench-ocr:  ## Compare OCR engines on training receipts (downloads docTR and PyTorch)
 	uv run --with "python-doctr[torch]>=1.1.0" --with "torch>=2.14.1" --with "torchvision>=0.29.1" \

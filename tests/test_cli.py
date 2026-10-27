@@ -3,6 +3,7 @@ import json
 import shutil
 import zipfile
 from collections.abc import Sequence
+from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from functools import partial
@@ -662,9 +663,45 @@ def test_the_training_report_renders_from_its_latest_run_record(tmp_path: Path) 
     assert "no fusion-training-oof record" in runner.invoke(app, empty).output
 
 
-def test_the_validation_check_runs_once_on_the_tables_its_records_describe(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
+@dataclass
+class Recorded:
+    """Both inputs tables on disk, their run records, and the commands that read them."""
+
+    tmp: Path
+    runs: Path
+    store: JsonRunStore
+    paths: dict[str, Path]
+    training: Any
+    training_run: Any
+
+    def check(self, **options: Path) -> Any:
+        """Run the validation check, with other tables or runs where given."""
+        given = self.paths | options
+        return runner.invoke(
+            app,
+            [
+                *("fusion", "validation-check", "--runs", str(given.get("runs", self.runs))),
+                *("--training", str(given["training"]), "--validation", str(given["validation"])),
+                *("--output", str(self.tmp / "check.md")),
+            ],
+        )
+
+    def shift(self, output: Path) -> Any:
+        """Run the comparison of the inputs."""
+        tables_given = ["--training", str(self.paths["training"])]
+        tables_given += ["--validation", str(self.paths["validation"])]
+        command = ["fusion", "input-shift", "--runs", str(self.runs), *tables_given]
+        return runner.invoke(app, [*command, "--output", str(output)])
+
+
+def said(result: Any) -> str:
+    """A command's output with the console's line wrapping undone."""
+    return " ".join(result.output.split())
+
+
+@pytest.fixture
+def recorded(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Recorded:
+    """Both inputs tables with the run records that made them, from a clean commit."""
     training, y_train, validation, checked = tables()
     train = [
         Document(
@@ -699,50 +736,55 @@ def test_the_validation_check_runs_once_on_the_tables_its_records_describe(
         current.log("sha256", hashlib.sha256(paths["validation"].read_bytes()).hexdigest())
     monkeypatch.setattr(cli_common, "load_findit2", lambda _: (*train, *checked))
     monkeypatch.setattr(cli_common, "code_version", lambda: clean)
+    monkeypatch.setattr(cli_common, "changed_since", lambda *_: [])
     monkeypatch.setattr(cli_fusion, "_pages", lambda documents: pages(list(documents)))
     monkeypatch.setattr(cli_fusion, "validation_check", partial(validation_check, resamples=50))
-    report = tmp_path / "check.md"
+    return Recorded(tmp_path, runs, store, paths, training, training_run)
 
-    def said(result: Any) -> str:
-        """The command's output with the console's line wrapping undone."""
-        return " ".join(result.output.split())
 
-    def check(**options: Path) -> Any:
-        given = paths | options
-        return runner.invoke(
-            app,
-            [
-                *("fusion", "validation-check", "--runs", str(given.get("runs", runs))),
-                *("--training", str(given["training"]), "--validation", str(given["validation"])),
-                *("--output", str(report)),
-            ],
-        )
-
-    assert "no fusion-validation-inputs record" in said(check(runs=tmp_path / "none"))
+def test_the_validation_check_refuses_tables_code_and_an_order_it_cannot_trust(
+    recorded: Recorded, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    assert "no fusion-validation-inputs record" in said(recorded.check(runs=recorded.tmp / "x"))
     monkeypatch.setattr(cli_common, "changed_since", lambda *_: ["src/docfraud/fusion/model.py"])
-    assert "the code changed since the validation inputs were made" in said(check())
+    assert "the code changed since the validation inputs were made" in said(recorded.check())
+    assert "the code changed" in said(recorded.shift(recorded.tmp / "shift.md"))
     monkeypatch.setattr(cli_common, "changed_since", lambda *_: [])
-    other = tmp_path / "other.json"
-    save_table(table_of_seeds(training, (0, 1)), other)
-    assert "is not the table" in said(check(training=other))
-    other.write_text(paths["validation"].read_text(encoding="utf-8") + "\n", encoding="utf-8")
-    assert "is not the table" in said(check(validation=other))
-    assert not store.records("fusion-validation-check")
-    result = check()
+    other = recorded.tmp / "other.json"
+    save_table(table_of_seeds(recorded.training, (0, 1)), other)
+    assert "is not the table" in said(recorded.check(training=other))
+    other.write_text(recorded.paths["validation"].read_text(encoding="utf-8") + "\n", "utf-8")
+    assert "is not the table" in said(recorded.check(validation=other))
+    assert "compare the inputs of both splits first" in said(recorded.check())
+    assert not recorded.store.records("fusion-validation-check")
+
+
+def test_the_inputs_are_compared_then_the_validation_check_runs_once(recorded: Recorded) -> None:
+    store, shift_report = recorded.store, recorded.tmp / "shift.md"
+    shifted = recorded.shift(shift_report)
+    assert shifted.exit_code == 0, shifted.output
+    (compared,) = store.records("fusion-input-shift")
+    (inputs_run,) = store.records("fusion-validation-inputs")
+    assert compared.config["validation_inputs"] == inputs_run.run_id
+    assert len(compared.results["comparisons"]) == 21
+    assert "Every fusion input, training → validation" in shift_report.read_text("utf-8")
+    result = recorded.check()
     assert result.exit_code == 0, result.output
     (made,) = store.records("fusion-validation-check")
-    assert made.config["training_inputs"] == training_run.run_id
+    assert made.config["training_inputs"] == recorded.training_run.run_id
     assert made.test_unlocks == ()
     assert set(made.results) >= {"transcript", "ocr", "policy", "grounding", "rq4"}
-    text = report.read_text(encoding="utf-8")
+    text = (recorded.tmp / "check.md").read_text(encoding="utf-8")
     assert "What Phase 7 applies to the test split" in text
-    again = check()
-    assert again.exit_code == 1
-    assert "refusing to run again" in said(again)
-    rendered = tmp_path / "again.md"
-    args = ["fusion", "validation-report", "--runs", str(runs), "--output", str(rendered)]
-    assert runner.invoke(app, args).exit_code == 0
-    assert rendered.read_text(encoding="utf-8") == text
+    for late in (recorded.check(), recorded.shift(recorded.tmp / "late.md")):
+        assert late.exit_code == 1
+        assert "refusing to run again" in said(late)
+    rendered = recorded.tmp / "again.md"
+    for command, made_text in (("validation-report", text), ("input-shift-report", None)):
+        args = ["fusion", command, "--runs", str(recorded.runs), "--output", str(rendered)]
+        assert runner.invoke(app, args).exit_code == 0
+        expected = made_text or shift_report.read_text(encoding="utf-8")
+        assert rendered.read_text(encoding="utf-8") == expected
 
 
 def test_validation_receipts_are_read_without_their_labels_and_annotations() -> None:

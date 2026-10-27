@@ -2,6 +2,7 @@
 
 import hashlib
 from collections.abc import Sequence
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Annotated
 
@@ -39,7 +40,7 @@ from docfraud.evaluation.runs import JsonRunStore, RunRecord, changed_since, run
 from docfraud.forensics.learned.rounds import SEEDS, run_directory
 from docfraud.forensics.learned.sampler import System
 from docfraud.forensics.learned.training import MODEL
-from docfraud.fusion import validation_report
+from docfraud.fusion import shift_report, validation_report
 from docfraud.fusion.development import (
     CATCHERS,
     PRACTICAL_VARIANTS,
@@ -57,8 +58,11 @@ from docfraud.fusion.development import (
 )
 from docfraud.fusion.development_report import render_report
 from docfraud.fusion.evidence import SystemTwo, page_findings
+from docfraud.fusion.shift import RUN_NAME as SHIFT_RUN
+from docfraud.fusion.shift import input_shift
 from docfraud.fusion.training_inputs import (
     RUN_NAME,
+    InputsTable,
     load_table,
     save_table,
     stored_system_2,
@@ -83,6 +87,7 @@ app = typer.Typer(help="Fusion of the findings.", no_args_is_help=True)
 TRAINING_INPUTS = Path("artifacts/fusion/training-inputs.json")
 VALIDATION_INPUTS = Path("artifacts/fusion/validation-inputs.json")
 VALIDATION_REPORT = Path("reports/fusion/validation-check.md")
+SHIFT_REPORT = Path("reports/fusion/input-shift.md")
 Runs = Annotated[Path, typer.Option(help="Where reported run records are kept.")]
 Output = Annotated[Path, typer.Option(help="Where to write the report.")]
 
@@ -418,26 +423,23 @@ def validation_inputs_command(  # pragma: no cover - needs the dataset, LLM answ
     console.print(f"[green]written[/green] {output}: {len(table.receipts)} rows")
 
 
-@app.command("validation-check")
-def validation_check_command(
-    data_dir: DataDir = Path("data"),
-    runs: Runs = REPORTED_RUNS,
-    training: Annotated[Path, typer.Option(help="The training inputs table.")] = TRAINING_INPUTS,
-    validation: Annotated[
-        Path, typer.Option(help="The validation inputs table.")
-    ] = VALIDATION_INPUTS,
-    output: Output = VALIDATION_REPORT,
-) -> None:
-    """Check the frozen system once on the validation split (ADR-0029, sections 1, 8 to 13).
+@dataclass(frozen=True, slots=True)
+class _Recorded:
+    """Both inputs tables, checked against the run records that made them."""
 
-    Refuses to run again. Runs only from a clean commit whose code is that of the validation
-    inputs, on the two tables their run records describe. Only aggregates go to the run record
-    and the report, with what Phase 7 applies to the test split: every row's model, Platt
-    scaling and max-F1 threshold, and the review policy's thresholds.
+    training_run: RunRecord
+    inputs_run: RunRecord
+    training: InputsTable
+    validation: InputsTable
+
+
+def _recorded_tables(store: JsonRunStore, training: Path, validation: Path) -> _Recorded:
+    """The tables that the latest validation inputs and their training inputs describe.
+
+    Stops unless the validation inputs were made from a clean commit whose source code is the
+    current one, and each table on disk is the one its record describes: the training table by
+    its aggregates, the validation table by its SHA-256.
     """
-    store = JsonRunStore(runs)
-    _refuse_after_the_check(store)
-    require_clean_commit()
     inputs_run = _latest(store, VALIDATION_INPUTS_RUN)
     if inputs_run.code.commit is None or inputs_run.code.dirty is not False:
         console.print(f"[red]{inputs_run.run_id} was not made from a clean commit[/red]")
@@ -453,7 +455,89 @@ def validation_check_command(
     if _sha256(validation) != inputs_run.results["sha256"]:
         console.print(f"[red]{validation} is not the table {inputs_run.run_id} wrote[/red]")
         raise typer.Exit(1)
-    validation_inputs = load_table(validation)
+    return _Recorded(training_run, inputs_run, training_table, load_table(validation))
+
+
+Training = Annotated[Path, typer.Option(help="The training inputs table.")]
+Validation = Annotated[Path, typer.Option(help="The validation inputs table.")]
+
+
+@app.command("input-shift")
+def input_shift_command(
+    runs: Runs = REPORTED_RUNS,
+    training: Training = TRAINING_INPUTS,
+    validation: Validation = VALIDATION_INPUTS,
+    output: Output = SHIFT_REPORT,
+) -> None:
+    """Compare every fusion input between the two splits, without labels (ADR-0029, 7 (d)).
+
+    Reads the two tables only, no receipt and no label, and only those their run records
+    describe. Runs only from a clean commit whose source code is that of the validation inputs,
+    and never after the validation check, which needs this comparison first.
+    """
+    store = JsonRunStore(runs)
+    _refuse_after_the_check(store)
+    require_clean_commit()
+    recorded = _recorded_tables(store, training, validation)
+    source = SOURCES[DatasetName.FINDIT2.value]
+    with run(
+        SHIFT_RUN,
+        store=store,
+        config={
+            "decision": "ADR-0029",
+            "training_inputs": recorded.training_run.run_id,
+            "validation_inputs": recorded.inputs_run.run_id,
+            "validation_sha256": recorded.inputs_run.results["sha256"],
+        },
+        seeds={"permutation": 0},
+        dataset_sha256={source.name: source.sha256},
+    ) as current:
+        for key, value in input_shift(recorded.training, recorded.validation, seeds=SEEDS).items():
+            current.log(key, value)
+    input_shift_report_command(runs, output)
+
+
+@app.command("input-shift-report")
+def input_shift_report_command(runs: Runs = REPORTED_RUNS, output: Output = SHIFT_REPORT) -> None:
+    """Render the comparison of the inputs on both splits from its run record."""
+    record = _latest(JsonRunStore(runs), SHIFT_RUN)
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text(
+        shift_report.render_report(record.results, record.code.commit), encoding="utf-8"
+    )
+    console.print(f"[green]written[/green] {output}")
+
+
+@app.command("validation-check")
+def validation_check_command(
+    data_dir: DataDir = Path("data"),
+    runs: Runs = REPORTED_RUNS,
+    training: Training = TRAINING_INPUTS,
+    validation: Validation = VALIDATION_INPUTS,
+    output: Output = VALIDATION_REPORT,
+) -> None:
+    """Check the frozen system once on the validation split (ADR-0029, sections 1, 8 to 13).
+
+    Refuses to run again. Runs only from a clean commit whose code is that of the validation
+    inputs, on the two tables their run records describe, and only after the inputs of both
+    splits have been compared (``input-shift``). Only aggregates go to the run record
+    and the report, with what Phase 7 applies to the test split: every row's model, Platt
+    scaling and max-F1 threshold, and the review policy's thresholds.
+    """
+    store = JsonRunStore(runs)
+    _refuse_after_the_check(store)
+    require_clean_commit()
+    recorded = _recorded_tables(store, training, validation)
+    training_run, inputs_run = recorded.training_run, recorded.inputs_run
+    training_table, validation_inputs = recorded.training, recorded.validation
+    if not any(
+        r.config.get("validation_inputs") == inputs_run.run_id for r in store.records(SHIFT_RUN)
+    ):
+        console.print(
+            "[red]compare the inputs of both splits first[/red] (ADR-0029, section 7 (d)): "
+            "docfraud fusion input-shift"
+        )
+        raise typer.Exit(1)
     documents = findit_documents(data_dir)
     train = sorted(select(documents, Split.TRAIN), key=lambda d: d.doc_id)
     checked = sorted(select(documents, Split.VAL), key=lambda d: d.doc_id)
