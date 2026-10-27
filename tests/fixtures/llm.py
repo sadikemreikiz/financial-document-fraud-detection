@@ -1,5 +1,6 @@
 """A provider that answers without calling any API, for tests of the LLM reader."""
 
+import json
 from collections.abc import Sequence
 from pathlib import Path
 
@@ -44,4 +45,26 @@ class FakeProvider:
                 seconds=None if batch else SECONDS,
             )
             for n, r in enumerate(requests)
+        ]
+
+
+class FakeDetector(FakeProvider):
+    """Answers the detector's requests: a high score for receipts whose text says EDITED."""
+
+    def run(self, requests: Sequence[Request], *, batch: bool) -> list[Response]:
+        answered = super().run(requests, batch=batch)
+        return [
+            response
+            if response.answer is None
+            else response.model_copy(
+                update={
+                    "answer": json.dumps(
+                        {
+                            "suspicion": 90 if "EDITED" in request.user else 10,
+                            "reasons": ["the total"],
+                        }
+                    )
+                }
+            )
+            for request, response in zip(requests, answered, strict=True)
         ]

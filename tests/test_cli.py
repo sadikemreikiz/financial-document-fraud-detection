@@ -24,6 +24,7 @@ from docfraud.cli import baseline as cli_baseline
 from docfraud.cli import common as cli_common
 from docfraud.cli import copy_move as cli_copy_move
 from docfraud.cli import data as cli_data
+from docfraud.cli import detector as cli_detector
 from docfraud.cli import forensics as cli_forensics
 from docfraud.cli import fusion as cli_fusion
 from docfraud.cli import llm as cli_llm
@@ -61,11 +62,14 @@ from docfraud.llm.adjudication import (
     load_questions,
 )
 from docfraud.llm.adjudication import save_log as save_adjudication
+from docfraud.llm.cost import Ledger
 from docfraud.llm.decision import ModelStep
+from docfraud.llm.detector_rounds import FrozenDetector, load_rounds
 from docfraud.llm.false_alarms import FIXED_AT
 from docfraud.llm.frozen import load_split_reading
 from docfraud.llm.gold_b import load_measurement
-from docfraud.llm.run import COMPARISON_SETTINGS, ForbiddenDocumentsError
+from docfraud.llm.run import COMPARISON_SETTINGS, ForbiddenDocumentsError, Runner
+from docfraud.llm.store import ResponseStore
 from docfraud.reading.fields import ReceiptFields
 from docfraud.reading.ocr import OcrResult
 from docfraud.synthesis.engine import Engine
@@ -81,9 +85,10 @@ from tests.data.test_observation import observation_documents, receipt_answers
 from tests.detectors.test_copy_move_measurement import measured
 from tests.evaluation.test_folds import documents as fold_documents
 from tests.fixtures.findit import load_toy
-from tests.fixtures.llm import FakeProvider
+from tests.fixtures.llm import FakeDetector, FakeProvider
 from tests.fusion.test_development import report_record
 from tests.fusion.test_validation import N_TRAIN, pages, tables
+from tests.llm.test_detector import development
 from tests.synthesis.pages import documents as synthesis_documents
 from tests.synthesis.pages import font as synthesis_font
 from tests.synthesis.pages import receipt as synthesis_receipt
@@ -1596,3 +1601,83 @@ def test_llm_the_validation_split_is_read_only_by_the_frozen_reader(
     assert result.exit_code == 1
     assert "the reader changed after it was frozen at abc123" in flat(result.output)
     assert not record.exists()
+
+
+def test_the_detector_is_developed_frozen_and_timed_on_the_design_fold_only(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    docs = [d for d in corpus(tmp_path / "corpus") if d.split is Split.TRAIN][:8]
+    for document in docs:
+        Image.new("L", (40, 30), 200).save(document.image_path)
+    instructions = tmp_path / "instructions"
+    instructions.mkdir()
+    written = (Path("src/docfraud/llm/instructions/detector-v1.md")).read_text(encoding="utf-8")
+    (instructions / "detector-v1.md").write_text(written, encoding="utf-8")
+    (instructions / "detector-v2.md").write_text(written + "\nBe brief.\n", encoding="utf-8")
+    answering = Runner(
+        FakeDetector(), ResponseStore(tmp_path / "store"), Ledger(tmp_path / "ledger.jsonl")
+    )
+    clean = CodeVersion(commit="b" * 40, dirty=False)
+    monkeypatch.setattr(cli_common, "load_findit2", lambda _: tuple(docs))
+    monkeypatch.setattr(cli_common, "RapidOcrEngine", FakeOcr)
+    monkeypatch.setattr(cli_detector, "DESIGN_FOLD_IDS", frozenset(d.doc_id for d in docs))
+    monkeypatch.setattr(cli_detector, "INSTRUCTIONS", instructions)
+    monkeypatch.setattr(cli_detector, "_runner", lambda *_: answering)
+    monkeypatch.setattr(cli_detector, "code_version", lambda: clean)
+    rounds = tmp_path / "rounds"
+    options = ["--rounds", str(rounds), "--cache", str(tmp_path / "ocr")]
+
+    def develop(*more: str) -> Any:
+        return runner.invoke(app, ["detector", "develop", *options, *more])
+
+    assert "run version 1" in develop("--version", "2").output
+    assert "versions (1, 2) only" in develop("--version", "3").output
+    pilot = develop("--version", "1", "--pilot")
+    assert pilot.exit_code == 0, pilot.output
+    assert pilot.output.count("transcript ·") == 5
+    monkeypatch.setattr(cli_common, "code_version", lambda: CodeVersion(commit="b", dirty=True))
+    assert "commit all changes first" in develop("--version", "1").output
+    monkeypatch.setattr(cli_common, "code_version", lambda: clean)
+    for version in ("1", "2"):
+        result = develop("--version", version)
+        assert result.exit_code == 0, result.output
+    developed = load_rounds(rounds)
+    transcript = developed[1].rows["transcript"]
+    assert (transcript.receipts, transcript.forged, transcript.failures) == (8, 2, 0)
+    assert transcript.average_precision == pytest.approx(1.0)  # its text says EDITED
+    assert developed[1].commit == clean.commit
+    freeze = ["detector", "freeze", "--rounds", str(rounds)]
+    assert runner.invoke(app, freeze).exit_code == 0
+    frozen = FrozenDetector.model_validate_json((rounds / "frozen.json").read_text("utf-8"))
+    assert frozen.version == 1  # version 2 is not clearly better
+    assert "frozen once" in runner.invoke(app, freeze).output
+    assert "development has ended" in develop("--version", "2").output
+    timed = runner.invoke(app, ["detector", "latency", *options])
+    assert timed.exit_code == 0, timed.output
+    latency = json.loads((rounds / "latency.json").read_text(encoding="utf-8"))
+    assert latency["image and OCR text"]["timed"] == 8
+    assert latency["transcript"]["median_seconds"] == pytest.approx(1.5)
+
+
+def test_the_detector_refuses_to_freeze_or_time_what_it_cannot_trust(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    rounds = tmp_path / "rounds"
+    clean = CodeVersion(commit="c" * 40, dirty=False)
+    monkeypatch.setattr(cli_common, "code_version", lambda: clean)
+    monkeypatch.setattr(cli_detector, "code_version", lambda: clean)
+    freeze = ["detector", "freeze", "--rounds", str(rounds)]
+    latency = ["detector", "latency", "--rounds", str(rounds)]
+    assert "version 1 has not run" in " ".join(runner.invoke(app, freeze).output.split())
+    assert "freeze a version first" in " ".join(runner.invoke(app, latency).output.split())
+    instruction = tmp_path / "detector-v1.md"
+    instruction.write_text("first", encoding="utf-8")
+    developed = development(1, 0.5).model_copy(
+        update={"instruction": str(instruction)}  # its hash is not the file's: it changed
+    )
+    rounds.mkdir()
+    (rounds / "round-v1.json").write_text(developed.model_dump_json(), encoding="utf-8")
+    assert "changed after version 1 ran" in " ".join(runner.invoke(app, freeze).output.split())
+    frozen = developed.model_dump(mode="json", exclude={"rows"})
+    (rounds / "frozen.json").write_text(json.dumps(frozen), encoding="utf-8")
+    assert "changed after it was frozen" in " ".join(runner.invoke(app, latency).output.split())

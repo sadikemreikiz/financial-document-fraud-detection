@@ -39,29 +39,67 @@ class Settings(_Frozen):
     effort: Effort
 
 
+IMAGE_PIXELS_PER_TOKEN = 750
+"""About how many pixels one image token covers, as the provider estimates image tokens."""
+
+
+class Image(_Frozen):
+    """An image sent before the text of a request: PNG data in base64 and its size in pixels."""
+
+    media_type: Literal["image/png"] = "image/png"
+    data: str
+    width: int = Field(gt=0)
+    height: int = Field(gt=0)
+
+    @property
+    def sha256(self) -> str:
+        """A hash of the image data, which stands for the image in a request's key."""
+        return hashlib.sha256(self.data.encode()).hexdigest()
+
+    @property
+    def tokens(self) -> int:
+        """The input tokens the image costs, by the provider's estimate."""
+        return -(-self.width * self.height // IMAGE_PIXELS_PER_TOKEN)
+
+
 class Request(_Frozen):
-    """One question to a model: fixed instructions, one receipt, and the form of the answer."""
+    """One question to a model: fixed instructions, one receipt, and the form of the answer.
+
+    A request may carry images, which the model sees before the text.
+    """
 
     settings: Settings
     system: str
     user: str
     answer_schema: Mapping[str, object]
     repeat: int = Field(default=0, ge=0, description="0 for a first reading, 1 to read it again")
+    images: tuple[Image, ...] = ()
 
     @property
     def key(self) -> str:
-        """A hash of everything that can change the answer, used to store and match it."""
-        canonical = json.dumps(
-            {
-                "settings": self.settings.model_dump(mode="json"),
-                "system": self.system,
-                "user": self.user,
-                "schema": self.answer_schema,
-                "repeat": self.repeat,
-            },
-            sort_keys=True,
-            ensure_ascii=False,
-        )
+        """A hash of everything that can change the answer, used to store and match it.
+
+        Images enter as their hashes and sizes, and only when there are any, so that a request
+        without images keeps the key it had before images could be sent.
+        """
+        identity: dict[str, object] = {
+            "settings": self.settings.model_dump(mode="json"),
+            "system": self.system,
+            "user": self.user,
+            "schema": self.answer_schema,
+            "repeat": self.repeat,
+        }
+        if self.images:
+            identity["images"] = [
+                {
+                    "media_type": i.media_type,
+                    "sha256": i.sha256,
+                    "width": i.width,
+                    "height": i.height,
+                }
+                for i in self.images
+            ]
+        canonical = json.dumps(identity, sort_keys=True, ensure_ascii=False)
         return hashlib.sha256(canonical.encode()).hexdigest()
 
 

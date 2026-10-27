@@ -127,20 +127,40 @@ class Runner:
             RuntimeError: If no pilot request was answered, so nothing can be projected.
         """
         requests = self.requests(settings, instruction, targets, repeat=repeat)
+        self.answer(requests, batch=batch)
+        return [self._read(r, t) for r, t in zip(requests, targets, strict=True)]
+
+    def answer(self, requests: Sequence[Request], *, batch: bool = True) -> list[Response | None]:
+        """Answer every request that has no stored answer, and return each stored response.
+
+        A pilot of the first requests is sent one by one, after checking its worst case against
+        the limit; its measured cost projects the rest, which go to the batch service (or one
+        by one, timed, without ``batch``) only if the projection stays within the limit.
+
+        Raises:
+            ValueError: If the requests name more than one model.
+            SpendingLimitError: Before the pilot or the batch, if it could pass the limit.
+            RuntimeError: If no pilot request was answered, so nothing can be projected.
+        """
+        models = {request.settings.model for request in requests}
+        if len(models) > 1:
+            msg = f"one model per run, not {sorted(models)}"
+            raise ValueError(msg)
         missing = self.store.missing(requests)
         if missing:
+            model = missing[0].settings.model
             pilot, rest = missing[: self.pilot], missing[self.pilot :]
             self.ledger.check(worst_case(pilot))
-            paid = self._settle(self.provider.run(pilot, batch=False), settings.model)
+            paid = self._settle(self.provider.run(pilot, batch=False), model)
             if rest:
                 if not paid:
                     msg = "no pilot request was answered; nothing is sent in a batch"
                     raise RuntimeError(msg)
-                spent = sum((cost(r.usage, settings.model, batch=False) for r in paid), Decimal(0))
+                spent = sum((cost(r.usage, model, batch=False) for r in paid), Decimal(0))
                 per_request = spent / len(paid) * (BATCH_FACTOR if batch else 1)
                 self.ledger.check(per_request * len(rest) * self.margin)
-                self._settle(self.provider.run(rest, batch=batch), settings.model)
-        return [self._read(r, t) for r, t in zip(requests, targets, strict=True)]
+                self._settle(self.provider.run(rest, batch=batch), model)
+        return [self.store.get(request.key) for request in requests]
 
     def _settle(self, responses: Sequence[Response], model: str) -> list[Response]:
         """Record what was paid and store every response worth keeping.
@@ -164,14 +184,15 @@ class Runner:
 def worst_case(requests: Sequence[Request]) -> Decimal:
     """The most that requests can cost.
 
-    Every input token is priced as a cache write, the dearest input, and every request is
-    assumed to use all of its output tokens.
+    Every input token, an image's included, is priced as a cache write, the dearest input, and
+    every request is assumed to use all of its output tokens.
     """
     return sum(
         (
             cost(
                 Usage(
-                    cache_write_tokens=math.ceil(len(r.system + r.user) / CHARS_PER_TOKEN),
+                    cache_write_tokens=math.ceil(len(r.system + r.user) / CHARS_PER_TOKEN)
+                    + sum(image.tokens for image in r.images),
                     output_tokens=r.settings.max_tokens,
                 ),
                 r.settings.model,
