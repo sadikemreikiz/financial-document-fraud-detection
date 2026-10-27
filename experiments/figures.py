@@ -1,10 +1,12 @@
-"""Figures of the clean measurement (ADR-0020), in light and dark versions.
+"""Figures of the clean measurement (ADR-0020) and of Phase 5's validation check (ADR-0029).
 
-Writes two figures to reports/forensics/figures, each as an SVG for a light and a dark page:
-the document-level average precision of every system with its 95 % interval against chance,
-and how often each system's top region hits an edit against a random box of the same size. The
+Every figure is written as an SVG for a light and a dark page. To reports/forensics/figures: the
+document-level average precision of every Phase 4 system with its 95 % interval against chance,
+and how often each system's top region hits an edit against a random box of the same size; the
 numbers are computed by docfraud.forensics.clean_report from what the measurement kept, as in
-its report; the report's tables are the figures' table view.
+its report. To reports/fusion/figures: the average precision of the fusion model, the
+score-level baseline and each single source on the validation split, for both text sources,
+read from the validation check's run record. The reports' tables are the figures' table view.
 
 matplotlib is not a project dependency; ``make figures`` supplies a pinned version. The SVGs carry
 no date and a fixed hash salt, so that the same numbers give the same files.
@@ -23,6 +25,7 @@ mpl.use("svg")
 import matplotlib.pyplot as plt
 
 from docfraud.evaluation.bootstrap import Estimate
+from docfraud.evaluation.runs import JsonRunStore
 from docfraud.forensics.clean import PROBE
 from docfraud.forensics.clean_report import (
     MAP_SYSTEMS,
@@ -38,6 +41,8 @@ from docfraud.forensics.clean_report import (
 
 ROOT = Path(__file__).resolve().parents[1]
 FIGURES = ROOT / "reports" / "forensics" / "figures"
+FUSION_FIGURES = ROOT / "reports" / "fusion" / "figures"
+VALIDATION_RUN = "fusion-validation-check"
 
 LABELS = {
     1: "System 1 · JPEG lattice",
@@ -117,14 +122,21 @@ def _axes(theme: Theme, rows: int, top: float, bottom: float) -> tuple[Any, Any]
 
 
 def _interval(  # noqa: PLR0913 - one mark and where it goes
-    axes: Any, row: int, estimate: Estimate, colour: str, theme: Theme, *, label: bool = True
+    axes: Any,
+    row: float,
+    estimate: Estimate,
+    colour: str,
+    theme: Theme,
+    *,
+    label: bool = True,
+    marker: str = "o",
 ) -> None:
     axes.hlines(row, estimate.low, estimate.high, color=colour, linewidth=2, capstyle="round")
     axes.plot(
         estimate.value,
         row,
-        "o",
-        markersize=8,
+        marker,
+        markersize=8 if marker == "o" else 7,
         color=colour,
         markeredgecolor=theme.surface,
         markeredgewidth=2,
@@ -146,9 +158,9 @@ def _note(figure: Any, note: str, theme: Theme) -> None:
     figure.text(0.012, 0.1 / figure.get_figheight(), note, fontsize=8, color=theme.muted)
 
 
-def _save(figure: Any, name: str, theme: Theme) -> Path:
-    FIGURES.mkdir(parents=True, exist_ok=True)
-    path = FIGURES / f"{name}-{theme.name}.svg"
+def _save(figure: Any, name: str, theme: Theme, directory: Path = FIGURES) -> Path:
+    directory.mkdir(parents=True, exist_ok=True)
+    path = directory / f"{name}-{theme.name}.svg"
     figure.savefig(path, format="svg", metadata={"Date": None})
     plt.close(figure)
     lines = path.read_text(encoding="utf-8").splitlines()  # matplotlib leaves trailing spaces
@@ -239,16 +251,93 @@ def localisation_figure(data: CleanData, order: Sequence[int], theme: Theme) -> 
         return _save(figure, "clean-localisation", theme)
 
 
+FUSION_ROWS = {
+    "fusion": "Fusion",
+    "score-level baseline": "Fusion without the links",
+    "copy-move": "Copy-move alone",
+    "pixel evidence": "Pixel evidence alone",
+    "accounting rules": "Accounting rules alone",
+}
+"""The rows of the validation figure: the fusion model, its baseline and RQ2's comparators."""
+
+TRACK_MARKS = (("transcript", "T1 · transcripts", "o"), ("ocr", "T2 · OCR", "D"))
+
+
+def validation_figure(results: Any, theme: Theme) -> Path:
+    """Average precision of fusion, its baseline and each single source, on both text sources."""
+    receipts, forged = results["transcript"]["receipts"], results["transcript"]["forged"]
+    chance = forged / receipts
+    with plt.rc_context(_style(theme)):
+        figure, axes = _axes(theme, len(FUSION_ROWS), top=1.15, bottom=0.8)
+        figure.subplots_adjust(right=0.8)  # room for the column of values
+        axes.axvline(chance, color=theme.muted, linewidth=1)
+        values_at = axes.get_yaxis_transform()  # x across the axes' width, y in rows
+        for row, name in enumerate(FUSION_ROWS):
+            values = []
+            for k, (track, label, marker) in enumerate(TRACK_MARKS):
+                e = results[track]["table"][name]["average_precision"]
+                estimate = Estimate(e["value"], e["low"], e["high"])
+                offset = -0.14 if k == 0 else 0.14
+                _interval(
+                    axes, row + offset, estimate, theme.series[k], theme, label=False, marker=marker
+                )
+                values.append(f"{label.split(' ')[0]} {estimate.value:.2f}")
+            axes.text(
+                1.03,
+                row,
+                " · ".join(values),
+                transform=values_at,
+                va="center",
+                color=theme.secondary,
+            )
+        axes.set_yticks(range(len(FUSION_ROWS)), list(FUSION_ROWS.values()))
+        axes.set_xlabel("Average precision")
+        handles = [
+            axes.plot([], [], marker, markersize=8, color=theme.series[k])[0]
+            for k, (_, _, marker) in enumerate(TRACK_MARKS)
+        ]
+        axes.legend(
+            handles,
+            [label for _, label, _ in TRACK_MARKS],
+            loc="lower left",
+            bbox_to_anchor=(0, 1.02),
+            ncol=2,
+            frameon=False,
+            borderaxespad=0,
+            handletextpad=0.4,
+            columnspacing=1.6,
+            labelcolor=theme.secondary,
+        )
+        _title(
+            figure,
+            "Average precision on the validation split, checked once",
+            f"{receipts} receipts, {forged} forged · dots with 95 % intervals · system 2 seed 0",
+            theme,
+        )
+        _note(
+            figure,
+            f"Grey line: chance, the share of forged receipts ({chance:.2f}). The claims are made "
+            "on the test split in Phase 7.",
+            theme,
+        )
+        return _save(figure, "validation-precision", theme, FUSION_FIGURES)
+
+
 def main() -> None:
-    """Write both figures in both themes."""
+    """Write every figure in both themes."""
     data = load(Sources.of(ROOT))
     precision = {
         s: precision_interval(pooled(data, s).labels, pooled(data, s).scores, data.resamples).value
         for s in MAP_SYSTEMS
     }
     order = sorted(MAP_SYSTEMS, key=lambda s: -precision[s])  # the highest first
+    validation = JsonRunStore(ROOT / "reports" / "runs").records(VALIDATION_RUN)[-1].results
     for theme in (LIGHT, DARK):
-        for path in (precision_figure(data, order, theme), localisation_figure(data, order, theme)):
+        for path in (
+            precision_figure(data, order, theme),
+            localisation_figure(data, order, theme),
+            validation_figure(validation, theme),
+        ):
             print(f"written: {path.relative_to(ROOT)}")  # noqa: T201
 
 

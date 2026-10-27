@@ -17,22 +17,27 @@ forgeries.
   the way I found a shortcut in the dataset: a rule that looks only at the file format beats the
   best published result (F1 79.3 against 28.39), so every image is normalised before any model
   sees it.
-- **Result so far:** a model trained only on forgeries from my own synthetic engine finds real
-  human forgeries it has never seen with an average precision of 0.65 (chance 0.17), and points
-  to the edited region on 69 % of them, in a single pre-registered measurement on held-out folds.
+- **Result so far:** combining copy-move detection, pixel forensics and the accounting rules
+  ranks forged receipts with an average precision of 0.85 (chance 0.17), above every single
+  source, in one pre-registered check on the validation split; at a 10 % review budget all 19
+  receipts sent to review are forged, and the first region an audit report shows hits the edit
+  on 30 of the 33 forgeries. The pixel model behind it was trained only on forgeries from my own synthetic
+  engine.
 - **Built with:** Python 3.14, PyTorch, scikit-learn, RapidOCR, the Claude API, pytest, mypy in
   strict mode and CI on every pull request.
-- **Status:** Phases 0 to 4 and 6a of 8 complete. In Phase 6a an LLM that reads the receipt
-  fields replaced the rule-based parser: with its fields the accounting rules raise fewer false
-  alarms, under a rule fixed in advance. Phase 5, which combines the evidence, is next.
+- **Status:** Phases 0 to 5 and 6a of 8 complete. Phase 5 combined the evidence into one
+  decision and an audit report, checked once on the validation split. Phase 6b, an LLM agent
+  that prepares the case file of a receipt sent to review, is next; the test split stays locked
+  until Phase 7.
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="reports/forensics/figures/clean-precision-dark.svg">
-  <img alt="Document-level average precision on the clean folds, with 95 % intervals: system 2 (synthetic forgeries) 0.65, system 1 (JPEG lattice) 0.51, system 4 (both) 0.44, system 3 (real forgeries) 0.30, system 6 (TruFor) 0.18, probe 0.19; chance 0.17." src="reports/forensics/figures/clean-precision-light.svg">
+  <source media="(prefers-color-scheme: dark)" srcset="reports/fusion/figures/validation-precision-dark.svg">
+  <img alt="Average precision on the validation split, with 95 % intervals, on transcripts (T1) and OCR text (T2): fusion 0.85 and 0.83, fusion without the links 0.83 and 0.82, copy-move alone 0.75, pixel evidence alone 0.66, accounting rules alone 0.39 and 0.32; chance 0.17." src="reports/fusion/figures/validation-precision-light.svg">
 </picture>
 
-How well each pixel-forensics system ranks the 75 forged receipts among 449 that no person had
-viewed, in the single measurement of Phase 4 ([Phase 4 results](reports/forensics/README.md)).
+How well the fused system and each source alone rank the 33 forged receipts among the 190 of the
+validation split, in the one check of Phase 5 ([Phase 5 results](reports/fusion/README.md)).
+Phase 4's measurement of the pixel systems is in the [Phase 4 results](reports/forensics/README.md).
 
 This repository is **v2** of my M.Sc. thesis (University of Europe for Applied Sciences, Berlin,
 2026). It is a rebuild from scratch: when I reviewed the thesis implementation after
@@ -41,8 +46,8 @@ same research questions properly. See [From thesis to v2](docs/thesis-review.md)
 
 ## Status
 
-**Under active development.** Phases 0 to 4 of the [roadmap](docs/project-charter.md#roadmap)
-are complete: foundations, data, reading, accounting rules and pixel forensics. Reading errors
+**Under active development.** Phases 0 to 5 of the [roadmap](docs/project-charter.md#roadmap)
+are complete: foundations, data, reading, accounting rules, pixel forensics and fusion. Reading errors
 cause most false alarms of the accounting rules, so LLM field extraction moved before Phase 5
 ([ADR-0024](docs/decisions/0024-llm-extraction-before-fusion.md)). Its measurement was fixed in
 advance ([ADR-0025](docs/decisions/0025-llm-extraction-preregistration.md)): the LLM points to
@@ -52,10 +57,12 @@ LLM did not pass ([report](reports/llm/gold-b.md)). A second test, fixed after t
 counted the accounting rules' false alarms with each reader on 482 training receipts
 ([ADR-0027](docs/decisions/0027-llm-reader-judged-by-false-alarms.md)): with the LLM's fields they fall from 37 % to
 18 % of authentic receipts on the transcripts and from 39 % to 31 % on our OCR, so the LLM reads
-the fields from here on ([report](reports/llm/false-alarms.md)). Phase 5 now combines the
-evidence: copy-move detection, linking pixel
-evidence to the fields it changes, fusion with the accounting rules and a decision policy. The
-test split stays locked until the final evaluation of Phase 7.
+the fields from here on ([report](reports/llm/false-alarms.md)). Phase 5 combined the evidence:
+copy-move detection, links between pixel evidence and the fields it changes, fusion with the
+accounting rules, a review policy and an audit report; it was fixed in advance
+([ADR-0029](docs/decisions/0029-fusion-preregistration.md)), frozen and checked once on the
+validation split ([Phase 5 results](reports/fusion/README.md)). The test split stays locked
+until the final evaluation of Phase 7.
 
 ## Findings so far
 
@@ -95,6 +102,18 @@ test split stays locked until the final evaluation of Phase 7.
   in advance. A first test, by exact reading on 30 owner-adjudicated receipts, could not
   tell the two readers apart, and the development set had overstated the LLM: 88 % of receipts
   read exactly there, 30 % on the adjudicated set ([record](docs/llm-development.md#second-test-false-alarms-2026-10-23)).
+- **Combining the evidence beats every single source.** Checked once on the validation split,
+  the fused system reaches an average precision of 0.85 on the transcripts and 0.83 on OCR text,
+  above copy-move detection alone (0.75), pixel forensics alone (0.66) and the accounting rules
+  alone (0.39 and 0.32), each by a paired-bootstrap interval above zero; the claims wait for the
+  test split ([report](reports/fusion/validation-check.md)).
+- **Linking pixels to fields adds little that can be shown.** Without the two links the fused
+  system loses 0.022 (0.0002 to 0.048) on the transcripts and 0.011 (−0.011 to 0.035) on OCR
+  text ([Phase 5 results](reports/fusion/README.md)).
+- **The audit report shows where to look, and states only evidence.** Its first region hits the
+  edit on 30 of the 33 forged validation receipts, where a random box hits about 5 % of the time,
+  and an independent checker found every one of the 16,496 numbers and boxes in 380 reports in
+  the evidence ([report](reports/fusion/validation-check.md)).
 
 ## How the work is done
 
@@ -121,6 +140,7 @@ test split stays locked until the final evaluation of Phase 7.
 | [Phase 2 results](reports/reading/README.md) | OCR choice, field extraction accuracy on two gold sets, known limitations |
 | [Phase 3 results](reports/rules/README.md) | Published baseline reproduced, accounting rules measured once on validation |
 | [Phase 4 results](reports/forensics/README.md) | Pre-registration, real forgeries, reference systems, synthetic engine, learned models, one clean measurement |
+| [Phase 5 results](reports/fusion/README.md) | Copy-move, linking, fusion, review policy and audit report, checked once on the validation split |
 | [Phase 6a pre-registration](docs/decisions/0025-llm-extraction-preregistration.md) | How the LLM field reader is developed, measured once and judged against the parser |
 | [From thesis to v2](docs/thesis-review.md) | Code-verified review of the original implementation |
 
