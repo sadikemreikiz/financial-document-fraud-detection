@@ -1,5 +1,5 @@
 .DEFAULT_GOAL := help
-.PHONY: help install lint format typecheck test test-data check data audit reports check-reports bench-ocr bench-synthesis trufor learned clean-measurement whole-training figures encoder-check fusion-preregistration fusion-diagnostics clean
+.PHONY: help install lint format typecheck test test-data check data audit reports check-reports bench-ocr bench-synthesis trufor learned clean-measurement whole-training figures encoder-check fusion-preregistration fusion-diagnostics llm-preregistration clean
 
 help:  ## Show available targets
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*## "}; {printf "  %-18s %s\n", $$1, $$2}'
@@ -75,6 +75,9 @@ fusion-preregistration:  ## Data behind ADR-0029 (needs artifacts/llm, artifacts
 	uv run python experiments/fusion_preregistration.py
 	uv run python experiments/copy_move_feasibility.py
 	uv run python experiments/input_shift_method.py
+
+llm-preregistration:  ## Data behind ADR-0031 (needs artifacts/llm and artifacts/fusion)
+	uv run python experiments/llm_6b_preregistration.py
 
 fusion-diagnostics:  ## Diagnostics of Phase 5's records (needs artifacts/llm and artifacts/fusion)
 	uv run python experiments/input_shift_rules.py
