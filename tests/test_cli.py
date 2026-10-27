@@ -703,6 +703,10 @@ def test_the_validation_check_runs_once_on_the_tables_its_records_describe(
     monkeypatch.setattr(cli_fusion, "validation_check", partial(validation_check, resamples=50))
     report = tmp_path / "check.md"
 
+    def said(result: Any) -> str:
+        """The command's output with the console's line wrapping undone."""
+        return " ".join(result.output.split())
+
     def check(**options: Path) -> Any:
         given = paths | options
         return runner.invoke(
@@ -714,15 +718,15 @@ def test_the_validation_check_runs_once_on_the_tables_its_records_describe(
             ],
         )
 
-    assert "no fusion-validation-inputs record" in check(runs=tmp_path / "none").output
+    assert "no fusion-validation-inputs record" in said(check(runs=tmp_path / "none"))
     monkeypatch.setattr(cli_common, "changed_since", lambda *_: ["src/docfraud/fusion/model.py"])
-    assert "the code changed since the validation inputs were made" in check().output
+    assert "the code changed since the validation inputs were made" in said(check())
     monkeypatch.setattr(cli_common, "changed_since", lambda *_: [])
     other = tmp_path / "other.json"
     save_table(table_of_seeds(training, (0, 1)), other)
-    assert "is not the table" in check(training=other).output
+    assert "is not the table" in said(check(training=other))
     other.write_text(paths["validation"].read_text(encoding="utf-8") + "\n", encoding="utf-8")
-    assert "is not the table" in check(validation=other).output
+    assert "is not the table" in said(check(validation=other))
     assert not store.records("fusion-validation-check")
     result = check()
     assert result.exit_code == 0, result.output
@@ -734,7 +738,7 @@ def test_the_validation_check_runs_once_on_the_tables_its_records_describe(
     assert "What Phase 7 applies to the test split" in text
     again = check()
     assert again.exit_code == 1
-    assert "refusing to run again" in again.output
+    assert "refusing to run again" in said(again)
     rendered = tmp_path / "again.md"
     args = ["fusion", "validation-report", "--runs", str(runs), "--output", str(rendered)]
     assert runner.invoke(app, args).exit_code == 0
