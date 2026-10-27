@@ -66,6 +66,7 @@ reports:  ## Regenerate every report that the current code produces
 	uv run docfraud copy-move report
 	uv run docfraud fusion training-report
 	uv run docfraud fusion input-shift-report
+	uv run docfraud fusion validation-report
 
 check-reports: reports  ## Fail if a committed report differs from its regeneration
 	git diff --exit-code -- reports
