@@ -8,9 +8,28 @@ from docfraud.markdown import Cell, Table, render_table
 TRACK_NAMES = {"transcript": "T1 (transcripts)", "ocr": "T2 (OCR)"}
 
 
+def _number(x: float) -> str:
+    """Three decimals, or four where three would show a number that is not zero as zero."""
+    return f"{x:.4f}" if x != 0 and abs(x) < 0.0005 else f"{x:.3f}"  # noqa: PLR2004
+
+
 def ci(e: Mapping[str, float]) -> str:
     """An estimate with its interval, as reports write it."""
-    return f"{e['value']:.3f} ({e['low']:.3f} to {e['high']:.3f})"
+    return f"{_number(e['value'])} ({_number(e['low'])} to {_number(e['high'])})"
+
+
+def _ceilings(track: Mapping[str, Any]) -> str:
+    """Why recall at a budget stops short of 1: the budget holds fewer receipts than are forged."""
+    sentences = []
+    for budget in (0.10, 0.20):
+        capacity = budget * track["receipts"]
+        if capacity < track["forged"]:
+            sentences.append(
+                f"At most {capacity:g} receipts fit in a {budget * 100:.0f} % budget and "
+                f"{track['forged']} are forged, so recall there cannot exceed "
+                f"{capacity / track['forged']:.3f}."
+            )
+    return " ".join(sentences)
 
 
 def ablation(name: str, track: Mapping[str, Any], *, note: str | None = None) -> Table:
@@ -54,13 +73,16 @@ def ablation(name: str, track: Mapping[str, Any], *, note: str | None = None) ->
             "ECE*",
         ),
         rows,
-        note=note
-        or f"{track['receipts']} training receipts, {track['forged']} forged, out of fold; "
-        "system 2 seed 0. Intervals: stratified bootstrap, 10,000 resamples, seed 0. The floor "
-        "row gives chance for each ranking metric and the F1 of flagging every receipt. *F1 at "
-        "the threshold "
-        "that maximises it on the same scores, Brier score and ECE of the models' own "
-        "probabilities before Platt scaling: optimistic.",
+        note=(
+            note
+            or f"{track['receipts']} training receipts, {track['forged']} forged, out of fold; "
+            "system 2 seed 0. Intervals: stratified bootstrap, 10,000 resamples, seed 0. The "
+            "floor row gives chance for each ranking metric and the F1 of flagging every "
+            "receipt. *F1 at the threshold that maximises it on the same scores, Brier score and "
+            "ECE of the models' own probabilities before Platt scaling: optimistic."
+        )
+        + " "
+        + _ceilings(track),
     )
 
 
