@@ -63,6 +63,9 @@ from docfraud.llm.adjudication import (
     load_questions,
 )
 from docfraud.llm.adjudication import save_log as save_adjudication
+from docfraud.llm.agent import SONNET_AGENT
+from docfraud.llm.agent_rounds import FrozenAgent
+from docfraud.llm.agent_rounds import load_rounds as load_agent_rounds
 from docfraud.llm.agent_tools import ReadField
 from docfraud.llm.cost import LIMIT_USD, Ledger
 from docfraud.llm.decision import ModelStep
@@ -92,6 +95,9 @@ from tests.fixtures.findit import load_toy
 from tests.fixtures.llm import FakeAgent, FakeDetector, FakeProvider
 from tests.fusion.test_development import report_record
 from tests.fusion.test_validation import N_TRAIN, pages, tables
+from tests.llm.test_agent_rounds import ELSEWHERE
+from tests.llm.test_agent_rounds import document as agent_document
+from tests.llm.test_agent_tools import BOX as AGENT_BOX
 from tests.llm.test_agent_tools import case as agent_case
 from tests.llm.test_detector import development
 from tests.synthesis.pages import documents as synthesis_documents
@@ -1858,6 +1864,88 @@ def test_the_agent_is_piloted_once_on_three_cases_and_keeps_a_model_by_its_rule(
     assert len(list((output / "pilot").glob("*.md"))) == 6
     assert "Case file: R1" in (output / "pilot" / "claude-sonnet-5-5-R1.md").read_text("utf-8")
     assert "the pilot runs once" in said(runner.invoke(app, command))
+
+
+def test_the_agent_is_developed_once_per_version_and_frozen_by_its_rule(  # noqa: PLR0915
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    documents = [
+        agent_document("R1", Label.FORGED, AGENT_BOX),
+        agent_document("R2", Label.FORGED, ELSEWHERE),
+        agent_document("R3", Label.AUTHENTIC),
+    ]
+    receipts = tuple(d.doc_id for d in documents)
+    found = SimpleNamespace(assessments={r: agent_case(r).assessment for r in receipts})
+    development = SimpleNamespace(receipts=receipts)
+    monkeypatch.setattr(cli_agent, "_training", lambda *_: (documents, development, found))
+    monkeypatch.setattr(cli_agent, "_reader", lambda *_: None)
+    monkeypatch.setattr(
+        cli_agent, "cases", lambda chosen, *_: {d.doc_id: agent_case(d.doc_id) for d in chosen}
+    )
+    monkeypatch.setattr(cli_agent, "DESIGN_FOLD_IDS", frozenset(receipts))
+    instructions = tmp_path / "instructions"
+    instructions.mkdir()
+    (instructions / "agent-v1.md").write_text("Draft the case file.", encoding="utf-8")
+    monkeypatch.setattr(cli_agent, "INSTRUCTIONS", instructions)
+    books = (ResponseStore(tmp_path / "store"), Ledger(tmp_path / "ledger.jsonl"))
+    computed = Runner(FakeAgent(computed=True, silent=1), *books)
+    monkeypatch.setattr(cli_agent, "_runner", lambda *_: computed)
+    clean = CodeVersion(commit="d" * 40, dirty=False)
+    monkeypatch.setattr(cli_agent, "code_version", lambda: clean)
+    monkeypatch.setattr(cli_common, "code_version", lambda: clean)
+    monkeypatch.setattr(cli_common, "changed_since", lambda *_: [])
+    output = tmp_path / "agent"
+    options = ["--output", str(output), "--cache", str(tmp_path / "ocr")]
+    develop = ["agent", "develop", *options, "--version"]
+    freeze = ["agent", "freeze", "--output", str(output)]
+    assert "versions (1, 2) only" in said(runner.invoke(app, [*develop, "3"]))
+    assert "run version 1 on the development cases first" in said(
+        runner.invoke(app, [*develop, "2"])
+    )
+    assert "run the pilot first" in said(runner.invoke(app, [*develop, "1"]))
+    output.mkdir()
+    pilot = {"kept": SONNET_AGENT.model_dump(mode="json"), "token_budget": 34_000}
+    (output / "pilot.json").write_text(json.dumps(pilot), encoding="utf-8")
+    assert "version 1 has not run" in said(runner.invoke(app, freeze))
+    assert "1 of 3 cases were not answered (R1); nothing is recorded" in said(
+        runner.invoke(app, [*develop, "1"])
+    )
+    assert not (output / "round-v1.json").exists()
+    first = runner.invoke(app, [*develop, "1"])  # sends only the step that was not answered
+    assert first.exit_code == 0, first.output
+    (v1,) = load_agent_rounds(output).values()
+    assert (v1.settings, v1.token_budget) == (SONNET_AGENT, 34_000)
+    assert [c.receipt for c in v1.cases] == list(receipts)
+    assert (v1.failures, v1.violations) == (0, 3)  # every case file states a computed number
+    assert [c.first_location_hit for c in v1.cases] == [True, False, None]
+    assert (v1.hits, v1.report_hits) == (1, 1)
+    assert sorted(p.name for p in (output / "v1").iterdir()) == [f"{r}.md" for r in receipts]
+    assert "each version runs once" in said(runner.invoke(app, [*develop, "1"]))
+    assert "write version 2 first" in said(runner.invoke(app, [*develop, "2"]))
+    (instructions / "agent-v2.md").write_text("Draft the case file. Quote.", encoding="utf-8")
+    monkeypatch.setattr(cli_common, "changed_since", lambda *_: ["src/docfraud/llm/agent.py"])
+    assert "the agent's code changed after version 1 ran" in said(
+        runner.invoke(app, [*develop, "2"])
+    )
+    monkeypatch.setattr(cli_common, "changed_since", lambda *_: [])
+    grounded = Runner(FakeAgent(), *books)
+    monkeypatch.setattr(cli_agent, "_runner", lambda *_: grounded)
+    second = runner.invoke(app, [*develop, "2"])
+    assert second.exit_code == 0, second.output
+    assert load_agent_rounds(output)[2].violations == 0
+    (instructions / "agent-v2.md").write_text("Changed.", encoding="utf-8")
+    assert "changed after version 2 ran" in said(runner.invoke(app, freeze))
+    (instructions / "agent-v2.md").write_text("Draft the case file. Quote.", encoding="utf-8")
+    monkeypatch.setattr(cli_common, "changed_since", lambda *_: ["src/docfraud/llm/case_file.py"])
+    assert "the agent's code changed after version 2 ran" in said(runner.invoke(app, freeze))
+    monkeypatch.setattr(cli_common, "changed_since", lambda *_: [])
+    frozen = runner.invoke(app, freeze)
+    assert frozen.exit_code == 0, frozen.output
+    kept = FrozenAgent.model_validate_json((output / "frozen.json").read_text(encoding="utf-8"))
+    assert (kept.version, kept.token_budget, kept.commit) == (2, 34_000, "d" * 40)
+    assert kept.instruction.endswith("agent-v2.md")
+    assert "the agent is frozen once" in said(runner.invoke(app, freeze))
+    assert "development has ended" in said(runner.invoke(app, [*develop, "2"]))
 
 
 def test_the_agent_sees_each_receipt_through_the_systems_outputs(tmp_path: Path) -> None:

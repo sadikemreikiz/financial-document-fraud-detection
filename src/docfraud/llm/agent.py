@@ -37,6 +37,9 @@ HAIKU_AGENT = Settings(
 SONNET_AGENT = HAIKU_AGENT.model_copy(update={"model": "claude-sonnet-5-5"})
 """The two models of the pilot, both at medium effort (ADR-0031, section 5)."""
 
+NOT_ANSWERED = "not answered"
+"""The failure of a case whose step got no response: a fault of the service, not the model's."""
+
 LIMIT_REACHED = ToolOutput(
     '{"error": "the limit of tool calls is reached: write the case file"}', error=True
 )
@@ -136,7 +139,7 @@ def investigate(
         (response,) = runner.answer([request], batch=False)
         found = (case.receipt, settings)
         if response is None:
-            return Investigation(*found, Read(None, "not answered"), tuple(calls), tuple(responses))
+            return Investigation(*found, Read(None, NOT_ANSWERED), tuple(calls), tuple(responses))
         responses.append(response)
         if response.stop_reason != "tool_use":
             read = read_case_file(response)
