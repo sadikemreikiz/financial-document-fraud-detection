@@ -923,6 +923,16 @@ def test_the_test_check_and_track_r_are_measured_once_after_a_reproduced_rehears
     assert made.results["sensitivity"]["ocr"]["receipts"] == len(stand_ins)  # no copies here
     assert set(made.results["ocr"]["success"]) >= {"f1", "recall_at_10pct", "met"}
     assert "refusing to run again" in said(runner.invoke(app, final))
+    errors = ["fusion", "error-analysis", *common, "--test", str(test_table)]
+    analysed = runner.invoke(app, errors)
+    assert analysed.exit_code == 0, analysed.output
+    (found,) = store.records("fusion-test-errors")
+    assert found.test_unlocks == (cli_common.TEST_UNLOCK,)
+    assert found.results["reviewed"] == made.results["policy"]["ocr"]["10 %"]["reviewed"]
+    assert found.results["misses"]["count"] + found.results["false_alarms"]["count"] == len(
+        found.results["errors"]
+    )
+    assert "refusing to run again" in said(runner.invoke(app, errors))
     saved = tmp / "saved-inputs"
     saved.mkdir()
     for quality in (95, 75):
