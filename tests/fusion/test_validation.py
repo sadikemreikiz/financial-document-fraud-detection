@@ -13,8 +13,10 @@ from docfraud.fusion.training_inputs import InputsTable
 from docfraud.fusion.validation import (
     FUSION_ROW,
     IDENTITY,
+    applied,
     check_row,
     check_track,
+    fitted,
     grounding,
     policy_results,
     row_metrics,
@@ -121,6 +123,16 @@ def test_a_row_that_platt_scaling_would_reverse_keeps_its_own_probabilities() ->
     found = row_metrics(reversed_labels, checked, resamples=50)
     assert (found["brier"], found["ece"]) == (None, None)
     assert 0 <= found["threshold"] <= 1
+
+
+def test_a_recorded_row_gives_the_same_probabilities_on_the_same_receipts() -> None:
+    training, y_train, validation, documents = tables()
+    rows_v = validation.rows("ocr", 0)
+    checked = check_row(training.rows("ocr", 0), y_train, rows_v, labels(documents), FUSION_ROW)
+    recorded = fitted(checked)
+    assert np.allclose(applied(recorded, rows_v, FUSION_ROW), checked.probabilities)
+    with pytest.raises(ValueError, match="takes"):
+        applied(recorded, rows_v, SINGLE_SOURCES[0])
 
 
 def test_the_track_check_holds_every_row_comparison_seed_and_what_phase_7_applies() -> None:

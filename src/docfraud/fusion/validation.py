@@ -108,6 +108,24 @@ def fitted(checked: Checked) -> dict[str, Any]:
     }
 
 
+def applied(recorded: Mapping[str, Any], rows: Sequence[ReceiptInputs], variant: Variant) -> Vector:
+    """A row's calibrated probabilities on these receipts, from what :func:`fitted` recorded.
+
+    Raises:
+        ValueError: If the record's inputs are not the row's, in its order.
+    """
+    names = tuple(recorded["coefficients"])
+    if names != variant.inputs:
+        msg = f"the record fits {names}, the row {variant.name!r} takes {variant.inputs}"
+        raise ValueError(msg)
+    standardised = (matrix(rows, variant) - [recorded["means"][n] for n in names]) / [
+        recorded["scales"][n] for n in names
+    ]
+    log_odds = recorded["intercept"] + standardised @ [recorded["coefficients"][n] for n in names]
+    platt = Platt(recorded["platt"]["slope"], recorded["platt"]["offset"])
+    return platt.probabilities(np.asarray(log_odds, dtype=float))
+
+
 def row_metrics(y: Labels, checked: Checked, resamples: int = DEFAULT_RESAMPLES) -> dict[str, Any]:
     """The ablation table's columns on the validation split, with the max-F1 threshold."""
     found = metrics(y, checked.probabilities, resamples)
