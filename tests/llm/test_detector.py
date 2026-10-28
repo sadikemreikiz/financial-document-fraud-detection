@@ -27,9 +27,12 @@ from docfraud.llm.detector import (
     request,
 )
 from docfraud.llm.detector_rounds import (
+    DETECTOR_CODE,
     MARGIN,
+    OPUS,
     UNSCORED,
     DevelopmentRound,
+    clearly_better,
     kept_version,
     load_rounds,
     row_result,
@@ -210,6 +213,21 @@ def test_a_revision_is_kept_only_if_clearly_better_without_more_failures() -> No
         kept_version({2: development(2, 0.6)})
     with pytest.raises(ValueError, match="versions"):
         kept_version({1: first, 3: development(3, 0.9)})
+
+
+def test_the_stronger_model_changes_the_model_only_and_is_kept_by_the_same_rule() -> None:
+    assert OPUS.model == "claude-opus-5-5"
+    assert OPUS.model_dump(exclude={"model"}) == SONNET.model_dump(exclude={"model"})
+    frozen = development(1, 0.40, failures=1).main_row()
+    assert clearly_better(frozen.model_copy(update={"average_precision": 0.40 + MARGIN}), frozen)
+    assert not clearly_better(frozen.model_copy(update={"average_precision": 0.44}), frozen)
+    assert not clearly_better(
+        frozen.model_copy(update={"average_precision": 0.9, "failures": 2}), frozen
+    )
+
+
+def test_the_code_frozen_with_the_detector_exists() -> None:
+    assert all(Path(path).exists() for path in DETECTOR_CODE)
 
 
 def test_rounds_are_saved_and_loaded_by_version(tmp_path: Path) -> None:

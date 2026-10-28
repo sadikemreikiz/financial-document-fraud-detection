@@ -4,7 +4,8 @@ Every command reads design-fold receipts only, checked before any request is bui
 requests without a stored answer; and stops before the spending limit. ``develop`` runs one
 version of the instruction for both rows (``--pilot``: five receipts, sent one by one, to check
 the answer form); ``freeze`` keeps a version by the rule fixed in advance; ``latency`` times the
-frozen version on 30 receipts sent one by one.
+frozen version on 30 receipts sent one by one; ``stronger-model`` runs the frozen main row once on
+Claude Opus 5.5 (ADR-0032).
 """
 
 import hashlib
@@ -24,6 +25,7 @@ from docfraud.cli.common import (
     console,
     findit_documents,
     require_clean_commit,
+    require_unchanged,
 )
 from docfraud.cli.llm import LEDGER, STORE, Cache, LedgerPath, Store, _runner
 from docfraud.data.models import Document, Label
@@ -39,9 +41,13 @@ from docfraud.llm.detector import (
     request,
 )
 from docfraud.llm.detector_rounds import (
+    DETECTOR_CODE,
+    OPUS,
     VERSIONS,
     DevelopmentRound,
     FrozenDetector,
+    StrongerModelCheck,
+    clearly_better,
     kept_version,
     load_rounds,
     row_result,
@@ -58,6 +64,7 @@ INSTRUCTIONS = Path("src/docfraud/llm/instructions")
 ROUNDS = Path("reports/llm/detector")
 PILOT_RECEIPTS = 5
 LATENCY_RECEIPTS = 30
+STRONGER_MODEL = "stronger-model.json"
 
 Rounds = Annotated[Path, typer.Option("--rounds", help="Where development rounds are kept.")]
 
@@ -169,10 +176,12 @@ def detector_develop(  # noqa: PLR0913, PLR0917 - one option per input and outpu
 
 
 def _frozen(rounds: Path) -> tuple[FrozenDetector, str]:
-    """The frozen version and its instruction, after checking the instruction is unchanged.
+    """The frozen version and its instruction, both checked unchanged since the freeze.
+
+    The instruction is checked by its hash, the code that builds its requests by git.
 
     Raises:
-        typer.Exit: If nothing is frozen or the instruction changed after it was frozen.
+        typer.Exit: If nothing is frozen, or something changed after it was frozen.
     """
     path = rounds / "frozen.json"
     if not path.exists():
@@ -183,6 +192,7 @@ def _frozen(rounds: Path) -> tuple[FrozenDetector, str]:
     if hashlib.sha256(text.encode()).hexdigest() != frozen.instruction_sha256:
         console.print(f"[red]{frozen.instruction} changed after it was frozen[/red]")
         raise typer.Exit(1)
+    require_unchanged(frozen.commit, DETECTOR_CODE, "the detector changed after it was frozen")
     return frozen, text
 
 
@@ -250,3 +260,51 @@ def detector_latency(
     path = rounds / "latency.json"
     path.write_text(json.dumps(found, indent=2) + "\n", encoding="utf-8")
     console.print(f"[green]written[/green] {path}")
+
+
+@app.command("stronger-model")
+def detector_stronger_model(
+    data_dir: DataDir = Path("data"),
+    store: Store = STORE,
+    ledger: LedgerPath = LEDGER,
+    cache: Cache = OCR_CACHE,
+    rounds: Rounds = ROUNDS,
+) -> None:
+    """Run the frozen main row once on Claude Opus 5.5, over the design fold (ADR-0032).
+
+    Every setting but the model is the frozen detector's. The record compares the result with
+    the frozen main row's on the same receipts and states, by the rule fixed in advance, whether
+    Opus also runs on the validation and test splits.
+    """
+    path = rounds / STRONGER_MODEL
+    if path.exists():
+        console.print(f"[red]{path} exists[/red]: the stronger model is checked once")
+        raise typer.Exit(1)
+    frozen, text = _frozen(rounds)
+    require_clean_commit()
+    frozen_result = load_rounds(rounds)[frozen.version].main_row()
+    documents = _design_fold(data_dir)
+    built = requests(documents, cached_ocr(cache), OPUS, text)[DetectorRow.IMAGE_AND_OCR]
+    answered = _runner(store, ledger).answer(built)
+    result = row_result(
+        [d.label is Label.FORGED for d in documents],
+        [read_judgement(r) for r in answered],
+        f"{_spent(answered, OPUS.model):.4f}",
+    )
+    record = StrongerModelCheck(
+        settings=OPUS,
+        instruction=frozen.instruction,
+        instruction_sha256=frozen.instruction_sha256,
+        commit=code_version().commit,
+        result=result,
+        frozen_result=frozen_result,
+        row_added=clearly_better(result, frozen_result),
+    )
+    path.write_text(record.model_dump_json(indent=2) + "\n", encoding="utf-8")
+    for name, shown in ((OPUS.model, result), (frozen.settings.model, frozen_result)):
+        console.print(
+            f"{name}: AP {shown.average_precision:.3f}, ROC-AUC {shown.roc_auc:.3f}, "
+            f"{shown.failures} failures, {shown.cost_usd} USD"
+        )
+    added = "runs" if record.row_added else "does not run"
+    console.print(f"Opus {added} on the validation and test splits")
