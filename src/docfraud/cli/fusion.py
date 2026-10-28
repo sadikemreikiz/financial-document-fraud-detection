@@ -581,6 +581,18 @@ def _rehearsal(store: JsonRunStore) -> RunRecord:
     return rehearsal
 
 
+def _models_of_the_rehearsal(paths: dict[int, Path], rehearsal: RunRecord) -> None:
+    """Stop unless system 2's model files are those the rehearsal used, by their SHA-256.
+
+    Raises:
+        typer.Exit: If a model file differs.
+    """
+    used = rehearsal.config["models"]
+    if any(used.get(seed) != model for seed, model in _models_config(paths).items()):
+        console.print(f"[red]system 2's models are not those {rehearsal.run_id} used[/red]")
+        raise typer.Exit(1)
+
+
 @app.command("test-inputs")
 def final_test_inputs_command(
     data_dir: DataDir = Path("data"),
@@ -607,6 +619,7 @@ def final_test_inputs_command(
         console.print("[red]the frozen reader has not read the test split[/red]: llm read-test")
         raise typer.Exit(1)
     paths = _whole_training_models(rounds)
+    _models_of_the_rehearsal(paths, rehearsal)
     documents = findit_documents(data_dir)
     train = sorted(select(documents, Split.TRAIN), key=lambda d: d.doc_id)
     source = SOURCES[DatasetName.FINDIT2.value]
@@ -661,6 +674,7 @@ def resaved_inputs_command(
         console.print("[red]the frozen reader has not read track R[/red]: llm read-resaved")
         raise typer.Exit(1)
     paths = _whole_training_models(rounds)
+    _models_of_the_rehearsal({0: paths[0]}, rehearsal)
     documents = findit_documents(data_dir)
     train = sorted(select(documents, Split.TRAIN), key=lambda d: d.doc_id)
     source = SOURCES[DatasetName.FINDIT2.value]

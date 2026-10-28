@@ -851,6 +851,11 @@ def test_test_and_track_r_inputs_are_made_once_by_code_that_reproduced_validatio
     monkeypatch.setattr(cli_common, "changed_since", lambda *_: ["src/docfraud/linking/links.py"])
     assert "the source changed after phase-7-freeze" in said(runner.invoke(app, final))
     monkeypatch.setattr(cli_common, "changed_since", lambda *_: [])
+    retrained = tmp / "retrained.pt"
+    retrained.write_bytes(b"other weights")
+    monkeypatch.setattr(cli_fusion, "_whole_training_models", lambda _: {0: retrained})
+    assert "system 2's models are not those" in said(runner.invoke(app, final))
+    monkeypatch.setattr(cli_fusion, "_whole_training_models", lambda _: {0: model})
     result = runner.invoke(app, final)
     assert result.exit_code == 0, result.output
     (made,) = store.records("fusion-test-inputs")
@@ -1875,6 +1880,9 @@ def test_llm_track_r_is_read_once_after_the_test_split(
     (made,) = JsonRunStore(runs).records("llm-resaved-reading")
     assert made.test_unlocks == (cli_common.TEST_UNLOCK,)
     assert made.results["requests"] == 2 * made.results["receipts"]  # two qualities, OCR only
+    # the toy pages read alike once saved again: every answer replays, and nothing is paid twice
+    assert made.results["read_before"] == made.results["requests"]
+    assert made.results["cost_usd"] == "0.0000"
     assert set(made.results["images"]) == {"95", "75"}
     assert sorted(p.name for p in (saved / "q75").iterdir()) == sorted(
         f"{p.stem}.jpg" for p in (saved / "q95").iterdir()

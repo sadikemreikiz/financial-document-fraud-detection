@@ -10,7 +10,7 @@ import hashlib
 import json
 import webbrowser
 from collections import Counter, defaultdict
-from collections.abc import Sequence
+from collections.abc import Collection, Sequence
 from datetime import UTC, datetime
 from decimal import Decimal
 from pathlib import Path
@@ -829,11 +829,18 @@ def _reader_shown_unchanged(
 
 
 def _read(
-    runner: Runner, version: FrozenVersion, text: str, targets: Sequence[Target]
+    runner: Runner,
+    version: FrozenVersion,
+    text: str,
+    targets: Sequence[Target],
+    *,
+    read_before: Collection[str] = (),
 ) -> dict[str, Any]:
     """Read the targets with the frozen version, sending only what is not stored.
 
-    Returns the reading's aggregates for its run record.
+    Returns the reading's aggregates for its run record. ``read_before`` are the keys of an
+    earlier reading: a target among them replays its answer, and its cost, paid then, is not
+    counted again.
 
     Raises:
         typer.Exit: If a request is left unanswered, so that nothing is recorded.
@@ -848,9 +855,11 @@ def _read(
         )
         raise typer.Exit(1)
     readings = [FrozenReader(version, text, runner.store).read(t) for t in targets]
+    keys = {r.key for r in requests}
     return {
         "requests": len(requests),
-        "cost_usd": f"{_spent(runner.ledger, {r.key for r in requests}):.4f}",
+        "read_before": sum(r.key in read_before for r in requests),
+        "cost_usd": f"{_spent(runner.ledger, keys - set(read_before)):.4f}",
         "without_answer": sum(any(r.field == "answer" for r in got.rejections) for got in readings),
     }
 
@@ -954,6 +963,7 @@ def llm_read_resaved(  # noqa: PLR0913, PLR0917 - one option per input and outpu
             select(documents, Split.TEST, unlock_test=True, reason=TEST_UNLOCK),
             key=lambda d: d.doc_id,
         )
+        read_before = {r.key for r in runner.requests(version.settings, text, _targets(test, ocr))}
         saved = {q: resaved(test, q, resaved_to / f"q{q}") for q in QUALITIES}
         targets = [
             target(d.doc_id, TextSource.OCR, read_document(d, ocr, TextSource.OCR).rows)
@@ -963,7 +973,7 @@ def llm_read_resaved(  # noqa: PLR0913, PLR0917 - one option per input and outpu
         current.log("receipts", len(test))
         current.log("validation_requests_found", found)
         current.log("images", {str(q): digest(saved[q]) for q in QUALITIES})
-        for key, value in _read(runner, version, text, targets).items():
+        for key, value in _read(runner, version, text, targets, read_before=read_before).items():
             current.log(key, value)
     console.print(
         f"[green]read[/green] {len(test)} test receipts saved at qualities {QUALITIES}: "
