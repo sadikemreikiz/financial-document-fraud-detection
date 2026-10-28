@@ -16,8 +16,11 @@ from docfraud.llm.provider import Response, Usage
 
 MILLION = Decimal(1_000_000)
 BATCH_FACTOR = Decimal("0.5")
-#: 15 EUR including tax, the owner's limit, less room for tax and the exchange rate.
-LIMIT_USD = Decimal(12)
+#: The owner's prepaid credit, less 0.50 USD of room for a difference between this ledger and
+#: the provider's billing. The first 10 USD were bought under ADR-0024's limit of 15 EUR; 15 USD
+#: more were bought on 2026-10-28 for the rest of Phase 6b and Phase 7, estimated at 10 to 16 USD
+#: (ADR-0031, section 7). Only the owner raises it, by buying more credit.
+LIMIT_USD = Decimal("24.50")
 
 
 @dataclass(frozen=True, slots=True)
