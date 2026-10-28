@@ -1,0 +1,13 @@
+{
+  "version": 2,
+  "settings": {
+    "model": "claude-sonnet-5-5",
+    "max_tokens": 8000,
+    "thinking": "adaptive",
+    "effort": "medium"
+  },
+  "token_budget": 34000,
+  "instruction": "src/docfraud/llm/instructions/agent-v2.md",
+  "instruction_sha256": "9eff3abd44da35a563939250efa088a217fae5d33b6fce25405b21f2bfc02b3f",
+  "commit": "153869fd813b62acf46a17e17c787137a7cd3800"
+}
