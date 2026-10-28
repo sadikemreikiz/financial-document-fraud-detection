@@ -155,29 +155,39 @@ def row_result(  # noqa: PLR0913 - the row, its answers, its cost and what it is
     }
 
 
-def fusion_probabilities(
-    check: Mapping[str, Any], table: InputsTable, receipts: Sequence[str], y: Labels, seed: int
+def fusion_probabilities(  # noqa: PLR0913 - the record, the table, its receipts and labels
+    check: Mapping[str, Any],
+    table: InputsTable,
+    receipts: Sequence[str],
+    y: Labels,
+    seed: int,
+    *,
+    measured: Mapping[str, Any] | None = None,
 ) -> dict[str, Vector]:
-    """Each track's frozen fusion probabilities on the validation receipts.
+    """Each track's frozen fusion probabilities on the receipts of ``table``.
 
     ``check`` holds the results of Phase 5's validation check, whose fitted fusion model is
-    applied to the validation inputs of system 2 seed ``seed``, the check's headline seed.
+    applied to the inputs of system 2 seed ``seed``, the check's headline seed. ``measured`` holds
+    the results of the run that measured these receipts, the check itself by default (the
+    validation split) or the test check: the probabilities must give the average precision it
+    recorded.
 
     Raises:
         ValueError: If a track's rows are not the receipts given, in order, or the rebuilt
-            probabilities do not give the average precision the check recorded.
+            probabilities do not give the average precision the run recorded.
     """
     found = {}
     for track, name in TRACK_NAMES.items():
         rows = table.rows(track, seed)
         if [r.receipt for r in rows] != list(receipts):
-            msg = f"the validation table's {track} rows are not the validation receipts"
+            msg = f"the table's {track} rows are not the receipts given"
             raise ValueError(msg)
         p = applied(check[track]["fitted"][FUSION_ROW.name], rows, FUSION_ROW)
-        recorded = check[track]["table"][FUSION_ROW.name]["average_precision"]["value"]
+        source = check if measured is None else measured
+        recorded = source[track]["table"][FUSION_ROW.name]["average_precision"]["value"]
         rebuilt = average_precision(y, p)
         if not math.isclose(rebuilt, recorded, rel_tol=0, abs_tol=1e-9):
-            msg = f"fusion of {name} gives AP {rebuilt:.6f} here, {recorded:.6f} in the check"
+            msg = f"fusion of {name} gives AP {rebuilt:.6f} here, {recorded:.6f} recorded"
             raise ValueError(msg)
         found[track] = p
     return found

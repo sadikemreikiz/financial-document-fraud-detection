@@ -18,6 +18,7 @@ from docfraud.data.download import SOURCES, PinnedFile, download
 from docfraud.data.findit import load_findit2
 from docfraud.data.models import Document
 from docfraud.evaluation.runs import changed_since, code_version
+from docfraud.llm.provider import Request, Response
 from docfraud.reading.ocr import CachedOcr, RapidOcrEngine
 from docfraud.reading.pipeline import TextSource
 
@@ -110,3 +111,18 @@ def require_freeze_tag() -> None:
     if changed:
         console.print(f"[red]the source changed after {FREEZE_TAG}[/red]: " + ", ".join(changed))
         raise typer.Exit(1)
+
+
+class NoRequests:
+    """A provider that refuses to send: a rehearsal answers from the store or not at all."""
+
+    identifier = "no requests"
+
+    def run(self, requests: Sequence[Request], *, batch: bool) -> list[Response]:  # noqa: ARG002 - the provider protocol
+        """Refuse every request.
+
+        Raises:
+            RuntimeError: Always.
+        """
+        msg = f"a rehearsal sends no request, and {len(requests)} were not stored"
+        raise RuntimeError(msg)

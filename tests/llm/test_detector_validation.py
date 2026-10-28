@@ -1,3 +1,4 @@
+import copy
 from typing import Any
 
 import numpy as np
@@ -83,10 +84,17 @@ def test_fusion_is_rebuilt_from_the_check_and_must_give_its_average_precision() 
             training.rows(track, 0), y_train, validation.rows(track, 0), y, FUSION_ROW
         )
         assert np.allclose(found[track], fitted_again.probabilities)
-    with pytest.raises(ValueError, match="not the validation receipts"):
+    with pytest.raises(ValueError, match="not the receipts given"):
         fusion_probabilities(check, validation, receipts[::-1], y, 0)
+    measured = copy.deepcopy(check)  # another run that measured these receipts
+    assert fusion_probabilities(check, validation, receipts, y, 0, measured=measured).keys() == (
+        found.keys()
+    )
+    measured["transcript"]["table"]["fusion"]["average_precision"]["value"] += 0.01
+    with pytest.raises(ValueError, match="recorded"):
+        fusion_probabilities(check, validation, receipts, y, 0, measured=measured)
     check["ocr"]["table"]["fusion"]["average_precision"]["value"] += 0.01
-    with pytest.raises(ValueError, match="in the check"):
+    with pytest.raises(ValueError, match="recorded"):
         fusion_probabilities(check, validation, receipts, y, 0)
 
 

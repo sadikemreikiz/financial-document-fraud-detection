@@ -11,10 +11,10 @@ validation split.
 
 import hashlib
 import json
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from decimal import Decimal
 from pathlib import Path
-from typing import Annotated
+from typing import Annotated, Any
 
 import numpy as np
 import typer
@@ -22,15 +22,18 @@ import typer
 from docfraud.cli.common import (
     OCR_CACHE,
     REPORTED_RUNS,
+    TEST_UNLOCK,
     DataDir,
     DatasetName,
+    NoRequests,
     cached_ocr,
     console,
     findit_documents,
     require_clean_commit,
+    require_freeze_tag,
     require_unchanged,
 )
-from docfraud.cli.fusion import VALIDATION_INPUTS
+from docfraud.cli.fusion import TEST_INPUTS, VALIDATION_INPUTS, _latest
 from docfraud.cli.llm import LEDGER, STORE, Cache, LedgerPath, Store, _runner
 from docfraud.data.download import SOURCES
 from docfraud.data.models import Document, Label, Split
@@ -40,10 +43,12 @@ from docfraud.evaluation.design_fold import DESIGN_FOLD_IDS
 from docfraud.evaluation.runs import JsonRunStore, code_version, run
 from docfraud.forensics.learned.rounds import SEEDS
 from docfraud.fusion.development_report import TRACK_NAMES
+from docfraud.fusion.final import RUN_NAME as TEST_CHECK_RUN
+from docfraud.fusion.rehearsal import TEST_INPUTS_RUN
 from docfraud.fusion.training_inputs import load_table
 from docfraud.fusion.validation import FUSION_ROW
 from docfraud.fusion.validation import RUN_NAME as CHECK_RUN
-from docfraud.llm.cost import cost
+from docfraud.llm.cost import Ledger, cost
 from docfraud.llm.detector import (
     SONNET,
     DetectorRow,
@@ -51,6 +56,16 @@ from docfraud.llm.detector import (
     read_judgement,
     request,
 )
+from docfraud.llm.detector_final import (
+    CLAIMS,
+    DESCRIPTIVE,
+    RUN_NAMES,
+    TEST_CODE,
+    detector_test,
+    part_rows,
+)
+from docfraud.llm.detector_final import REHEARSAL_RUN as DETECTOR_REHEARSAL_RUN
+from docfraud.llm.detector_final import rehearsal_mismatches as detector_mismatches
 from docfraud.llm.detector_rounds import (
     DETECTOR_CODE,
     OPUS,
@@ -66,13 +81,15 @@ from docfraud.llm.detector_rounds import (
 )
 from docfraud.llm.detector_validation import RUN_NAME as VALIDATION_RUN
 from docfraud.llm.detector_validation import (
+    ValidationRow,
     detector_validation,
     fusion_probabilities,
     validation_rows,
 )
 from docfraud.llm.detector_validation_report import render_report
 from docfraud.llm.provider import Request, Response, Settings
-from docfraud.llm.run import check_documents
+from docfraud.llm.run import Runner, check_documents
+from docfraud.llm.store import ResponseStore
 from docfraud.reading.ocr import CachedOcr
 from docfraud.reading.pipeline import TextSource, read_document
 
@@ -205,6 +222,17 @@ def _frozen(rounds: Path) -> tuple[FrozenDetector, str]:
     Raises:
         typer.Exit: If nothing is frozen, or something changed after it was frozen.
     """
+    frozen, text = _frozen_instruction(rounds)
+    require_unchanged(frozen.commit, DETECTOR_CODE, "the detector changed after it was frozen")
+    return frozen, text
+
+
+def _frozen_instruction(rounds: Path) -> tuple[FrozenDetector, str]:
+    """The frozen version and its instruction, checked unchanged by its hash.
+
+    Raises:
+        typer.Exit: If nothing is frozen, or the instruction changed after it was frozen.
+    """
     path = rounds / "frozen.json"
     if not path.exists():
         console.print(f"[red]{path} does not exist[/red]: freeze a version first")
@@ -214,7 +242,6 @@ def _frozen(rounds: Path) -> tuple[FrozenDetector, str]:
     if hashlib.sha256(text.encode()).hexdigest() != frozen.instruction_sha256:
         console.print(f"[red]{frozen.instruction} changed after it was frozen[/red]")
         raise typer.Exit(1)
-    require_unchanged(frozen.commit, DETECTOR_CODE, "the detector changed after it was frozen")
     return frozen, text
 
 
@@ -446,3 +473,191 @@ def detector_validation_report_command(
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(render_report(record.results, record.code.commit), encoding="utf-8")
     console.print(f"[green]written[/green] {output}")
+
+
+def _answered(
+    runner: Runner, rows: Sequence[ValidationRow], built: Mapping[str, Mapping[DetectorRow, Any]]
+) -> dict[str, list[Response | None]]:
+    """Each row's answers, by row name, in the order of the receipts."""
+    return {row.name: runner.answer(built[row.settings.model][row.row]) for row in rows}
+
+
+def _built(
+    documents: Sequence[Document], rows: Sequence[ValidationRow], text: str, cache: Path
+) -> dict[str, dict[DetectorRow, list[Request]]]:
+    """Every model's requests for every receipt, by model."""
+    ocr = cached_ocr(cache)
+    found: dict[str, dict[DetectorRow, list[Request]]] = {}
+    for row in rows:
+        if row.settings.model not in found:
+            found[row.settings.model] = requests(documents, ocr, row.settings, text)
+    return found
+
+
+@app.command("rehearse-test")
+def detector_rehearse_test(  # noqa: PLR0913, PLR0917 - one option per input and output
+    data_dir: DataDir = Path("data"),
+    store: Store = STORE,
+    ledger: LedgerPath = LEDGER,
+    cache: Cache = OCR_CACHE,
+    rounds: Rounds = ROUNDS,
+    runs: Runs = REPORTED_RUNS,
+    validation: Validation = VALIDATION_INPUTS,
+) -> None:
+    """Apply the test run's code to the validation receipts from stored answers (ADR-0034).
+
+    Every request of the validation run must be built again exactly as stored, so that none is
+    sent, and every result of that run must come back, with each row's recorded calibration
+    applied. Phase 6b changed the provider's code after the detector was frozen; this, not a
+    check that no file changed, shows that the detector asks and reads as it did. Reads no test
+    receipt.
+    """
+    records = JsonRunStore(runs)
+    require_clean_commit()
+    frozen, text = _frozen_instruction(rounds)
+    measured = _latest(records, VALIDATION_RUN)
+    check = _latest(records, CHECK_RUN)
+    if hashlib.sha256(validation.read_bytes()).hexdigest() != check.config["validation_sha256"]:
+        console.print(f"[red]{validation} is not the table {check.run_id} read[/red]")
+        raise typer.Exit(1)
+    documents = sorted(select(findit_documents(data_dir), Split.VAL), key=lambda d: d.doc_id)
+    receipts = [d.doc_id for d in documents]
+    y = np.array([d.label is Label.FORGED for d in documents])
+    fusion = fusion_probabilities(check.results, load_table(validation), receipts, y, SEEDS[0])
+    rows = validation_rows(frozen.settings, stronger=measured.config["stronger_model_added"])
+    built = _built(documents, rows, text, cache)
+    runner = Runner(NoRequests(), ResponseStore(store), Ledger(ledger))
+    every = [r for row in rows for r in built[row.settings.model][row.row]]  # the rows run
+    missing = runner.store.missing(every)
+    if missing:
+        console.print(
+            f"[red]{len(missing)} of {len(every)} requests are not the stored ones[/red]: the "
+            "detector no longer asks as it did"
+        )
+        raise typer.Exit(1)
+    source = SOURCES[DatasetName.FINDIT2.value]
+    with run(
+        DETECTOR_REHEARSAL_RUN,
+        store=records,
+        config={"decision": "ADR-0034", "validation_run": measured.run_id},
+        seeds={"bootstrap": 0},
+        dataset_sha256={source.name: source.sha256},
+    ) as current:
+        answered = _answered(runner, rows, built)
+        rebuilt = detector_test(
+            y,
+            rows,
+            {name: [read_judgement(r) for r in got] for name, got in answered.items()},
+            {r.name: f"{_spent(answered[r.name], r.settings.model):.4f}" for r in rows},
+            fusion,
+            recorded=measured.results,
+        )
+        mismatches = detector_mismatches(measured.results, rebuilt)
+        current.log("reproduced", not mismatches)
+        current.log("mismatches", mismatches)
+        current.log("requests_found", len(every))
+    verdict = "reproduced" if not mismatches else f"[red]{len(mismatches)} differences[/red]"
+    console.print(f"the detector's validation run: {verdict}")
+
+
+@app.command("test")
+def detector_test_command(  # noqa: PLR0913, PLR0917 - one option per input and output
+    part: Annotated[str, typer.Option(help="claims (the frozen model) or descriptive.")],
+    data_dir: DataDir = Path("data"),
+    store: Store = STORE,
+    ledger: LedgerPath = LEDGER,
+    cache: Cache = OCR_CACHE,
+    rounds: Rounds = ROUNDS,
+    runs: Runs = REPORTED_RUNS,
+    test: Annotated[Path, typer.Option(help="The test inputs table.")] = TEST_INPUTS,
+) -> None:
+    """Run one part of the frozen detector's rows once on the test split (ADR-0034, 7 and 10).
+
+    ``claims``, the frozen model's main and text rows, comes first: RQ6 and the paper's
+    result; ``descriptive``, the other models' rows, after it. Each row's calibration is the one
+    its validation run set. Runs once per part, at the freeze tag, from a clean commit, after
+    the test check and after a rehearsal that reproduced the validation run with the code
+    unchanged since. A run that leaves a request unanswered records nothing.
+    """
+    try:
+        name = RUN_NAMES[part]
+    except KeyError as error:
+        console.print(f"[red]no part {part!r}[/red]: {CLAIMS} or {DESCRIPTIVE}")
+        raise typer.Exit(1) from error
+    records = JsonRunStore(runs)
+    if records.records(name):
+        console.print(f"[red]refusing to run again:[/red] a {name} record exists")
+        raise typer.Exit(1)
+    if part == DESCRIPTIVE and not records.records(RUN_NAMES[CLAIMS]):
+        console.print(f"[red]run the claims first[/red]: docfraud detector test --part {CLAIMS}")
+        raise typer.Exit(1)
+    require_clean_commit()
+    require_freeze_tag()
+    frozen, text = _frozen_instruction(rounds)
+    rehearsal = _latest(records, DETECTOR_REHEARSAL_RUN)
+    if (
+        not rehearsal.results["reproduced"]
+        or rehearsal.code.commit is None
+        or rehearsal.code.dirty is not False
+    ):
+        console.print(f"[red]{rehearsal.run_id} did not reproduce the validation run[/red]")
+        raise typer.Exit(1)
+    require_unchanged(rehearsal.code.commit, TEST_CODE, "the detector changed since")
+    measured = _latest(records, VALIDATION_RUN)
+    check = _latest(records, CHECK_RUN)
+    test_check = _latest(records, TEST_CHECK_RUN)
+    inputs = _latest(records, TEST_INPUTS_RUN)
+    if hashlib.sha256(test.read_bytes()).hexdigest() != inputs.results["sha256"]:
+        console.print(f"[red]{test} is not the table {inputs.run_id} wrote[/red]")
+        raise typer.Exit(1)
+    rows = part_rows(
+        validation_rows(frozen.settings, stronger=measured.config["stronger_model_added"]), part
+    )
+    source = SOURCES[DatasetName.FINDIT2.value]
+    with run(
+        name,
+        store=records,
+        config={
+            "decision": "ADR-0034",
+            "part": part,
+            "validation_run": measured.run_id,
+            "rehearsal": rehearsal.run_id,
+            "test_check": test_check.run_id,
+        },
+        seeds={"bootstrap": 0},
+        dataset_sha256={source.name: source.sha256},
+    ) as current:
+        documents = sorted(
+            select(findit_documents(data_dir), Split.TEST, unlock_test=True, reason=TEST_UNLOCK),
+            key=lambda d: d.doc_id,
+        )
+        receipts = [d.doc_id for d in documents]
+        y = np.array([d.label is Label.FORGED for d in documents])
+        try:
+            fusion = fusion_probabilities(
+                check.results, load_table(test), receipts, y, SEEDS[0], measured=test_check.results
+            )
+        except ValueError as error:
+            console.print(f"[red]{error}[/red]")
+            raise typer.Exit(1) from error
+        answered = _answered(_runner(store, ledger), rows, _built(documents, rows, text, cache))
+        unanswered = sum(r is None for got in answered.values() for r in got)
+        if unanswered:
+            total = sum(len(got) for got in answered.values())
+            console.print(
+                f"[red]{unanswered} of {total} requests were not answered[/red]; nothing is "
+                "recorded. Run the command again to send them."
+            )
+            raise typer.Exit(1)
+        results = detector_test(
+            y,
+            rows,
+            {n: [read_judgement(r) for r in got] for n, got in answered.items()},
+            {r.name: f"{_spent(answered[r.name], r.settings.model):.4f}" for r in rows},
+            fusion,
+            recorded=measured.results,
+        )
+        for key, value in results.items():
+            current.log(key, value)
+    if "rq6" in results:
+        console.print(f"RQ6: {results['rq6']['answer']}")

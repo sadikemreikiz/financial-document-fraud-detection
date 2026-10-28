@@ -136,7 +136,24 @@ def frozen_metrics(
     y: Labels, checked: Checked, threshold: float, resamples: int = DEFAULT_RESAMPLES
 ) -> dict[str, Any]:
     """The ablation table's columns, with F1 at the frozen threshold and its interval."""
-    p = checked.probabilities
+    return metrics_at(
+        y, checked.probabilities, threshold, calibrated=checked.calibrated, resamples=resamples
+    )
+
+
+def metrics_at(
+    y: Labels,
+    p: Vector,
+    threshold: float,
+    *,
+    calibrated: bool,
+    resamples: int = DEFAULT_RESAMPLES,
+) -> dict[str, Any]:
+    """The ablation table's columns for probabilities measured with a frozen threshold.
+
+    Ranking metrics and F1 at the threshold get intervals; the Brier score and the expected
+    calibration error are given only if the probabilities are calibrated.
+    """
     found: dict[str, Any] = {
         name: _estimate(stratified(_on(m, y, p), y, resamples=resamples))
         for name, m in RANKING.items()
@@ -144,8 +161,8 @@ def frozen_metrics(
     flagged = p >= threshold
     f1 = stratified(lambda d: Counts.of(y[d], flagged[d]).f1, y, resamples=resamples)
     found["f1"] = _estimate(f1)
-    found["brier"] = brier(y, p) if checked.calibrated else None
-    found["ece"] = expected_calibration_error(y, p) if checked.calibrated else None
+    found["brier"] = brier(y, p) if calibrated else None
+    found["ece"] = expected_calibration_error(y, p) if calibrated else None
     found["threshold"] = threshold
     return found
 
@@ -351,6 +368,17 @@ def resaved_check(  # noqa: PLR0913 - both tables, the labels, the saved tables,
     return found
 
 
+def differences_in(recorded: Any, rebuilt: Any, path: str = "") -> list[str]:
+    """Every path at which the rebuilt value differs from the recorded one, in a record's terms.
+
+    Mappings are compared key by key, with keys read as text as a record keeps them; lists and
+    tuples item by item; anything else by equality.
+    """
+    out: list[str] = []
+    _same(recorded, rebuilt, path, out)
+    return out
+
+
 def _same(recorded: Any, rebuilt: Any, path: str, out: list[str]) -> None:
     """Add to ``out`` every path where the rebuilt value differs from the recorded one."""
     if isinstance(recorded, Mapping) and isinstance(rebuilt, Mapping):
@@ -386,17 +414,17 @@ def rehearsal_mismatches(recorded: Mapping[str, Any], rebuilt: Mapping[str, Any]
                 if part == "fitted":
                     continue
                 if part == "table":
-                    _same(_flat_f1(found), _flat_f1(rebuilt[key]["table"]), f"/{key}/table", out)
+                    _same(flat_f1(found), flat_f1(rebuilt[key]["table"]), f"/{key}/table", out)
                 else:
                     _same(found, rebuilt[key].get(part), f"/{key}/{part}", out)
         elif key == "T3":
-            _same(_flat_f1(value["table"]), _flat_f1(rebuilt["T3"]["table"]), "/T3/table", out)
+            _same(flat_f1(value["table"]), flat_f1(rebuilt["T3"]["table"]), "/T3/table", out)
         else:
             _same(value, rebuilt.get(key), f"/{key}", out)
     return out
 
 
-def _flat_f1(table: Mapping[str, Any]) -> dict[str, Any]:
+def flat_f1(table: Mapping[str, Any]) -> dict[str, Any]:
     """A table with each row's F1 as its value alone, as the check recorded it."""
     return {
         row: dict(found) | {"f1": f["value"] if isinstance(f := found["f1"], Mapping) else f}
