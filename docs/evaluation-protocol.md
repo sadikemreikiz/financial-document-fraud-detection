@@ -84,6 +84,9 @@ T1 and T2 are both headline results and are always reported side by side.
    fold. Each outer fold retrains every component on its
    training part, generates synthetic data only from that part, and calibrates on a stratified
    20 % inner hold-out. This is run once, after step 3.
+   *(Dropped on 2026-10-28 by [ADR-0034](decisions/0034-phase-7-preregistration.md), before the
+   test split was unlocked: 752 of the 970 documents shaped the design, so the estimate would be
+   biased upward, and it would cost days of retraining.)*
 
 ## 5. Metrics
 
