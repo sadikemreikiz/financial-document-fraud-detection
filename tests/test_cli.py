@@ -57,6 +57,7 @@ from docfraud.forensics.learned import inference
 from docfraud.forensics.learned.inference import LearnedOutput
 from docfraud.forensics.learned.pretrained import IMAGENET_WEIGHTS
 from docfraud.forensics.trufor import TRUFOR_CODE, TRUFOR_WEIGHTS
+from docfraud.fusion.final import frozen_check, rehearsal_mismatches, resaved_check
 from docfraud.fusion.training_inputs import InputsTable, load_table, save_table, summary
 from docfraud.fusion.validation import validation_check
 from docfraud.llm.adjudication import (
@@ -880,6 +881,69 @@ def test_test_and_track_r_inputs_are_made_once_by_code_that_reproduced_validatio
     assert resaved_run.test_unlocks == (cli_common.TEST_UNLOCK,)
     assert set(resaved_run.results) == {"q95", "q75"}
     assert load_table(tmp / "resaved" / "q75-inputs.json") == validation
+    assert "refusing to run again" in said(runner.invoke(app, resave))
+
+
+def test_the_test_check_and_track_r_are_measured_once_after_a_reproduced_rehearsal(  # noqa: PLR0915
+    recorded: Recorded, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    tmp, store = recorded.tmp, recorded.store
+    assert recorded.shift(tmp / "shift.md").exit_code == 0
+    assert recorded.check().exit_code == 0
+    monkeypatch.setattr(cli_fusion, "frozen_check", partial(frozen_check, resamples=50))
+    monkeypatch.setattr(cli_fusion, "resaved_check", partial(resaved_check, resamples=50))
+    everything = cli_common.findit_documents(tmp)
+    stand_ins = [d.model_copy(update={"split": Split.TEST}) for d in tables()[3]]
+    monkeypatch.setattr(cli_common, "load_findit2", lambda _: (*everything, *stand_ins))
+    tables_given = ["--training", str(recorded.paths["training"])]
+    tables_given += ["--validation", str(recorded.paths["validation"])]
+    common = ["--runs", str(recorded.runs), *tables_given]
+    test_table = tmp / "test.json"
+    shutil.copy(recorded.paths["validation"], test_table)  # the stand-ins' inputs
+    rehearse = ["fusion", "rehearse-check", *common]
+    final = ["fusion", "test-check", *common, "--test", str(test_table)]
+    assert "no fusion-check-rehearsal record" in said(runner.invoke(app, final))
+    monkeypatch.setattr(cli_fusion, "rehearsal_mismatches", lambda *_: ["/ocr/seeds/0"])
+    assert "1 differences" in said(runner.invoke(app, rehearse))
+    assert "did not reproduce the validation check" in said(runner.invoke(app, final))
+    monkeypatch.setattr(cli_fusion, "rehearsal_mismatches", rehearsal_mismatches)
+    assert "the validation check: reproduced" in said(runner.invoke(app, rehearse))
+    assert "no fusion-test-inputs record" in said(runner.invoke(app, final))
+    with run("fusion-test-inputs", store=store, config={}, seeds={}, dataset_sha256={}) as r:
+        r.log("sha256", hashlib.sha256(test_table.read_bytes()).hexdigest())
+    result = runner.invoke(app, final)
+    assert result.exit_code == 0, result.output
+    assert "T2 (OCR): ADR-0013's success criterion" in said(result)
+    (made,) = store.records("fusion-test-check")
+    assert made.test_unlocks == (cli_common.TEST_UNLOCK,)
+    assert {"transcript", "ocr", "T3", "policy", "rq4", "sensitivity"} <= set(made.results)
+    assert made.results["sensitivity"]["ocr"]["receipts"] == len(stand_ins)  # no copies here
+    assert set(made.results["ocr"]["success"]) >= {"f1", "recall_at_10pct", "met"}
+    assert "refusing to run again" in said(runner.invoke(app, final))
+    saved = tmp / "saved-inputs"
+    saved.mkdir()
+    for quality in (95, 75):
+        shutil.copy(recorded.paths["validation"], saved / f"q{quality}-inputs.json")
+    resave = ["fusion", "resaved-check", *common, "--test", str(test_table)]
+    resave += ["--resaved-inputs", str(saved)]
+    assert "no fusion-resaved-inputs record" in said(runner.invoke(app, resave))
+    digests = {
+        f"q{q}": {"sha256": hashlib.sha256((saved / f"q{q}-inputs.json").read_bytes()).hexdigest()}
+        for q in (95, 75)
+    }
+    with run("fusion-resaved-inputs", store=store, config={}, seeds={}, dataset_sha256={}) as r:
+        r.log("q95", digests["q95"])
+        r.log("q75", {"sha256": "other"})
+    assert "is not the table" in said(runner.invoke(app, resave))
+    with run("fusion-resaved-inputs", store=store, config={}, seeds={}, dataset_sha256={}) as r:
+        for key, value in digests.items():
+            r.log(key, value)
+    result = runner.invoke(app, resave)
+    assert result.exit_code == 0, result.output
+    assert "JPEG quality 75: ADR-0013's conditions" in said(result)
+    (track_r,) = store.records("fusion-resaved-check")
+    assert track_r.test_unlocks == (cli_common.TEST_UNLOCK,)
+    assert set(track_r.results) == {"95", "75", "original"}
     assert "refusing to run again" in said(runner.invoke(app, resave))
 
 
