@@ -1,11 +1,12 @@
-"""``docfraud detector``: the standalone LLM detector's development on the design fold (ADR-0031).
+"""``docfraud detector``: the standalone LLM detector, developed on the design fold (ADR-0031).
 
-Every command reads design-fold receipts only, checked before any request is built; sends only
-requests without a stored answer; and stops before the spending limit. ``develop`` runs one
-version of the instruction for both rows (``--pilot``: five receipts, sent one by one, to check
-the answer form); ``freeze`` keeps a version by the rule fixed in advance; ``latency`` times the
-frozen version on 30 receipts sent one by one; ``stronger-model`` runs the frozen main row once on
-Claude Opus 5.5 (ADR-0032).
+Every command checks the receipts it reads before any request is built; sends only requests
+without a stored answer; and stops before the spending limit. On the design fold, ``develop``
+runs one version of the instruction for both rows (``--pilot``: five receipts, sent one by one,
+to check the answer form); ``freeze`` keeps a version by the rule fixed in advance; ``latency``
+times the frozen version on 30 receipts sent one by one; ``stronger-model`` runs the frozen main
+row once on Claude Opus 5.5 (ADR-0032). ``validation`` then runs every row once on the
+validation split.
 """
 
 import hashlib
@@ -20,18 +21,28 @@ import typer
 
 from docfraud.cli.common import (
     OCR_CACHE,
+    REPORTED_RUNS,
     DataDir,
+    DatasetName,
     cached_ocr,
     console,
     findit_documents,
     require_clean_commit,
     require_unchanged,
 )
+from docfraud.cli.fusion import VALIDATION_INPUTS
 from docfraud.cli.llm import LEDGER, STORE, Cache, LedgerPath, Store, _runner
-from docfraud.data.models import Document, Label
+from docfraud.data.download import SOURCES
+from docfraud.data.models import Document, Label, Split
 from docfraud.data.normalize import load_grayscale
+from docfraud.data.splits import select
 from docfraud.evaluation.design_fold import DESIGN_FOLD_IDS
-from docfraud.evaluation.runs import code_version
+from docfraud.evaluation.runs import JsonRunStore, code_version, run
+from docfraud.forensics.learned.rounds import SEEDS
+from docfraud.fusion.development_report import TRACK_NAMES
+from docfraud.fusion.training_inputs import load_table
+from docfraud.fusion.validation import FUSION_ROW
+from docfraud.fusion.validation import RUN_NAME as CHECK_RUN
 from docfraud.llm.cost import cost
 from docfraud.llm.detector import (
     SONNET,
@@ -53,6 +64,13 @@ from docfraud.llm.detector_rounds import (
     row_result,
     save_round,
 )
+from docfraud.llm.detector_validation import RUN_NAME as VALIDATION_RUN
+from docfraud.llm.detector_validation import (
+    detector_validation,
+    fusion_probabilities,
+    validation_rows,
+)
+from docfraud.llm.detector_validation_report import render_report
 from docfraud.llm.provider import Request, Response, Settings
 from docfraud.llm.run import check_documents
 from docfraud.reading.ocr import CachedOcr
@@ -65,8 +83,12 @@ ROUNDS = Path("reports/llm/detector")
 PILOT_RECEIPTS = 5
 LATENCY_RECEIPTS = 30
 STRONGER_MODEL = "stronger-model.json"
+VALIDATION_REPORT = Path("reports/llm/detector/validation.md")
 
 Rounds = Annotated[Path, typer.Option("--rounds", help="Where development rounds are kept.")]
+Runs = Annotated[Path, typer.Option(help="Where reported run records are kept.")]
+Validation = Annotated[Path, typer.Option(help="The validation inputs table of Phase 5.")]
+Output = Annotated[Path, typer.Option(help="Where to write the report.")]
 
 
 def instruction_path(version: int) -> Path:
@@ -308,3 +330,119 @@ def detector_stronger_model(
         )
     added = "runs" if record.row_added else "does not run"
     console.print(f"Opus {added} on the validation and test splits")
+
+
+@app.command("validation")
+def detector_validation_command(  # noqa: PLR0913, PLR0917 - one option per input and output
+    data_dir: DataDir = Path("data"),
+    store: Store = STORE,
+    ledger: LedgerPath = LEDGER,
+    cache: Cache = OCR_CACHE,
+    rounds: Rounds = ROUNDS,
+    runs: Runs = REPORTED_RUNS,
+    validation: Validation = VALIDATION_INPUTS,
+    output: Output = VALIDATION_REPORT,
+) -> None:
+    """Run every row of the frozen detector once on the validation split (ADR-0031, 3 and 4).
+
+    Refuses to run again. Runs only from a clean commit, after the stronger model was checked on
+    the design fold (ADR-0032), on the receipts of Phase 5's validation check, whose fusion
+    model it rebuilds from that check's record. A run that leaves a request unanswered records
+    nothing; running it again sends only what is missing. Only aggregates go to the run record
+    and the report, with what Phase 7 applies: every row's Platt scaling and max-F1 threshold.
+    """
+    records = JsonRunStore(runs)
+    if records.records(VALIDATION_RUN):
+        console.print(f"[red]refusing to run again:[/red] a {VALIDATION_RUN} record exists")
+        raise typer.Exit(1)
+    frozen, text = _frozen(rounds)
+    require_clean_commit()
+    if not (rounds / STRONGER_MODEL).exists():
+        console.print(
+            "[red]check the stronger model on the design fold first[/red] (ADR-0032): "
+            "docfraud detector stronger-model"
+        )
+        raise typer.Exit(1)
+    stronger = StrongerModelCheck.model_validate_json(
+        (rounds / STRONGER_MODEL).read_text(encoding="utf-8")
+    )
+    checks = records.records(CHECK_RUN)
+    if not checks:
+        console.print(f"[red]no {CHECK_RUN} record in {runs}[/red]: Phase 5's check comes first")
+        raise typer.Exit(1)
+    check = checks[-1]
+    if hashlib.sha256(validation.read_bytes()).hexdigest() != check.config["validation_sha256"]:
+        console.print(f"[red]{validation} is not the table {check.run_id} read[/red]")
+        raise typer.Exit(1)
+    table = load_table(validation)
+    documents = sorted(select(findit_documents(data_dir), Split.VAL), key=lambda d: d.doc_id)
+    receipts = [d.doc_id for d in documents]
+    allowed = {r.receipt for r in table.rows(next(iter(TRACK_NAMES)), SEEDS[0])}
+    check_documents(receipts, allowed, "the detector's validation run")
+    if any(d.label is None for d in documents):
+        console.print("[red]every receipt must be labelled authentic or forged[/red]")
+        raise typer.Exit(1)
+    y = np.array([d.label is Label.FORGED for d in documents])
+    try:
+        fusion = fusion_probabilities(check.results, table, receipts, y, SEEDS[0])
+    except ValueError as error:
+        console.print(f"[red]{error}[/red]")
+        raise typer.Exit(1) from error
+    rows = validation_rows(frozen.settings, stronger=stronger.row_added)
+    ocr = cached_ocr(cache)
+    built_by_model: dict[str, dict[DetectorRow, list[Request]]] = {}
+    for row in rows:
+        if row.settings.model not in built_by_model:
+            built_by_model[row.settings.model] = requests(documents, ocr, row.settings, text)
+    runner = _runner(store, ledger)
+    answered = {
+        row.name: runner.answer(built_by_model[row.settings.model][row.row]) for row in rows
+    }
+    unanswered = sum(r is None for got in answered.values() for r in got)
+    if unanswered:
+        total = sum(len(got) for got in answered.values())
+        console.print(
+            f"[red]{unanswered} of {total} requests were not answered[/red]; nothing is "
+            "recorded. Run the command again to send them."
+        )
+        raise typer.Exit(1)
+    source = SOURCES[DatasetName.FINDIT2.value]
+    with run(
+        VALIDATION_RUN,
+        store=records,
+        config={
+            "decision": "ADR-0031, ADR-0032",
+            "frozen": frozen.model_dump(mode="json"),
+            "stronger_model_added": stronger.row_added,
+            "validation_check": check.run_id,
+            "validation_sha256": check.config["validation_sha256"],
+        },
+        seeds={"bootstrap": 0},
+        dataset_sha256={source.name: source.sha256},
+    ) as current:
+        results = detector_validation(
+            y,
+            rows,
+            {name: [read_judgement(r) for r in got] for name, got in answered.items()},
+            {r.name: f"{_spent(answered[r.name], r.settings.model):.4f}" for r in rows},
+            fusion,
+            {track: check.results[track]["table"][FUSION_ROW.name] for track in TRACK_NAMES},
+        )
+        for key, value in results.items():
+            current.log(key, value)
+    detector_validation_report_command(runs, output)
+
+
+@app.command("validation-report")
+def detector_validation_report_command(
+    runs: Runs = REPORTED_RUNS, output: Output = VALIDATION_REPORT
+) -> None:
+    """Render the report of the detector's validation run from its run record."""
+    found = JsonRunStore(runs).records(VALIDATION_RUN)
+    if not found:
+        console.print(f"[red]no {VALIDATION_RUN} record in {runs}[/red]")
+        raise typer.Exit(1)
+    record = found[-1]
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text(render_report(record.results, record.code.commit), encoding="utf-8")
+    console.print(f"[green]written[/green] {output}")
