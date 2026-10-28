@@ -14,6 +14,7 @@ from docfraud.fusion.training_inputs import InputsTable
 
 REHEARSAL_RUN = "fusion-inputs-rehearsal"
 TEST_INPUTS_RUN = "fusion-test-inputs"
+RESAVED_INPUTS_RUN = "fusion-resaved-inputs"
 
 
 def differences(recorded: InputsTable, rebuilt: InputsTable) -> dict[str, Any]:

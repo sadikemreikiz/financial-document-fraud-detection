@@ -37,7 +37,7 @@ from docfraud.cli import synthesis as cli_synthesis
 from docfraud.data.benign_marks import ReceiptMarks, load_mark_log, marks_plan, round_path
 from docfraud.data.download import SOURCES, PinnedFile
 from docfraud.data.gold import GoldManifest, load_manifest
-from docfraud.data.models import Document, Entity, Label, Split, Technique
+from docfraud.data.models import BBox, Document, Entity, Label, Split, Technique
 from docfraud.data.observation import (
     ASSISTANT,
     ObservationLog,
@@ -46,12 +46,15 @@ from docfraud.data.observation import (
     save_log,
     seal,
 )
+from docfraud.data.resave import digest
 from docfraud.data.splits import TestSetLockedError
 from docfraud.evaluation import runs as runs_module
 from docfraud.evaluation.bootstrap import Estimate
 from docfraud.evaluation.design_fold import CLEAN_FOLDS, DESIGN_FOLD
 from docfraud.evaluation.folds import assign_folds, load_folds, save_folds
 from docfraud.evaluation.runs import CodeVersion, JsonRunStore, run
+from docfraud.forensics.learned import inference
+from docfraud.forensics.learned.inference import LearnedOutput
 from docfraud.forensics.learned.pretrained import IMAGENET_WEIGHTS
 from docfraud.forensics.trufor import TRUFOR_CODE, TRUFOR_WEIGHTS
 from docfraud.fusion.training_inputs import InputsTable, load_table, save_table, summary
@@ -761,7 +764,58 @@ def recorded(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Recorded:
     return Recorded(tmp_path, runs, store, paths, training, training_run)
 
 
-def test_the_test_inputs_are_made_once_by_code_that_reproduced_the_validation_inputs(
+class _FakeModel:
+    """System 2 without a network: a flat map over the whole page."""
+
+    identifier = "fake-system-2"
+
+    def analyse(self, image: npt.NDArray[np.uint8]) -> LearnedOutput:
+        page = BBox(x=0, y=0, width=image.shape[1], height=image.shape[0])
+        return LearnedOutput(np.zeros(image.shape, dtype=np.float32), (page,), 0.1)
+
+
+def test_a_splits_inputs_are_made_for_exactly_the_seeds_given(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    def receipt(name: str, split: Split, label: Label | None, shade: int) -> Document:
+        image, text = tmp_path / f"{name}.png", tmp_path / f"{name}.txt"
+        Image.new("L", (120, 90), shade).save(image)
+        text.write_text(f"SHOP {name}\nTOTAL 12.30\n", encoding="utf-8")
+        return Document(
+            dataset="toy",
+            doc_id=name,
+            source_id=name,
+            split=split,
+            label=label,
+            image_path=image,
+            transcript_path=text,
+        )
+
+    labels = (Label.FORGED, Label.AUTHENTIC, Label.FORGED, Label.AUTHENTIC)
+    train = [receipt(f"T{i}", Split.TRAIN, label, 200 + i) for i, label in enumerate(labels)]
+    receipts = [receipt(f"R{i}", Split.TEST, None, 180 + i) for i in range(2)]
+    reading = SimpleNamespace(
+        extraction=Extraction(fields=ReceiptFields(merchant="SHOP"), sources=FieldSources())
+    )
+    monkeypatch.setattr(cli_fusion, "cached_ocr", lambda _: CachedOcr(FakeOcr(), tmp_path / "o"))
+    monkeypatch.setattr(
+        cli_fusion, "_frozen_reader", lambda: SimpleNamespace(read=lambda _: reading)
+    )
+    monkeypatch.setattr(inference.LearnedModel, "from_file", lambda _: _FakeModel())
+    made = cli_fusion._split_inputs(train, receipts, {0: tmp_path / "model.pt"}, "toy receipts")
+    assert {(r.track, r.seed) for r in made.table.receipts} == {("transcript", 0), ("ocr", 0)}
+    assert [r.receipt for r in made.table.rows("ocr", 0)] == ["R0", "R1"]
+    assert made.models == {"0": "fake-system-2"}
+    assert {name: len(times) for name, times in made.seconds.items()} == {
+        "page and OCR": 2,
+        "system 1, copy-move and file traits": 2,
+        "system 2, one seed": 2,
+        "reading both text sources": 2,
+    }
+    assert set(cli_fusion._efficiency(made.seconds)) == {"seconds", "peak_resident_bytes"}
+
+
+def test_test_and_track_r_inputs_are_made_once_by_code_that_reproduced_validation(  # noqa: PLR0915
     recorded: Recorded, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     tmp, store = recorded.tmp, recorded.store
@@ -805,6 +859,23 @@ def test_the_test_inputs_are_made_once_by_code_that_reproduced_the_validation_in
     assert made.results["efficiency"]["seconds"]["page and OCR"]["median"] == 1.0
     assert load_table(tmp / "test.json") == validation
     assert "refusing to run again" in said(runner.invoke(app, final))
+    resave = ["fusion", "resaved-inputs", *runs, "--output", str(tmp / "resaved")]
+    resave += ["--resaved-to", str(tmp / "images")]
+    assert "has not read track R" in said(runner.invoke(app, resave))
+    with run("llm-resaved-reading", store=store, config={}, seeds={}, dataset_sha256={}) as r:
+        r.log("images", {"95": "other", "75": "other"})
+    assert "the images at quality 95 are not those read" in said(runner.invoke(app, resave))
+    assert not store.records("fusion-resaved-inputs")
+    no_images = digest([])  # the fixture's dataset has no test receipt
+    with run("llm-resaved-reading", store=store, config={}, seeds={}, dataset_sha256={}) as r:
+        r.log("images", {"95": no_images, "75": no_images})
+    result = runner.invoke(app, resave)
+    assert result.exit_code == 0, result.output
+    (resaved_run,) = store.records("fusion-resaved-inputs")
+    assert resaved_run.test_unlocks == (cli_common.TEST_UNLOCK,)
+    assert set(resaved_run.results) == {"q95", "q75"}
+    assert load_table(tmp / "resaved" / "q75-inputs.json") == validation
+    assert "refusing to run again" in said(runner.invoke(app, resave))
 
 
 def test_the_validation_check_refuses_tables_code_and_an_order_it_cannot_trust(
@@ -1784,6 +1855,31 @@ def test_llm_the_test_split_is_read_once_at_the_freeze_by_a_reader_shown_unchang
     assert made.results["requests"] == 2 * made.results["receipts"]  # both text sources
     assert made.results["validation_requests_found"] == 2
     assert "refusing to run again" in flat(runner.invoke(app, read_test).output)
+
+
+def test_llm_track_r_is_read_once_after_the_test_split(
+    toy_source: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    arguments, _ = _validation_setup(toy_source, tmp_path, monkeypatch)
+    clean = CodeVersion(commit="d" * 40, dirty=False)
+    monkeypatch.setattr(runs_module, "code_version", lambda repo=None: clean)  # noqa: ARG005
+    monkeypatch.setattr(cli_llm, "ClaudeProvider", FakeProvider)
+    runs, saved = tmp_path / "runs", tmp_path / "saved"
+    given = [*arguments[: arguments.index("--record")], "--runs", str(runs)]
+    read_resaved = ["llm", "read-resaved", *given, "--resaved-to", str(saved)]
+    assert "read the test split first" in flat(runner.invoke(app, read_resaved).output)
+    assert runner.invoke(app, ["llm", "read-validation", *arguments]).exit_code == 0
+    assert runner.invoke(app, ["llm", "read-test", *given]).exit_code == 0
+    result = runner.invoke(app, read_resaved)
+    assert result.exit_code == 0, result.output
+    (made,) = JsonRunStore(runs).records("llm-resaved-reading")
+    assert made.test_unlocks == (cli_common.TEST_UNLOCK,)
+    assert made.results["requests"] == 2 * made.results["receipts"]  # two qualities, OCR only
+    assert set(made.results["images"]) == {"95", "75"}
+    assert sorted(p.name for p in (saved / "q75").iterdir()) == sorted(
+        f"{p.stem}.jpg" for p in (saved / "q95").iterdir()
+    )
+    assert "refusing to run again" in flat(runner.invoke(app, read_resaved).output)
 
 
 def _detector_setup(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> list[str]:

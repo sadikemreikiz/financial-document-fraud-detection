@@ -29,11 +29,12 @@ from docfraud.cli.common import (
     require_unchanged,
 )
 from docfraud.cli.forensics import ROUNDS_DIR
-from docfraud.cli.llm import FROZEN, STORE, TEST_READING_RUN
+from docfraud.cli.llm import FROZEN, RESAVED, RESAVED_READING_RUN, STORE, TEST_READING_RUN
 from docfraud.data.download import SOURCES
 from docfraud.data.gold import load_manifest
 from docfraud.data.models import BBox, Document, Label, Split
 from docfraud.data.normalize import load_grayscale
+from docfraud.data.resave import QUALITIES, digest, resaved
 from docfraud.data.splits import select
 from docfraud.detectors.finding import Finding
 from docfraud.detectors.metadata import editing_traits
@@ -62,7 +63,12 @@ from docfraud.fusion.development import (
 )
 from docfraud.fusion.development_report import render_report
 from docfraud.fusion.evidence import SystemTwo, page_findings
-from docfraud.fusion.rehearsal import REHEARSAL_RUN, TEST_INPUTS_RUN, differences
+from docfraud.fusion.rehearsal import (
+    REHEARSAL_RUN,
+    RESAVED_INPUTS_RUN,
+    TEST_INPUTS_RUN,
+    differences,
+)
 from docfraud.fusion.shift import RUN_NAME as SHIFT_RUN
 from docfraud.fusion.shift import input_shift
 from docfraud.fusion.training_inputs import (
@@ -93,6 +99,7 @@ TRAINING_INPUTS = Path("artifacts/fusion/training-inputs.json")
 VALIDATION_INPUTS = Path("artifacts/fusion/validation-inputs.json")
 REHEARSAL_INPUTS = Path("artifacts/fusion/rehearsal-inputs.json")
 TEST_INPUTS = Path("artifacts/fusion/test-inputs.json")
+RESAVED_INPUTS = Path("artifacts/fusion/resaved")
 VALIDATION_REPORT = Path("reports/fusion/validation-check.md")
 SHIFT_REPORT = Path("reports/fusion/input-shift.md")
 Runs = Annotated[Path, typer.Option(help="Where reported run records are kept.")]
@@ -371,7 +378,7 @@ class _Made:
     seconds: dict[str, list[float]]
 
 
-def _split_inputs(  # pragma: no cover - needs the dataset, LLM answers and models
+def _split_inputs(
     train: Sequence[Document], receipts: Sequence[Document], paths: dict[int, Path], name: str
 ) -> _Made:
     """The fusion inputs of ``receipts`` with the components trained on the whole training split.
@@ -387,7 +394,7 @@ def _split_inputs(  # pragma: no cover - needs the dataset, LLM answers and mode
     scorers = rules_scorers(outcomes, [d.label is Label.FORGED for d in train])
     models = {seed: LearnedModel.from_file(path) for seed, path in paths.items()}
     page: list[tuple[Finding, ...]] = []
-    system_2: dict[int, dict[str, SystemTwo]] = {seed: {} for seed in SEEDS}
+    system_2: dict[int, dict[str, SystemTwo]] = {seed: {} for seed in models}
     readings: dict[str, list[Reading]] = {t.value: [] for t in TRACKS}
     seconds: dict[str, list[float]] = {
         "page and OCR": [],
@@ -548,6 +555,32 @@ def rehearse_inputs_command(
     console.print(f"the validation inputs: {verdict}")
 
 
+def _rehearsal(store: JsonRunStore) -> RunRecord:
+    """The latest rehearsal, if it reproduced the validation inputs with today's input code.
+
+    Raises:
+        typer.Exit: If there is none, it did not reproduce them from a clean commit, or the code
+            that makes the inputs changed after it.
+    """
+    rehearsal = _latest(store, REHEARSAL_RUN)
+    if (
+        not rehearsal.results["reproduced"]
+        or rehearsal.code.commit is None
+        or rehearsal.code.dirty is not False
+    ):
+        console.print(
+            f"[red]{rehearsal.run_id} did not reproduce the validation inputs from a clean "
+            "commit[/red]"
+        )
+        raise typer.Exit(1)
+    require_unchanged(
+        rehearsal.code.commit,
+        INPUT_CODE,
+        "the code that makes the inputs changed since the rehearsal",
+    )
+    return rehearsal
+
+
 @app.command("test-inputs")
 def final_test_inputs_command(
     data_dir: DataDir = Path("data"),
@@ -569,22 +602,7 @@ def final_test_inputs_command(
         raise typer.Exit(1)
     require_clean_commit()
     require_freeze_tag()
-    rehearsal = _latest(store, REHEARSAL_RUN)
-    if (
-        not rehearsal.results["reproduced"]
-        or rehearsal.code.commit is None
-        or rehearsal.code.dirty is not False
-    ):
-        console.print(
-            f"[red]{rehearsal.run_id} did not reproduce the validation inputs from a clean "
-            "commit[/red]"
-        )
-        raise typer.Exit(1)
-    require_unchanged(
-        rehearsal.code.commit,
-        INPUT_CODE,
-        "the code that makes the inputs changed since the rehearsal",
-    )
+    rehearsal = _rehearsal(store)
     if not store.records(TEST_READING_RUN):
         console.print("[red]the frozen reader has not read the test split[/red]: llm read-test")
         raise typer.Exit(1)
@@ -614,6 +632,66 @@ def final_test_inputs_command(
         current.log("models", made.models)
         current.log("efficiency", _efficiency(made.seconds))
     console.print(f"[green]written[/green] {output}: {len(made.table.receipts)} rows")
+
+
+@app.command("resaved-inputs")
+def resaved_inputs_command(
+    data_dir: DataDir = Path("data"),
+    runs: Runs = REPORTED_RUNS,
+    rounds: Annotated[Path, typer.Option(help="Where the rounds are kept.")] = ROUNDS_DIR,
+    resaved_to: Annotated[Path, typer.Option(help="Where track R's images go.")] = RESAVED,
+    output: Annotated[Path, typer.Option(help="Where to write the tables.")] = RESAVED_INPUTS,
+) -> None:
+    """Compute track R's inputs: the test receipts saved again as JPEG, once (ADR-0034, 4).
+
+    At every quality of track R, the test images are saved again and enter the T2 pipeline from
+    the start, with system 2 at seed 0, as the test inputs are made and under their guards,
+    after the frozen reader read the saved images' text. The images must be those it read. One
+    table per quality goes to ``output``; the run record records the unlock and aggregates.
+    """
+    store = JsonRunStore(runs)
+    if store.records(RESAVED_INPUTS_RUN):
+        console.print(f"[red]refusing to run again:[/red] a {RESAVED_INPUTS_RUN} record exists")
+        raise typer.Exit(1)
+    require_clean_commit()
+    require_freeze_tag()
+    rehearsal = _rehearsal(store)
+    readings = store.records(RESAVED_READING_RUN)
+    if not readings:
+        console.print("[red]the frozen reader has not read track R[/red]: llm read-resaved")
+        raise typer.Exit(1)
+    paths = _whole_training_models(rounds)
+    documents = findit_documents(data_dir)
+    train = sorted(select(documents, Split.TRAIN), key=lambda d: d.doc_id)
+    source = SOURCES[DatasetName.FINDIT2.value]
+    with run(
+        RESAVED_INPUTS_RUN,
+        store=store,
+        config={
+            "decision": "ADR-0034",
+            "rehearsal": rehearsal.run_id,
+            "resaved_reading": readings[-1].run_id,
+            "qualities": list(QUALITIES),
+            "models": _models_config({0: paths[0]}),
+        },
+        seeds={"system 2, seed 0": 0},
+        dataset_sha256={source.name: source.sha256},
+    ) as current:
+        test = sorted(
+            select(documents, Split.TEST, unlock_test=True, reason=TEST_UNLOCK),
+            key=lambda d: d.doc_id,
+        )
+        for quality in QUALITIES:
+            saved = resaved(test, quality, resaved_to / f"q{quality}")
+            if digest(saved) != readings[-1].results["images"][str(quality)]:
+                console.print(f"[red]the images at quality {quality} are not those read[/red]")
+                raise typer.Exit(1)
+            receipts = list(map(unlabelled, saved))
+            made = _split_inputs(train, receipts, {0: paths[0]}, f"test receipts at {quality}")
+            table = output / f"q{quality}-inputs.json"
+            save_table(made.table, table)
+            current.log(f"q{quality}", {"summary": summary(made.table), "sha256": _sha256(table)})
+    console.print(f"[green]written[/green] track R's inputs at qualities {QUALITIES} to {output}")
 
 
 @dataclass(frozen=True, slots=True)
