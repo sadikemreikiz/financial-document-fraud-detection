@@ -99,7 +99,7 @@ def _failures(results: Mapping[str, Any]) -> Table | None:
     return Table("Cases without a case file in the fixed form", ("Failure", "Cases"), rows)
 
 
-def _cases(results: Mapping[str, Any]) -> Table:
+def _cases(results: Mapping[str, Any], files: str) -> Table:
     rows: list[list[Cell]] = []
     for c in results["cases"]:
         pointed, report = c["first_location"], c["report_first_region"]
@@ -134,13 +134,27 @@ def _cases(results: Mapping[str, Any]) -> Table:
             "Time, s",
         ),
         rows,
-        note="The case files are in [`validation/`](validation/), one per receipt.",
+        note=f"The case files are in [`{files}`]({files}), one per receipt.",
     )
 
 
-def render_report(results: Mapping[str, Any], config: Mapping[str, Any], commit: str | None) -> str:
-    """The validation-split report of the investigation agent."""
-    frozen, policy = config["frozen"], config["policy"]
+def render_report(  # noqa: PLR0913 - the record, and where and how it was made
+    results: Mapping[str, Any],
+    config: Mapping[str, Any],
+    commit: str | None,
+    *,
+    split: str = "validation",
+    run_name: str = RUN_NAME,
+    command: str = "docfraud agent validation-report",
+) -> str:
+    """The report of the investigation agent on the validation split, or on the test split.
+
+    The validation run records the policy in its configuration, the test run in its results,
+    where the policy of Phase 5's check is applied unchanged.
+    """
+    frozen = config["frozen"]
+    policy = config.get("policy") or results["policy"]
+    unchanged = "" if split == "validation" else ", applied unchanged"
     tables = [
         t
         for t in (
@@ -148,13 +162,13 @@ def render_report(results: Mapping[str, Any], config: Mapping[str, Any], commit:
             _pointing(results),
             _violations(results),
             _failures(results),
-            _cases(results),
+            _cases(results, f"{split}/"),
         )
         if t is not None
     ]
     header = (
-        "# The investigation agent on the validation split\n\n"
-        f"> Generated from the run record `{RUN_NAME}` by `docfraud agent validation-report`. "
+        f"# The investigation agent on the {split} split\n\n"
+        f"> Generated from the run record `{run_name}` by `{command}`. "
         "Do not edit by hand.\n\n"
         "The frozen agent "
         "([ADR-0031](../../../docs/decisions/0031-llm-detector-and-agent.md), sections 5 and 6, "
@@ -162,10 +176,10 @@ def render_report(results: Mapping[str, Any], config: Mapping[str, Any], commit:
         f"{frozen['version']} of its instruction, `{frozen['settings']['model']}` at "
         f"{frozen['settings']['effort']} effort, at most 8 tool calls and "
         f"{frozen['token_budget']:,} tokens per case, frozen at `{frozen['commit'][:7]}`. It ran "
-        f"once, at commit `{(commit or 'unknown')[:7]}`, on the {results['receipts']} validation "
+        f"once, at commit `{(commit or 'unknown')[:7]}`, on the {results['receipts']} {split} "
         "receipts that the review policy of track T2 sends to review (calibrated probability at "
         f"least {policy['threshold']:.3f}, the {policy['budget'] * 100:.0f} % budget of Phase 5's "
-        f"check); {results['forged']} of them are forged. Its case files state no verdict: "
-        "the reviewer decides.\n\n"
+        f"check{unchanged}); {results['forged']} of them are forged. Its case files state no "
+        "verdict: the reviewer decides.\n\n"
     )
     return header + "\n".join(render_table(t) for t in tables)
