@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Annotated, Any
 
 import numpy as np
+import numpy.typing as npt
 import typer
 from rich.progress import track as with_progress
 
@@ -31,6 +32,7 @@ from docfraud.cli.common import (
 from docfraud.cli.forensics import ROUNDS_DIR
 from docfraud.cli.llm import FROZEN, RESAVED, RESAVED_READING_RUN, STORE, TEST_READING_RUN
 from docfraud.data.download import SOURCES
+from docfraud.data.findit import SENSITIVITY_EXCLUSIONS
 from docfraud.data.gold import load_manifest
 from docfraud.data.models import BBox, Document, Label, Split
 from docfraud.data.normalize import load_grayscale
@@ -61,8 +63,18 @@ from docfraud.fusion.development import (
     score,
     track_results,
 )
-from docfraud.fusion.development_report import render_report
+from docfraud.fusion.development_report import TRACK_NAMES, render_report
 from docfraud.fusion.evidence import SystemTwo, page_findings
+from docfraud.fusion.final import (
+    CHECK_CODE,
+    frozen_check,
+    rehearsal_mismatches,
+    resaved_check,
+    subset,
+)
+from docfraud.fusion.final import REHEARSAL_RUN as CHECK_REHEARSAL_RUN
+from docfraud.fusion.final import RESAVED_RUN as RESAVED_CHECK_RUN
+from docfraud.fusion.final import RUN_NAME as TEST_CHECK_RUN
 from docfraud.fusion.rehearsal import (
     REHEARSAL_RUN,
     RESAVED_INPUTS_RUN,
@@ -104,6 +116,8 @@ VALIDATION_REPORT = Path("reports/fusion/validation-check.md")
 SHIFT_REPORT = Path("reports/fusion/input-shift.md")
 Runs = Annotated[Path, typer.Option(help="Where reported run records are kept.")]
 Output = Annotated[Path, typer.Option(help="Where to write the report.")]
+Training = Annotated[Path, typer.Option(help="The training inputs table.")]
+Validation = Annotated[Path, typer.Option(help="The validation inputs table.")]
 
 type Reading = tuple[dict[str, Outcome], FieldSources]
 
@@ -708,6 +722,254 @@ def resaved_inputs_command(
     console.print(f"[green]written[/green] track R's inputs at qualities {QUALITIES} to {output}")
 
 
+def _recorded_check(
+    store: JsonRunStore, training: Path, validation: Path
+) -> tuple[RunRecord, InputsTable]:
+    """Phase 5's check and the training table it was fitted on, checked against their records.
+
+    Raises:
+        typer.Exit: If there is no check, or a table is not the one its record describes.
+    """
+    check = _latest(store, CHECK_RUN)
+    if _sha256(validation) != check.config["validation_sha256"]:
+        console.print(f"[red]{validation} is not the table {check.run_id} read[/red]")
+        raise typer.Exit(1)
+    table = load_table(training)
+    if summary(table) != store.load(check.config["training_inputs"]).results["summary"]:
+        console.print(f"[red]{training} is not the table {check.run_id} was fitted on[/red]")
+        raise typer.Exit(1)
+    return check, table
+
+
+def _labels(documents: Sequence[Document]) -> npt.NDArray[np.bool_]:
+    """Whether each receipt is forged."""
+    return np.array([d.label is Label.FORGED for d in documents])
+
+
+@app.command("rehearse-check")
+def rehearse_check_command(
+    data_dir: DataDir = Path("data"),
+    runs: Runs = REPORTED_RUNS,
+    training: Training = TRAINING_INPUTS,
+    validation: Validation = VALIDATION_INPUTS,
+) -> None:
+    """Apply the frozen check to the validation split and compare with its record (ADR-0034).
+
+    The code that will measure the test split must give back, on the validation split and from
+    the check's record, every result the check recorded. Reads no test receipt. The run record
+    says whether it did and, if not, where it differs.
+    """
+    store = JsonRunStore(runs)
+    require_clean_commit()
+    check, training_table = _recorded_check(store, training, validation)
+    documents = findit_documents(data_dir)
+    train = sorted(select(documents, Split.TRAIN), key=lambda d: d.doc_id)
+    checked = sorted(select(documents, Split.VAL), key=lambda d: d.doc_id)
+    source = SOURCES[DatasetName.FINDIT2.value]
+    with run(
+        CHECK_REHEARSAL_RUN,
+        store=store,
+        config={"decision": "ADR-0034", "validation_check": check.run_id},
+        seeds={"bootstrap": 0, "baseline": 0},
+        dataset_sha256={source.name: source.sha256},
+    ) as current:
+        try:
+            rebuilt = frozen_check(
+                training_table,
+                _labels(train),
+                load_table(validation),
+                checked,
+                _pages(checked),
+                recorded=check.results,
+                seeds=SEEDS,
+            )
+        except ValueError as error:
+            console.print(f"[red]{error}[/red]")
+            raise typer.Exit(1) from error
+        mismatches = rehearsal_mismatches(check.results, rebuilt)
+        current.log("reproduced", not mismatches)
+        current.log("mismatches", mismatches)
+    verdict = "reproduced" if not mismatches else f"[red]{len(mismatches)} differences[/red]"
+    console.print(f"the validation check: {verdict}")
+
+
+def _check_rehearsal(store: JsonRunStore) -> RunRecord:
+    """The latest rehearsal of the check, if it reproduced it with today's code.
+
+    Raises:
+        typer.Exit: If there is none, it did not reproduce the check from a clean commit, or the
+            code that makes the results changed after it.
+    """
+    rehearsal = _latest(store, CHECK_REHEARSAL_RUN)
+    if (
+        not rehearsal.results["reproduced"]
+        or rehearsal.code.commit is None
+        or rehearsal.code.dirty is not False
+    ):
+        console.print(
+            f"[red]{rehearsal.run_id} did not reproduce the validation check from a clean "
+            "commit[/red]"
+        )
+        raise typer.Exit(1)
+    require_unchanged(
+        rehearsal.code.commit, CHECK_CODE, "the code that makes the results changed since"
+    )
+    return rehearsal
+
+
+def _recorded_table(store: JsonRunStore, name: str, path: Path, key: str = "sha256") -> InputsTable:
+    """A table written by the latest run of ``name``, checked by its SHA-256.
+
+    Raises:
+        typer.Exit: If there is no such run or the table is not the one it wrote.
+    """
+    made = _latest(store, name)
+    found: Any = made.results
+    for part in key.split("/"):
+        found = found[part]
+    if _sha256(path) != found:
+        console.print(f"[red]{path} is not the table {made.run_id} wrote[/red]")
+        raise typer.Exit(1)
+    return load_table(path)
+
+
+@app.command("test-check")
+def final_check_command(
+    data_dir: DataDir = Path("data"),
+    runs: Runs = REPORTED_RUNS,
+    training: Training = TRAINING_INPUTS,
+    validation: Validation = VALIDATION_INPUTS,
+    test: Annotated[Path, typer.Option(help="The test inputs table.")] = TEST_INPUTS,
+) -> None:
+    """Measure the frozen system once on the test split (ADR-0034, decisions 3, 5 and 6).
+
+    Applies the check's record to the test inputs, as the rehearsal applied it to the validation
+    split: every table, the nine pre-named comparisons of fusion, ADR-0013's success criterion,
+    the review policy, RQ3, RQ4 and the grounding of every report, and track T3; then all of it
+    again without the eight receipts that had copies (ADR-0009). Runs once, at the freeze tag,
+    from a clean commit, after a rehearsal that reproduced the check with today's code.
+    """
+    store = JsonRunStore(runs)
+    if store.records(TEST_CHECK_RUN):
+        console.print(f"[red]refusing to run again:[/red] a {TEST_CHECK_RUN} record exists")
+        raise typer.Exit(1)
+    require_clean_commit()
+    require_freeze_tag()
+    rehearsal = _check_rehearsal(store)
+    check, training_table = _recorded_check(store, training, validation)
+    measured = _recorded_table(store, TEST_INPUTS_RUN, test)
+    documents = findit_documents(data_dir)
+    train = sorted(select(documents, Split.TRAIN), key=lambda d: d.doc_id)
+    source = SOURCES[DatasetName.FINDIT2.value]
+    with run(
+        TEST_CHECK_RUN,
+        store=store,
+        config={
+            "decision": "ADR-0034",
+            "validation_check": check.run_id,
+            "rehearsal": rehearsal.run_id,
+            "test_inputs": _latest(store, TEST_INPUTS_RUN).run_id,
+        },
+        seeds={"bootstrap": 0, "baseline": 0},
+        dataset_sha256={source.name: source.sha256},
+    ) as current:
+        receipts = sorted(
+            select(documents, Split.TEST, unlock_test=True, reason=TEST_UNLOCK),
+            key=lambda d: d.doc_id,
+        )
+        pages = _pages(receipts)
+        results = frozen_check(
+            training_table,
+            _labels(train),
+            measured,
+            receipts,
+            pages,
+            recorded=check.results,
+            seeds=SEEDS,
+        )
+        kept_table, kept = subset(measured, receipts, SENSITIVITY_EXCLUSIONS)
+        results["sensitivity"] = frozen_check(
+            training_table,
+            _labels(train),
+            kept_table,
+            kept,
+            {r: page for r, page in pages.items() if r not in SENSITIVITY_EXCLUSIONS},
+            recorded=check.results,
+            seeds=SEEDS,
+        )
+        for key, value in results.items():
+            current.log(key, value)
+    for track, name in TRACK_NAMES.items():
+        met = "met" if results[track]["success"]["met"] else "not met"
+        console.print(f"{name}: ADR-0013's success criterion {met}")
+
+
+@app.command("resaved-check")
+def resaved_check_command(  # noqa: PLR0913, PLR0917 - one option per input
+    data_dir: DataDir = Path("data"),
+    runs: Runs = REPORTED_RUNS,
+    training: Training = TRAINING_INPUTS,
+    validation: Validation = VALIDATION_INPUTS,
+    test: Annotated[Path, typer.Option(help="The test inputs table.")] = TEST_INPUTS,
+    resaved_inputs: Annotated[Path, typer.Option(help="Where track R's tables are.")] = (
+        RESAVED_INPUTS
+    ),
+) -> None:
+    """Measure track R once: the frozen T2 model on the test images saved again (ADR-0034, 4).
+
+    Runs once, at the freeze tag, from a clean commit, after the test check and under its
+    rehearsal; every table must be the one its run wrote.
+    """
+    store = JsonRunStore(runs)
+    if store.records(RESAVED_CHECK_RUN):
+        console.print(f"[red]refusing to run again:[/red] a {RESAVED_CHECK_RUN} record exists")
+        raise typer.Exit(1)
+    require_clean_commit()
+    require_freeze_tag()
+    rehearsal = _check_rehearsal(store)
+    _latest(store, TEST_CHECK_RUN)
+    check, training_table = _recorded_check(store, training, validation)
+    measured = _recorded_table(store, TEST_INPUTS_RUN, test)
+    resaved_tables = {
+        q: _recorded_table(
+            store, RESAVED_INPUTS_RUN, resaved_inputs / f"q{q}-inputs.json", f"q{q}/sha256"
+        )
+        for q in QUALITIES
+    }
+    documents = findit_documents(data_dir)
+    train = sorted(select(documents, Split.TRAIN), key=lambda d: d.doc_id)
+    source = SOURCES[DatasetName.FINDIT2.value]
+    with run(
+        RESAVED_CHECK_RUN,
+        store=store,
+        config={
+            "decision": "ADR-0034",
+            "validation_check": check.run_id,
+            "rehearsal": rehearsal.run_id,
+            "resaved_inputs": _latest(store, RESAVED_INPUTS_RUN).run_id,
+        },
+        seeds={"bootstrap": 0},
+        dataset_sha256={source.name: source.sha256},
+    ) as current:
+        receipts = sorted(
+            select(documents, Split.TEST, unlock_test=True, reason=TEST_UNLOCK),
+            key=lambda d: d.doc_id,
+        )
+        results = resaved_check(
+            training_table,
+            _labels(train),
+            measured,
+            resaved_tables,
+            _labels(receipts),
+            recorded=check.results["ocr"],
+        )
+        for key, value in results.items():
+            current.log(key, value)
+    for quality in QUALITIES:
+        met = "would hold" if results[str(quality)]["success"]["met"] else "would not hold"
+        console.print(f"JPEG quality {quality}: ADR-0013's conditions {met}")
+
+
 @dataclass(frozen=True, slots=True)
 class _Recorded:
     """Both inputs tables, checked against the run records that made them."""
@@ -741,10 +1003,6 @@ def _recorded_tables(store: JsonRunStore, training: Path, validation: Path) -> _
         console.print(f"[red]{validation} is not the table {inputs_run.run_id} wrote[/red]")
         raise typer.Exit(1)
     return _Recorded(training_run, inputs_run, training_table, load_table(validation))
-
-
-Training = Annotated[Path, typer.Option(help="The training inputs table.")]
-Validation = Annotated[Path, typer.Option(help="The validation inputs table.")]
 
 
 @app.command("input-shift")

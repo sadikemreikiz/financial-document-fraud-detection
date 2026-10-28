@@ -197,24 +197,32 @@ def policy_results(
 
     The intervals resample receipts with the threshold held fixed.
     """
-    out: dict[str, Any] = {}
-    for budget in BUDGETS:
-        policy = ReviewPolicy.set_on(probabilities, budget)
-        reviewed = policy.reviewed(probabilities).astype(float)
-        found = (policy.reviewed(probabilities) & y).astype(float)
-        counts = outcome(policy, probabilities, y)
-        out[f"{budget * 100:.0f} %"] = {
-            "budget": budget,
-            "threshold": policy.threshold,
-            "receipts": counts.receipts,
-            "reviewed": counts.reviewed,
-            "forged": counts.forged,
-            "forged_reviewed": counts.forged_reviewed,
-            "review_share": _estimate(reviewed, np.ones(y.size), resamples),
-            "recall": _estimate(found, y.astype(float), resamples),
-            "precision": _estimate(found, reviewed, resamples),
-        }
-    return out
+    return {
+        f"{budget * 100:.0f} %": policy_result(
+            y, probabilities, ReviewPolicy.set_on(probabilities, budget), resamples
+        )
+        for budget in BUDGETS
+    }
+
+
+def policy_result(
+    y: Labels, probabilities: Vector, policy: ReviewPolicy, resamples: int = DEFAULT_RESAMPLES
+) -> dict[str, Any]:
+    """What one review policy does on these receipts, with its threshold held fixed."""
+    reviewed = policy.reviewed(probabilities).astype(float)
+    found = (policy.reviewed(probabilities) & y).astype(float)
+    counts = outcome(policy, probabilities, y)
+    return {
+        "budget": policy.budget,
+        "threshold": policy.threshold,
+        "receipts": counts.receipts,
+        "reviewed": counts.reviewed,
+        "forged": counts.forged,
+        "forged_reviewed": counts.forged_reviewed,
+        "review_share": _estimate(reviewed, np.ones(y.size), resamples),
+        "recall": _estimate(found, y.astype(float), resamples),
+        "precision": _estimate(found, reviewed, resamples),
+    }
 
 
 def grounding(
