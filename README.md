@@ -3,15 +3,15 @@
 [![CI](https://github.com/sadikemreikiz/financial-document-fraud-detection/actions/workflows/ci.yml/badge.svg)](https://github.com/sadikemreikiz/financial-document-fraud-detection/actions/workflows/ci.yml)
 
 Explainable detection of forged receipts from the evidence they carry: pixel forensics and
-accounting-rule verification, with an LLM-assisted review planned, evaluated on real human
-forgeries.
+accounting-rule verification, with an LLM that reads the fields and drafts the case for a human
+reviewer, evaluated on real human forgeries.
 
 ## At a glance
 
 - **What it does:** detects forged receipts from the evidence they carry: arithmetic on the
   receipt that no longer adds up, and traces of editing in its pixels. An LLM that reads the
   receipt's fields replaced the rule-based parser after a pre-registered test of the accounting
-  rules' false alarms; an LLM-assisted review is planned.
+  rules' false alarms, and an LLM agent drafts the case file of each receipt sent to review.
 - **What stands out:** I audited my own thesis, found that data leakage had invalidated its
   results, and rebuilt it under an evaluation protocol fixed before any model was trained. Along
   the way I found a shortcut in the dataset: a rule that looks only at the file format beats the
@@ -25,10 +25,10 @@ forgeries.
   engine.
 - **Built with:** Python 3.14, PyTorch, scikit-learn, RapidOCR, the Claude API, pytest, mypy in
   strict mode and CI on every pull request.
-- **Status:** Phases 0 to 5 and 6a of 8 complete. Phase 5 combined the evidence into one
-  decision and an audit report, checked once on the validation split. Phase 6b, an LLM agent
-  that prepares the case file of a receipt sent to review, is next; the test split stays locked
-  until Phase 7.
+- **Status:** Phases 0 to 6 of 8 complete. Phase 5 combined the evidence into one decision and
+  an audit report; Phase 6 measured an LLM as a detector against it and built the review agent,
+  each checked once on the validation split. Phase 7, the single evaluation on the locked test
+  split, is next.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="reports/fusion/figures/validation-precision-dark.svg">
@@ -46,8 +46,9 @@ same research questions properly. See [From thesis to v2](docs/thesis-review.md)
 
 ## Status
 
-**Under active development.** Phases 0 to 5 of the [roadmap](docs/project-charter.md#roadmap)
-are complete: foundations, data, reading, accounting rules, pixel forensics and fusion. Reading errors
+**Under active development.** Phases 0 to 6 of the [roadmap](docs/project-charter.md#roadmap)
+are complete: foundations, data, reading, accounting rules, pixel forensics, fusion and the
+language-model layer. Reading errors
 cause most false alarms of the accounting rules, so LLM field extraction moved before Phase 5
 ([ADR-0024](docs/decisions/0024-llm-extraction-before-fusion.md)). Its measurement was fixed in
 advance ([ADR-0025](docs/decisions/0025-llm-extraction-preregistration.md)): the LLM points to
@@ -61,8 +62,12 @@ the fields from here on ([report](reports/llm/false-alarms.md)). Phase 5 combine
 copy-move detection, links between pixel evidence and the fields it changes, fusion with the
 accounting rules, a review policy and an audit report; it was fixed in advance
 ([ADR-0029](docs/decisions/0029-fusion-preregistration.md)), frozen and checked once on the
-validation split ([Phase 5 results](reports/fusion/README.md)). The test split stays locked
-until the final evaluation of Phase 7.
+validation split ([Phase 5 results](reports/fusion/README.md)). Phase 6b set a language model
+against that system as a detector and built an agent that drafts the case file of a receipt sent
+to review, both fixed in advance
+([ADR-0031](docs/decisions/0031-llm-detector-and-agent.md)) and checked once on the validation
+split ([Phase 6 results](reports/llm/README.md)). The test split stays locked until the final
+evaluation of Phase 7.
 
 ## Findings so far
 
@@ -114,6 +119,15 @@ until the final evaluation of Phase 7.
   edit on 30 of the 33 forged validation receipts, where a random box hits about 5 % of the time,
   and an independent checker found every one of the 16,496 numbers and boxes in 380 reports in
   the evidence ([report](reports/fusion/validation-check.md)).
+- **A general LLM detects far worse than the specialised system.** Asked to score each
+  validation receipt from its page and OCR text, Claude Sonnet 5.5 reaches an average precision
+  of 0.47 and Claude Opus 5.5 0.67, against 0.83 for the fused system on the same text; the
+  difference to Sonnet, the comparison named in advance, is 0.36 (0.20 to 0.51)
+  ([report](reports/llm/detector/validation.md)).
+- **The review agent's case files rest on its tools' outputs, at about 2 cents a receipt.** On the 19
+  validation receipts sent to review, 5 of the 1,224 numbers and boxes in its case files were
+  not found in the tool outputs, and its first observation pointed at the edit on all 19, as the
+  audit report does ([report](reports/llm/agent/validation.md)).
 
 ## How the work is done
 
@@ -141,7 +155,7 @@ until the final evaluation of Phase 7.
 | [Phase 3 results](reports/rules/README.md) | Published baseline reproduced, accounting rules measured once on validation |
 | [Phase 4 results](reports/forensics/README.md) | Pre-registration, real forgeries, reference systems, synthetic engine, learned models, one clean measurement |
 | [Phase 5 results](reports/fusion/README.md) | Copy-move, linking, fusion, review policy and audit report, checked once on the validation split |
-| [Phase 6a pre-registration](docs/decisions/0025-llm-extraction-preregistration.md) | How the LLM field reader is developed, measured once and judged against the parser |
+| [Phase 6 results](reports/llm/README.md) | The LLM field reader, the LLM as a detector against the fused system, and the review agent, each checked once |
 | [From thesis to v2](docs/thesis-review.md) | Code-verified review of the original implementation |
 
 ## Development
@@ -168,8 +182,9 @@ report and are reproduced as described in the [Phase 2 results](reports/reading/
 ## Licence
 
 Code is released under the [MIT licence](LICENSE). Datasets are not redistributed; they are
-downloaded from their original sources and verified by checksum. Phase 6a sends receipt text,
-never images, to the Claude API for processing; what is sent and kept is recorded in the
+downloaded from their original sources and verified by checksum. Phase 6 sends receipt text
+and, in 6b, normalised page images and crops of them to the Claude API for processing; what is
+sent and kept is recorded in the
 [data card](docs/data-card.md#use-with-a-hosted-language-model). Phase 4 uses third-party
 models under their own terms: TruFor for nonprofit research, credited to its authors, and
 ImageNet-trained weights, which limit the models trained from them to non-commercial research.
