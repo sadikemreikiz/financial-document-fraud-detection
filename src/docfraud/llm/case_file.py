@@ -32,7 +32,10 @@ from docfraud.llm.provider import Response
 type ToolName = Literal["assessment", "read_fields", "ocr_rows", "crop"]
 
 _BOX = re.compile(r"\((\d+), (\d+), (\d+) x (\d+) px\)")
-_NUMBER = re.compile(r"[-+]?\d+(?:\.\d+)?")
+_NUMBER = re.compile(r"(?:(?<!\d)[-+])?\d+(?:\.\d+)?")
+"""A number. A sign counts only where no digit comes just before it, so that the hyphen of a
+range, a date or a code (604-615, 2018-06-20, 3-1708032) is not read as minus; a number next
+to letters (RM50.00, INV123) is still a number."""
 
 
 class _Form(BaseModel):

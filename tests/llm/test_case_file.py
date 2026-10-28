@@ -109,6 +109,19 @@ def test_every_number_and_box_must_come_from_what_the_agent_received() -> None:
     assert check_case_file(elsewhere, ["X1", OUTPUT]).violations == ("(51, 20, 20 x 10 px)",)
 
 
+def test_a_hyphen_between_digits_is_not_a_minus_sign() -> None:
+    received = ["X1", json.dumps({"page": {"width": 615}, "date": "2018-06-20", "paid": "-50.00"})]
+    stated = render_case_file(
+        "X1", case_file("At x 604-615 on 2018-06-20, paid -50.00, code 3-1708032.")
+    )
+    assert check_case_file(stated, [*received, "604", "3-1708032"]).violations == ()
+    assert check_case_file(
+        render_case_file("X1", case_file("Paid -615.")), received
+    ).violations == ("-615",)
+    glued = render_case_file("X1", case_file("Total RM51.00."))
+    assert check_case_file(glued, received).violations == ("51.00",)  # still checked
+
+
 def test_the_first_location_is_the_first_observations() -> None:
     located = case_file("First.", Location(x=1, y=2, width=3, height=4))
     assert first_location(located) == BBox(x=1, y=2, width=3, height=4)
