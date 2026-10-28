@@ -64,7 +64,7 @@ from docfraud.llm.adjudication import (
 from docfraud.llm.adjudication import save_log as save_adjudication
 from docfraud.llm.cost import Ledger
 from docfraud.llm.decision import ModelStep
-from docfraud.llm.detector_rounds import FrozenDetector, load_rounds
+from docfraud.llm.detector_rounds import OPUS, FrozenDetector, StrongerModelCheck, load_rounds
 from docfraud.llm.false_alarms import FIXED_AT
 from docfraud.llm.frozen import load_split_reading
 from docfraud.llm.gold_b import load_measurement
@@ -1603,12 +1603,11 @@ def test_llm_the_validation_split_is_read_only_by_the_frozen_reader(
     assert not record.exists()
 
 
-def test_the_detector_is_developed_frozen_and_timed_on_the_design_fold_only(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
+def _detector_setup(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> list[str]:
+    """Eight design-fold receipts, both instructions, a fake detector and a clean commit."""
     docs = [d for d in corpus(tmp_path / "corpus") if d.split is Split.TRAIN][:8]
-    for document in docs:
-        Image.new("L", (40, 30), 200).save(document.image_path)
+    for shade, document in enumerate(docs, start=200):  # one page per receipt, one request each
+        Image.new("L", (40, 30), shade).save(document.image_path)
     instructions = tmp_path / "instructions"
     instructions.mkdir()
     written = (Path("src/docfraud/llm/instructions/detector-v1.md")).read_text(encoding="utf-8")
@@ -1624,8 +1623,17 @@ def test_the_detector_is_developed_frozen_and_timed_on_the_design_fold_only(
     monkeypatch.setattr(cli_detector, "INSTRUCTIONS", instructions)
     monkeypatch.setattr(cli_detector, "_runner", lambda *_: answering)
     monkeypatch.setattr(cli_detector, "code_version", lambda: clean)
+    monkeypatch.setattr(cli_common, "code_version", lambda: clean)
+    monkeypatch.setattr(cli_common, "changed_since", lambda *_: [])
+    return ["--rounds", str(tmp_path / "rounds"), "--cache", str(tmp_path / "ocr")]
+
+
+def test_the_detector_is_developed_frozen_and_timed_on_the_design_fold_only(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    options = _detector_setup(tmp_path, monkeypatch)
     rounds = tmp_path / "rounds"
-    options = ["--rounds", str(rounds), "--cache", str(tmp_path / "ocr")]
+    clean = CodeVersion(commit="b" * 40, dirty=False)
 
     def develop(*more: str) -> Any:
         return runner.invoke(app, ["detector", "develop", *options, *more])
@@ -1657,6 +1665,32 @@ def test_the_detector_is_developed_frozen_and_timed_on_the_design_fold_only(
     latency = json.loads((rounds / "latency.json").read_text(encoding="utf-8"))
     assert latency["image and OCR text"]["timed"] == 8
     assert latency["transcript"]["median_seconds"] == pytest.approx(1.5)
+
+
+def test_the_frozen_main_row_is_checked_once_on_the_stronger_model(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    options = _detector_setup(tmp_path, monkeypatch)
+    rounds = tmp_path / "rounds"
+    stronger = ["detector", "stronger-model", *options]
+    assert "freeze a version first" in flat(runner.invoke(app, stronger).output)
+    assert runner.invoke(app, ["detector", "develop", "--version", "1", *options]).exit_code == 0
+    assert runner.invoke(app, ["detector", "freeze", "--rounds", str(rounds)]).exit_code == 0
+    monkeypatch.setattr(cli_common, "changed_since", lambda *_: ["src/docfraud/llm/detector.py"])
+    assert "the detector changed after it was frozen" in flat(runner.invoke(app, stronger).output)
+    monkeypatch.setattr(cli_common, "changed_since", lambda *_: [])
+    checked = runner.invoke(app, stronger)
+    assert checked.exit_code == 0, checked.output
+    record = StrongerModelCheck.model_validate_json(
+        (rounds / "stronger-model.json").read_text(encoding="utf-8")
+    )
+    assert record.settings == OPUS
+    assert record.instruction.endswith("detector-v1.md")
+    assert record.result.receipts == record.frozen_result.receipts == 8
+    assert not record.row_added  # the same answers are not clearly better
+    spent = [json.loads(line) for line in (tmp_path / "ledger.jsonl").read_text().splitlines()]
+    assert sum(entry["model"] == OPUS.model for entry in spent) == 8  # the main row only
+    assert "checked once" in flat(runner.invoke(app, stronger).output)
 
 
 def test_the_detector_refuses_to_freeze_or_time_what_it_cannot_trust(

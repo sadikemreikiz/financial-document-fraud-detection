@@ -7,6 +7,10 @@ The kept version is frozen at a clean commit and is the one the validation and t
 
 A receipt without a score, because the answer failed its form or never came, ranks below every
 scored receipt: a failure counts against the version that produced it.
+
+Once frozen, the main row is checked once on a stronger model over the same receipts
+(ADR-0032); by the same margin, that check decides whether the stronger model also runs on the
+validation and test splits.
 """
 
 from collections.abc import Mapping, Sequence
@@ -17,7 +21,7 @@ import numpy.typing as npt
 from pydantic import BaseModel, ConfigDict, Field
 
 from docfraud.evaluation.detection import average_precision, roc_auc
-from docfraud.llm.detector import DetectorRow, Reading
+from docfraud.llm.detector import SONNET, DetectorRow, Reading
 from docfraud.llm.provider import Settings
 
 MARGIN = 0.05
@@ -28,6 +32,18 @@ VERSIONS = (1, 2)
 
 UNSCORED = -1.0
 """The score of a receipt without one: below every score the model can give."""
+
+OPUS = SONNET.model_copy(update={"model": "claude-opus-5-5"})
+"""The stronger model the frozen main row is checked on: every other setting is the same."""
+
+DETECTOR_CODE = (
+    "src/docfraud/llm/detector.py",
+    "src/docfraud/llm/claude.py",
+    "src/docfraud/llm/provider.py",
+    "src/docfraud/reading",
+    "src/docfraud/data/normalize.py",
+)
+"""The code that builds the detector's requests from a receipt; frozen with the instruction."""
 
 
 class _Frozen(BaseModel):
@@ -70,6 +86,20 @@ class FrozenDetector(_Frozen):
     commit: str
 
 
+class StrongerModelCheck(_Frozen):
+    """The frozen main row on a stronger model, on the design fold (ADR-0032)."""
+
+    settings: Settings
+    instruction: str
+    instruction_sha256: str
+    commit: str | None
+    result: RowResult
+    frozen_result: RowResult
+    """The frozen main row on its own model, over the same receipts."""
+    row_added: bool
+    """Whether the stronger model also runs on the validation and test splits."""
+
+
 def scores(readings: Sequence[Reading]) -> npt.NDArray[np.float64]:
     """Every receipt's score, with :data:`UNSCORED` for a receipt without one."""
     return np.array(
@@ -98,6 +128,11 @@ def row_result(forged: Sequence[bool], readings: Sequence[Reading], cost_usd: st
     )
 
 
+def clearly_better(new: RowResult, old: RowResult) -> bool:
+    """Whether ``new`` ranks at least :data:`MARGIN` higher and fails on no more receipts."""
+    return new.average_precision >= old.average_precision + MARGIN and new.failures <= old.failures
+
+
 def kept_version(rounds: Mapping[int, DevelopmentRound]) -> int:
     """The version to freeze, by the rule fixed in advance.
 
@@ -112,13 +147,7 @@ def kept_version(rounds: Mapping[int, DevelopmentRound]) -> int:
         raise ValueError(msg)
     first = rounds[1].main_row()
     second = rounds[2].main_row() if 2 in rounds else None  # noqa: PLR2004 - the revision
-    if (
-        second is not None
-        and second.average_precision >= first.average_precision + MARGIN
-        and second.failures <= first.failures
-    ):
-        return 2
-    return 1
+    return 2 if second is not None and clearly_better(second, first) else 1
 
 
 def save_round(record: DevelopmentRound, path: Path) -> None:

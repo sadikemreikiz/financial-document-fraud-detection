@@ -1,6 +1,7 @@
 # 0031. How Phase 6b builds and measures the LLM detector and the investigation agent
 
-- **Status**: Accepted
+- **Status**: Accepted; section 4 amended by [0032](0032-stronger-model-on-the-design-fold.md)
+  (the frozen detector checked on Claude Opus 5.5)
 - **Date**: 2026-10-27 (before any request of Phase 6b; no image of a receipt has been sent to a
   language model, and the Phase 5 check of the validation split is complete)
 
