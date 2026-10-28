@@ -19,6 +19,7 @@ from PIL import Image
 from typer.testing import CliRunner
 
 from docfraud import __version__
+from docfraud.cli import agent as cli_agent
 from docfraud.cli import app
 from docfraud.cli import baseline as cli_baseline
 from docfraud.cli import common as cli_common
@@ -62,6 +63,7 @@ from docfraud.llm.adjudication import (
     load_questions,
 )
 from docfraud.llm.adjudication import save_log as save_adjudication
+from docfraud.llm.agent_tools import ReadField
 from docfraud.llm.cost import LIMIT_USD, Ledger
 from docfraud.llm.decision import ModelStep
 from docfraud.llm.detector import SONNET
@@ -72,8 +74,8 @@ from docfraud.llm.frozen import load_split_reading
 from docfraud.llm.gold_b import load_measurement
 from docfraud.llm.run import COMPARISON_SETTINGS, ForbiddenDocumentsError, Runner
 from docfraud.llm.store import ResponseStore
-from docfraud.reading.fields import ReceiptFields
-from docfraud.reading.ocr import OcrResult
+from docfraud.reading.fields import Extraction, FieldSources, ReceiptFields
+from docfraud.reading.ocr import CachedOcr, OcrResult
 from docfraud.synthesis.engine import Engine
 from docfraud.synthesis.fonts import font_files
 from docfraud.synthesis.review import ReviewLog, review_sample
@@ -87,9 +89,10 @@ from tests.data.test_observation import observation_documents, receipt_answers
 from tests.detectors.test_copy_move_measurement import measured
 from tests.evaluation.test_folds import documents as fold_documents
 from tests.fixtures.findit import load_toy
-from tests.fixtures.llm import FakeDetector, FakeProvider
+from tests.fixtures.llm import FakeAgent, FakeDetector, FakeProvider
 from tests.fusion.test_development import report_record
 from tests.fusion.test_validation import N_TRAIN, pages, tables
+from tests.llm.test_agent_tools import case as agent_case
 from tests.llm.test_detector import development
 from tests.synthesis.pages import documents as synthesis_documents
 from tests.synthesis.pages import font as synthesis_font
@@ -1799,3 +1802,82 @@ def test_the_detector_refuses_to_freeze_or_time_what_it_cannot_trust(
     frozen = developed.model_dump(mode="json", exclude={"rows"})
     (rounds / "frozen.json").write_text(json.dumps(frozen), encoding="utf-8")
     assert "changed after it was frozen" in " ".join(runner.invoke(app, latency).output.split())
+
+
+@pytest.mark.parametrize(
+    ("computed", "kept"), [(False, "claude-haiku-5-5"), (True, "claude-sonnet-5-5")]
+)
+def test_the_agent_is_piloted_once_on_three_cases_and_keeps_a_model_by_its_rule(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    computed: bool,
+    kept: str,
+) -> None:
+    pilot = ("R1", "R2", "R3")
+    documents = [
+        Document(
+            dataset="toy",
+            doc_id=r,
+            source_id=r,
+            split=Split.TRAIN,
+            label=Label.AUTHENTIC if r == "R3" else Label.FORGED,
+            image_path=tmp_path / f"{r}.png",
+        )
+        for r in pilot
+    ]
+    found = SimpleNamespace(assessments={})
+    development = SimpleNamespace(pilot=pilot)
+    monkeypatch.setattr(cli_agent, "_training", lambda *_: (documents, development, found))
+    monkeypatch.setattr(cli_agent, "_reader", lambda *_: None)
+    monkeypatch.setattr(
+        cli_agent, "cases", lambda chosen, *_: {d.doc_id: agent_case(d.doc_id) for d in chosen}
+    )
+    monkeypatch.setattr(cli_agent, "DESIGN_FOLD_IDS", frozenset(pilot))
+    books = (ResponseStore(tmp_path / "store"), Ledger(tmp_path / "ledger.jsonl"))
+    monkeypatch.setattr(
+        cli_agent, "_runner", lambda *_: Runner(FakeAgent(computed=computed), *books)
+    )
+    clean = CodeVersion(commit="d" * 40, dirty=False)
+    monkeypatch.setattr(cli_agent, "code_version", lambda: clean)
+    monkeypatch.setattr(cli_common, "code_version", lambda: CodeVersion(commit="d", dirty=True))
+    output = tmp_path / "agent"
+    command = ["agent", "pilot", "--output", str(output), "--cache", str(tmp_path / "ocr")]
+    assert "commit all changes first" in said(runner.invoke(app, command))
+    monkeypatch.setattr(cli_common, "code_version", lambda: clean)
+    result = runner.invoke(app, command)
+    assert result.exit_code == 0, result.output
+    record = json.loads((output / "pilot.json").read_text(encoding="utf-8"))
+    assert record["kept"]["model"] == kept
+    assert record["cases"] == list(pilot)
+    haiku = record["models"]["claude-haiku-5-5"]
+    assert [c["receipt"] for c in haiku] == list(pilot)
+    assert [c["forged"] for c in haiku] == [True, True, False]
+    assert haiku[0]["tool_calls"][0] == {"tool": "assessment", "arguments": {}}
+    assert bool(haiku[0]["grounding"]["violations"]) is computed
+    assert record["token_budget"] == 8000  # twice 3,600 tokens, rounded up to a thousand
+    assert len(list((output / "pilot").glob("*.md"))) == 6
+    assert "Case file: R1" in (output / "pilot" / "claude-sonnet-5-5-R1.md").read_text("utf-8")
+    assert "the pilot runs once" in said(runner.invoke(app, command))
+
+
+def test_the_agent_sees_each_receipt_through_the_systems_outputs(tmp_path: Path) -> None:
+    image = tmp_path / "R1.png"
+    Image.new("L", (40, 30), 200).save(image)
+    document = Document(
+        dataset="toy",
+        doc_id="R1",
+        source_id="R1",
+        split=Split.TRAIN,
+        label=Label.FORGED,
+        image_path=image,
+    )
+    reading = SimpleNamespace(
+        extraction=Extraction(fields=ReceiptFields(merchant="SHOP"), sources=FieldSources())
+    )
+    reader = SimpleNamespace(read=lambda _: reading)
+    assessed = {"R1": agent_case().assessment}
+    ocr = CachedOcr(FakeOcr(), tmp_path / "ocr")
+    (found,) = cli_agent.cases([document], assessed, ocr, reader).values()  # type: ignore[arg-type]
+    assert found.fields == (ReadField(field="merchant", value="SHOP"),)
+    assert found.page.shape == (30, 40)
+    assert found.assessment is assessed["R1"]

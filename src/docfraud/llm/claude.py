@@ -8,6 +8,11 @@ caching, and the answer is constrained to the form's JSON schema. Inference is r
 as the request says rather than a workspace default, so that every answer is billed at the list
 prices the ledger uses (US-only inference costs 1.1 times as much).
 
+A request that offers tools is sent with them, strict to their input schemas, and with the turns
+of the conversation so far, whose end is marked for prompt caching; the model's content blocks
+come back in the response, so that the next turn can return them unchanged, thinking blocks
+included.
+
 A batch is remembered on disk from the moment it is submitted until its results are in. Polls
 wait out transient failures, such as a lost connection, for up to an hour; if the run stops for
 any reason, running it again collects the same batch instead of paying for a second one.
@@ -18,13 +23,21 @@ import json
 import time
 from collections.abc import Callable, Sequence
 from pathlib import Path
+from typing import cast
 
 import anthropic
-from anthropic.types import ContentBlockParam, Message, ThinkingConfigParam
+from anthropic.types import (
+    ContentBlock,
+    ContentBlockParam,
+    Message,
+    MessageParam,
+    ThinkingConfigParam,
+    ToolParam,
+)
 from anthropic.types.message_create_params import MessageCreateParamsNonStreaming
 from anthropic.types.messages import MessageBatchIndividualResponse
 
-from docfraud.llm.provider import Request, Response, Thinking, Usage
+from docfraud.llm.provider import Block, Request, Response, Thinking, Usage
 
 POLL_SECONDS = 30.0
 #: Transient failures in a row that a batch run waits out, one poll apart: an hour at 30 s.
@@ -164,7 +177,8 @@ class ClaudeProvider:
                 seconds=self._clock() - sent,
             )
         seconds = self._clock() - sent
-        return _from_message(request.key, message).model_copy(update={"seconds": seconds})
+        found = _from_message(request.key, message, keep_content=bool(request.tools))
+        return found.model_copy(update={"seconds": seconds})
 
 
 def _remembered(marker: Path | None) -> str | None:
@@ -186,13 +200,13 @@ def _remember(marker: Path | None, batch_id: str, requests: int) -> None:
 def params(request: Request) -> MessageCreateParamsNonStreaming:
     """The Messages API parameters of a request."""
     settings = request.settings
-    return {
+    found: MessageCreateParamsNonStreaming = {
         "model": settings.model,
         "max_tokens": settings.max_tokens,
         "system": [
             {"type": "text", "text": request.system, "cache_control": {"type": "ephemeral"}}
         ],
-        "messages": [{"role": "user", "content": _content(request)}],
+        "messages": [{"role": "user", "content": _content(request)}, *_turns(request)],
         "inference_geo": "global",
         "thinking": _thinking(settings.thinking),
         "output_config": {
@@ -200,6 +214,38 @@ def params(request: Request) -> MessageCreateParamsNonStreaming:
             "format": {"type": "json_schema", "schema": dict(request.answer_schema)},
         },
     }
+    if request.tools:
+        found["tools"] = [
+            cast(
+                "ToolParam",
+                {
+                    "name": tool.name,
+                    "description": tool.description,
+                    "input_schema": dict(tool.input_schema),
+                    "strict": True,
+                },
+            )
+            for tool in request.tools
+        ]
+        found["tool_choice"] = (
+            {"type": "none"} if request.tool_choice == "none" else {"type": "auto"}
+        )
+    return found
+
+
+def _turns(request: Request) -> list[MessageParam]:
+    """The turns after the first user message, their blocks as the API takes them.
+
+    The last block is marked for prompt caching, so that the next step of an agent reads the
+    conversation so far from the cache.
+    """
+    turns = [[dict(b) for b in turn.content] for turn in request.turns]
+    if turns and turns[-1]:
+        turns[-1][-1]["cache_control"] = {"type": "ephemeral"}
+    return [
+        cast("MessageParam", {"role": turn.role, "content": content})
+        for turn, content in zip(request.turns, turns, strict=True)
+    ]
 
 
 def _content(request: Request) -> str | list[ContentBlockParam]:
@@ -227,7 +273,24 @@ def _thinking(thinking: Thinking) -> ThinkingConfigParam:
             return {"type": "adaptive"}
 
 
-def _from_message(key: str, message: Message, *, batch: bool = False) -> Response:
+def _replayable(block: ContentBlock) -> Block:
+    """A content block as the next turn sends it back: only the fields the API takes."""
+    match block.type:
+        case "thinking":
+            return {"type": "thinking", "thinking": block.thinking, "signature": block.signature}
+        case "redacted_thinking":
+            return {"type": "redacted_thinking", "data": block.data}
+        case "text":
+            return {"type": "text", "text": block.text}
+        case "tool_use":
+            return {"type": "tool_use", "id": block.id, "name": block.name, "input": block.input}
+        case _:
+            return block.model_dump(mode="json", exclude_none=True)
+
+
+def _from_message(
+    key: str, message: Message, *, batch: bool = False, keep_content: bool = False
+) -> Response:
     text = next((block.text for block in message.content if block.type == "text"), None)
     usage = message.usage
     details = usage.output_tokens_details
@@ -245,6 +308,7 @@ def _from_message(key: str, message: Message, *, batch: bool = False) -> Respons
         ),
         batch=batch,
         request_id=message.id,
+        content=tuple(_replayable(b) for b in message.content) if keep_content else (),
     )
 
 
