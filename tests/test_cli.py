@@ -1965,6 +1965,11 @@ def test_the_frozen_agent_runs_once_on_the_validation_queue_of_phase_5s_check(
     unanswered = Runner(FakeAgent(silent=1), *books)
     monkeypatch.setattr(cli_agent, "_runner", lambda *_: unanswered)
     output, report = tmp / "agent", tmp / "agent" / "validation.md"
+    monkeypatch.setattr(  # files written before the record is saved would make its tree dirty
+        runs_module,
+        "code_version",
+        lambda repo=None: CodeVersion(commit="a" * 40, dirty=(output / "validation").exists()),  # noqa: ARG005
+    )
 
     def validate(
         validation: Path = recorded.paths["validation"], runs: Path = recorded.runs
@@ -2000,6 +2005,7 @@ def test_the_frozen_agent_runs_once_on_the_validation_queue_of_phase_5s_check(
     result = validate()  # sends only the step that was not answered
     assert result.exit_code == 0, result.output
     (made,) = recorded.store.records("llm-agent-validation")
+    assert made.code.dirty is False
     assert (
         made.config["validation_check"]
         == recorded.store.records("fusion-validation-check")[0].run_id

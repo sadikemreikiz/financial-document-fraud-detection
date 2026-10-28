@@ -503,11 +503,6 @@ def agent_validation_command(  # noqa: PLR0913, PLR0917 - one option per input a
             f"({', '.join(unanswered)}); nothing is recorded. Run the command again to send them."
         )
         raise typer.Exit(1)
-    files = output / "validation"
-    files.mkdir(parents=True, exist_ok=True)
-    for investigation in done:
-        rendered = investigation.rendered or f"No case file: {investigation.read.failure}\n"
-        (files / f"{investigation.receipt}.md").write_text(rendered, encoding="utf-8")
     pages = _pages(chosen)
     source = SOURCES[DatasetName.FINDIT2.value]
     with run(
@@ -531,6 +526,12 @@ def agent_validation_command(  # noqa: PLR0913, PLR0917 - one option per input a
         )
         for key, value in results.items():
             current.log(key, value)
+    # Written once the record is saved: the record names the commit the tree was clean at.
+    files = output / "validation"
+    files.mkdir(parents=True, exist_ok=True)
+    for investigation in done:
+        rendered = investigation.rendered or f"No case file: {investigation.read.failure}\n"
+        (files / f"{investigation.receipt}.md").write_text(rendered, encoding="utf-8")
     agent_validation_report_command(runs, report)
 
 
