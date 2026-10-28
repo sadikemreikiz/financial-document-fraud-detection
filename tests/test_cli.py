@@ -3,7 +3,7 @@ import json
 import shutil
 import zipfile
 from collections.abc import Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from functools import partial
@@ -54,7 +54,7 @@ from docfraud.evaluation.folds import assign_folds, load_folds, save_folds
 from docfraud.evaluation.runs import CodeVersion, JsonRunStore, run
 from docfraud.forensics.learned.pretrained import IMAGENET_WEIGHTS
 from docfraud.forensics.trufor import TRUFOR_CODE, TRUFOR_WEIGHTS
-from docfraud.fusion.training_inputs import save_table, summary
+from docfraud.fusion.training_inputs import InputsTable, load_table, save_table, summary
 from docfraud.fusion.validation import validation_check
 from docfraud.llm.adjudication import (
     AdjudicationLog,
@@ -79,7 +79,9 @@ from docfraud.llm.gold_b import load_measurement
 from docfraud.llm.run import COMPARISON_SETTINGS, ForbiddenDocumentsError, Runner
 from docfraud.llm.store import ResponseStore
 from docfraud.reading.fields import Extraction, FieldSources, ReceiptFields
+from docfraud.reading.layout import Row, Segment
 from docfraud.reading.ocr import CachedOcr, OcrResult
+from docfraud.reading.pipeline import read_document
 from docfraud.synthesis.engine import Engine
 from docfraud.synthesis.fonts import font_files
 from docfraud.synthesis.review import ReviewLog, review_sample
@@ -757,6 +759,52 @@ def recorded(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Recorded:
     monkeypatch.setattr(cli_fusion, "_pages", lambda documents: pages(list(documents)))
     monkeypatch.setattr(cli_fusion, "validation_check", partial(validation_check, resamples=50))
     return Recorded(tmp_path, runs, store, paths, training, training_run)
+
+
+def test_the_test_inputs_are_made_once_by_code_that_reproduced_the_validation_inputs(
+    recorded: Recorded, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    tmp, store = recorded.tmp, recorded.store
+    model = tmp / "model.pt"
+    model.write_bytes(b"weights")
+    monkeypatch.setattr(cli_fusion, "_whole_training_models", lambda _: {0: model})
+    validation = load_table(recorded.paths["validation"])
+    rebuilt = {"table": InputsTable(receipts=validation.receipts[1:])}
+
+    def split_inputs(*_: Any) -> Any:
+        return cli_fusion._Made(rebuilt["table"], {}, {"0": "m"}, {"page and OCR": [0.5, 1.5]})
+
+    monkeypatch.setattr(cli_fusion, "_split_inputs", split_inputs)
+    runs = ["--runs", str(recorded.runs)]
+    rehearse = ["fusion", "rehearse-inputs", *runs, "--output", str(tmp / "again.json")]
+    rehearse += ["--validation", str(recorded.paths["validation"])]
+    final = ["fusion", "test-inputs", *runs, "--output", str(tmp / "test.json")]
+    assert "no fusion-inputs-rehearsal record" in said(runner.invoke(app, final))
+    other = tmp / "other.json"
+    other.write_text(recorded.paths["validation"].read_text("utf-8") + "\n", encoding="utf-8")
+    elsewhere = [*rehearse[: rehearse.index("--validation")], "--validation", str(other)]
+    assert "is not the table" in said(runner.invoke(app, elsewhere))
+    assert "not reproduced" in said(runner.invoke(app, rehearse))
+    assert "did not reproduce the validation inputs" in said(runner.invoke(app, final))
+    rebuilt["table"] = validation
+    assert "the validation inputs: reproduced" in said(runner.invoke(app, rehearse))
+    failed, passed = store.records("fusion-inputs-rehearsal")
+    assert failed.results["differences"]["rows_missing"] == 1
+    assert passed.results["reproduced"]
+    assert "has not read the test split" in said(runner.invoke(app, final))
+    with run("llm-test-reading", store=store, config={}, seeds={}, dataset_sha256={}):
+        pass
+    monkeypatch.setattr(cli_common, "changed_since", lambda *_: ["src/docfraud/linking/links.py"])
+    assert "the source changed after phase-7-freeze" in said(runner.invoke(app, final))
+    monkeypatch.setattr(cli_common, "changed_since", lambda *_: [])
+    result = runner.invoke(app, final)
+    assert result.exit_code == 0, result.output
+    (made,) = store.records("fusion-test-inputs")
+    assert made.test_unlocks == (cli_common.TEST_UNLOCK,)
+    assert made.config["rehearsal"] == passed.run_id
+    assert made.results["efficiency"]["seconds"]["page and OCR"]["median"] == 1.0
+    assert load_table(tmp / "test.json") == validation
+    assert "refusing to run again" in said(runner.invoke(app, final))
 
 
 def test_the_validation_check_refuses_tables_code_and_an_order_it_cannot_trust(
@@ -1695,6 +1743,47 @@ def test_llm_the_validation_split_is_read_only_by_the_frozen_reader(
     assert result.exit_code == 1
     assert "the reader changed after it was frozen at abc123" in flat(result.output)
     assert not record.exists()
+
+
+def test_llm_the_test_split_is_read_once_at_the_freeze_by_a_reader_shown_unchanged(
+    toy_source: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    arguments, _ = _validation_setup(toy_source, tmp_path, monkeypatch)
+    clean = CodeVersion(commit="d" * 40, dirty=False)
+    monkeypatch.setattr(runs_module, "code_version", lambda repo=None: clean)  # noqa: ARG005
+    monkeypatch.setattr(cli_llm, "ClaudeProvider", FakeProvider)
+    runs = tmp_path / "runs"
+    given = arguments[: arguments.index("--record")]
+    read_test = ["llm", "read-test", *given, "--runs", str(runs)]
+    monkeypatch.setattr(cli_common, "changed_since", lambda *_: None)
+    assert "no tag phase-7-freeze" in flat(runner.invoke(app, read_test).output)
+    monkeypatch.setattr(cli_common, "changed_since", lambda *_: ["src/docfraud/llm/agent.py"])
+    assert "the source changed after phase-7-freeze" in flat(runner.invoke(app, read_test).output)
+    monkeypatch.setattr(cli_common, "changed_since", lambda *_: [])
+    unshown = flat(runner.invoke(app, read_test).output)
+    assert "2 of 2 requests of the validation reading are not the stored ones" in unshown
+    assert runner.invoke(app, ["llm", "read-validation", *arguments]).exit_code == 0
+    reading = read_document
+
+    def distinct(document: Document, *rest: Any) -> Any:  # the toy receipts read alike
+        found = reading(document, *rest)
+        if document.split is not Split.TEST:
+            return found
+        return replace(found, rows=(*found.rows, Row((Segment(document.doc_id),))))
+
+    monkeypatch.setattr(cli_llm, "read_document", distinct)
+    monkeypatch.setattr(cli_llm, "ClaudeProvider", lambda **_: FakeProvider(fail=frozenset({0})))
+    assert "requests were not answered" in flat(runner.invoke(app, read_test).output)
+    assert not JsonRunStore(runs).records("llm-test-reading")  # nothing is recorded
+    monkeypatch.setattr(cli_llm, "ClaudeProvider", FakeProvider)
+    result = runner.invoke(app, read_test)
+    assert result.exit_code == 0, result.output
+    (made,) = JsonRunStore(runs).records("llm-test-reading")
+    assert made.test_unlocks == (cli_common.TEST_UNLOCK,)
+    assert made.results["receipts"] >= 1
+    assert made.results["requests"] == 2 * made.results["receipts"]  # both text sources
+    assert made.results["validation_requests_found"] == 2
+    assert "refusing to run again" in flat(runner.invoke(app, read_test).output)
 
 
 def _detector_setup(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> list[str]:

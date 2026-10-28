@@ -1,10 +1,12 @@
 """`docfraud fusion`: the fusion of the findings (ADR-0028, ADR-0029)."""
 
 import hashlib
+import resource
+import time
 from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Annotated
+from typing import Annotated, Any
 
 import numpy as np
 import typer
@@ -15,6 +17,7 @@ from docfraud.cli.common import (
     GOLD_MANIFEST,
     OCR_CACHE,
     REPORTED_RUNS,
+    TEST_UNLOCK,
     TRACKS,
     DataDir,
     DatasetName,
@@ -22,10 +25,11 @@ from docfraud.cli.common import (
     console,
     findit_documents,
     require_clean_commit,
+    require_freeze_tag,
     require_unchanged,
 )
 from docfraud.cli.forensics import ROUNDS_DIR
-from docfraud.cli.llm import FROZEN, STORE
+from docfraud.cli.llm import FROZEN, STORE, TEST_READING_RUN
 from docfraud.data.download import SOURCES
 from docfraud.data.gold import load_manifest
 from docfraud.data.models import BBox, Document, Label, Split
@@ -58,6 +62,7 @@ from docfraud.fusion.development import (
 )
 from docfraud.fusion.development_report import render_report
 from docfraud.fusion.evidence import SystemTwo, page_findings
+from docfraud.fusion.rehearsal import REHEARSAL_RUN, TEST_INPUTS_RUN, differences
 from docfraud.fusion.shift import RUN_NAME as SHIFT_RUN
 from docfraud.fusion.shift import input_shift
 from docfraud.fusion.training_inputs import (
@@ -86,6 +91,8 @@ app = typer.Typer(help="Fusion of the findings.", no_args_is_help=True)
 
 TRAINING_INPUTS = Path("artifacts/fusion/training-inputs.json")
 VALIDATION_INPUTS = Path("artifacts/fusion/validation-inputs.json")
+REHEARSAL_INPUTS = Path("artifacts/fusion/rehearsal-inputs.json")
+TEST_INPUTS = Path("artifacts/fusion/test-inputs.json")
 VALIDATION_REPORT = Path("reports/fusion/validation-check.md")
 SHIFT_REPORT = Path("reports/fusion/input-shift.md")
 Runs = Annotated[Path, typer.Option(help="Where reported run records are kept.")]
@@ -333,6 +340,107 @@ def _sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def _whole_training_models(rounds: Path) -> dict[int, Path]:  # pragma: no cover - PyTorch
+    """System 2's models trained on the whole training split, seeds 0 to 2, checked complete.
+
+    Raises:
+        typer.Exit: If a model is missing.
+    """
+    from docfraud.forensics.learned.rounds import WHOLE_RUNS, require_trained  # noqa: PLC0415
+
+    try:
+        require_trained(rounds, (WHOLE_TRAINING,), WHOLE_RUNS)
+    except ValueError as error:
+        console.print(f"[red]{error}[/red]")
+        raise typer.Exit(1) from error
+    return {s: run_directory(rounds, WHOLE_TRAINING, System.SYNTHETIC, s) / MODEL for s in SEEDS}
+
+
+def _models_config(paths: dict[int, Path]) -> dict[str, dict[str, str]]:
+    """The models of a run record: each seed's file and its SHA-256."""
+    return {str(s): {"path": str(p), "sha256": _sha256(p)} for s, p in paths.items()}
+
+
+@dataclass(frozen=True, slots=True)
+class _Made:
+    """One split's inputs, what made them, and the seconds each component took per receipt."""
+
+    table: InputsTable
+    scorers: dict[str, Any]
+    models: dict[str, str]
+    seconds: dict[str, list[float]]
+
+
+def _split_inputs(  # pragma: no cover - needs the dataset, LLM answers and models
+    train: Sequence[Document], receipts: Sequence[Document], paths: dict[int, Path], name: str
+) -> _Made:
+    """The fusion inputs of ``receipts`` with the components trained on the whole training split.
+
+    The rules' scorer is fitted on the frozen reader's fields of every training receipt; system 1,
+    copy-move, the file's editing traits and the links are made as on the training split.
+    """
+    from docfraud.forensics.learned.inference import LearnedModel  # noqa: PLC0415 - PyTorch
+
+    ocr = cached_ocr(OCR_CACHE)
+    reader = _frozen_reader()
+    outcomes = {t.value: [_reading(d, ocr, reader, t)[0] for d in train] for t in TRACKS}
+    scorers = rules_scorers(outcomes, [d.label is Label.FORGED for d in train])
+    models = {seed: LearnedModel.from_file(path) for seed, path in paths.items()}
+    page: list[tuple[Finding, ...]] = []
+    system_2: dict[int, dict[str, SystemTwo]] = {seed: {} for seed in SEEDS}
+    readings: dict[str, list[Reading]] = {t.value: [] for t in TRACKS}
+    seconds: dict[str, list[float]] = {
+        "page and OCR": [],
+        "system 1, copy-move and file traits": [],
+        "system 2, one seed": [],
+        "reading both text sources": [],
+    }
+    for document in with_progress(receipts, description=name, console=console):
+        start = time.perf_counter()
+        image = load_grayscale(document.image_path)
+        words = _words(ocr, image)
+        seconds["page and OCR"].append(time.perf_counter() - start)
+        start = time.perf_counter()
+        page.append(page_findings(image, words, editing_traits(document.image_path)))
+        seconds["system 1, copy-move and file traits"].append(time.perf_counter() - start)
+        for seed, model in models.items():
+            start = time.perf_counter()
+            system_2[seed][document.doc_id] = system_two(model.analyse(image), words)
+            seconds["system 2, one seed"].append(time.perf_counter() - start)
+        start = time.perf_counter()
+        for text_source in TRACKS:
+            readings[text_source.value].append(_reading(document, ocr, reader, text_source))
+        seconds["reading both text sources"].append(time.perf_counter() - start)
+    table = validation_table(
+        [d.doc_id for d in receipts], readings, page=page, system_2=system_2, scorers=scorers
+    )
+    return _Made(
+        table,
+        {t: scorer.weights() for t, scorer in scorers.items()},
+        {str(seed): m.identifier for seed, m in models.items()},
+        seconds,
+    )
+
+
+def _efficiency(seconds: dict[str, list[float]]) -> dict[str, Any]:
+    """Each component's time per receipt, median and 95th percentile, and the peak memory.
+
+    The memory is the process's peak resident size, in bytes on macOS, the reference machine.
+    """
+    return {
+        "seconds": {
+            name: {
+                "receipts": len(found),
+                "median": float(np.median(found)),
+                "p95": float(np.percentile(found, 95)),
+            }
+            for name, found in seconds.items()
+            if found
+        },
+        "peak_resident_bytes": resource.getrusage(resource.RUSAGE_SELF).ru_maxrss,
+    }
+
+
 @app.command("validation-inputs")
 def validation_inputs_command(  # pragma: no cover - needs the dataset, LLM answers and models
     data_dir: DataDir = Path("data"),
@@ -362,20 +470,10 @@ def validation_inputs_command(  # pragma: no cover - needs the dataset, LLM answ
         INPUT_CODE,
         "the code that makes the inputs changed since the training inputs were made",
     )
-    from docfraud.forensics.learned.inference import LearnedModel  # noqa: PLC0415 - PyTorch
-    from docfraud.forensics.learned.rounds import WHOLE_RUNS, require_trained  # noqa: PLC0415
-
-    try:
-        require_trained(rounds, (WHOLE_TRAINING,), WHOLE_RUNS)
-    except ValueError as error:
-        console.print(f"[red]{error}[/red]")
-        raise typer.Exit(1) from error
+    paths = _whole_training_models(rounds)
     documents = findit_documents(data_dir)
     train = sorted(select(documents, Split.TRAIN), key=lambda d: d.doc_id)
     validation = sorted(map(unlabelled, select(documents, Split.VAL)), key=lambda d: d.doc_id)
-    ocr = cached_ocr(OCR_CACHE)
-    reader = _frozen_reader()
-    paths = {s: run_directory(rounds, WHOLE_TRAINING, System.SYNTHETIC, s) / MODEL for s in SEEDS}
     source = SOURCES[DatasetName.FINDIT2.value]
     with run(
         VALIDATION_INPUTS_RUN,
@@ -384,43 +482,138 @@ def validation_inputs_command(  # pragma: no cover - needs the dataset, LLM answ
             "decision": "ADR-0029",
             "frozen_reader": str(FROZEN),
             "training_inputs": training_run.run_id,
-            "models": {str(s): {"path": str(p), "sha256": _sha256(p)} for s, p in paths.items()},
+            "models": _models_config(paths),
         },
         seeds={f"system 2, seed {s}": s for s in SEEDS},
         dataset_sha256={source.name: source.sha256},
     ) as current:
-        outcomes = {t.value: [_reading(d, ocr, reader, t)[0] for d in train] for t in TRACKS}
-        scorers = rules_scorers(outcomes, [d.label is Label.FORGED for d in train])
-        models = {seed: LearnedModel.from_file(path) for seed, path in paths.items()}
-        page: list[tuple[Finding, ...]] = []
-        system_2: dict[int, dict[str, SystemTwo]] = {seed: {} for seed in SEEDS}
-        readings: dict[str, list[Reading]] = {t.value: [] for t in TRACKS}
-        for document in with_progress(
-            validation, description="validation receipts", console=console
-        ):
-            image = load_grayscale(document.image_path)
-            words = _words(ocr, image)
-            page.append(page_findings(image, words, editing_traits(document.image_path)))
-            for seed, model in models.items():
-                system_2[seed][document.doc_id] = system_two(model.analyse(image), words)
-            for text_source in TRACKS:
-                readings[text_source.value].append(_reading(document, ocr, reader, text_source))
-        table = validation_table(
-            [d.doc_id for d in validation],
-            readings,
-            page=page,
-            system_2=system_2,
-            scorers=scorers,
-        )
+        made = _split_inputs(train, validation, paths, "validation receipts")
+        table = made.table
         save_table(table, output)
         current.log("summary", summary(table))
         current.log("sha256", _sha256(output))
-        current.log("rules_scorers", {t: scorer.weights() for t, scorer in scorers.items()})
-        current.log("models", {str(seed): m.identifier for seed, m in models.items()})
+        current.log("rules_scorers", made.scorers)
+        current.log("models", made.models)
         current.log(
             "changed_since_training_inputs", changed_since(training_run.code.commit, ["src"])
         )
     console.print(f"[green]written[/green] {output}: {len(table.receipts)} rows")
+
+
+@app.command("rehearse-inputs")
+def rehearse_inputs_command(
+    data_dir: DataDir = Path("data"),
+    runs: Runs = REPORTED_RUNS,
+    rounds: Annotated[Path, typer.Option(help="Where the rounds are kept.")] = ROUNDS_DIR,
+    validation: Annotated[Path, typer.Option(help="The recorded validation inputs table.")] = (
+        VALIDATION_INPUTS
+    ),
+    output: Annotated[Path, typer.Option(help="Where to write the table.")] = REHEARSAL_INPUTS,
+) -> None:
+    """Make the validation inputs again with today's code and compare them (ADR-0034, 13).
+
+    The test inputs are made only by code that reproduces the recorded validation table exactly
+    (:mod:`docfraud.fusion.rehearsal`). Reads no test receipt. The run record says whether the
+    table was reproduced and, if not, where it differs.
+    """
+    store = JsonRunStore(runs)
+    require_clean_commit()
+    inputs_run = _latest(store, VALIDATION_INPUTS_RUN)
+    if _sha256(validation) != inputs_run.results["sha256"]:
+        console.print(f"[red]{validation} is not the table {inputs_run.run_id} wrote[/red]")
+        raise typer.Exit(1)
+    paths = _whole_training_models(rounds)
+    documents = findit_documents(data_dir)
+    train = sorted(select(documents, Split.TRAIN), key=lambda d: d.doc_id)
+    receipts = sorted(map(unlabelled, select(documents, Split.VAL)), key=lambda d: d.doc_id)
+    source = SOURCES[DatasetName.FINDIT2.value]
+    with run(
+        REHEARSAL_RUN,
+        store=store,
+        config={
+            "decision": "ADR-0034",
+            "validation_inputs": inputs_run.run_id,
+            "models": _models_config(paths),
+        },
+        seeds={f"system 2, seed {s}": s for s in SEEDS},
+        dataset_sha256={source.name: source.sha256},
+    ) as current:
+        made = _split_inputs(train, receipts, paths, "validation receipts, again")
+        save_table(made.table, output)
+        recorded = load_table(validation)
+        current.log("reproduced", made.table == recorded)
+        current.log("differences", differences(recorded, made.table))
+        current.log("sha256", _sha256(output))
+    verdict = "reproduced" if current.results["reproduced"] else "[red]not reproduced[/red]"
+    console.print(f"the validation inputs: {verdict}")
+
+
+@app.command("test-inputs")
+def final_test_inputs_command(
+    data_dir: DataDir = Path("data"),
+    runs: Runs = REPORTED_RUNS,
+    rounds: Annotated[Path, typer.Option(help="Where the rounds are kept.")] = ROUNDS_DIR,
+    output: Annotated[Path, typer.Option(help="Where to write the table.")] = TEST_INPUTS,
+) -> None:
+    """Compute the fusion inputs of every test receipt, once (ADR-0034, decisions 1 to 3).
+
+    As the validation inputs were made, by code that the rehearsal showed to reproduce them: it
+    runs only at the freeze tag, from a clean commit, after the frozen reader read the test
+    split, and only if the code that makes the inputs is unchanged since a rehearsal that
+    reproduced the validation table. The test receipts are read without their labels and
+    annotations. The run record records the unlock, aggregates and each component's time.
+    """
+    store = JsonRunStore(runs)
+    if store.records(TEST_INPUTS_RUN):
+        console.print(f"[red]refusing to run again:[/red] a {TEST_INPUTS_RUN} record exists")
+        raise typer.Exit(1)
+    require_clean_commit()
+    require_freeze_tag()
+    rehearsal = _latest(store, REHEARSAL_RUN)
+    if (
+        not rehearsal.results["reproduced"]
+        or rehearsal.code.commit is None
+        or rehearsal.code.dirty is not False
+    ):
+        console.print(
+            f"[red]{rehearsal.run_id} did not reproduce the validation inputs from a clean "
+            "commit[/red]"
+        )
+        raise typer.Exit(1)
+    require_unchanged(
+        rehearsal.code.commit,
+        INPUT_CODE,
+        "the code that makes the inputs changed since the rehearsal",
+    )
+    if not store.records(TEST_READING_RUN):
+        console.print("[red]the frozen reader has not read the test split[/red]: llm read-test")
+        raise typer.Exit(1)
+    paths = _whole_training_models(rounds)
+    documents = findit_documents(data_dir)
+    train = sorted(select(documents, Split.TRAIN), key=lambda d: d.doc_id)
+    source = SOURCES[DatasetName.FINDIT2.value]
+    with run(
+        TEST_INPUTS_RUN,
+        store=store,
+        config={
+            "decision": "ADR-0034",
+            "rehearsal": rehearsal.run_id,
+            "test_reading": store.records(TEST_READING_RUN)[-1].run_id,
+            "models": _models_config(paths),
+        },
+        seeds={f"system 2, seed {s}": s for s in SEEDS},
+        dataset_sha256={source.name: source.sha256},
+    ) as current:
+        test = select(documents, Split.TEST, unlock_test=True, reason=TEST_UNLOCK)
+        receipts = sorted(map(unlabelled, test), key=lambda d: d.doc_id)
+        made = _split_inputs(train, receipts, paths, "test receipts")
+        save_table(made.table, output)
+        current.log("summary", summary(made.table))
+        current.log("sha256", _sha256(output))
+        current.log("rules_scorers", made.scorers)
+        current.log("models", made.models)
+        current.log("efficiency", _efficiency(made.seconds))
+    console.print(f"[green]written[/green] {output}: {len(made.table.receipts)} rows")
 
 
 @dataclass(frozen=True, slots=True)

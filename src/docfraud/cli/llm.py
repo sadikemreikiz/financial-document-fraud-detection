@@ -22,22 +22,27 @@ from docfraud.cli.common import (
     GOLD_B_MANIFEST,
     GOLD_MANIFEST,
     OCR_CACHE,
+    REPORTED_RUNS,
+    TEST_UNLOCK,
     TRACKS,
     DataDir,
+    DatasetName,
     cached_ocr,
     console,
     findit_documents,
     require_clean_commit,
+    require_freeze_tag,
     require_unchanged,
 )
+from docfraud.data.download import SOURCES
 from docfraud.data.gold import GoldAnnotation, GoldManifest, load_annotations, load_manifest
 from docfraud.data.local_page import HOST, make_server
-from docfraud.data.models import Label, Split
+from docfraud.data.models import Document, Label, Split
 from docfraud.data.normalize import load_grayscale
 from docfraud.data.observation_text import PageLanguage
 from docfraud.data.splits import select
 from docfraud.evaluation.extraction import DocumentScore, score_document
-from docfraud.evaluation.runs import code_version
+from docfraud.evaluation.runs import JsonRunStore, code_version, run
 from docfraud.llm.adjudication import (
     GOLD,
     in_order,
@@ -81,6 +86,7 @@ from docfraud.llm.report import (
 from docfraud.llm.run import COMPARISON_SETTINGS, Runner, Target, check_documents, target
 from docfraud.llm.store import ResponseStore
 from docfraud.reading.fields import Extraction, ReceiptFields
+from docfraud.reading.ocr import CachedOcr
 from docfraud.reading.parser import parse_receipt
 from docfraud.reading.pipeline import TextSource, read_document
 
@@ -100,6 +106,7 @@ GOLD_B_REPORT = Path("reports/llm/gold-b.md")
 FALSE_ALARMS_DIR = Path("artifacts/llm/false-alarms")
 FALSE_ALARMS_REPORT = Path("reports/llm/false-alarms.md")
 VALIDATION_READING = Path("reports/llm/validation-reading.json")
+TEST_READING_RUN = "llm-test-reading"
 GOLD_A = GOLD_MANIFEST
 GOLD_B = GOLD_B_MANIFEST
 MAX_ROUNDS = 10
@@ -750,12 +757,7 @@ def llm_read_validation(  # noqa: PLR0913, PLR0917 - one option per input and ou
     version = _frozen(frozen)
     require_unchanged(version.commit, READER_CODE, "the reader changed after it was frozen")
     documents = sorted(select(findit_documents(data_dir), Split.VAL), key=lambda d: d.doc_id)
-    ocr = cached_ocr(cache)
-    targets = [
-        target(document.doc_id, source, read_document(document, ocr, source).rows)
-        for document in documents
-        for source in TRACKS
-    ]
+    targets = _targets(documents, cached_ocr(cache))
     runner = _runner(store, ledger)
     text = Path(version.instruction).read_text(encoding="utf-8")
     runner.run(version.settings, text, targets)
@@ -786,6 +788,93 @@ def llm_read_validation(  # noqa: PLR0913, PLR0917 - one option per input and ou
         "without an answer"
     )
     console.print("nothing is measured; Phase 5 takes the fields from the store")
+
+
+def _targets(documents: Sequence[Document], ocr: CachedOcr) -> list[Target]:
+    """What the reader reads of each receipt: its rows from both text sources, in order."""
+    return [
+        target(document.doc_id, source, read_document(document, ocr, source).rows)
+        for document in documents
+        for source in TRACKS
+    ]
+
+
+@app.command("read-test")
+def llm_read_test(  # noqa: PLR0913, PLR0917 - one option per input and output
+    data_dir: DataDir = Path("data"),
+    cache: Cache = OCR_CACHE,
+    store: Store = STORE,
+    ledger: LedgerPath = LEDGER,
+    frozen: Frozen = FROZEN,
+    runs: Annotated[Path, typer.Option(help="Where reported run records are kept.")] = (
+        REPORTED_RUNS
+    ),
+) -> None:
+    """Read the test receipts once with the frozen version, for Phase 7 (ADR-0034).
+
+    Runs only at the freeze tag, from a clean commit, and only if today's code builds every
+    request with which the frozen version read the validation split exactly as it was stored:
+    the reader's code changed after it was frozen (Phase 6b), so this, not a check that no file
+    changed, shows that it reads as it did. The answers go to the store, from which the test
+    inputs take the fields; the run record, which records the unlock, keeps aggregates only. A
+    run that leaves a request unanswered records nothing; running it again sends only what is
+    missing.
+    """
+    records = JsonRunStore(runs)
+    if records.records(TEST_READING_RUN):
+        console.print(f"[red]refusing to run again:[/red] a {TEST_READING_RUN} record exists")
+        raise typer.Exit(1)
+    require_clean_commit()
+    require_freeze_tag()
+    version = _frozen(frozen)
+    text = Path(version.instruction).read_text(encoding="utf-8")
+    documents = findit_documents(data_dir)
+    ocr = cached_ocr(cache)
+    runner = _runner(store, ledger)
+    validation = sorted(select(documents, Split.VAL), key=lambda d: d.doc_id)
+    stored = runner.requests(version.settings, text, _targets(validation, ocr))
+    changed = runner.store.missing(stored)
+    if changed:
+        console.print(
+            f"[red]{len(changed)} of {len(stored)} requests of the validation reading are not "
+            "the stored ones[/red]: the reader no longer reads as it was frozen"
+        )
+        raise typer.Exit(1)
+    source = SOURCES[DatasetName.FINDIT2.value]
+    with run(
+        TEST_READING_RUN,
+        store=records,
+        config={"decision": "ADR-0034", "frozen": version.model_dump(mode="json")},
+        seeds={},
+        dataset_sha256={source.name: source.sha256},
+    ) as current:
+        test = sorted(
+            select(documents, Split.TEST, unlock_test=True, reason=TEST_UNLOCK),
+            key=lambda d: d.doc_id,
+        )
+        targets = _targets(test, ocr)
+        runner.run(version.settings, text, targets)
+        requests = runner.requests(version.settings, text, targets)
+        missing = runner.store.missing(requests)
+        if missing:
+            console.print(
+                f"[red]{len(missing)} of {len(requests)} requests were not answered[/red]; "
+                "nothing is recorded. Run the command again to send them."
+            )
+            raise typer.Exit(1)
+        readings = [FrozenReader(version, text, runner.store).read(t) for t in targets]
+        current.log("receipts", len(test))
+        current.log("requests", len(requests))
+        current.log("validation_requests_found", len(stored))
+        current.log("cost_usd", f"{_spent(runner.ledger, {r.key for r in requests}):.4f}")
+        current.log(
+            "without_answer",
+            sum(any(r.field == "answer" for r in got.rejections) for got in readings),
+        )
+    console.print(
+        f"[green]read[/green] {len(test)} test receipts from both text sources: "
+        f"{len(requests)} requests, {current.results['cost_usd']} USD"
+    )
 
 
 @app.command("spending")

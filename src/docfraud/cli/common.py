@@ -29,6 +29,10 @@ CV_FOLDS_PATH = Path("annotations/findit2/cv-folds.json")
 OCR_CACHE = Path("artifacts/ocr")
 REPORTED_RUNS = Path("reports/runs")
 TRACKS = {TextSource.TRANSCRIPT: "T1 transcript", TextSource.OCR: "T2 OCR"}
+FREEZE_TAG = "phase-7-freeze"
+"""The git tag the configuration is frozen at before the test split is unlocked (ADR-0034)."""
+TEST_UNLOCK = "ADR-0034: the single evaluation of Phase 7"
+"""The reason every command of Phase 7 gives when it unlocks the test split (ADR-0034)."""
 
 
 class DatasetName(StrEnum):
@@ -88,4 +92,21 @@ def require_unchanged(commit: str, paths: Sequence[str], problem: str) -> None:
         raise typer.Exit(1)
     if changed:
         console.print(f"[red]{problem}[/red] at {commit[:12]}: " + ", ".join(changed))
+        raise typer.Exit(1)
+
+
+def require_freeze_tag() -> None:
+    """Stop unless the committed source is the source tagged :data:`FREEZE_TAG` (ADR-0034, 1).
+
+    Raises:
+        typer.Exit: If the tag does not exist or the source changed after it.
+    """
+    changed = changed_since(FREEZE_TAG, ("src",))
+    if changed is None:
+        console.print(
+            f"[red]no tag {FREEZE_TAG}[/red]: freeze the configuration first (ADR-0034, decision 1)"
+        )
+        raise typer.Exit(1)
+    if changed:
+        console.print(f"[red]the source changed after {FREEZE_TAG}[/red]: " + ", ".join(changed))
         raise typer.Exit(1)
