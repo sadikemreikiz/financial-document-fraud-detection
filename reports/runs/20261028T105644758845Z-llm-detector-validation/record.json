@@ -1,0 +1,400 @@
+{
+  "run_id": "20261028T105644758845Z-llm-detector-validation",
+  "name": "llm-detector-validation",
+  "started": "2026-10-28T10:56:44.758845Z",
+  "finished": "2026-10-28T10:56:48.708199Z",
+  "code": {
+    "commit": "037b0adeba48479ac2b30b6eae6d5c968bbd28b0",
+    "dirty": false
+  },
+  "environment": {
+    "python": "3.14.8",
+    "docfraud": "2.0.0.dev0",
+    "packages": {
+      "annotated-doc": "0.0.5",
+      "annotated-types": "0.8.0",
+      "anthropic": "2.1.0",
+      "antlr4-python3-runtime": "4.9.3",
+      "anyio": "4.15.1",
+      "ast_serialize": "0.12.1",
+      "certifi": "2026.7.22",
+      "cfgv": "3.5.0",
+      "charset-normalizer": "3.5.2",
+      "cloudpickle": "3.1.2",
+      "colorlog": "6.12.0",
+      "coverage": "7.16.2",
+      "distlib": "0.4.3",
+      "docfraud": "2.0.0.dev0",
+      "docstring_parser": "0.18.0",
+      "filelock": "4.0.12",
+      "flatbuffers": "25.12.19",
+      "fsspec": "2026.9.0",
+      "h11": "0.16.0",
+      "httpcore2": "2.16.0",
+      "httpx2": "2.16.0",
+      "identify": "2.6.20",
+      "idna": "3.20",
+      "iniconfig": "2.3.0",
+      "jinja2": "3.1.6",
+      "jiter": "0.17.0",
+      "joblib": "1.6.0",
+      "librt": "0.16.0",
+      "markdown-it-py": "4.2.0",
+      "markupsafe": "3.0.4",
+      "mdurl": "0.1.2",
+      "mpmath": "1.3.0",
+      "mypy": "2.4.0",
+      "mypy_extensions": "1.1.0",
+      "narwhals": "2.26.0",
+      "networkx": "3.7",
+      "nodeenv": "1.11.0",
+      "numpy": "2.5.3",
+      "omegaconf": "2.3.1",
+      "onnxruntime": "1.30.0",
+      "opencv-python": "5.0.0.93",
+      "opentelemetry-api": "1.45.1",
+      "packaging": "26.3",
+      "pathspec": "1.1.1",
+      "pillow": "12.3.0",
+      "platformdirs": "4.12.3",
+      "pluggy": "1.6.0",
+      "pre_commit": "4.6.2",
+      "protobuf": "7.36.2",
+      "pyclipper": "1.4.0",
+      "pydantic": "2.13.5",
+      "pydantic_core": "2.46.5",
+      "pygments": "2.21.0",
+      "pytest": "9.1.1",
+      "pytest-cov": "7.1.0",
+      "python-discovery": "1.6.1",
+      "pyyaml": "6.0.3",
+      "rapidocr": "3.9.2",
+      "requests": "2.34.2",
+      "rich": "15.0.0",
+      "ruff": "0.16.10",
+      "scikit-learn": "1.9.1",
+      "scipy": "1.18.1",
+      "setuptools": "84.0.0",
+      "shapely": "2.1.2",
+      "shellingham": "1.5.4",
+      "six": "1.17.0",
+      "sniffio": "1.3.1",
+      "sympy": "1.14.0",
+      "threadpoolctl": "3.7.0",
+      "torch": "2.14.1",
+      "tqdm": "4.70.1",
+      "truststore": "0.10.5",
+      "typer": "0.27.2",
+      "typing-inspection": "0.4.4",
+      "typing_extensions": "4.16.0",
+      "urllib3": "2.8.0",
+      "virtualenv": "21.14.5"
+    },
+    "platform": "macOS-15.7.7-arm64-arm-64bit-Mach-O",
+    "machine": "arm64",
+    "processor": "arm",
+    "cpu_count": 10,
+    "memory_bytes": 17179869184
+  },
+  "config": {
+    "decision": "ADR-0031, ADR-0032",
+    "frozen": {
+      "version": 1,
+      "settings": {
+        "model": "claude-sonnet-5-5",
+        "max_tokens": 8000,
+        "thinking": "adaptive",
+        "effort": "medium"
+      },
+      "instruction": "src/docfraud/llm/instructions/detector-v1.md",
+      "instruction_sha256": "f186e40dab20387ce2c435cbaf04987913e5ffe5a1afe08f3c6df67d0070ccc3",
+      "commit": "538ffe67b0cb1fa8431f312a82506b4f6869c74f"
+    },
+    "stronger_model_added": true,
+    "validation_check": "20261027T102600447861Z-fusion-validation-check",
+    "validation_sha256": "5a33cf33bd96479717342f02659cfdbf7daaf4d5e856e36171840df5f8a36b9b"
+  },
+  "config_hash": "5e7212eb44e18d834f64e7eb1991642ebc8052dfb5be172d5dce91a0ba80a17b",
+  "dataset_sha256": {
+    "findit2": "6f8c6f134951956627edcc06c7e8fc298abb9e984073ab193174aee204d46261"
+  },
+  "seeds": {
+    "bootstrap": 0
+  },
+  "test_unlocks": [],
+  "results": {
+    "receipts": 190,
+    "forged": 33,
+    "rows": {
+      "image and OCR text, claude-sonnet-5-5": {
+        "input": "image and OCR text",
+        "settings": {
+          "model": "claude-sonnet-5-5",
+          "max_tokens": 8000,
+          "thinking": "adaptive",
+          "effort": "medium"
+        },
+        "track": "ocr",
+        "failures": {},
+        "cost_usd": "0.6883",
+        "table": {
+          "average_precision": {
+            "value": 0.4721127698749066,
+            "low": 0.3482267181501497,
+            "high": 0.6063250994825135
+          },
+          "roc_auc": {
+            "value": 0.7869137232194557,
+            "low": 0.7001544103454932,
+            "high": 0.864413240687126
+          },
+          "recall_at_10pct": {
+            "value": 0.2967171717171717,
+            "low": 0.19298245614035087,
+            "high": 0.39719239094239084
+          },
+          "recall_at_20pct": {
+            "value": 0.47474747474747475,
+            "low": 0.3333333333333333,
+            "high": 0.6127946127946128
+          },
+          "f1": 0.5106382978723404,
+          "brier": 0.12533628960698415,
+          "ece": 0.054795567171295724,
+          "threshold": 0.12600622444723844
+        },
+        "against_fusion": {
+          "value": 0.3589200985815668,
+          "low": 0.20220559246432718,
+          "high": 0.5069464031986444,
+          "above_zero": true
+        },
+        "fitted": {
+          "platt": {
+            "slope": 0.02557520703699237,
+            "offset": -2.4993965025446006
+          },
+          "threshold": 0.12600622444723844
+        }
+      },
+      "transcript, claude-sonnet-5-5": {
+        "input": "transcript",
+        "settings": {
+          "model": "claude-sonnet-5-5",
+          "max_tokens": 8000,
+          "thinking": "adaptive",
+          "effort": "medium"
+        },
+        "track": "transcript",
+        "failures": {},
+        "cost_usd": "0.3167",
+        "table": {
+          "average_precision": {
+            "value": 0.48175622173624033,
+            "low": 0.36164140253775207,
+            "high": 0.6192599358514207
+          },
+          "roc_auc": {
+            "value": 0.7823779193205945,
+            "low": 0.6888607411696583,
+            "high": 0.866340957344142
+          },
+          "recall_at_10pct": {
+            "value": 0.324354657687991,
+            "low": 0.23484848484848486,
+            "high": 0.41213286713286695
+          },
+          "recall_at_20pct": {
+            "value": 0.5454545454545454,
+            "low": 0.3939393939393939,
+            "high": 0.6767676767676767
+          },
+          "f1": 0.5151515151515151,
+          "brier": 0.12274027365642032,
+          "ece": 0.07130761543486651,
+          "threshold": 0.39281780423753426
+        },
+        "against_fusion": {
+          "value": 0.36878834869240973,
+          "low": 0.22768264466682855,
+          "high": 0.50298885584453,
+          "above_zero": true
+        },
+        "fitted": {
+          "platt": {
+            "slope": 0.03009194208015032,
+            "offset": -2.9932980786740826
+          },
+          "threshold": 0.39281780423753426
+        }
+      },
+      "image and OCR text, claude-haiku-5-5": {
+        "input": "image and OCR text",
+        "settings": {
+          "model": "claude-haiku-5-5",
+          "max_tokens": 8000,
+          "thinking": "adaptive",
+          "effort": "medium"
+        },
+        "track": "ocr",
+        "failures": {},
+        "cost_usd": "0.0597",
+        "table": {
+          "average_precision": {
+            "value": 0.5017610486648241,
+            "low": 0.3659666328885662,
+            "high": 0.6521448310587891
+          },
+          "roc_auc": {
+            "value": 0.7493727079714341,
+            "low": 0.6563259988419224,
+            "high": 0.8361320208453966
+          },
+          "recall_at_10pct": {
+            "value": 0.36363636363636365,
+            "low": 0.24242424242424243,
+            "high": 0.4696969696969697
+          },
+          "recall_at_20pct": {
+            "value": 0.4575757575757576,
+            "low": 0.30303030303030304,
+            "high": 0.6060606060606061
+          },
+          "f1": 0.4727272727272727,
+          "brier": 0.1171321493424556,
+          "ece": 0.05187531712428696,
+          "threshold": 0.4080618372919672
+        },
+        "against_fusion": {
+          "value": 0.3292718197916493,
+          "low": 0.16690949427448487,
+          "high": 0.4808092697591553,
+          "above_zero": true
+        },
+        "fitted": {
+          "platt": {
+            "slope": 0.04170913850713143,
+            "offset": -2.8745317600611004
+          },
+          "threshold": 0.4080618372919672
+        }
+      },
+      "image and OCR text, claude-opus-5-5": {
+        "input": "image and OCR text",
+        "settings": {
+          "model": "claude-opus-5-5",
+          "max_tokens": 8000,
+          "thinking": "adaptive",
+          "effort": "medium"
+        },
+        "track": "ocr",
+        "failures": {},
+        "cost_usd": "1.6297",
+        "table": {
+          "average_precision": {
+            "value": 0.6737584019265748,
+            "low": 0.5360872791263206,
+            "high": 0.8092562662982155
+          },
+          "roc_auc": {
+            "value": 0.8208839992279483,
+            "low": 0.7246622273692338,
+            "high": 0.9056166763173132
+          },
+          "recall_at_10pct": {
+            "value": 0.4949494949494949,
+            "low": 0.38636363636363635,
+            "high": 0.5757575757575758
+          },
+          "recall_at_20pct": {
+            "value": 0.6464646464646464,
+            "low": 0.5041322314049587,
+            "high": 0.7878787878787878
+          },
+          "f1": 0.6666666666666666,
+          "brier": 0.0875374452438155,
+          "ece": 0.022495933661519498,
+          "threshold": 0.3435464198272991
+        },
+        "against_fusion": {
+          "value": 0.15727446652989863,
+          "low": 0.001965827197650794,
+          "high": 0.31074055548039176,
+          "above_zero": true
+        },
+        "fitted": {
+          "platt": {
+            "slope": 0.056470357769257885,
+            "offset": -3.188695842509252
+          },
+          "threshold": 0.3435464198272991
+        }
+      }
+    },
+    "fusion": {
+      "transcript": {
+        "average_precision": {
+          "value": 0.8505445704286501,
+          "low": 0.7502784759486609,
+          "high": 0.9372638243311063
+        },
+        "roc_auc": {
+          "value": 0.9254970082995561,
+          "low": 0.8606398378691373,
+          "high": 0.9778035128353599
+        },
+        "recall_at_10pct": {
+          "value": 0.5757575757575758,
+          "low": 0.48484848484848486,
+          "high": 0.5757575757575758
+        },
+        "recall_at_20pct": {
+          "value": 0.7575757575757576,
+          "low": 0.6666666666666666,
+          "high": 0.9090909090909091
+        },
+        "f1": 0.7719298245614035,
+        "brier": 0.05946857327402442,
+        "ece": 0.042943199467571865,
+        "threshold": 0.6131477002553435
+      },
+      "ocr": {
+        "average_precision": {
+          "value": 0.8310328684564734,
+          "low": 0.725727430567915,
+          "high": 0.9247710052380422
+        },
+        "roc_auc": {
+          "value": 0.9087048832271762,
+          "low": 0.8328508010036673,
+          "high": 0.970276008492569
+        },
+        "recall_at_10pct": {
+          "value": 0.5757575757575758,
+          "low": 0.48484848484848486,
+          "high": 0.5757575757575758
+        },
+        "recall_at_20pct": {
+          "value": 0.7575757575757576,
+          "low": 0.6363636363636364,
+          "high": 0.8787878787878788
+        },
+        "f1": 0.7586206896551724,
+        "brier": 0.06310944994435239,
+        "ece": 0.05829941801172963,
+        "threshold": 0.5624147669061262
+      }
+    },
+    "rq6": {
+      "row": "image and OCR text, claude-sonnet-5-5",
+      "track": "ocr",
+      "difference": {
+        "value": 0.3589200985815668,
+        "low": 0.20220559246432718,
+        "high": 0.5069464031986444,
+        "above_zero": true
+      },
+      "answer": "the specialised components detect better"
+    }
+  }
+}

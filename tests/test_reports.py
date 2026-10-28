@@ -19,6 +19,7 @@ from docfraud.evaluation.runs import JsonRunStore, RunRecord
 from docfraud.fusion.development_report import render_report as render_training
 from docfraud.fusion.shift_report import render_report as render_shift
 from docfraud.fusion.validation_report import render_report as render_validation
+from docfraud.llm.detector_validation_report import render_report as render_detector
 
 ROOT = Path(__file__).resolve().parents[1]
 RUNS = JsonRunStore(ROOT / "reports" / "runs")
@@ -67,6 +68,13 @@ def test_validation_report_matches_its_run_record() -> None:
     expected = render_validation(record.results, record.code.commit)
     committed = (ROOT / "reports" / "fusion" / "validation-check.md").read_text(encoding="utf-8")
     assert committed == expected, "run `docfraud fusion validation-report`"
+
+
+def test_detector_validation_report_matches_its_run_record() -> None:
+    record = latest("llm-detector-validation")
+    expected = render_detector(record.results, record.code.commit)
+    committed = (ROOT / "reports" / "llm" / "detector" / "validation.md").read_text("utf-8")
+    assert committed == expected, "run `docfraud detector validation-report`"
 
 
 def test_input_shift_report_matches_its_run_record() -> None:
