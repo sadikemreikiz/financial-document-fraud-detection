@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "settings": {
+    "model": "claude-sonnet-5-5",
+    "max_tokens": 8000,
+    "thinking": "adaptive",
+    "effort": "medium"
+  },
+  "instruction": "src/docfraud/llm/instructions/detector-v1.md",
+  "instruction_sha256": "f186e40dab20387ce2c435cbaf04987913e5ffe5a1afe08f3c6df67d0070ccc3",
+  "commit": "079dbfab5f0ca0cf3cd558d01931bf4747c3e3c5",
+  "rows": {
+    "image and OCR text": {
+      "receipts": 113,
+      "forged": 19,
+      "failures": 0,
+      "average_precision": 0.3620742273373852,
+      "roc_auc": 0.6486562150055991,
+      "cost_usd": "0.4485"
+    },
+    "transcript": {
+      "receipts": 113,
+      "forged": 19,
+      "failures": 0,
+      "average_precision": 0.3463982665776831,
+      "roc_auc": 0.6556550951847704,
+      "cost_usd": "0.1933"
+    }
+  }
+}

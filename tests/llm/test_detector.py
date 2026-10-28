@@ -44,7 +44,7 @@ from tests.fixtures.llm import FakeDetector
 
 INSTRUCTION = f"Judge the receipt.\n\n{IMAGE_START}\nLook at the image.\n{IMAGE_END}\n\nAnswer.\n"
 ROWS = [Row((Segment("TOTAL"), Segment("12.00"))), Row((Segment("CASH 20.00"),))]
-V1 = Path("src/docfraud/llm/instructions/detector-v1.md")
+WRITTEN = [Path(f"src/docfraud/llm/instructions/detector-v{v}.md") for v in (1, 2)]
 
 
 def page(height: int = 40, width: int = 30) -> np.ndarray:
@@ -63,8 +63,9 @@ def test_each_row_gets_the_instruction_with_or_without_its_part_about_the_image(
         instruction_for("no markers", DetectorRow.TRANSCRIPT)
 
 
-def test_the_first_version_marks_its_part_about_the_image_once() -> None:
-    written = V1.read_text(encoding="utf-8")
+@pytest.mark.parametrize("path", WRITTEN, ids=lambda p: p.stem)
+def test_each_version_marks_its_part_about_the_image_once(path: Path) -> None:
+    written = path.read_text(encoding="utf-8")
     transcript_copy = instruction_for(written, DetectorRow.TRANSCRIPT)
     assert "image" not in transcript_copy.lower()
     assert "suspicion" in transcript_copy
