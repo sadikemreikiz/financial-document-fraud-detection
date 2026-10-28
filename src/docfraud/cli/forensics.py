@@ -5,7 +5,8 @@ and the training and measurement of their development round (ADR-0022) and of th
 the clean measurement (ADR-0020).
 """
 
-from collections.abc import Callable, Sequence
+import hashlib
+from collections.abc import Callable, Iterator, Sequence
 from pathlib import Path
 from typing import TYPE_CHECKING, Annotated
 
@@ -16,15 +17,24 @@ from docfraud.cli import common
 from docfraud.cli.common import (
     CV_FOLDS_PATH,
     OCR_CACHE,
+    REPORTED_RUNS,
+    TEST_UNLOCK,
     DataDir,
+    DatasetName,
     cached_ocr,
     console,
     findit_documents,
     require_clean_commit,
+    require_freeze_tag,
+    require_unchanged,
 )
 from docfraud.cli.synthesis import FONTS_DIR
-from docfraud.data.download import safe_extract
-from docfraud.data.models import Document, Split
+from docfraud.data.download import SOURCES, safe_extract
+from docfraud.data.models import BBox, Document, Label, Split
+from docfraud.data.normalize import load_grayscale
+from docfraud.data.splits import select
+from docfraud.detectors.copy_move_measurement import measure as measure_copy_move
+from docfraud.detectors.copy_move_measurement import results as copy_move_results
 from docfraud.evaluation.design_fold import (
     CLEAN_FOLDS,
     DESIGN_FOLD,
@@ -32,9 +42,20 @@ from docfraud.evaluation.design_fold import (
     WHOLE_TRAINING,
 )
 from docfraud.evaluation.folds import FoldAssignment, load_folds
-from docfraud.evaluation.runs import code_version, environment
+from docfraud.evaluation.runs import JsonRunStore, code_version, environment, run
+from docfraud.evaluation.runs import RunRecord as Record
+from docfraud.forensics.final import (
+    LOCALISATION_CODE,
+    SYSTEMS,
+    TEST_RUN,
+    THRESHOLDS_RUN,
+    map_results,
+    measured,
+    pixel_threshold,
+)
 from docfraud.forensics.learned.pages import PageCache
 from docfraud.forensics.learned.pretrained import IMAGENET_WEIGHTS, read_weights
+from docfraud.forensics.learned.results import Group, Item, real_item
 from docfraud.forensics.learned.sampler import CachedReceipts, RoundForger, System, round_material
 from docfraud.forensics.trufor import CITATION, TRUFOR_CODE, TRUFOR_WEIGHTS
 from docfraud.synthesis.engine import Stream
@@ -609,3 +630,159 @@ def measure_probe_command(  # pragma: no cover - needs the dataset and the train
             f"{result.model}, trained on {result.trained_on}"
         )
     console.print(f"[green]system 5 measured[/green]: {directory}")
+
+
+def _system_2(directory: Path) -> tuple[Path, Analyser]:  # pragma: no cover - PyTorch
+    """System 2 as fusion reads it: the model trained on the whole training split, seed 0."""
+    from docfraud.forensics.learned.inference import LearnedModel  # noqa: PLC0415 - PyTorch
+    from docfraud.forensics.learned.rounds import (  # noqa: PLC0415 - imports PyTorch
+        WHOLE_RUNS,
+        require_trained,
+        run_directory,
+    )
+    from docfraud.forensics.learned.training import MODEL  # noqa: PLC0415 - PyTorch
+
+    try:
+        require_trained(directory, (WHOLE_TRAINING,), WHOLE_RUNS)
+    except ValueError as error:
+        console.print(f"[red]{error}[/red]")
+        raise typer.Exit(1) from error
+    path = run_directory(directory, WHOLE_TRAINING, System.SYNTHETIC, 0) / MODEL
+    return path, LearnedModel.from_file(path)
+
+
+def _system_1() -> Analyser:  # pragma: no cover - imports PyTorch
+    """System 1, the JPEG-lattice map."""
+    from docfraud.forensics.clean import LatticeSystem  # noqa: PLC0415 - imports PyTorch
+
+    return LatticeSystem()
+
+
+def _models(path: Path, lattice: Analyser) -> dict[str, str]:
+    """What identifies each system's map: system 2's weights by SHA-256, system 1's code."""
+    return {"2": hashlib.sha256(path.read_bytes()).hexdigest(), "1": lattice.identifier}
+
+
+def _items(
+    documents: Sequence[Document], group: Group, words: dict[str, list[BBox]]
+) -> Iterator[Item]:
+    """Each receipt's page and OCR word boxes, loaded when needed; the words are kept."""
+    ocr = cached_ocr(OCR_CACHE)
+    for document in documents:
+        page = load_grayscale(document.image_path)
+        words[document.doc_id] = [token.box for token in ocr.recognize(page).tokens]
+        yield real_item(document, group, page, words[document.doc_id])
+
+
+@app.command("pixel-thresholds")
+def pixel_thresholds_command(
+    data_dir: DataDir = Path("data"),
+    directory: RoundsDir = ROUNDS_DIR,
+    runs: Annotated[Path, typer.Option(help="Where reported run records are kept.")] = (
+        REPORTED_RUNS
+    ),
+) -> None:
+    """Choose the pixel thresholds of systems 2 and 1 on the validation split (ADR-0034, 1).
+
+    By the rule of ADR-0015 (section 5), on the maps of the forged validation receipts with a
+    modified rectangle, for system 2 as fusion reads it and for system 1. Before the freeze:
+    never once the test split has been measured. Reads no test receipt.
+    """
+    store = JsonRunStore(runs)
+    if store.records(TEST_RUN):
+        console.print(f"[red]refusing:[/red] a {TEST_RUN} record exists")
+        raise typer.Exit(1)
+    require_clean_commit()
+    path, model = _system_2(directory)
+    lattice = _system_1()
+    validation = sorted(
+        (d for d in select(findit_documents(data_dir), Split.VAL) if d.label is Label.FORGED),
+        key=lambda d: d.doc_id,
+    )
+    source = SOURCES[DatasetName.FINDIT2.value]
+    with run(
+        THRESHOLDS_RUN,
+        store=store,
+        config={"decision": "ADR-0034, ADR-0015", "models": _models(path, lattice)},
+        seeds={"system 2": 0, "baseline": 0},
+        dataset_sha256={source.name: source.sha256},
+    ) as current:
+        for number, analyser in ((2, model), (1, lattice)):
+            found = pixel_threshold(analyser, _items(validation, Group.VALIDATION, {}))
+            current.log(str(number), found.model_dump(mode="json"))
+            console.print(f"{SYSTEMS[number]}: pixel threshold {found.value:.4g}")
+
+
+def _thresholds(store: JsonRunStore, path: Path, lattice: Analyser) -> Record:
+    """The latest pixel thresholds, chosen from a clean commit by today's code and maps.
+
+    Raises:
+        typer.Exit: If there are none, or the code or a map changed after they were chosen.
+    """
+    found = store.records(THRESHOLDS_RUN)
+    if not found:
+        console.print(f"[red]no {THRESHOLDS_RUN} record[/red]: choose the thresholds first")
+        raise typer.Exit(1)
+    chosen = found[-1]
+    if chosen.code.commit is None or chosen.code.dirty is not False:
+        console.print(f"[red]{chosen.run_id} was not made from a clean commit[/red]")
+        raise typer.Exit(1)
+    require_unchanged(chosen.code.commit, LOCALISATION_CODE, "the maps' code changed since")
+    if chosen.config["models"] != _models(path, lattice):
+        console.print(f"[red]the maps are not those {chosen.run_id} measured[/red]")
+        raise typer.Exit(1)
+    return chosen
+
+
+@app.command("test-localisation")
+def final_localisation_command(
+    data_dir: DataDir = Path("data"),
+    directory: RoundsDir = ROUNDS_DIR,
+    runs: Annotated[Path, typer.Option(help="Where reported run records are kept.")] = (
+        REPORTED_RUNS
+    ),
+) -> None:
+    """Measure where systems 2 and 1 and copy-move point on the test split, once (ADR-0034, 5).
+
+    Each map at its frozen pixel threshold, as Phase 4 measured the held-out folds; copy-move's
+    pair as Phase 5 measured the clean folds. Runs once, at the freeze tag, from a clean commit,
+    with the maps and the code of the thresholds' record.
+    """
+    store = JsonRunStore(runs)
+    if store.records(TEST_RUN):
+        console.print(f"[red]refusing to run again:[/red] a {TEST_RUN} record exists")
+        raise typer.Exit(1)
+    require_clean_commit()
+    require_freeze_tag()
+    path, model = _system_2(directory)
+    lattice = _system_1()
+    chosen = _thresholds(store, path, lattice)
+    documents = findit_documents(data_dir)
+    source = SOURCES[DatasetName.FINDIT2.value]
+    with run(
+        TEST_RUN,
+        store=store,
+        config={
+            "decision": "ADR-0034",
+            "thresholds": chosen.run_id,
+            "models": chosen.config["models"],
+        },
+        seeds={"system 2": 0, "baseline": 0},
+        dataset_sha256={source.name: source.sha256},
+    ) as current:
+        test = sorted(
+            select(documents, Split.TEST, unlock_test=True, reason=TEST_UNLOCK),
+            key=lambda d: d.doc_id,
+        )
+        words: dict[str, list[BBox]] = {}
+        for number, analyser in ((2, model), (1, lattice)):
+            threshold = chosen.results[str(number)]["value"]
+            receipts = measured(analyser, _items(test, Group.HELD_OUT, words), threshold)
+            current.log(str(number), map_results(receipts, words, threshold))
+        current.log(
+            "copy_move",
+            copy_move_results(
+                [measure_copy_move(d, load_grayscale(d.image_path), words[d.doc_id]) for d in test]
+            ),
+        )
+    console.print(f"[green]recorded[/green] {TEST_RUN} on {len(test)} test receipts")

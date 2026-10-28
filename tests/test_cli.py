@@ -38,7 +38,7 @@ from docfraud.cli import synthesis as cli_synthesis
 from docfraud.data.benign_marks import ReceiptMarks, load_mark_log, marks_plan, round_path
 from docfraud.data.download import SOURCES, PinnedFile
 from docfraud.data.gold import GoldManifest, load_manifest
-from docfraud.data.models import BBox, Document, Entity, Label, Split, Technique
+from docfraud.data.models import BBox, Document, Entity, Label, Region, RegionRole, Split, Technique
 from docfraud.data.observation import (
     ASSISTANT,
     ObservationLog,
@@ -57,6 +57,7 @@ from docfraud.evaluation.runs import CodeVersion, JsonRunStore, run
 from docfraud.forensics.learned import inference
 from docfraud.forensics.learned.inference import LearnedOutput
 from docfraud.forensics.learned.pretrained import IMAGENET_WEIGHTS
+from docfraud.forensics.learned.results import real_item
 from docfraud.forensics.trufor import TRUFOR_CODE, TRUFOR_WEIGHTS
 from docfraud.fusion.development_report import TRACK_NAMES
 from docfraud.fusion.final import frozen_check, rehearsal_mismatches, resaved_check
@@ -103,6 +104,10 @@ from tests.detectors.test_copy_move_measurement import measured
 from tests.evaluation.test_folds import documents as fold_documents
 from tests.fixtures.findit import load_toy
 from tests.fixtures.llm import FakeAgent, FakeDetector, FakeProvider
+from tests.forensics.test_final import EDIT as SPOT_EDIT
+from tests.forensics.test_final import SOURCE as SPOT_SOURCE
+from tests.forensics.test_final import WORDS as SPOT_WORDS
+from tests.forensics.test_final import Spot
 from tests.fusion.test_development import report_record
 from tests.fusion.test_validation import N_TRAIN, pages, tables
 from tests.llm.test_agent_rounds import ELSEWHERE
@@ -885,6 +890,83 @@ def test_test_and_track_r_inputs_are_made_once_by_code_that_reproduced_validatio
     assert set(resaved_run.results) == {"q95", "q75"}
     assert load_table(tmp / "resaved" / "q75-inputs.json") == validation
     assert "refusing to run again" in said(runner.invoke(app, resave))
+
+
+def test_the_pixel_thresholds_come_first_and_the_test_localisation_runs_once(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    def receipt(name: str, split: Split, forged: bool) -> Document:
+        regions = (
+            (
+                Region(box=SPOT_EDIT, role=RegionRole.MODIFIED),
+                Region(box=SPOT_SOURCE, role=RegionRole.SOURCE),
+            )
+            if forged
+            else ()
+        )
+        return Document(
+            dataset="toy",
+            doc_id=name,
+            source_id=name,
+            split=split,
+            label=Label.FORGED if forged else Label.AUTHENTIC,
+            image_path=tmp_path / f"{name}.png",
+            regions=regions,
+            has_region_annotations=forged,
+        )
+
+    receipts = [
+        receipt("V1", Split.VAL, True),
+        receipt("V2", Split.VAL, False),
+        receipt("T1", Split.TEST, True),
+        receipt("T2", Split.TEST, False),
+    ]
+
+    def items(documents: Sequence[Document], group: Any, words: dict[str, Any]) -> Any:
+        for d in documents:
+            page = np.zeros((60, 80), dtype=np.uint8)
+            page[0, 5] = d.label is Label.FORGED  # the spot map marks the forged pages
+            words[d.doc_id] = list(SPOT_WORDS)
+            yield real_item(d, group, page, SPOT_WORDS)
+
+    monkeypatch.setattr(cli_common, "load_findit2", lambda _: tuple(receipts))
+    model = tmp_path / "model.pt"
+    model.write_bytes(b"weights")
+    monkeypatch.setattr(cli_forensics, "_system_2", lambda _: (model, Spot()))
+    lattice = SimpleNamespace(identifier="lattice-1", analyse=Spot().analyse)
+    monkeypatch.setattr(cli_forensics, "_system_1", lambda: lattice)
+    monkeypatch.setattr(cli_forensics, "_items", items)
+    monkeypatch.setattr(cli_forensics, "load_grayscale", lambda _: np.zeros((60, 80), np.uint8))
+    monkeypatch.setattr(cli_forensics, "measure_copy_move", lambda d, *_: d.doc_id)
+    monkeypatch.setattr(cli_forensics, "copy_move_results", lambda found: {"measured": found})
+    clean = CodeVersion(commit="e" * 40, dirty=False)
+    monkeypatch.setattr(cli_common, "code_version", lambda: clean)
+    monkeypatch.setattr(runs_module, "code_version", lambda repo=None: clean)  # noqa: ARG005
+    monkeypatch.setattr(cli_common, "changed_since", lambda *_: [])
+    runs = ["--runs", str(tmp_path / "runs")]
+    thresholds = ["forensics", "pixel-thresholds", *runs]
+    final = ["forensics", "test-localisation", *runs]
+    store = JsonRunStore(tmp_path / "runs")
+    assert "no forensics-pixel-thresholds record" in said(runner.invoke(app, final))
+    chosen = runner.invoke(app, thresholds)
+    assert chosen.exit_code == 0, chosen.output
+    assert "system 2, synthetic forgeries: pixel threshold" in said(chosen)
+    (record,) = store.records("forensics-pixel-thresholds")
+    assert record.test_unlocks == ()  # the validation split alone
+    assert record.results["2"]["receipts"] == 1
+    monkeypatch.setattr(cli_forensics, "_system_1", lambda: SimpleNamespace(identifier="lattice-2"))
+    assert "the maps are not those" in said(runner.invoke(app, final))
+    monkeypatch.setattr(cli_forensics, "_system_1", lambda: lattice)
+    measured_once = runner.invoke(app, final)
+    assert measured_once.exit_code == 0, measured_once.output
+    (made,) = store.records("forensics-test-localisation")
+    assert made.test_unlocks == (cli_common.TEST_UNLOCK,)
+    assert set(made.results) == {"2", "1", "copy_move"}
+    assert made.results["2"]["forged_with_regions"] == 1
+    assert made.results["2"]["threshold"] == record.results["2"]["value"]
+    assert made.results["copy_move"] == {"measured": ["T1", "T2"]}
+    assert "refusing to run again" in said(runner.invoke(app, final))
+    assert "refusing" in said(runner.invoke(app, thresholds))
 
 
 def test_the_test_check_and_track_r_are_measured_once_after_a_reproduced_rehearsal(  # noqa: PLR0915
