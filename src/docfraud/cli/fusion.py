@@ -64,6 +64,8 @@ from docfraud.fusion.development import (
     track_results,
 )
 from docfraud.fusion.development_report import TRACK_NAMES, render_report
+from docfraud.fusion.errors import RUN_NAME as ERRORS_RUN
+from docfraud.fusion.errors import error_analysis, frozen_assessments
 from docfraud.fusion.evidence import SystemTwo, page_findings
 from docfraud.fusion.final import (
     CHECK_CODE,
@@ -968,6 +970,71 @@ def resaved_check_command(  # noqa: PLR0913, PLR0917 - one option per input
     for quality in QUALITIES:
         met = "would hold" if results[str(quality)]["success"]["met"] else "would not hold"
         console.print(f"JPEG quality {quality}: ADR-0013's conditions {met}")
+
+
+@app.command("error-analysis")
+def error_analysis_command(
+    data_dir: DataDir = Path("data"),
+    runs: Runs = REPORTED_RUNS,
+    training: Training = TRAINING_INPUTS,
+    validation: Validation = VALIDATION_INPUTS,
+    test: Annotated[Path, typer.Option(help="The test inputs table.")] = TEST_INPUTS,
+) -> None:
+    """Find every error of T2's review policy on the test split and its cause (ADR-0034, 8).
+
+    The policy and the fusion model are those of Phase 5's check, applied unchanged; the
+    policy must send as many receipts to review as the test check counted. Runs once, at the
+    freeze tag, from a clean commit, after the test check and under its rehearsal.
+    """
+    store = JsonRunStore(runs)
+    if store.records(ERRORS_RUN):
+        console.print(f"[red]refusing to run again:[/red] a {ERRORS_RUN} record exists")
+        raise typer.Exit(1)
+    require_clean_commit()
+    require_freeze_tag()
+    rehearsal = _check_rehearsal(store)
+    test_check = _latest(store, TEST_CHECK_RUN)
+    check, training_table = _recorded_check(store, training, validation)
+    measured = _recorded_table(store, TEST_INPUTS_RUN, test)
+    documents = findit_documents(data_dir)
+    train = sorted(select(documents, Split.TRAIN), key=lambda d: d.doc_id)
+    source = SOURCES[DatasetName.FINDIT2.value]
+    with run(
+        ERRORS_RUN,
+        store=store,
+        config={
+            "decision": "ADR-0034",
+            "validation_check": check.run_id,
+            "rehearsal": rehearsal.run_id,
+            "test_check": test_check.run_id,
+        },
+        seeds={},
+        dataset_sha256={source.name: source.sha256},
+    ) as current:
+        receipts = sorted(
+            select(documents, Split.TEST, unlock_test=True, reason=TEST_UNLOCK),
+            key=lambda d: d.doc_id,
+        )
+        rows = measured.rows("ocr", SEEDS[0])
+        if [r.receipt for r in rows] != [d.doc_id for d in receipts]:
+            console.print(f"[red]the rows of {test} are not the test receipts[/red]")
+            raise typer.Exit(1)
+        policy, assessed = frozen_assessments(
+            training_table.rows("ocr", SEEDS[0]), _labels(train), rows, check.results
+        )
+        results = error_analysis(receipts, assessed, policy)
+        counted = test_check.results["policy"]["ocr"]["10 %"]["reviewed"]
+        if results["reviewed"] != counted:
+            console.print(
+                f"[red]{results['reviewed']} sent to review; the test check counted {counted}[/red]"
+            )
+            raise typer.Exit(1)
+        for key, value in results.items():
+            current.log(key, value)
+    console.print(
+        f"{results['misses']['count']} misses and {results['false_alarms']['count']} false "
+        "alarms recorded"
+    )
 
 
 @dataclass(frozen=True, slots=True)
