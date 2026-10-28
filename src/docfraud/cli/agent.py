@@ -10,7 +10,9 @@ twice the most tokens a case of the kept model used, rounded up to a thousand.
 model and the token budget the pilot kept; ``freeze`` keeps a version by the rule of ADR-0033.
 Every case file is written beside its record, for the owner to read.
 
-The cases are design-fold receipts of the training split, checked before any request is built.
+These cases are design-fold receipts of the training split. ``validation`` then runs the frozen
+agent once on the validation receipts that track T2's review policy sends to review. Every
+command checks the receipts it reads before any request is built.
 """
 
 import hashlib
@@ -28,22 +30,26 @@ from docfraud.cli.common import (
     OCR_CACHE,
     REPORTED_RUNS,
     DataDir,
+    DatasetName,
     cached_ocr,
     console,
     findit_documents,
     require_clean_commit,
     require_unchanged,
 )
-from docfraud.cli.fusion import TRAINING_INPUTS
+from docfraud.cli.fusion import TRAINING_INPUTS, VALIDATION_INPUTS, _pages
 from docfraud.cli.llm import FROZEN, LEDGER, STORE, Cache, LedgerPath, Store, _runner
+from docfraud.data.download import SOURCES
 from docfraud.data.models import Document, Label, Split
 from docfraud.data.normalize import load_grayscale
 from docfraud.data.splits import select
 from docfraud.evaluation.design_fold import DESIGN_FOLD_IDS
 from docfraud.evaluation.folds import load_folds
-from docfraud.evaluation.runs import JsonRunStore, code_version
+from docfraud.evaluation.runs import JsonRunStore, RunRecord, code_version, run
+from docfraud.forensics.learned.rounds import SEEDS
 from docfraud.fusion.training_inputs import RUN_NAME as TRAINING_INPUTS_RUN
 from docfraud.fusion.training_inputs import load_table, summary
+from docfraud.fusion.validation import RUN_NAME as CHECK_RUN
 from docfraud.llm.agent import (
     HAIKU_AGENT,
     NOT_ANSWERED,
@@ -63,6 +69,9 @@ from docfraud.llm.agent_rounds import (
     save_round,
 )
 from docfraud.llm.agent_tools import Case, read_fields
+from docfraud.llm.agent_validation import RUN_NAME as VALIDATION_RUN
+from docfraud.llm.agent_validation import Queue, agent_validation, measured, review_queue
+from docfraud.llm.agent_validation_report import render_report
 from docfraud.llm.frozen import FrozenReader
 from docfraud.llm.provider import Settings
 from docfraud.llm.record import FrozenVersion
@@ -71,15 +80,19 @@ from docfraud.llm.store import ResponseStore
 from docfraud.reading.ocr import CachedOcr
 from docfraud.reading.pipeline import TextSource, read_document
 
-app = typer.Typer(help="The investigation agent: its pilot and development on its cases.")
+app = typer.Typer(help="The investigation agent: its pilot, development and validation run.")
 
 INSTRUCTIONS = Path("src/docfraud/llm/instructions")
 AGENT = Path("reports/llm/agent")
 PILOT = "pilot.json"
 FROZEN_AGENT = "frozen.json"
+VALIDATION_REPORT = AGENT / "validation.md"
 
 Output = Annotated[Path, typer.Option(help="Where the agent's records and case files go.")]
 Training = Annotated[Path, typer.Option(help="The training inputs table of Phase 5.")]
+Validation = Annotated[Path, typer.Option(help="The validation inputs table of Phase 5.")]
+Runs = Annotated[Path, typer.Option(help="Where reported run records are kept.")]
+Report = Annotated[Path, typer.Option(help="Where to write the report.")]
 
 
 def instruction_path(version: int) -> Path:
@@ -245,6 +258,10 @@ def _sha256(text: str) -> str:
     return hashlib.sha256(text.encode()).hexdigest()
 
 
+def _sha256_file(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
 @app.command("develop")
 def agent_develop(  # noqa: PLR0913, PLR0917 - one option per input and output
     version: Annotated[int, typer.Option(help="The version of the instruction, 1 or 2.")],
@@ -366,3 +383,169 @@ def agent_freeze(output: Output = AGENT) -> None:
     )
     path.write_text(frozen.model_dump_json(indent=2) + "\n", encoding="utf-8")
     console.print(f"[green]frozen[/green] version {version} at {frozen.commit[:7]}")
+
+
+def _frozen(output: Path) -> tuple[FrozenAgent, str]:
+    """The frozen agent and its instruction, both checked unchanged since the freeze.
+
+    The instruction is checked by its hash, the agent's code by git.
+
+    Raises:
+        typer.Exit: If the agent is not frozen, or something changed after it was frozen.
+    """
+    path = output / FROZEN_AGENT
+    if not path.exists():
+        console.print(f"[red]{path} does not exist[/red]: freeze the agent first")
+        raise typer.Exit(1)
+    frozen = FrozenAgent.model_validate_json(path.read_text(encoding="utf-8"))
+    text = Path(frozen.instruction).read_text(encoding="utf-8")
+    if _sha256(text) != frozen.instruction_sha256:
+        console.print(f"[red]{frozen.instruction} changed after it was frozen[/red]")
+        raise typer.Exit(1)
+    require_unchanged(frozen.commit, AGENT_CODE, "the agent changed after it was frozen")
+    return frozen, text
+
+
+def _labels(documents: Sequence[Document]) -> Any:
+    """Whether each receipt is forged.
+
+    Raises:
+        typer.Exit: If a receipt has no label.
+    """
+    if any(d.label is None for d in documents):
+        console.print("[red]every receipt must be labelled authentic or forged[/red]")
+        raise typer.Exit(1)
+    return np.array([d.label is Label.FORGED for d in documents])
+
+
+def _review_queue(
+    check: RunRecord, records: JsonRunStore, data_dir: Path, training: Path, validation: Path
+) -> tuple[Queue, list[Document]]:
+    """Track T2's review queue on the validation split, rebuilt from Phase 5's check.
+
+    Raises:
+        typer.Exit: If a table is not the one the check read, or the queue is not the recorded.
+    """
+    if _sha256_file(validation) != check.config["validation_sha256"]:
+        console.print(f"[red]{validation} is not the table {check.run_id} read[/red]")
+        raise typer.Exit(1)
+    training_table = load_table(training)
+    if summary(training_table) != records.load(check.config["training_inputs"]).results["summary"]:
+        console.print(f"[red]{training} is not the table {check.run_id} was fitted on[/red]")
+        raise typer.Exit(1)
+    documents = findit_documents(data_dir)
+    train = sorted(select(documents, Split.TRAIN), key=lambda d: d.doc_id)
+    val = sorted(select(documents, Split.VAL), key=lambda d: d.doc_id)
+    training_rows = training_table.rows(TRACK, SEEDS[0])
+    validation_rows = load_table(validation).rows(TRACK, SEEDS[0])
+    if [r.receipt for r in training_rows] != [d.doc_id for d in train] or [
+        r.receipt for r in validation_rows
+    ] != [d.doc_id for d in val]:
+        console.print("[red]the tables' receipts are not the training and validation splits[/red]")
+        raise typer.Exit(1)
+    try:
+        queue = review_queue(
+            training_rows, _labels(train), validation_rows, _labels(val), check.results
+        )
+    except ValueError as error:
+        console.print(f"[red]{error}[/red]")
+        raise typer.Exit(1) from error
+    return queue, val
+
+
+@app.command("validation")
+def agent_validation_command(  # noqa: PLR0913, PLR0917 - one option per input and output
+    data_dir: DataDir = Path("data"),
+    store: Store = STORE,
+    ledger: LedgerPath = LEDGER,
+    cache: Cache = OCR_CACHE,
+    training: Training = TRAINING_INPUTS,
+    validation: Validation = VALIDATION_INPUTS,
+    runs: Runs = REPORTED_RUNS,
+    output: Output = AGENT,
+    report: Report = VALIDATION_REPORT,
+) -> None:
+    """Run the frozen agent once on the validation receipts sent to review (ADR-0031, 5 and 6).
+
+    Refuses to run again. Runs only from a clean commit, on the review queue of track T2 that
+    Phase 5's check left: its fusion model is fitted again on the training table its record
+    names and must reproduce the recorded probabilities and policy. A run that leaves a step
+    unanswered records nothing; running it again replays the stored steps and sends only what
+    is missing. The case files go beside the agent's records, the results to the run record and
+    its report.
+    """
+    records = JsonRunStore(runs)
+    if records.records(VALIDATION_RUN):
+        console.print(f"[red]refusing to run again:[/red] a {VALIDATION_RUN} record exists")
+        raise typer.Exit(1)
+    frozen, text = _frozen(output)
+    require_clean_commit()
+    checks = records.records(CHECK_RUN)
+    if not checks:
+        console.print(f"[red]no {CHECK_RUN} record in {runs}[/red]: Phase 5's check comes first")
+        raise typer.Exit(1)
+    check = checks[-1]
+    queue, val = _review_queue(check, records, data_dir, training, validation)
+    receipts = list(queue.assessments)
+    check_documents(receipts, {d.doc_id for d in val}, "the agent's validation run")
+    by_id = {d.doc_id: d for d in val}
+    chosen = [by_id[r] for r in receipts]
+    shown = cases(chosen, queue.assessments, cached_ocr(cache), _reader(FROZEN, store))
+    runner = _runner(store, ledger)
+    done = [
+        investigate(shown[r], frozen.settings, text, runner, budget=frozen.token_budget)
+        for r in receipts
+    ]
+    unanswered = [i.receipt for i in done if i.read.failure == NOT_ANSWERED]
+    if unanswered:
+        console.print(
+            f"[red]{len(unanswered)} of {len(done)} cases were not answered[/red] "
+            f"({', '.join(unanswered)}); nothing is recorded. Run the command again to send them."
+        )
+        raise typer.Exit(1)
+    files = output / "validation"
+    files.mkdir(parents=True, exist_ok=True)
+    for investigation in done:
+        rendered = investigation.rendered or f"No case file: {investigation.read.failure}\n"
+        (files / f"{investigation.receipt}.md").write_text(rendered, encoding="utf-8")
+    pages = _pages(chosen)
+    source = SOURCES[DatasetName.FINDIT2.value]
+    with run(
+        VALIDATION_RUN,
+        store=records,
+        config={
+            "decision": "ADR-0031, ADR-0033",
+            "frozen": frozen.model_dump(mode="json"),
+            "validation_check": check.run_id,
+            "validation_sha256": check.config["validation_sha256"],
+            "policy": {"budget": queue.policy.budget, "threshold": queue.policy.threshold},
+        },
+        seeds={"bootstrap": 0, "baseline": 0},
+        dataset_sha256={source.name: source.sha256},
+    ) as current:
+        results = agent_validation(
+            [
+                measured(i, by_id[i.receipt], queue.assessments[i.receipt], pages.get(i.receipt))
+                for i in done
+            ]
+        )
+        for key, value in results.items():
+            current.log(key, value)
+    agent_validation_report_command(runs, report)
+
+
+@app.command("validation-report")
+def agent_validation_report_command(
+    runs: Runs = REPORTED_RUNS, report: Report = VALIDATION_REPORT
+) -> None:
+    """Render the report of the agent's validation run from its run record."""
+    found = JsonRunStore(runs).records(VALIDATION_RUN)
+    if not found:
+        console.print(f"[red]no {VALIDATION_RUN} record in {runs}[/red]")
+        raise typer.Exit(1)
+    record = found[-1]
+    report.parent.mkdir(parents=True, exist_ok=True)
+    report.write_text(
+        render_report(record.results, record.config, record.code.commit), encoding="utf-8"
+    )
+    console.print(f"[green]written[/green] {report}")
