@@ -20,7 +20,7 @@ from collections.abc import Callable, Sequence
 from pathlib import Path
 
 import anthropic
-from anthropic.types import Message, ThinkingConfigParam
+from anthropic.types import ContentBlockParam, Message, ThinkingConfigParam
 from anthropic.types.message_create_params import MessageCreateParamsNonStreaming
 from anthropic.types.messages import MessageBatchIndividualResponse
 
@@ -192,7 +192,7 @@ def params(request: Request) -> MessageCreateParamsNonStreaming:
         "system": [
             {"type": "text", "text": request.system, "cache_control": {"type": "ephemeral"}}
         ],
-        "messages": [{"role": "user", "content": request.user}],
+        "messages": [{"role": "user", "content": _content(request)}],
         "inference_geo": "global",
         "thinking": _thinking(settings.thinking),
         "output_config": {
@@ -200,6 +200,21 @@ def params(request: Request) -> MessageCreateParamsNonStreaming:
             "format": {"type": "json_schema", "schema": dict(request.answer_schema)},
         },
     }
+
+
+def _content(request: Request) -> str | list[ContentBlockParam]:
+    """The user turn: the text alone, or the images followed by the text."""
+    if not request.images:
+        return request.user
+    blocks: list[ContentBlockParam] = [
+        {
+            "type": "image",
+            "source": {"type": "base64", "media_type": image.media_type, "data": image.data},
+        }
+        for image in request.images
+    ]
+    blocks.append({"type": "text", "text": request.user})
+    return blocks
 
 
 def _thinking(thinking: Thinking) -> ThinkingConfigParam:
