@@ -67,6 +67,7 @@ from docfraud.llm.agent import SONNET_AGENT
 from docfraud.llm.agent_rounds import FrozenAgent
 from docfraud.llm.agent_rounds import load_rounds as load_agent_rounds
 from docfraud.llm.agent_tools import ReadField
+from docfraud.llm.agent_validation import agent_validation
 from docfraud.llm.cost import LIMIT_USD, Ledger
 from docfraud.llm.decision import ModelStep
 from docfraud.llm.detector import SONNET
@@ -1946,6 +1947,75 @@ def test_the_agent_is_developed_once_per_version_and_frozen_by_its_rule(  # noqa
     assert kept.instruction.endswith("agent-v2.md")
     assert "the agent is frozen once" in said(runner.invoke(app, freeze))
     assert "development has ended" in said(runner.invoke(app, [*develop, "2"]))
+
+
+def test_the_frozen_agent_runs_once_on_the_validation_queue_of_phase_5s_check(
+    recorded: Recorded, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    tmp = recorded.tmp
+    assert recorded.shift(tmp / "shift.md").exit_code == 0
+    assert recorded.check().exit_code == 0
+    monkeypatch.setattr(cli_agent, "_reader", lambda *_: None)
+    monkeypatch.setattr(
+        cli_agent, "cases", lambda chosen, *_: {d.doc_id: agent_case(d.doc_id) for d in chosen}
+    )
+    monkeypatch.setattr(cli_agent, "_pages", lambda documents: pages(list(documents)))
+    monkeypatch.setattr(cli_agent, "agent_validation", partial(agent_validation, resamples=20))
+    books = (ResponseStore(tmp / "store"), Ledger(tmp / "ledger.jsonl"))
+    unanswered = Runner(FakeAgent(silent=1), *books)
+    monkeypatch.setattr(cli_agent, "_runner", lambda *_: unanswered)
+    output, report = tmp / "agent", tmp / "agent" / "validation.md"
+
+    def validate(
+        validation: Path = recorded.paths["validation"], runs: Path = recorded.runs
+    ) -> Any:
+        command = ["agent", "validation", "--runs", str(runs), "--output", str(output)]
+        command += ["--training", str(recorded.paths["training"])]
+        command += ["--validation", str(validation), "--cache", str(tmp / "ocr")]
+        return runner.invoke(app, [*command, "--report", str(report)])
+
+    assert "freeze the agent first" in said(validate())
+    instruction = tmp / "agent-v2.md"
+    instruction.write_text("Draft the case file.", encoding="utf-8")
+    sha = hashlib.sha256(instruction.read_text("utf-8").encode()).hexdigest()
+    frozen = FrozenAgent(
+        version=2,
+        settings=SONNET_AGENT,
+        token_budget=34_000,
+        instruction=str(instruction),
+        instruction_sha256=sha,
+        commit="a" * 40,
+    )
+    output.mkdir()
+    (output / "frozen.json").write_text(frozen.model_dump_json(), encoding="utf-8")
+    monkeypatch.setattr(cli_common, "changed_since", lambda *_: ["src/docfraud/llm/agent.py"])
+    assert "the agent changed after it was frozen" in said(validate())
+    monkeypatch.setattr(cli_common, "changed_since", lambda *_: [])
+    assert "Phase 5's check comes first" in said(validate(runs=tmp / "no-runs"))
+    other = tmp / "other.json"
+    other.write_text(recorded.paths["validation"].read_text("utf-8") + "\n", encoding="utf-8")
+    assert "is not the table" in said(validate(other))
+    assert "1 of 30 cases were not answered" in said(validate())
+    assert not recorded.store.records("llm-agent-validation")
+    result = validate()  # sends only the step that was not answered
+    assert result.exit_code == 0, result.output
+    (made,) = recorded.store.records("llm-agent-validation")
+    assert (
+        made.config["validation_check"]
+        == recorded.store.records("fusion-validation-check")[0].run_id
+    )
+    assert made.config["frozen"]["version"] == 2
+    assert made.config["policy"]["budget"] == 0.1
+    assert made.results["receipts"] == len(made.results["cases"]) == 30
+    assert made.results["grounding"]["violations"] == []
+    assert made.results["first_location"]["receipts"] == made.results["forged"] == 10
+    assert len(list((output / "validation").glob("*.md"))) == 30
+    assert "# The investigation agent on the validation split" in report.read_text("utf-8")
+    assert "refusing to run again" in said(validate())
+    again = tmp / "again.md"
+    rendered = ["agent", "validation-report", "--runs", str(recorded.runs)]
+    assert runner.invoke(app, [*rendered, "--report", str(again)]).exit_code == 0
+    assert again.read_text(encoding="utf-8") == report.read_text(encoding="utf-8")
 
 
 def test_the_agent_sees_each_receipt_through_the_systems_outputs(tmp_path: Path) -> None:
