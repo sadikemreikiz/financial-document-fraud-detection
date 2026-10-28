@@ -64,7 +64,9 @@ from docfraud.llm.adjudication import (
 from docfraud.llm.adjudication import save_log as save_adjudication
 from docfraud.llm.cost import LIMIT_USD, Ledger
 from docfraud.llm.decision import ModelStep
+from docfraud.llm.detector import SONNET
 from docfraud.llm.detector_rounds import OPUS, FrozenDetector, StrongerModelCheck, load_rounds
+from docfraud.llm.detector_validation import detector_validation, validation_rows
 from docfraud.llm.false_alarms import FIXED_AT
 from docfraud.llm.frozen import load_split_reading
 from docfraud.llm.gold_b import load_measurement
@@ -762,6 +764,88 @@ def test_the_validation_check_refuses_tables_code_and_an_order_it_cannot_trust(
     assert "is not the table" in said(recorded.check(validation=other))
     assert "compare the inputs of both splits first" in said(recorded.check())
     assert not recorded.store.records("fusion-validation-check")
+
+
+def _validation_receipts(tmp: Path) -> list[Document]:
+    """The toy validation receipts with a page and a transcript each; a few say the opposite."""
+    pages_dir, transcripts = tmp / "pages", tmp / "transcripts"
+    pages_dir.mkdir()
+    transcripts.mkdir()
+    found = []
+    for shade, document in enumerate(tables()[3], start=200):
+        image, text = pages_dir / f"{document.doc_id}.png", transcripts / f"{document.doc_id}.txt"
+        Image.new("L", (40, 30), shade).save(image)
+        says_edited = (document.label is Label.FORGED) != (shade % 7 == 0)
+        text.write_text(
+            f"RECEIPT {document.doc_id}\n{'EDITED' if says_edited else 'PRINTED'}\n", "utf-8"
+        )
+        found.append(document.model_copy(update={"image_path": image, "transcript_path": text}))
+    return found
+
+
+def test_the_detector_runs_once_on_the_validation_split_against_phase_5s_fusion(
+    recorded: Recorded, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    tmp, store = recorded.tmp, recorded.store
+    assert recorded.shift(tmp / "shift.md").exit_code == 0
+    assert recorded.check().exit_code == 0
+    validation_receipts = _validation_receipts(tmp)
+    monkeypatch.setattr(cli_common, "load_findit2", lambda _: tuple(validation_receipts))
+    monkeypatch.setattr(cli_common, "RapidOcrEngine", FakeOcr)
+    monkeypatch.setattr(
+        cli_detector, "detector_validation", partial(detector_validation, resamples=20)
+    )
+    instruction = tmp / "detector-v1.md"
+    instruction.write_text(Path("src/docfraud/llm/instructions/detector-v1.md").read_text("utf-8"))
+    sha = hashlib.sha256(instruction.read_text("utf-8").encode()).hexdigest()
+    rounds = tmp / "rounds"
+    rounds.mkdir()
+    named = {"instruction": str(instruction), "instruction_sha256": sha, "commit": "a" * 40}
+    frozen = FrozenDetector(version=1, settings=SONNET, **named)
+    (rounds / "frozen.json").write_text(frozen.model_dump_json(), encoding="utf-8")
+    output = tmp / "validation.md"
+
+    def validate(
+        validation: Path = recorded.paths["validation"], runs: Path = recorded.runs
+    ) -> Any:
+        command = ["detector", "validation", "--runs", str(runs), "--rounds", str(rounds)]
+        command += ["--validation", str(validation), "--cache", str(tmp / "ocr")]
+        return runner.invoke(app, [*command, "--output", str(output)])
+
+    def answering(provider: FakeProvider) -> None:
+        books = (ResponseStore(tmp / "store"), Ledger(tmp / "ledger.jsonl"))
+        monkeypatch.setattr(cli_detector, "_runner", lambda *_: Runner(provider, *books))
+
+    answering(FakeDetector(fail=frozenset({0})))
+    assert "check the stronger model on the design fold first" in said(validate())
+    row = development(1, 0.5).main_row()
+    checked = StrongerModelCheck(
+        settings=OPUS, **named, result=row, frozen_result=row, row_added=True
+    )
+    (rounds / "stronger-model.json").write_text(checked.model_dump_json(), encoding="utf-8")
+    other = tmp / "other.json"
+    other.write_text(recorded.paths["validation"].read_text("utf-8") + "\n", encoding="utf-8")
+    assert "is not the table" in said(validate(other))
+    assert "Phase 5's check comes first" in said(validate(runs=tmp / "no-runs"))
+    assert "of 120 requests were not answered" in said(validate())
+    assert not store.records("llm-detector-validation")
+    answering(FakeDetector())
+    result = validate()
+    assert result.exit_code == 0, result.output
+    (made,) = store.records("llm-detector-validation")
+    assert made.config["validation_check"] == store.records("fusion-validation-check")[0].run_id
+    assert list(made.results["rows"]) == [r.name for r in validation_rows(SONNET, stronger=True)]
+    assert made.results["rows"]["transcript, claude-sonnet-5-5"]["fitted"]["platt"] is not None
+    spent = [json.loads(line) for line in (tmp / "ledger.jsonl").read_text().splitlines()]
+    assert sum(entry["model"] == OPUS.model for entry in spent) == 30
+    assert "**RQ6, as a check.**" in output.read_text(encoding="utf-8")
+    assert "refusing to run again" in said(validate())
+    again = tmp / "again.md"
+    rendered = ["detector", "validation-report", "--runs", str(recorded.runs)]
+    assert runner.invoke(app, [*rendered, "--output", str(again)]).exit_code == 0
+    assert again.read_text(encoding="utf-8") == output.read_text(encoding="utf-8")
+    missing = runner.invoke(app, ["detector", "validation-report", "--runs", str(tmp / "none")])
+    assert "no llm-detector-validation record" in said(missing)
 
 
 def test_the_inputs_are_compared_then_the_validation_check_runs_once(recorded: Recorded) -> None:
