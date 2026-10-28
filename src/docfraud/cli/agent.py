@@ -29,24 +29,31 @@ from docfraud.cli.common import (
     CV_FOLDS_PATH,
     OCR_CACHE,
     REPORTED_RUNS,
+    TEST_UNLOCK,
     DataDir,
     DatasetName,
+    NoRequests,
     cached_ocr,
     console,
     findit_documents,
     require_clean_commit,
+    require_freeze_tag,
     require_unchanged,
 )
-from docfraud.cli.fusion import TRAINING_INPUTS, VALIDATION_INPUTS, _pages
+from docfraud.cli.fusion import TEST_INPUTS, TRAINING_INPUTS, VALIDATION_INPUTS, _latest, _pages
 from docfraud.cli.llm import FROZEN, LEDGER, STORE, Cache, LedgerPath, Store, _runner
 from docfraud.data.download import SOURCES
 from docfraud.data.models import Document, Label, Split
 from docfraud.data.normalize import load_grayscale
 from docfraud.data.splits import select
+from docfraud.decision import BUDGETS
 from docfraud.evaluation.design_fold import DESIGN_FOLD_IDS
 from docfraud.evaluation.folds import load_folds
 from docfraud.evaluation.runs import JsonRunStore, RunRecord, code_version, run
 from docfraud.forensics.learned.rounds import SEEDS
+from docfraud.fusion.final import RUN_NAME as TEST_CHECK_RUN
+from docfraud.fusion.final import differences_in
+from docfraud.fusion.rehearsal import TEST_INPUTS_RUN
 from docfraud.fusion.training_inputs import RUN_NAME as TRAINING_INPUTS_RUN
 from docfraud.fusion.training_inputs import load_table, summary
 from docfraud.fusion.validation import RUN_NAME as CHECK_RUN
@@ -58,6 +65,10 @@ from docfraud.llm.agent import (
     investigate,
 )
 from docfraud.llm.agent_cases import TRACK, Development, development_cases, out_of_fold
+from docfraud.llm.agent_final import REHEARSAL_RUN as AGENT_REHEARSAL_RUN
+from docfraud.llm.agent_final import RUN_NAME as TEST_RUN
+from docfraud.llm.agent_final import TEST_CODE as AGENT_TEST_CODE
+from docfraud.llm.agent_final import frozen_queue
 from docfraud.llm.agent_rounds import (
     AGENT_CODE,
     VERSIONS,
@@ -72,10 +83,11 @@ from docfraud.llm.agent_tools import Case, read_fields
 from docfraud.llm.agent_validation import RUN_NAME as VALIDATION_RUN
 from docfraud.llm.agent_validation import Queue, agent_validation, measured, review_queue
 from docfraud.llm.agent_validation_report import render_report
+from docfraud.llm.cost import Ledger
 from docfraud.llm.frozen import FrozenReader
 from docfraud.llm.provider import Settings
 from docfraud.llm.record import FrozenVersion
-from docfraud.llm.run import check_documents, target
+from docfraud.llm.run import Runner, check_documents, target
 from docfraud.llm.store import ResponseStore
 from docfraud.reading.ocr import CachedOcr
 from docfraud.reading.pipeline import TextSource, read_document
@@ -550,3 +562,207 @@ def agent_validation_report_command(
         render_report(record.results, record.config, record.code.commit), encoding="utf-8"
     )
     console.print(f"[green]written[/green] {report}")
+
+
+def _frozen_queue(  # noqa: PLR0913, PLR0917 - the record, its store, both splits, both tables
+    check: RunRecord,
+    records: JsonRunStore,
+    train: Sequence[Document],
+    documents: Sequence[Document],
+    training: Path,
+    table: Path,
+) -> Queue:
+    """Track T2's review queue among ``documents``, with Phase 5's check applied unchanged.
+
+    Raises:
+        typer.Exit: If the training table is not the one the check was fitted on, the table's
+            rows are not the receipts given, or the fusion model is not the recorded one.
+    """
+    training_table = load_table(training)
+    if summary(training_table) != records.load(check.config["training_inputs"]).results["summary"]:
+        console.print(f"[red]{training} is not the table {check.run_id} was fitted on[/red]")
+        raise typer.Exit(1)
+    rows = load_table(table).rows(TRACK, SEEDS[0])
+    if [r.receipt for r in rows] != [d.doc_id for d in documents]:
+        console.print(f"[red]the rows of {table} are not the receipts measured[/red]")
+        raise typer.Exit(1)
+    try:
+        return frozen_queue(
+            training_table.rows(TRACK, SEEDS[0]), _labels(train), rows, check.results
+        )
+    except ValueError as error:
+        console.print(f"[red]{error}[/red]")
+        raise typer.Exit(1) from error
+
+
+@app.command("rehearse-test")
+def agent_rehearse_test(  # noqa: PLR0913, PLR0917 - one option per input and output
+    data_dir: DataDir = Path("data"),
+    store: Store = STORE,
+    ledger: LedgerPath = LEDGER,
+    cache: Cache = OCR_CACHE,
+    training: Training = TRAINING_INPUTS,
+    validation: Validation = VALIDATION_INPUTS,
+    runs: Runs = REPORTED_RUNS,
+    output: Output = AGENT,
+) -> None:
+    """Apply the test run's code to the validation receipts from stored steps (ADR-0034).
+
+    The queue, built with the check's recorded policy, must be the validation run's; every step
+    of every case must be stored, so that none is sent; and every result of the validation run
+    must come back. Reads no test receipt.
+    """
+    records = JsonRunStore(runs)
+    require_clean_commit()
+    frozen, text = _frozen(output)
+    measured_run = _latest(records, VALIDATION_RUN)
+    check = _latest(records, CHECK_RUN)
+    if _sha256_file(validation) != check.config["validation_sha256"]:
+        console.print(f"[red]{validation} is not the table {check.run_id} read[/red]")
+        raise typer.Exit(1)
+    documents = findit_documents(data_dir)
+    train = sorted(select(documents, Split.TRAIN), key=lambda d: d.doc_id)
+    val = sorted(select(documents, Split.VAL), key=lambda d: d.doc_id)
+    queue = _frozen_queue(check, records, train, val, training, validation)
+    receipts = list(queue.assessments)
+    if receipts != [c["receipt"] for c in measured_run.results["cases"]]:
+        console.print(f"[red]the queue is not the one {measured_run.run_id} measured[/red]")
+        raise typer.Exit(1)
+    by_id = {d.doc_id: d for d in val}
+    chosen = [by_id[r] for r in receipts]
+    shown = cases(chosen, queue.assessments, cached_ocr(cache), _reader(FROZEN, store))
+    runner = Runner(NoRequests(), ResponseStore(store), Ledger(ledger))
+    try:
+        done = [
+            investigate(shown[r], frozen.settings, text, runner, budget=frozen.token_budget)
+            for r in receipts
+        ]
+    except RuntimeError as error:
+        console.print(f"[red]{error}[/red]: the agent no longer asks as it did")
+        raise typer.Exit(1) from error
+    pages = _pages(chosen)
+    source = SOURCES[DatasetName.FINDIT2.value]
+    with run(
+        AGENT_REHEARSAL_RUN,
+        store=records,
+        config={"decision": "ADR-0034", "validation_run": measured_run.run_id},
+        seeds={"bootstrap": 0, "baseline": 0},
+        dataset_sha256={source.name: source.sha256},
+    ) as current:
+        rebuilt = agent_validation(
+            [
+                measured(i, by_id[i.receipt], queue.assessments[i.receipt], pages.get(i.receipt))
+                for i in done
+            ]
+        )
+        mismatches = differences_in(measured_run.results, rebuilt)
+        current.log("reproduced", not mismatches)
+        current.log("mismatches", mismatches)
+    verdict = "reproduced" if not mismatches else f"[red]{len(mismatches)} differences[/red]"
+    console.print(f"the agent's validation run: {verdict}")
+
+
+@app.command("test")
+def agent_test_command(  # noqa: PLR0913, PLR0917 - one option per input and output
+    data_dir: DataDir = Path("data"),
+    store: Store = STORE,
+    ledger: LedgerPath = LEDGER,
+    cache: Cache = OCR_CACHE,
+    training: Training = TRAINING_INPUTS,
+    test: Annotated[Path, typer.Option(help="The test inputs table.")] = TEST_INPUTS,
+    runs: Runs = REPORTED_RUNS,
+    output: Output = AGENT,
+) -> None:
+    """Run the frozen agent once on the test receipts sent to review (ADR-0034, decision 7).
+
+    The queue is the T2 policy of Phase 5's check applied to the test inputs, and must hold as
+    many receipts as the test check counted. Runs once, at the freeze tag, from a clean commit,
+    after the test check and a rehearsal that reproduced the validation run with the code
+    unchanged since. A run that leaves a step unanswered records nothing. The case files go to
+    ``output``/test once the record is saved.
+    """
+    records = JsonRunStore(runs)
+    if records.records(TEST_RUN):
+        console.print(f"[red]refusing to run again:[/red] a {TEST_RUN} record exists")
+        raise typer.Exit(1)
+    require_clean_commit()
+    require_freeze_tag()
+    frozen, text = _frozen(output)
+    rehearsal = _latest(records, AGENT_REHEARSAL_RUN)
+    if (
+        not rehearsal.results["reproduced"]
+        or rehearsal.code.commit is None
+        or rehearsal.code.dirty is not False
+    ):
+        console.print(f"[red]{rehearsal.run_id} did not reproduce the validation run[/red]")
+        raise typer.Exit(1)
+    require_unchanged(rehearsal.code.commit, AGENT_TEST_CODE, "the agent changed since")
+    check = _latest(records, CHECK_RUN)
+    test_check = _latest(records, TEST_CHECK_RUN)
+    inputs = _latest(records, TEST_INPUTS_RUN)
+    if _sha256_file(test) != inputs.results["sha256"]:
+        console.print(f"[red]{test} is not the table {inputs.run_id} wrote[/red]")
+        raise typer.Exit(1)
+    documents = findit_documents(data_dir)
+    train = sorted(select(documents, Split.TRAIN), key=lambda d: d.doc_id)
+    source = SOURCES[DatasetName.FINDIT2.value]
+    with run(
+        TEST_RUN,
+        store=records,
+        config={
+            "decision": "ADR-0034",
+            "frozen": frozen.model_dump(mode="json"),
+            "rehearsal": rehearsal.run_id,
+            "test_check": test_check.run_id,
+        },
+        seeds={"bootstrap": 0, "baseline": 0},
+        dataset_sha256={source.name: source.sha256},
+    ) as current:
+        receipts_of_test = sorted(
+            select(documents, Split.TEST, unlock_test=True, reason=TEST_UNLOCK),
+            key=lambda d: d.doc_id,
+        )
+        queue = _frozen_queue(check, records, train, receipts_of_test, training, test)
+        counted = test_check.results["policy"][TRACK][f"{BUDGETS[0] * 100:.0f} %"]["reviewed"]
+        if len(queue.assessments) != counted:
+            console.print(
+                f"[red]{len(queue.assessments)} sent to review; the test check counted "
+                f"{counted}[/red]"
+            )
+            raise typer.Exit(1)
+        by_id = {d.doc_id: d for d in receipts_of_test}
+        chosen = [by_id[r] for r in queue.assessments]
+        shown = cases(chosen, queue.assessments, cached_ocr(cache), _reader(FROZEN, store))
+        runner = _runner(store, ledger)
+        done = [
+            investigate(shown[r], frozen.settings, text, runner, budget=frozen.token_budget)
+            for r in queue.assessments
+        ]
+        unanswered = [i.receipt for i in done if i.read.failure == NOT_ANSWERED]
+        if unanswered:
+            console.print(
+                f"[red]{len(unanswered)} of {len(done)} cases were not answered[/red] "
+                f"({', '.join(unanswered)}); nothing is recorded. Run the command again to send "
+                "them."
+            )
+            raise typer.Exit(1)
+        pages = _pages(chosen)
+        results = agent_validation(
+            [
+                measured(i, by_id[i.receipt], queue.assessments[i.receipt], pages.get(i.receipt))
+                for i in done
+            ]
+        )
+        current.log("policy", {"budget": queue.policy.budget, "threshold": queue.policy.threshold})
+        for key, value in results.items():
+            current.log(key, value)
+    # Written once the record is saved: the record names the commit the tree was clean at.
+    files = output / "test"
+    files.mkdir(parents=True, exist_ok=True)
+    for investigation in done:
+        rendered = investigation.rendered or f"No case file: {investigation.read.failure}\n"
+        (files / f"{investigation.receipt}.md").write_text(rendered, encoding="utf-8")
+    console.print(
+        f"[green]recorded[/green] {len(done)} case files; grounding "
+        f"{results['grounding']['rate']:.4f}"
+    )

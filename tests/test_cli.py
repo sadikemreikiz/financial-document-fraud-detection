@@ -1,3 +1,4 @@
+import copy
 import hashlib
 import json
 import shutil
@@ -57,6 +58,7 @@ from docfraud.forensics.learned import inference
 from docfraud.forensics.learned.inference import LearnedOutput
 from docfraud.forensics.learned.pretrained import IMAGENET_WEIGHTS
 from docfraud.forensics.trufor import TRUFOR_CODE, TRUFOR_WEIGHTS
+from docfraud.fusion.development_report import TRACK_NAMES
 from docfraud.fusion.final import frozen_check, rehearsal_mismatches, resaved_check
 from docfraud.fusion.training_inputs import InputsTable, load_table, save_table, summary
 from docfraud.fusion.validation import validation_check
@@ -75,6 +77,7 @@ from docfraud.llm.agent_validation import agent_validation
 from docfraud.llm.cost import LIMIT_USD, Ledger
 from docfraud.llm.decision import ModelStep
 from docfraud.llm.detector import SONNET
+from docfraud.llm.detector_final import detector_test
 from docfraud.llm.detector_rounds import OPUS, FrozenDetector, StrongerModelCheck, load_rounds
 from docfraud.llm.detector_validation import detector_validation, validation_rows
 from docfraud.llm.false_alarms import FIXED_AT
@@ -2044,6 +2047,89 @@ def test_the_frozen_main_row_is_checked_once_on_the_stronger_model(
     assert "checked once" in flat(runner.invoke(app, stronger).output)
 
 
+def test_the_detectors_test_run_follows_a_rehearsal_that_sends_nothing(  # noqa: PLR0915
+    recorded: Recorded, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    tmp, store = recorded.tmp, recorded.store
+    assert recorded.shift(tmp / "shift.md").exit_code == 0
+    assert recorded.check().exit_code == 0
+    validation_receipts = _validation_receipts(tmp)
+    stand_ins = [d.model_copy(update={"split": Split.TEST}) for d in validation_receipts]
+    monkeypatch.setattr(cli_common, "load_findit2", lambda _: (*validation_receipts, *stand_ins))
+    monkeypatch.setattr(cli_common, "RapidOcrEngine", FakeOcr)
+    monkeypatch.setattr(
+        cli_detector, "detector_validation", partial(detector_validation, resamples=20)
+    )
+    monkeypatch.setattr(cli_detector, "detector_test", partial(detector_test, resamples=20))
+    instruction = tmp / "detector-v1.md"
+    instruction.write_text(Path("src/docfraud/llm/instructions/detector-v1.md").read_text("utf-8"))
+    sha = hashlib.sha256(instruction.read_text("utf-8").encode()).hexdigest()
+    rounds = tmp / "rounds"
+    rounds.mkdir()
+    named = {"instruction": str(instruction), "instruction_sha256": sha, "commit": "a" * 40}
+    frozen = FrozenDetector(version=1, settings=SONNET, **named)
+    (rounds / "frozen.json").write_text(frozen.model_dump_json(), encoding="utf-8")
+    row = development(1, 0.5).main_row()
+    checked = StrongerModelCheck(
+        settings=OPUS, **named, result=row, frozen_result=row, row_added=True
+    )
+    (rounds / "stronger-model.json").write_text(checked.model_dump_json(), encoding="utf-8")
+    books = (ResponseStore(tmp / "store"), Ledger(tmp / "ledger.jsonl"))
+    monkeypatch.setattr(cli_detector, "_runner", lambda *_: Runner(FakeDetector(), *books))
+    common = ["--runs", str(recorded.runs), "--rounds", str(rounds), "--cache", str(tmp / "ocr")]
+    common += ["--store", str(tmp / "store"), "--ledger", str(tmp / "ledger.jsonl")]
+    validate = ["detector", "validation", *common, "--output", str(tmp / "validation.md")]
+    rehearse = ["detector", "rehearse-test", *common]
+    assert "no llm-detector-validation record" in said(runner.invoke(app, rehearse))
+    assert (
+        runner.invoke(app, [*validate, "--validation", str(recorded.paths["validation"])]).exit_code
+        == 0
+    )
+    rehearse += ["--validation", str(recorded.paths["validation"])]
+    shutil.move(tmp / "store", tmp / "kept")  # nothing stored: the rehearsal must not send
+    (tmp / "store").mkdir()
+    assert "requests are not the stored ones" in said(runner.invoke(app, rehearse))
+    shutil.rmtree(tmp / "store")
+    shutil.move(tmp / "kept", tmp / "store")
+    result = runner.invoke(app, rehearse)
+    assert result.exit_code == 0, result.output
+    assert "the detector's validation run: reproduced" in said(result)
+    (rehearsal,) = store.records("llm-detector-rehearsal")
+    assert rehearsal.results["requests_found"] == 4 * len(validation_receipts)  # 4 rows run
+    test_table = tmp / "test.json"
+    shutil.copy(recorded.paths["validation"], test_table)
+    final = ["detector", "test", *common, "--test", str(test_table), "--part"]
+    assert "run the claims first" in said(runner.invoke(app, [*final, "descriptive"]))
+    assert "no part 'all'" in said(runner.invoke(app, [*final, "all"]))
+    assert "no fusion-test-check record" in said(runner.invoke(app, [*final, "claims"]))
+    (check,) = store.records("fusion-validation-check")
+    measured = {t: {"table": {"fusion": check.results[t]["table"]["fusion"]}} for t in TRACK_NAMES}
+    with run("fusion-test-check", store=store, config={}, seeds={}, dataset_sha256={}) as r:
+        for key, value in measured.items():
+            r.log(key, value)
+    with run("fusion-test-inputs", store=store, config={}, seeds={}, dataset_sha256={}) as r:
+        r.log("sha256", hashlib.sha256(test_table.read_bytes()).hexdigest())
+    claims = runner.invoke(app, [*final, "claims"])
+    assert claims.exit_code == 0, claims.output
+    assert "RQ6:" in said(claims)
+    (made,) = store.records("llm-detector-test")
+    assert made.test_unlocks == (cli_common.TEST_UNLOCK,)
+    assert list(made.results["rows"]) == [
+        "image and OCR text, claude-sonnet-5-5",
+        "transcript, claude-sonnet-5-5",
+    ]
+    assert {"rq6", "paper"} <= set(made.results)
+    assert "refusing to run again" in said(runner.invoke(app, [*final, "claims"]))
+    descriptive = runner.invoke(app, [*final, "descriptive"])
+    assert descriptive.exit_code == 0, descriptive.output
+    (other,) = store.records("llm-detector-test-descriptive")
+    assert [r.split(", ")[1] for r in other.results["rows"]] == [
+        "claude-haiku-5-5",
+        "claude-opus-5-5",
+    ]
+    assert "rq6" not in other.results
+
+
 def test_the_detector_refuses_to_freeze_or_time_what_it_cannot_trust(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -2279,6 +2365,77 @@ def test_the_frozen_agent_runs_once_on_the_validation_queue_of_phase_5s_check(
     rendered = ["agent", "validation-report", "--runs", str(recorded.runs)]
     assert runner.invoke(app, [*rendered, "--report", str(again)]).exit_code == 0
     assert again.read_text(encoding="utf-8") == report.read_text(encoding="utf-8")
+
+
+def test_the_agents_test_run_follows_a_rehearsal_that_sends_nothing(  # noqa: PLR0915
+    recorded: Recorded, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    tmp, store = recorded.tmp, recorded.store
+    assert recorded.shift(tmp / "shift.md").exit_code == 0
+    assert recorded.check().exit_code == 0
+    everything = cli_common.findit_documents(tmp)
+    stand_ins = [d.model_copy(update={"split": Split.TEST}) for d in tables()[3]]
+    monkeypatch.setattr(cli_common, "load_findit2", lambda _: (*everything, *stand_ins))
+    monkeypatch.setattr(cli_agent, "_reader", lambda *_: None)
+    monkeypatch.setattr(
+        cli_agent, "cases", lambda chosen, *_: {d.doc_id: agent_case(d.doc_id) for d in chosen}
+    )
+    monkeypatch.setattr(cli_agent, "_pages", lambda documents: pages(list(documents)))
+    monkeypatch.setattr(cli_agent, "agent_validation", partial(agent_validation, resamples=20))
+    books = (ResponseStore(tmp / "store"), Ledger(tmp / "ledger.jsonl"))
+    monkeypatch.setattr(cli_agent, "_runner", lambda *_: Runner(FakeAgent(), *books))
+    output = tmp / "agent"
+    output.mkdir()
+    instruction = tmp / "agent-v2.md"
+    instruction.write_text("Draft the case file.", encoding="utf-8")
+    frozen = FrozenAgent(
+        version=2,
+        settings=SONNET_AGENT,
+        token_budget=34_000,
+        instruction=str(instruction),
+        instruction_sha256=hashlib.sha256(b"Draft the case file.").hexdigest(),
+        commit="a" * 40,
+    )
+    (output / "frozen.json").write_text(frozen.model_dump_json(), encoding="utf-8")
+    common = ["--runs", str(recorded.runs), "--output", str(output), "--cache", str(tmp / "ocr")]
+    common += ["--store", str(tmp / "store"), "--ledger", str(tmp / "ledger.jsonl")]
+    common += ["--training", str(recorded.paths["training"])]
+    given = ["--validation", str(recorded.paths["validation"])]
+    validate = ["agent", "validation", *common, *given, "--report", str(output / "v.md")]
+    assert runner.invoke(app, validate).exit_code == 0
+    rehearse = ["agent", "rehearse-test", *common, *given]
+    shutil.move(tmp / "store", tmp / "kept")  # nothing stored: the rehearsal must not send
+    (tmp / "store").mkdir()
+    assert "the agent no longer asks as it did" in said(runner.invoke(app, rehearse))
+    shutil.rmtree(tmp / "store")
+    shutil.move(tmp / "kept", tmp / "store")
+    result = runner.invoke(app, rehearse)
+    assert result.exit_code == 0, result.output
+    assert "the agent's validation run: reproduced" in said(result)
+    test_table = tmp / "test.json"
+    shutil.copy(recorded.paths["validation"], test_table)
+    final = ["agent", "test", *common, "--test", str(test_table)]
+    assert "no fusion-test-check record" in said(runner.invoke(app, final))
+    (check,) = store.records("fusion-validation-check")
+    policy = check.results["policy"]
+    wrong = copy.deepcopy(policy)
+    wrong["ocr"]["10 %"]["reviewed"] += 1
+    with run("fusion-test-inputs", store=store, config={}, seeds={}, dataset_sha256={}) as r:
+        r.log("sha256", hashlib.sha256(test_table.read_bytes()).hexdigest())
+    with run("fusion-test-check", store=store, config={}, seeds={}, dataset_sha256={}) as r:
+        r.log("policy", wrong)
+    assert "the test check counted" in said(runner.invoke(app, final))
+    assert not store.records("llm-agent-test")
+    with run("fusion-test-check", store=store, config={}, seeds={}, dataset_sha256={}) as r:
+        r.log("policy", policy)
+    result = runner.invoke(app, final)
+    assert result.exit_code == 0, result.output
+    (made,) = store.records("llm-agent-test")
+    assert made.test_unlocks == (cli_common.TEST_UNLOCK,)
+    assert made.results["receipts"] == policy["ocr"]["10 %"]["reviewed"]
+    assert made.results["policy"]["threshold"] == policy["ocr"]["10 %"]["threshold"]
+    assert len(list((output / "test").glob("*.md"))) == made.results["receipts"]
+    assert "refusing to run again" in said(runner.invoke(app, final))
 
 
 def test_the_agent_sees_each_receipt_through_the_systems_outputs(tmp_path: Path) -> None:
