@@ -6,6 +6,7 @@ import typer
 
 from docfraud import __version__
 from docfraud.cli import (
+    agent,
     baseline,
     copy_move,
     data,
@@ -38,6 +39,7 @@ app.add_typer(llm.app, name="llm")
 app.add_typer(copy_move.app, name="copy-move")
 app.add_typer(fusion.app, name="fusion")
 app.add_typer(detector.app, name="detector")
+app.add_typer(agent.app, name="agent")
 
 
 def _print_version(value: bool) -> None:

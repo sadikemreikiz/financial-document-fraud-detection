@@ -8,6 +8,8 @@ batch service at half the price, or one by one when the time to each answer is m
 Which receipts a run may read is checked before any request is built (ADR-0025, decision 3).
 """
 
+import base64
+import json
 import math
 from collections.abc import Collection, Sequence
 from dataclasses import dataclass
@@ -16,7 +18,16 @@ from decimal import Decimal
 from docfraud.llm.answer import answer_schema
 from docfraud.llm.cost import BATCH_FACTOR, Ledger, cost
 from docfraud.llm.labels import LabelledRows, label_rows
-from docfraud.llm.provider import Provider, Request, Response, Settings, Thinking, Usage
+from docfraud.llm.provider import (
+    IMAGE_PIXELS_PER_TOKEN,
+    Block,
+    Provider,
+    Request,
+    Response,
+    Settings,
+    Thinking,
+    Usage,
+)
 from docfraud.llm.reader import EMPTY, LlmReading, Rejection, read_response
 from docfraud.llm.store import ResponseStore
 from docfraud.reading.layout import Row
@@ -181,20 +192,45 @@ class Runner:
         return read_response(stored, target.labelled, target.rows)
 
 
+def _png_tokens(data: str) -> int:
+    """The image tokens of a base64 PNG, from the width and height in its header."""
+    header = base64.standard_b64decode(data[:32])
+    width, height = int.from_bytes(header[16:20]), int.from_bytes(header[20:24])
+    return -(-width * height // IMAGE_PIXELS_PER_TOKEN)
+
+
+def _block_tokens(block: Block) -> int:
+    """The most input tokens a content block of an earlier turn can take."""
+    source = block.get("source")
+    if block.get("type") == "image" and isinstance(source, dict):
+        return _png_tokens(str(source["data"]))
+    content = block.get("content")
+    if isinstance(content, list | tuple):  # a tool result, possibly with images
+        return sum(_block_tokens(b) for b in content if isinstance(b, dict))
+    return math.ceil(len(json.dumps(block, ensure_ascii=False)) / CHARS_PER_TOKEN)
+
+
+def _input_tokens(request: Request) -> int:
+    """The most input tokens a request can take: its text, images, tools and earlier turns."""
+    tools = json.dumps([t.model_dump(mode="json") for t in request.tools], ensure_ascii=False)
+    return (
+        math.ceil(len(request.system + request.user + tools) / CHARS_PER_TOKEN)
+        + sum(image.tokens for image in request.images)
+        + sum(_block_tokens(b) for turn in request.turns for b in turn.content)
+    )
+
+
 def worst_case(requests: Sequence[Request]) -> Decimal:
     """The most that requests can cost.
 
-    Every input token, an image's included, is priced as a cache write, the dearest input, and
-    every request is assumed to use all of its output tokens.
+    Every input token, an image's, a tool's and an earlier turn's included, is priced as a
+    cache write, the dearest input, and every request is assumed to use all of its output
+    tokens.
     """
     return sum(
         (
             cost(
-                Usage(
-                    cache_write_tokens=math.ceil(len(r.system + r.user) / CHARS_PER_TOKEN)
-                    + sum(image.tokens for image in r.images),
-                    output_tokens=r.settings.max_tokens,
-                ),
+                Usage(cache_write_tokens=_input_tokens(r), output_tokens=r.settings.max_tokens),
                 r.settings.model,
                 batch=False,
             )

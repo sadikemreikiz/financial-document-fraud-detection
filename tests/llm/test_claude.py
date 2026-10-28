@@ -10,7 +10,7 @@ from anthropic.types import Message
 from anthropic.types.messages import MessageBatch, MessageBatchIndividualResponse
 
 from docfraud.llm.claude import ClaudeProvider, params
-from docfraud.llm.provider import Request, Settings, Thinking
+from docfraud.llm.provider import Request, Settings, Thinking, Tool, Turn
 
 SETTINGS = Settings(
     model="claude-haiku-5-5", max_tokens=4000, thinking=Thinking.DISABLED, effort="medium"
@@ -342,3 +342,62 @@ def test_a_stopped_batch_is_collected_again_without_paying_twice(tmp_path: Path)
     assert [r.answer for r in responses] == ['{"a": 1}', '{"a": 1}']
     assert again.messages.batches.creations == 0  # the remembered batch, not a new one
     assert list(pending.iterdir()) == []  # forgotten once its results are in
+
+
+TOOL = Tool(
+    name="ocr_rows",
+    description="The receipt's OCR rows.",
+    input_schema={"type": "object", "properties": {}, "additionalProperties": False},
+)
+
+
+def tool_message() -> Message:
+    return Message.model_validate(
+        {
+            "id": "msg_2",
+            "type": "message",
+            "role": "assistant",
+            "model": "claude-haiku-5-5",
+            "content": [
+                {"type": "thinking", "thinking": "", "signature": "sig"},
+                {"type": "text", "text": "Reading the rows.", "citations": None},
+                {"type": "tool_use", "id": "toolu_1", "name": "ocr_rows", "input": {}},
+            ],
+            "stop_reason": "tool_use",
+            "stop_sequence": None,
+            "usage": {"input_tokens": 50, "output_tokens": 10},
+        }
+    )
+
+
+def test_a_request_with_tools_sends_them_strict_with_its_turns_and_keeps_the_content() -> None:
+    turn = Turn(role="assistant", content=({"type": "text", "text": "Earlier."},))
+    asked = request("a").model_copy(update={"tools": (TOOL,), "turns": (turn,)})
+    sent = params(asked)
+    assert sent["tools"] == [
+        {
+            "name": "ocr_rows",
+            "description": "The receipt's OCR rows.",
+            "input_schema": {"type": "object", "properties": {}, "additionalProperties": False},
+            "strict": True,
+        }
+    ]
+    assert sent["tool_choice"] == {"type": "auto"}
+    assert list(sent["messages"])[1] == {
+        "role": "assistant",
+        "content": [dict(turn.content[0]) | {"cache_control": {"type": "ephemeral"}}],
+    }
+    assert "cache_control" not in turn.content[0]  # the request itself is left as it was
+    last = asked.model_copy(update={"tool_choice": "none"})
+    assert params(last)["tool_choice"] == {"type": "none"}
+    assert "tools" not in params(request("a"))
+    assert len({request("a").key, asked.key, last.key}) == 3
+    (response,) = provider(FakeClient(replies=[tool_message()])).run([asked], batch=False)
+    assert (response.answer, response.stop_reason) == (None, "tool_use")
+    assert response.content == (
+        {"type": "thinking", "thinking": "", "signature": "sig"},
+        {"type": "text", "text": "Reading the rows."},
+        {"type": "tool_use", "id": "toolu_1", "name": "ocr_rows", "input": {}},
+    )
+    (plain,) = provider(FakeClient(replies=[message()])).run([request("a")], batch=False)
+    assert plain.content == ()

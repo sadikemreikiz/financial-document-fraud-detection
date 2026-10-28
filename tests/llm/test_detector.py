@@ -1,6 +1,7 @@
 import base64
 import io
 import json
+from decimal import Decimal
 from pathlib import Path
 
 import numpy as np
@@ -39,7 +40,16 @@ from docfraud.llm.detector_rounds import (
     save_round,
     scores,
 )
-from docfraud.llm.provider import Image, Request, Response, Settings, Thinking, Usage
+from docfraud.llm.provider import (
+    Image,
+    Request,
+    Response,
+    Settings,
+    Thinking,
+    Tool,
+    Turn,
+    Usage,
+)
 from docfraud.llm.run import Runner, worst_case
 from docfraud.llm.store import ResponseStore
 from docfraud.reading.layout import Row, Segment
@@ -136,6 +146,23 @@ def test_an_image_counts_in_the_worst_case_cost() -> None:
     text = request(DetectorRow.TRANSCRIPT, SONNET, INSTRUCTION, ROWS)
     with_image = text.model_copy(update={"images": (image,)})
     assert worst_case([with_image]) > worst_case([text])
+
+
+def test_tools_and_earlier_turns_count_in_the_worst_case_cost() -> None:
+    text = request(DetectorRow.TRANSCRIPT, SONNET, INSTRUCTION, ROWS)
+    crop = page_image(page(400, 300))  # 120,000 pixels, 160 image tokens
+    result = {
+        "type": "tool_result",
+        "tool_use_id": "toolu_1",
+        "content": [{"type": "image", "source": {"type": "base64", "data": crop.data}}],
+    }
+    with_tool = text.model_copy(
+        update={"tools": (Tool(name="crop", description="A region.", input_schema={}),)}
+    )
+    with_turns = with_tool.model_copy(update={"turns": (Turn(role="user", content=(result,)),)})
+    assert worst_case([text]) < worst_case([with_tool]) < worst_case([with_turns])
+    price = Decimal("2.50") / 1_000_000  # Sonnet 5.5's cache write per token
+    assert worst_case([with_turns]) - worst_case([with_tool]) == 160 * price
 
 
 def response(answer: str | None, **change: object) -> Response:
