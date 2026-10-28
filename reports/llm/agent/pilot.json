@@ -1,0 +1,298 @@
+{
+  "instruction": "src/docfraud/llm/instructions/agent-v1.md",
+  "commit": "a6bf59a379406a99d8e20bcb0b056d09493eb349",
+  "cases": [
+    "X51008099071",
+    "X51007231331",
+    "X51005715451"
+  ],
+  "models": {
+    "claude-haiku-5-5": [
+      {
+        "receipt": "X51008099071",
+        "forged": true,
+        "failure": null,
+        "observations": 5,
+        "grounding": {
+          "facts": 168,
+          "violations": [
+            "(118, 811, 764 x 88 px)",
+            "2.62"
+          ]
+        },
+        "tool_calls": [
+          {
+            "tool": "assessment",
+            "arguments": {}
+          },
+          {
+            "tool": "read_fields",
+            "arguments": {}
+          },
+          {
+            "tool": "ocr_rows",
+            "arguments": {}
+          },
+          {
+            "tool": "crop",
+            "arguments": {
+              "x": 700,
+              "y": 1100,
+              "width": 180,
+              "height": 80
+            }
+          }
+        ],
+        "steps": 3,
+        "tokens": 19151,
+        "cost_usd": "0.0022",
+        "seconds": 15.147585250000702
+      },
+      {
+        "receipt": "X51007231331",
+        "forged": true,
+        "failure": null,
+        "observations": 6,
+        "grounding": {
+          "facts": 150,
+          "violations": []
+        },
+        "tool_calls": [
+          {
+            "tool": "assessment",
+            "arguments": {}
+          },
+          {
+            "tool": "read_fields",
+            "arguments": {}
+          },
+          {
+            "tool": "ocr_rows",
+            "arguments": {}
+          },
+          {
+            "tool": "crop",
+            "arguments": {
+              "x": 2280,
+              "y": 3210,
+              "width": 700,
+              "height": 110
+            }
+          },
+          {
+            "tool": "crop",
+            "arguments": {
+              "x": 2280,
+              "y": 3805,
+              "width": 660,
+              "height": 100
+            }
+          }
+        ],
+        "steps": 3,
+        "tokens": 23909,
+        "cost_usd": "0.0025",
+        "seconds": 15.788364166990505
+      },
+      {
+        "receipt": "X51005715451",
+        "forged": false,
+        "failure": null,
+        "observations": 6,
+        "grounding": {
+          "facts": 146,
+          "violations": [
+            "-615",
+            "567"
+          ]
+        },
+        "tool_calls": [
+          {
+            "tool": "assessment",
+            "arguments": {}
+          },
+          {
+            "tool": "read_fields",
+            "arguments": {}
+          },
+          {
+            "tool": "ocr_rows",
+            "arguments": {}
+          },
+          {
+            "tool": "crop",
+            "arguments": {
+              "x": 200,
+              "y": 10,
+              "width": 290,
+              "height": 76
+            }
+          },
+          {
+            "tool": "crop",
+            "arguments": {
+              "x": 590,
+              "y": 62,
+              "width": 40,
+              "height": 44
+            }
+          },
+          {
+            "tool": "crop",
+            "arguments": {
+              "x": 560,
+              "y": 62,
+              "width": 55,
+              "height": 44
+            }
+          }
+        ],
+        "steps": 4,
+        "tokens": 28921,
+        "cost_usd": "0.0025",
+        "seconds": 16.646786958008306
+      }
+    ],
+    "claude-sonnet-5-5": [
+      {
+        "receipt": "X51008099071",
+        "forged": true,
+        "failure": null,
+        "observations": 5,
+        "grounding": {
+          "facts": 75,
+          "violations": [
+            "06",
+            "06"
+          ]
+        },
+        "tool_calls": [
+          {
+            "tool": "assessment",
+            "arguments": {}
+          },
+          {
+            "tool": "read_fields",
+            "arguments": {}
+          },
+          {
+            "tool": "crop",
+            "arguments": {
+              "x": 100,
+              "y": 790,
+              "width": 800,
+              "height": 150
+            }
+          },
+          {
+            "tool": "crop",
+            "arguments": {
+              "x": 650,
+              "y": 1060,
+              "width": 250,
+              "height": 120
+            }
+          }
+        ],
+        "steps": 3,
+        "tokens": 13801,
+        "cost_usd": "0.0291",
+        "seconds": 15.30076562501199
+      },
+      {
+        "receipt": "X51007231331",
+        "forged": true,
+        "failure": null,
+        "observations": 5,
+        "grounding": {
+          "facts": 86,
+          "violations": []
+        },
+        "tool_calls": [
+          {
+            "tool": "assessment",
+            "arguments": {}
+          },
+          {
+            "tool": "read_fields",
+            "arguments": {}
+          },
+          {
+            "tool": "crop",
+            "arguments": {
+              "x": 2200,
+              "y": 3750,
+              "width": 800,
+              "height": 200
+            }
+          },
+          {
+            "tool": "crop",
+            "arguments": {
+              "x": 2400,
+              "y": 3140,
+              "width": 560,
+              "height": 180
+            }
+          }
+        ],
+        "steps": 3,
+        "tokens": 16737,
+        "cost_usd": "0.0271",
+        "seconds": 14.929256625007838
+      },
+      {
+        "receipt": "X51005715451",
+        "forged": false,
+        "failure": null,
+        "observations": 4,
+        "grounding": {
+          "facts": 63,
+          "violations": [
+            "3",
+            "3"
+          ]
+        },
+        "tool_calls": [
+          {
+            "tool": "assessment",
+            "arguments": {}
+          },
+          {
+            "tool": "read_fields",
+            "arguments": {}
+          },
+          {
+            "tool": "crop",
+            "arguments": {
+              "x": 180,
+              "y": 0,
+              "width": 120,
+              "height": 100
+            }
+          },
+          {
+            "tool": "crop",
+            "arguments": {
+              "x": 560,
+              "y": 50,
+              "width": 100,
+              "height": 70
+            }
+          }
+        ],
+        "steps": 3,
+        "tokens": 13550,
+        "cost_usd": "0.0199",
+        "seconds": 11.560903334000614
+      }
+    ]
+  },
+  "kept": {
+    "model": "claude-sonnet-5-5",
+    "max_tokens": 8000,
+    "thinking": "adaptive",
+    "effort": "medium"
+  },
+  "token_budget": 34000
+}
