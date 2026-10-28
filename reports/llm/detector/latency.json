@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "commit": "5ed6b5fbf2ae0af2191faec9884515f3d1f500c7",
+  "receipts": 30,
+  "image and OCR text": {
+    "timed": 30,
+    "median_seconds": 3.1615487705057603,
+    "p95_seconds": 6.628927716298491,
+    "cost_usd": "0.2079"
+  },
+  "transcript": {
+    "timed": 30,
+    "median_seconds": 2.8851878129935358,
+    "p95_seconds": 6.685244514951044,
+    "cost_usd": "0.0862"
+  }
+}

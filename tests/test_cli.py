@@ -62,7 +62,7 @@ from docfraud.llm.adjudication import (
     load_questions,
 )
 from docfraud.llm.adjudication import save_log as save_adjudication
-from docfraud.llm.cost import Ledger
+from docfraud.llm.cost import LIMIT_USD, Ledger
 from docfraud.llm.decision import ModelStep
 from docfraud.llm.detector_rounds import OPUS, FrozenDetector, StrongerModelCheck, load_rounds
 from docfraud.llm.false_alarms import FIXED_AT
@@ -1188,7 +1188,7 @@ def test_llm_compare_models_then_a_development_round(
     assert "numbered 1 to 10" in eleventh.output
     spending = runner.invoke(app, ["llm", "spending", "--ledger", str(tmp_path / "ledger.jsonl")])
     assert spending.exit_code == 0
-    assert "limit 12 USD" in spending.output
+    assert f"limit {LIMIT_USD} USD" in spending.output
 
 
 def test_llm_development_refuses_receipts_of_gold_set_b(

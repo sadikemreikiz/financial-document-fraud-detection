@@ -53,5 +53,5 @@ def test_work_stops_before_the_limit_is_passed(tmp_path: Path) -> None:
         ledger.check(D("0.0093"))
 
 
-def test_the_default_limit_is_the_owners() -> None:
-    assert D(12) == LIMIT_USD
+def test_the_default_limit_is_the_owners_credit_less_room() -> None:
+    assert D("24.50") == LIMIT_USD
