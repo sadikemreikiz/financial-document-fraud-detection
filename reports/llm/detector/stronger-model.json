@@ -1,0 +1,28 @@
+{
+  "settings": {
+    "model": "claude-opus-5-5",
+    "max_tokens": 8000,
+    "thinking": "adaptive",
+    "effort": "medium"
+  },
+  "instruction": "src/docfraud/llm/instructions/detector-v1.md",
+  "instruction_sha256": "f186e40dab20387ce2c435cbaf04987913e5ffe5a1afe08f3c6df67d0070ccc3",
+  "commit": "c19fbec00aecdbe53ad30178bb113a41f6c6d2db",
+  "result": {
+    "receipts": 113,
+    "forged": 19,
+    "failures": 0,
+    "average_precision": 0.5729811815197555,
+    "roc_auc": 0.7581187010078387,
+    "cost_usd": "1.0078"
+  },
+  "frozen_result": {
+    "receipts": 113,
+    "forged": 19,
+    "failures": 0,
+    "average_precision": 0.3620742273373852,
+    "roc_auc": 0.6486562150055991,
+    "cost_usd": "0.4485"
+  },
+  "row_added": true
+}
