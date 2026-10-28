@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "settings": {
+    "model": "claude-sonnet-5-5",
+    "max_tokens": 8000,
+    "thinking": "adaptive",
+    "effort": "medium"
+  },
+  "instruction": "src/docfraud/llm/instructions/detector-v1.md",
+  "instruction_sha256": "f186e40dab20387ce2c435cbaf04987913e5ffe5a1afe08f3c6df67d0070ccc3",
+  "commit": "538ffe67b0cb1fa8431f312a82506b4f6869c74f"
+}
