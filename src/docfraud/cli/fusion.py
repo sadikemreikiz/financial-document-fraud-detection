@@ -15,6 +15,7 @@ from rich.progress import track as with_progress
 
 from docfraud.cli.common import (
     CV_FOLDS_PATH,
+    FIX_TAG,
     GOLD_MANIFEST,
     OCR_CACHE,
     REPORTED_RUNS,
@@ -395,12 +396,19 @@ class _Made:
 
 
 def _split_inputs(
-    train: Sequence[Document], receipts: Sequence[Document], paths: dict[int, Path], name: str
+    train: Sequence[Document],
+    receipts: Sequence[Document],
+    paths: dict[int, Path],
+    name: str,
+    tracks: Sequence[TextSource] = (TextSource.TRANSCRIPT, TextSource.OCR),
 ) -> _Made:
     """The fusion inputs of ``receipts`` with the components trained on the whole training split.
 
     The rules' scorer is fitted on the frozen reader's fields of every training receipt; system 1,
-    copy-move, the file's editing traits and the links are made as on the training split.
+    copy-move, the file's editing traits and the links are made as on the training split. Only
+    the text sources in ``tracks`` are read from ``receipts``: track R reads its saved images'
+    OCR text alone, since the transcript is aligned to the page's OCR and the frozen reader has
+    not read it against the saved page (ADR-0034, 2 and 4).
     """
     from docfraud.forensics.learned.inference import LearnedModel  # noqa: PLC0415 - PyTorch
 
@@ -411,7 +419,7 @@ def _split_inputs(
     models = {seed: LearnedModel.from_file(path) for seed, path in paths.items()}
     page: list[tuple[Finding, ...]] = []
     system_2: dict[int, dict[str, SystemTwo]] = {seed: {} for seed in models}
-    readings: dict[str, list[Reading]] = {t.value: [] for t in TRACKS}
+    readings: dict[str, list[Reading]] = {t.value: [] for t in tracks}
     seconds: dict[str, list[float]] = {
         "page and OCR": [],
         "system 1, copy-move and file traits": [],
@@ -431,7 +439,7 @@ def _split_inputs(
             system_2[seed][document.doc_id] = system_two(model.analyse(image), words)
             seconds["system 2, one seed"].append(time.perf_counter() - start)
         start = time.perf_counter()
-        for text_source in TRACKS:
+        for text_source in tracks:
             readings[text_source.value].append(_reading(document, ocr, reader, text_source))
         seconds["reading both text sources"].append(time.perf_counter() - start)
     table = validation_table(
@@ -675,8 +683,9 @@ def resaved_inputs_command(
 
     At every quality of track R, the test images are saved again and enter the T2 pipeline from
     the start, with system 2 at seed 0, as the test inputs are made and under their guards,
-    after the frozen reader read the saved images' text. The images must be those it read. One
-    table per quality goes to ``output``; the run record records the unlock and aggregates.
+    after the frozen reader read the saved images' text. The images must be those it read, and
+    only their OCR text is read: track R is T2's. One table per quality goes to ``output``; the
+    run record records the unlock and aggregates.
     """
     store = JsonRunStore(runs)
     if store.records(RESAVED_INPUTS_RUN):
@@ -702,6 +711,8 @@ def resaved_inputs_command(
             "rehearsal": rehearsal.run_id,
             "resaved_reading": readings[-1].run_id,
             "qualities": list(QUALITIES),
+            "text_sources": [TextSource.OCR.value],
+            "fix": FIX_TAG,
             "models": _models_config({0: paths[0]}),
         },
         seeds={"system 2, seed 0": 0},
@@ -717,7 +728,9 @@ def resaved_inputs_command(
                 console.print(f"[red]the images at quality {quality} are not those read[/red]")
                 raise typer.Exit(1)
             receipts = list(map(unlabelled, saved))
-            made = _split_inputs(train, receipts, {0: paths[0]}, f"test receipts at {quality}")
+            made = _split_inputs(
+                train, receipts, {0: paths[0]}, f"test receipts at {quality}", (TextSource.OCR,)
+            )
             table = output / f"q{quality}-inputs.json"
             save_table(made.table, table)
             current.log(f"q{quality}", {"summary": summary(made.table), "sha256": _sha256(table)})
