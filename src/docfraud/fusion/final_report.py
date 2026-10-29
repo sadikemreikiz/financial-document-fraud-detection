@@ -275,8 +275,12 @@ def render_test_report(results: Mapping[str, Any], commit: str | None) -> str:
     )
 
 
-def render_track_r(results: Mapping[str, Any], commit: str | None) -> str:
-    """The report of track R: the frozen T2 model on the test images saved again as JPEG."""
+def render_track_r(results: Mapping[str, Any], commit: str | None, fix: str | None = None) -> str:
+    """The report of track R: the frozen T2 model on the test images saved again as JPEG.
+
+    ``fix`` is the tag of the fix its inputs were made after, if any, which the report discloses
+    (ADR-0034, decision 2).
+    """
     rows: list[list[Cell]] = []
     for name, found in [("original images", results["original"])] + [
         (f"saved as JPEG at quality {q}", results[q]["table"])
@@ -337,6 +341,14 @@ def render_track_r(results: Mapping[str, Any], commit: str | None) -> str:
         f"Measured once at commit `{(commit or 'unknown')[:7]}` "
         "([ADR-0034](../../docs/decisions/0034-phase-7-preregistration.md), decision 4).\n\n"
     )
+    if fix:
+        header += (
+            f"**A fix after the unlock.** The inputs were made after the one fix of Phase 7, at "
+            f"the tag `{fix}`. Their first run stopped on the transcript of a saved image, a "
+            "request the frozen reader had never read; the fix reads only the saved images' OCR "
+            "text, which is all that track R uses. No model, setting, threshold or instruction "
+            "changed (ADR-0034, decision 2; the [Phase 7 page](../README.md)).\n\n"
+        )
     return header + "\n".join(render_table(t) for t in tables)
 
 

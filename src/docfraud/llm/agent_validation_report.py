@@ -12,7 +12,7 @@ def _yes(flag: bool | None) -> str | None:
     return None if flag is None else ("yes" if flag else "no")
 
 
-def _summary(results: Mapping[str, Any]) -> Table:
+def _summary(results: Mapping[str, Any], split: str) -> Table:
     g, cost, seconds = results["grounding"], results["cost_usd"], results["seconds"]
     rows: list[list[Cell]] = [
         ["Case files in the fixed form", f"{g['case_files']} of {results['receipts']}"],
@@ -31,7 +31,7 @@ def _summary(results: Mapping[str, Any]) -> Table:
             ]
         )
     return Table(
-        "The agent on the validation split",
+        f"The agent on the {split} split",
         ("Measure", "Result"),
         rows,
         note="A fact is a number or a box of a rendered case file; it is grounded if a tool "
@@ -158,7 +158,7 @@ def render_report(  # noqa: PLR0913 - the record, and where and how it was made
     tables = [
         t
         for t in (
-            _summary(results),
+            _summary(results, split),
             _pointing(results),
             _violations(results),
             _failures(results),

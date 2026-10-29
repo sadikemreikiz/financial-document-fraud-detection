@@ -12,6 +12,7 @@ from typer.testing import CliRunner
 
 from docfraud.baselines.report import render_report
 from docfraud.cli import app
+from docfraud.cli.final import RENDERED
 from docfraud.detectors.copy_move_measurement import RUN_NAME as COPY_MOVE_RUN
 from docfraud.detectors.copy_move_measurement import render_report as render_copy_move
 from docfraud.detectors.report import render_rules_report
@@ -90,6 +91,13 @@ def test_input_shift_report_matches_its_run_record() -> None:
     expected = render_shift(record.results, record.code.commit)
     committed = (ROOT / "reports" / "fusion" / "input-shift.md").read_text(encoding="utf-8")
     assert committed == expected, "run `docfraud fusion input-shift-report`"
+
+
+@pytest.mark.parametrize(("name", "path"), [(name, path) for name, (path, _) in RENDERED.items()])
+def test_phase_7_report_matches_its_run_record(name: str, path: str) -> None:
+    _, render = RENDERED[name]
+    committed = (ROOT / "reports" / path).read_text(encoding="utf-8")
+    assert committed == render(RUNS, latest(name)), "run `docfraud final reports`"
 
 
 @pytest.mark.parametrize(
