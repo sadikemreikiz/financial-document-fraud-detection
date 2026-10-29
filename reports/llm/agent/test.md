@@ -4,7 +4,7 @@
 
 The frozen agent ([ADR-0031](../../../docs/decisions/0031-llm-detector-and-agent.md), sections 5 and 6, and [ADR-0033](../../../docs/decisions/0033-agent-development-rule.md)): version 2 of its instruction, `claude-sonnet-5-5` at medium effort, at most 8 tool calls and 34,000 tokens per case, frozen at `153869f`. It ran once, at commit `3745df8`, on the 24 test receipts that the review policy of track T2 sends to review (calibrated probability at least 0.723, the 10 % budget of Phase 5's check, applied unchanged); 24 of them are forged. Its case files state no verdict: the reviewer decides.
 
-### The agent on the validation split
+### The agent on the test split
 
 | Measure | Result |
 |---|---|

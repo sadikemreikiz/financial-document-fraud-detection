@@ -161,4 +161,5 @@ def test_every_report_of_phase_7_renders_from_its_record(
     agent_report = (reports / "llm" / "agent" / "test.md").read_text("utf-8")
     assert agent_report.startswith("# The investigation agent on the test split\n")
     assert "Phase 5's check, applied unchanged" in agent_report
+    assert "### The agent on the test split" in agent_report
     assert "[`test/`](test/)" in agent_report
