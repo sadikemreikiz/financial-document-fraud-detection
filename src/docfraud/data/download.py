@@ -42,7 +42,7 @@ FINDIT2 = PinnedFile(
     homepage="https://l3i-share.univ-lr.fr/2023Finditagain/index.html",
     citation=(
         "B. Martínez Tornés et al., Receipt Dataset for Document Forgery Detection, "
-        "ICDAR 2023, LNCS 14191, pp. 454-469, doi:10.1007/978-3-031-41682-8_28"
+        "ICDAR 2023, LNCS 14189, pp. 454-469, doi:10.1007/978-3-031-41682-8_28"
     ),
 )
 

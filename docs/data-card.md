@@ -10,12 +10,12 @@ test regenerates and compares on every local run.
 |---|---|
 | **Name** | Find-it-again (archive `findit2.zip`) |
 | **Authors** | B. Martínez Tornés, T. Taburet, E. Boros, K. Rouis, A. Doucet, P. Gomez-Krämer, N. Sidere, V. Poulain d'Andecy (L3i, University of La Rochelle; Yooz) |
-| **Reference** | *Receipt Dataset for Document Forgery Detection*, ICDAR 2023, LNCS 14191, pp. 454–469, [doi:10.1007/978-3-031-41682-8_28](https://doi.org/10.1007/978-3-031-41682-8_28) |
+| **Reference** | *Receipt Dataset for Document Forgery Detection*, ICDAR 2023, Part III, LNCS 14189, pp. 454–469, [doi:10.1007/978-3-031-41682-8_28](https://doi.org/10.1007/978-3-031-41682-8_28) |
 | **Homepage** | <https://l3i-share.univ-lr.fr/2023Finditagain/index.html> |
 | **Content** | 987 receipt files (PNG) with transcripts, 163 forged by people; 970 distinct documents after removing copies of the same receipt |
 | **Splits** | Train / validation / test: 562 / 190 / 218 receipts, 94 / 33 / 35 forged, after the corrections below; the test split is the published one |
 | **Pinned archive** | 673,974,679 bytes, SHA-256 `6f8c6f134951956627edcc06c7e8fc298abb9e984073ab193174aee204d46261` |
-| **Licence** | Not stated by the authors. The data is therefore not redistributed: the tooling downloads it from the original source and verifies the checksum. |
+| **Licence** | Not stated by the authors. The data is therefore not redistributed: the tooling downloads it from the original source and verifies the checksum. Ten test images are shown on the public demo with the written permission of L3i ([below](#the-public-demo)). |
 
 ## Motivation and use in this project
 
@@ -120,6 +120,19 @@ investigation agent drafts a case file for receipts sent to review.
 | **Provider's use and retention** | Not used to train models without express permission. Inputs and outputs are deleted within 30 days, unless flagged under the provider's usage policy or required by law; the batch service keeps a job for 29 days; prompt caching stores no prompt or output. Checked on 2026-10-22 in the provider's [API data retention documentation](https://platform.claude.com/docs/en/manage-claude/api-and-data-retention) and [commercial retention policy](https://privacy.claude.com/en/articles/7996866-how-long-do-you-store-my-organization-s-data) |
 | **Licence** | Not stated (see [Summary](#summary)). Sending text to a processor to answer a request is not publication, and nothing from the dataset is published by this use |
 | **What is kept here** | Each response, under a hash of its request, in `artifacts/llm` (not committed): the model ID the provider reports, the answer (labels and row numbers), the stop reason, the token usage and, for a request sent on its own, the seconds to the answer. The receipt text is not stored with it. A model could write free text where a label belongs; the reader rejects it as a label that does not exist, and stored responses are checked for such text before any is published |
+
+## The public demo
+
+Recorded on 2026-10-29, as [ADR-0035](decisions/0035-public-demo.md) requires.
+
+| | |
+|---|---|
+| **Request** | Sent by the owner on 2026-10-28 to L3i's team list: at most ten receipts with the system's markings, on a non-commercial portfolio demo, with credit, removed on request |
+| **Permission** | Given in writing on 2026-10-29 by L3i, through a research engineer writing on the laboratory's list: a small number of images, on a non-commercial demo page, with a clear citation of the paper and the dataset page. The owner keeps the email |
+| **What is shown** | Ten receipts of the test split, chosen by the rule of ADR-0035, as the dataset distributes them, with their annotated regions and the system's outputs; nothing else from the dataset |
+| **Where the images are kept** | In a private repository of the owner, read only by the demo's deployment; never in this repository, whose page data holds only the system's outputs. Each image is checked against its SHA-256 before every deployment |
+| **Personal data** | One of the ten, X51006619869, prints a customer's name and membership number; several print a cashier's name. They are shown as distributed (ADR-0035, decision 2) |
+| **Removal** | On request, the private repository is deleted and the site unpublished |
 
 ## Limitations
 

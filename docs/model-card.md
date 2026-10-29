@@ -68,7 +68,7 @@ On the test split, measured once with everything frozen before the unlock
 | Measure | T1 (transcripts) | T2 (OCR) | Reference |
 |---|---|---|---|
 | Average precision | 0.912 (0.844 to 0.967) | 0.902 (0.829 to 0.963) | chance 0.161 |
-| F1 at the frozen threshold | 0.814 (0.679 to 0.906) | 0.814 (0.679 to 0.906) | best published 0.284 |
+| F1 at the frozen threshold | 0.814 (0.679 to 0.906) | 0.814 (0.679 to 0.906) | best published we know of 0.284 |
 | Recall at the 10 % budget | 0.623 (0.566 to 0.623) | 0.623 (0.543 to 0.623) | chance 0.10 |
 | Sent to review at 10 %, of them forged | 23, 23 | 24, 24 | |
 | Brier score, expected calibration error | 0.041, 0.029 | 0.042, 0.034 | |
@@ -124,6 +124,6 @@ review agent's case files hold 3 numbers or boxes, of 1,500, not found in its to
   the [data card](data-card.md#use-with-a-hosted-language-model) records.
 - A wrong flag can cast suspicion on a person. The system therefore only ranks and explains; a
   reviewer decides, and every statement in a report is checked against the evidence.
-- The public demo, still to be built, may show a small number of the dataset's receipts: its
-  authors allowed it in writing on 2026-10-29, for a non-commercial page with a clear citation
-  of the paper and the dataset page.
+- The public demo, still to be built, may show a small number of the dataset's receipts: L3i,
+  which published the dataset, allowed it in writing on 2026-10-29, for a non-commercial page
+  with a clear citation of the paper and the dataset page.
