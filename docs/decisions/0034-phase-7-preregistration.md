@@ -1,6 +1,6 @@
 # 0034. Phase 7: the single evaluation on the test split
 
-- **Status**: Accepted
+- **Status**: Accepted; decision 12's publication step amended by [0035](0035-public-demo.md)
 - **Date**: 2026-10-28 (before any of our systems has met the test split)
 
 ## Context
