@@ -4,6 +4,8 @@
 
 Measured once at commit `0b07762` ([ADR-0034](../../docs/decisions/0034-phase-7-preregistration.md), decision 4).
 
+**A fix after the unlock.** The inputs were made after the one fix of Phase 7, at the tag `phase-7-fix-1`. Their first run stopped on the transcript of a saved image, a request the frozen reader had never read; the fix reads only the saved images' OCR text, which is all that track R uses. No model, setting, threshold or instruction changed (ADR-0034, decision 2; the [Phase 7 page](../README.md)).
+
 ### Fusion of T2 on the test images, as distributed and saved again
 
 | Images | Average precision | ROC-AUC | Recall at 10 % | Recall at 20 % | F1 (95 % interval) |

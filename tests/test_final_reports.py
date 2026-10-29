@@ -113,7 +113,9 @@ def test_every_report_of_phase_7_renders_from_its_record(
     assert "no fusion-test-check record yet" in nothing.output
     fusion, track_r = _fusion()
     _record(store, "fusion-test-check", fusion)
-    _record(store, "fusion-resaved-check", track_r)
+    _record(store, "fusion-resaved-inputs", {}, fix="phase-7-fix-1")
+    (inputs,) = store.records("fusion-resaved-inputs")
+    _record(store, "fusion-resaved-check", track_r, resaved_inputs=inputs.run_id)
     _record(store, "fusion-test-errors", _errors())
     _record(store, "forensics-test-localisation", _localisation())
     given, recorded = _validation_run()
@@ -146,6 +148,7 @@ def test_every_report_of_phase_7_renders_from_its_record(
     track = (reports / "fusion" / "track-r.md").read_text("utf-8")
     assert "saved as JPEG at quality 95" in track
     assert "| quality 75 | 0.000 (0.000 to 0.000) |" in track  # the same inputs cost nothing
+    assert "made after the one fix of Phase 7, at the tag `phase-7-fix-1`" in track
     errors = (reports / "fusion" / "test-errors.md").read_text("utf-8")
     assert "| R3 | false alarm | pixel evidence |" in errors
     assert "found at the edit, too weak 1, found elsewhere 1" in errors

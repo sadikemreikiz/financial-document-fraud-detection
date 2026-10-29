@@ -37,6 +37,12 @@ def _detector(store: JsonRunStore, claims: RunRecord) -> str:
     )
 
 
+def _track_r(store: JsonRunStore, check: RunRecord) -> str:
+    inputs = check.config.get("resaved_inputs")
+    fix = store.load(inputs).config.get("fix") if inputs else None
+    return render_track_r(check.results, check.code.commit, fix)
+
+
 def _agent(_: JsonRunStore, record: RunRecord) -> str:
     return render_agent(
         record.results,
@@ -53,7 +59,7 @@ RENDERED: dict[str, tuple[str, Render]] = {
         "fusion/test-check.md",
         lambda _, r: render_test_report(r.results, r.code.commit),
     ),
-    RESAVED_RUN: ("fusion/track-r.md", lambda _, r: render_track_r(r.results, r.code.commit)),
+    RESAVED_RUN: ("fusion/track-r.md", _track_r),
     ERRORS_RUN: ("fusion/test-errors.md", lambda _, r: render_errors(r.results, r.code.commit)),
     LOCALISATION_RUN: (
         "forensics/test-localisation.md",
