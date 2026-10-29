@@ -1,0 +1,248 @@
+{
+  "run_id": "20261029T155855396616Z-llm-detector-test-descriptive",
+  "name": "llm-detector-test-descriptive",
+  "started": "2026-10-29T15:58:55.396616Z",
+  "finished": "2026-10-29T16:12:49.548461Z",
+  "code": {
+    "commit": "fb57da88a7def37e3c4346e13591cdf5b3219c50",
+    "dirty": false
+  },
+  "environment": {
+    "python": "3.14.8",
+    "docfraud": "2.0.0.dev0",
+    "packages": {
+      "annotated-doc": "0.0.5",
+      "annotated-types": "0.8.0",
+      "anthropic": "2.1.0",
+      "antlr4-python3-runtime": "4.9.3",
+      "anyio": "4.15.1",
+      "ast_serialize": "0.12.1",
+      "certifi": "2026.7.22",
+      "cfgv": "3.5.0",
+      "charset-normalizer": "3.5.2",
+      "cloudpickle": "3.1.2",
+      "colorlog": "6.12.0",
+      "coverage": "7.16.2",
+      "distlib": "0.4.3",
+      "docfraud": "2.0.0.dev0",
+      "docstring_parser": "0.18.0",
+      "filelock": "4.0.12",
+      "flatbuffers": "25.12.19",
+      "fsspec": "2026.9.0",
+      "h11": "0.16.0",
+      "httpcore2": "2.16.0",
+      "httpx2": "2.16.0",
+      "identify": "2.6.20",
+      "idna": "3.20",
+      "iniconfig": "2.3.0",
+      "jinja2": "3.1.6",
+      "jiter": "0.17.0",
+      "joblib": "1.6.0",
+      "librt": "0.16.0",
+      "markdown-it-py": "4.2.0",
+      "markupsafe": "3.0.4",
+      "mdurl": "0.1.2",
+      "mpmath": "1.3.0",
+      "mypy": "2.4.0",
+      "mypy_extensions": "1.1.0",
+      "narwhals": "2.26.0",
+      "networkx": "3.7",
+      "nodeenv": "1.11.0",
+      "numpy": "2.5.3",
+      "omegaconf": "2.3.1",
+      "onnxruntime": "1.30.0",
+      "opencv-python": "5.0.0.93",
+      "opentelemetry-api": "1.45.1",
+      "packaging": "26.3",
+      "pathspec": "1.1.1",
+      "pillow": "12.3.0",
+      "platformdirs": "4.12.3",
+      "pluggy": "1.6.0",
+      "pre_commit": "4.6.2",
+      "protobuf": "7.36.2",
+      "pyclipper": "1.4.0",
+      "pydantic": "2.13.5",
+      "pydantic_core": "2.46.5",
+      "pygments": "2.21.0",
+      "pytest": "9.1.1",
+      "pytest-cov": "7.1.0",
+      "python-discovery": "1.6.1",
+      "pyyaml": "6.0.3",
+      "rapidocr": "3.9.2",
+      "requests": "2.34.2",
+      "rich": "15.0.0",
+      "ruff": "0.16.10",
+      "scikit-learn": "1.9.1",
+      "scipy": "1.18.1",
+      "setuptools": "84.0.0",
+      "shapely": "2.1.2",
+      "shellingham": "1.5.4",
+      "six": "1.17.0",
+      "sniffio": "1.3.1",
+      "sympy": "1.14.0",
+      "threadpoolctl": "3.7.0",
+      "torch": "2.14.1",
+      "tqdm": "4.70.1",
+      "truststore": "0.10.5",
+      "typer": "0.27.2",
+      "typing-inspection": "0.4.4",
+      "typing_extensions": "4.16.0",
+      "urllib3": "2.8.0",
+      "virtualenv": "21.14.5"
+    },
+    "platform": "macOS-15.7.7-arm64-arm-64bit-Mach-O",
+    "machine": "arm64",
+    "processor": "arm",
+    "cpu_count": 10,
+    "memory_bytes": 17179869184
+  },
+  "config": {
+    "decision": "ADR-0034",
+    "part": "descriptive",
+    "validation_run": "20261028T105644758845Z-llm-detector-validation",
+    "rehearsal": "20261028T223535993164Z-llm-detector-rehearsal",
+    "test_check": "20261029T141719459478Z-fusion-test-check"
+  },
+  "config_hash": "5a18e0bd82dea9a26e4cd630968017f9ea78d7b534716f7bbfc1975c9c7badb6",
+  "dataset_sha256": {
+    "findit2": "6f8c6f134951956627edcc06c7e8fc298abb9e984073ab193174aee204d46261"
+  },
+  "seeds": {
+    "bootstrap": 0
+  },
+  "test_unlocks": [
+    "ADR-0034: the single evaluation of Phase 7"
+  ],
+  "results": {
+    "receipts": 218,
+    "forged": 35,
+    "rows": {
+      "image and OCR text, claude-haiku-5-5": {
+        "input": "image and OCR text",
+        "settings": {
+          "model": "claude-haiku-5-5",
+          "max_tokens": 8000,
+          "thinking": "adaptive",
+          "effort": "medium"
+        },
+        "track": "ocr",
+        "failures": {},
+        "cost_usd": "0.0657",
+        "table": {
+          "average_precision": {
+            "value": 0.5581747356671183,
+            "low": 0.42150402391159736,
+            "high": 0.7211535271189731
+          },
+          "roc_auc": {
+            "value": 0.7989071038251366,
+            "low": 0.6919574551131928,
+            "high": 0.8919613583138173
+          },
+          "recall_at_10pct": {
+            "value": 0.4114285714285714,
+            "low": 0.3028571428571428,
+            "high": 0.5149251700680271
+          },
+          "recall_at_20pct": {
+            "value": 0.6268131868131869,
+            "low": 0.493712087912088,
+            "high": 0.7714285714285715
+          },
+          "f1": {
+            "value": 0.5454545454545454,
+            "low": 0.4,
+            "high": 0.684931506849315
+          },
+          "brier": 0.09825356696210008,
+          "ece": 0.08112670119575845,
+          "threshold": 0.4080618372919672
+        },
+        "against_fusion": {
+          "value": 0.34400433495733096,
+          "low": 0.18012661802392815,
+          "high": 0.4880539212869463,
+          "above_zero": true
+        },
+        "success": {
+          "f1": {
+            "value": 0.5454545454545454,
+            "low": 0.4,
+            "high": 0.684931506849315
+          },
+          "recall_at_10pct": {
+            "value": 0.4114285714285714,
+            "low": 0.3028571428571428,
+            "high": 0.5149251700680271
+          },
+          "f1_above_published": true,
+          "recall_above_chance": true,
+          "met": true
+        }
+      },
+      "image and OCR text, claude-opus-5-5": {
+        "input": "image and OCR text",
+        "settings": {
+          "model": "claude-opus-5-5",
+          "max_tokens": 8000,
+          "thinking": "adaptive",
+          "effort": "medium"
+        },
+        "track": "ocr",
+        "failures": {},
+        "cost_usd": "2.3188",
+        "table": {
+          "average_precision": {
+            "value": 0.6917944634379728,
+            "low": 0.5581767426244594,
+            "high": 0.8188739817069538
+          },
+          "roc_auc": {
+            "value": 0.8355191256830601,
+            "low": 0.7489422326307572,
+            "high": 0.9126463700234192
+          },
+          "recall_at_10pct": {
+            "value": 0.5142857142857142,
+            "low": 0.4,
+            "high": 0.6228571428571429
+          },
+          "recall_at_20pct": {
+            "value": 0.6614285714285714,
+            "low": 0.5309841269841271,
+            "high": 0.8
+          },
+          "f1": {
+            "value": 0.6333333333333333,
+            "low": 0.48148148148148145,
+            "high": 0.7692307692307693
+          },
+          "brier": 0.07901861666560817,
+          "ece": 0.013130995721772457,
+          "threshold": 0.3435464198272991
+        },
+        "against_fusion": {
+          "value": 0.21038460718647645,
+          "low": 0.08143185928513774,
+          "high": 0.34702213479795213,
+          "above_zero": true
+        },
+        "success": {
+          "f1": {
+            "value": 0.6333333333333333,
+            "low": 0.48148148148148145,
+            "high": 0.7692307692307693
+          },
+          "recall_at_10pct": {
+            "value": 0.5142857142857142,
+            "low": 0.4,
+            "high": 0.6228571428571429
+          },
+          "f1_above_published": true,
+          "recall_above_chance": true,
+          "met": true
+        }
+      }
+    }
+  }
+}
