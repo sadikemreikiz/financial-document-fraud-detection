@@ -118,6 +118,14 @@ BIBTEX = r"""@inproceedings{martineztornes2023receipt,
   doi       = {10.1109/ICDAR.2019.00244}
 }"""
 
+COMMANDS = """uv sync
+uv run docfraud data download
+uv run docfraud data prepare
+uv run docfraud demo cards
+uv run docfraud demo assets --output demo-assets
+uv run docfraud demo build --assets demo-assets --output _site"""
+"""The commands that rebuild the page; ``demo cards`` also needs Phase 7's inputs tables."""
+
 ERROR_NOTE = re.compile(r"^\| (X\d+) \| [0-9.]+ \| (.+) \|$")
 
 
@@ -156,7 +164,7 @@ def ci(found: Mapping[str, float]) -> str:
 
 def _colour(detector: str) -> str:
     red, green, blue = COLOURS[detector]
-    return f"rgb({red} {green} {blue})"
+    return f"rgb({red}, {green}, {blue})"
 
 
 def _link(url: str, text: str) -> str:
@@ -257,9 +265,9 @@ def results(records: Records) -> str:
   {criterion}: copy-move needs regions identical pixel for pixel. Fusion is not shown to beat
   copy-move alone: its margin is {ci(copy_move)}.</p>
   <p><strong>General language models</strong> given the same receipts reach average precisions
-  of {detectors}. In the paper's setting, on the transcripts, Claude Sonnet 5.5 reaches an F1 of
-  {ci(paper["f1"])}, against {PUBLISHED_F1:.3f} for ChatGPT; the system exceeds Sonnet by
-  {ci(rq6)} in average precision.</p>
+  of {detectors}; the system's exceeds Sonnet's by {ci(rq6)}, the ninth test named before the
+  unlock. In the paper's setting, on the transcripts, Claude Sonnet 5.5 reaches an F1 of
+  {ci(paper["f1"])}, against {PUBLISHED_F1:.3f} for ChatGPT.</p>
 </section>"""
 
 
@@ -278,7 +286,7 @@ def how() -> str:
     <li>OCR, and a language model pointing to the fields</li>
     <li>Evidence from five sources</li>
     <li>Fusion: a logistic regression, calibrated</li>
-    <li>Review policy: the most suspicious 10 %</li>
+    <li>Review policy: a threshold set for a 10 % budget</li>
     <li>An audit report, and a case file drafted for the reviewer</li>
   </ol>
   <p>The system ranks receipts and shows where to look; it states no verdict, and a person
@@ -300,16 +308,18 @@ def how() -> str:
 def choice(records: Records) -> str:
     """How the ten receipts were chosen (ADR-0035, 1)."""
     counts = records.cards["outcomes"]
+    shown = {group: len(records.cards["gallery"][group]) for group, _, _ in GROUPS}
     rules_t1 = records.check["transcript"]["table"]["accounting rules"]["average_precision"]
     rules_t2 = records.check["ocr"]["table"]["accounting rules"]["average_precision"]
     return f"""
 <section id="choice" aria-labelledby="choice-title">
   <h2 id="choice-title">How the ten receipts were chosen</h2>
-  <p>By a rule fixed before any image was looked at, the same number from each group shown below.
-  Within each group the receipts are ranked by probability, highest first, and evenly
-  spaced ranks are taken with both ends included, so the strongest and the weakest case of each
-  group are shown. The gallery is therefore not a sample: of the {records.cards["receipts"]} test
-  receipts, {counts[CAUGHT]} were caught, {counts[MISSED]} missed, {counts["false alarm"]} raised
+  <p>By a rule fixed before any image was looked at: {shown[CAUGHT]} caught, {shown[MISSED]}
+  missed and {shown[GENUINE]} genuine receipts. Within each group the receipts are ranked by
+  probability, highest first, and evenly spaced ranks are taken with both ends included, so the
+  strongest and the weakest case of each group are shown. The gallery therefore does not show the
+  real mix: of the {records.cards["receipts"]} test receipts,
+  {counts[CAUGHT]} were caught, {counts[MISSED]} missed, {counts["false alarm"]} raised
   a false alarm and {counts[GENUINE]} genuine receipts were accepted
   ({_link(REPOSITORY + "/blob/main/docs/decisions/0035-public-demo.md", "ADR-0035")}).</p>
   <p>The images are the dataset's files, unchanged; each card gives its SHA-256. The boxes are
@@ -372,9 +382,9 @@ def _truth(annotation: Mapping[str, Any]) -> str:
     modified = [r for r in annotation["regions"] if r["role"] == "modified"]
     techniques = sorted({t for r in modified for t in r["techniques"]})
     entities = sorted({r["entity"] for r in modified if r["entity"]})
-    how = ", ".join(TECHNIQUES.get(t, t) for t in techniques) or "technique not recorded"
-    what = ", ".join(ENTITIES.get(e, e) for e in entities) or "field not recorded"
-    return f"Forged by {how}; it changed {what}"
+    how = ", ".join(TECHNIQUES.get(t, t) for t in techniques) or "not recorded"
+    what = ", ".join(ENTITIES.get(e, e) for e in entities) or "not recorded"
+    return f"Forged. Annotated technique: {how}; annotated field: {what}"
 
 
 def card(  # noqa: PLR0913 - a card joins the record, the annotation and two documents
@@ -518,7 +528,10 @@ def reproduce(records: Records) -> str:
   <p>The code, the run records behind every number and the commands are in the
   {_link(REPOSITORY, "repository")}; the evaluated system is frozen at the tag
   <code>phase-7-freeze</code>. The dataset is downloaded from its page and checked against the
-  SHA-256 <code>{_e(FINDIT2.sha256)}</code>. This page was built from commit
+  SHA-256 <code>{_e(FINDIT2.sha256)}</code>, which identifies the archive wherever it is obtained.
+  The page itself is rebuilt with:</p>
+  <pre>{_e(COMMANDS)}</pre>
+  <p>This page was built from commit
   {_link(f"{REPOSITORY}/commit/{commit}", commit[:12])} on {_e(records.built)} by
   <code>docfraud demo build</code>, from the record <code>demo-cards</code>.</p>
 </section>"""
