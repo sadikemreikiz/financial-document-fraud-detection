@@ -28,8 +28,8 @@ reviewer, evaluated on real human forgeries.
 - **Built with:** Python 3.14, PyTorch, scikit-learn, RapidOCR, the Claude API, pytest, mypy in
   strict mode and CI on every pull request.
 - **Status:** Phases 0 to 6 of 8 complete, and Phase 7's single evaluation on the locked test
-  split is done ([Phase 7 results](reports/README.md)). The model card, a public demo and
-  publication complete Phase 7.
+  split is done ([Phase 7 results](reports/README.md)), and the [model card](docs/model-card.md)
+  states where the system fails. A public demo and publication complete Phase 7.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="reports/fusion/figures/test-precision-dark.svg">
@@ -70,8 +70,8 @@ to review, both fixed in advance
 ([ADR-0031](docs/decisions/0031-llm-detector-and-agent.md)) and checked once on the validation
 split ([Phase 6 results](reports/llm/README.md)). Phase 7 unlocked the test split once, as fixed
 in advance ([ADR-0034](docs/decisions/0034-phase-7-preregistration.md)), and measured every system
-on it ([Phase 7 results](reports/README.md)); the model card, a public demo and publication come
-next.
+on it ([Phase 7 results](reports/README.md), [model card](docs/model-card.md)); a public demo and
+publication come next.
 
 ## Findings so far
 
@@ -180,6 +180,7 @@ next.
 | [Phase 5 results](reports/fusion/README.md) | Copy-move, linking, fusion, review policy and audit report, checked once on the validation split |
 | [Phase 6 results](reports/llm/README.md) | The LLM field reader, the LLM as a detector against the fused system, and the review agent, each checked once |
 | [Phase 7 results](reports/README.md) | The single evaluation on the test split: the claims, robustness to re-saved images, every error and the one fix after the unlock |
+| [Model card](docs/model-card.md) | What the system is, what it was measured on, how well, and where it fails |
 | [From thesis to v2](docs/thesis-review.md) | Code-verified review of the original implementation |
 
 ## Development
