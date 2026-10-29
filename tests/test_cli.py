@@ -89,7 +89,7 @@ from docfraud.llm.store import ResponseStore
 from docfraud.reading.fields import Extraction, FieldSources, ReceiptFields
 from docfraud.reading.layout import Row, Segment
 from docfraud.reading.ocr import CachedOcr, OcrResult
-from docfraud.reading.pipeline import read_document
+from docfraud.reading.pipeline import TextSource, read_document
 from docfraud.synthesis.engine import Engine
 from docfraud.synthesis.fonts import font_files
 from docfraud.synthesis.review import ReviewLog, review_sample
@@ -806,10 +806,14 @@ def test_a_splits_inputs_are_made_for_exactly_the_seeds_given(
     reading = SimpleNamespace(
         extraction=Extraction(fields=ReceiptFields(merchant="SHOP"), sources=FieldSources())
     )
+    asked: list[tuple[str, TextSource]] = []
+
+    def read(target: Any) -> SimpleNamespace:
+        asked.append((target.doc_id, target.source))
+        return reading
+
     monkeypatch.setattr(cli_fusion, "cached_ocr", lambda _: CachedOcr(FakeOcr(), tmp_path / "o"))
-    monkeypatch.setattr(
-        cli_fusion, "_frozen_reader", lambda: SimpleNamespace(read=lambda _: reading)
-    )
+    monkeypatch.setattr(cli_fusion, "_frozen_reader", lambda: SimpleNamespace(read=read))
     monkeypatch.setattr(inference.LearnedModel, "from_file", lambda _: _FakeModel())
     made = cli_fusion._split_inputs(train, receipts, {0: tmp_path / "model.pt"}, "toy receipts")
     assert {(r.track, r.seed) for r in made.table.receipts} == {("transcript", 0), ("ocr", 0)}
@@ -822,6 +826,14 @@ def test_a_splits_inputs_are_made_for_exactly_the_seeds_given(
         "reading both text sources": 2,
     }
     assert set(cli_fusion._efficiency(made.seconds)) == {"seconds", "peak_resident_bytes"}
+    asked.clear()
+    ocr_only = cli_fusion._split_inputs(
+        train, receipts, {0: tmp_path / "model.pt"}, "toy receipts", (TextSource.OCR,)
+    )
+    assert {(r.track, r.seed) for r in ocr_only.table.receipts} == {("ocr", 0)}
+    assert ocr_only.table.rows("ocr", 0) == made.table.rows("ocr", 0)
+    assert {source for name, source in asked if name.startswith("R")} == {TextSource.OCR}
+    assert {source for name, source in asked if name.startswith("T")} == set(TextSource)
 
 
 def test_test_and_track_r_inputs_are_made_once_by_code_that_reproduced_validation(  # noqa: PLR0915
@@ -833,8 +845,10 @@ def test_test_and_track_r_inputs_are_made_once_by_code_that_reproduced_validatio
     monkeypatch.setattr(cli_fusion, "_whole_training_models", lambda _: {0: model})
     validation = load_table(recorded.paths["validation"])
     rebuilt = {"table": InputsTable(receipts=validation.receipts[1:])}
+    tracks_read: list[Any] = []
 
-    def split_inputs(*_: Any) -> Any:
+    def split_inputs(*arguments: Any) -> Any:
+        tracks_read.append(arguments[4:])
         return cli_fusion._Made(rebuilt["table"], {}, {"0": "m"}, {"page and OCR": [0.5, 1.5]})
 
     monkeypatch.setattr(cli_fusion, "_split_inputs", split_inputs)
@@ -887,6 +901,9 @@ def test_test_and_track_r_inputs_are_made_once_by_code_that_reproduced_validatio
     assert result.exit_code == 0, result.output
     (resaved_run,) = store.records("fusion-resaved-inputs")
     assert resaved_run.test_unlocks == (cli_common.TEST_UNLOCK,)
+    assert tracks_read[-2:] == [((TextSource.OCR,),)] * 2
+    assert resaved_run.config["text_sources"] == ["ocr"]
+    assert resaved_run.config["fix"] == cli_common.FIX_TAG
     assert set(resaved_run.results) == {"q95", "q75"}
     assert load_table(tmp / "resaved" / "q75-inputs.json") == validation
     assert "refusing to run again" in said(runner.invoke(app, resave))
@@ -1978,6 +1995,34 @@ def test_llm_the_validation_split_is_read_only_by_the_frozen_reader(
     assert result.exit_code == 1
     assert "the reader changed after it was frozen at abc123" in flat(result.output)
     assert not record.exists()
+
+
+def test_the_freeze_admits_the_disclosed_fix_and_nothing_else(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    freeze, fix, fixed = cli_common.FREEZE_TAG, cli_common.FIX_TAG, list(cli_common.FIXED_FILES)
+
+    def since(changes: dict[str, list[str] | None]) -> Any:
+        return lambda commit, _paths: changes[commit]
+
+    passing: list[dict[str, list[str] | None]] = [
+        {freeze: []},
+        {freeze: fixed, fix: []},
+        {freeze: fixed[1:], fix: []},
+    ]
+    failing: list[dict[str, list[str] | None]] = [
+        {freeze: None},
+        {freeze: fixed, fix: None},  # the fix is not tagged
+        {freeze: fixed, fix: [fixed[1]]},  # the source changed after the fix
+        {freeze: [*fixed, "src/docfraud/fusion/final.py"], fix: []},  # the fix reached further
+    ]
+    for changes in passing:
+        monkeypatch.setattr(cli_common, "changed_since", since(changes))
+        cli_common.require_freeze_tag()
+    for changes in failing:
+        monkeypatch.setattr(cli_common, "changed_since", since(changes))
+        with pytest.raises(typer.Exit):
+            cli_common.require_freeze_tag()
 
 
 def test_llm_the_test_split_is_read_once_at_the_freeze_by_a_reader_shown_unchanged(

@@ -1,0 +1,3904 @@
+{
+  "run_id": "20261029T141719459478Z-fusion-test-check",
+  "name": "fusion-test-check",
+  "started": "2026-10-29T14:17:19.459478Z",
+  "finished": "2026-10-29T14:18:22.081817Z",
+  "code": {
+    "commit": "fba78aee98080723dc407b280a81a8b856017f90",
+    "dirty": false
+  },
+  "environment": {
+    "python": "3.14.8",
+    "docfraud": "2.0.0.dev0",
+    "packages": {
+      "annotated-doc": "0.0.5",
+      "annotated-types": "0.8.0",
+      "anthropic": "2.1.0",
+      "antlr4-python3-runtime": "4.9.3",
+      "anyio": "4.15.1",
+      "ast_serialize": "0.12.1",
+      "certifi": "2026.7.22",
+      "cfgv": "3.5.0",
+      "charset-normalizer": "3.5.2",
+      "cloudpickle": "3.1.2",
+      "colorlog": "6.12.0",
+      "coverage": "7.16.2",
+      "distlib": "0.4.3",
+      "docfraud": "2.0.0.dev0",
+      "docstring_parser": "0.18.0",
+      "filelock": "4.0.12",
+      "flatbuffers": "25.12.19",
+      "fsspec": "2026.9.0",
+      "h11": "0.16.0",
+      "httpcore2": "2.16.0",
+      "httpx2": "2.16.0",
+      "identify": "2.6.20",
+      "idna": "3.20",
+      "iniconfig": "2.3.0",
+      "jinja2": "3.1.6",
+      "jiter": "0.17.0",
+      "joblib": "1.6.0",
+      "librt": "0.16.0",
+      "markdown-it-py": "4.2.0",
+      "markupsafe": "3.0.4",
+      "mdurl": "0.1.2",
+      "mpmath": "1.3.0",
+      "mypy": "2.4.0",
+      "mypy_extensions": "1.1.0",
+      "narwhals": "2.26.0",
+      "networkx": "3.7",
+      "nodeenv": "1.11.0",
+      "numpy": "2.5.3",
+      "omegaconf": "2.3.1",
+      "onnxruntime": "1.30.0",
+      "opencv-python": "5.0.0.93",
+      "opentelemetry-api": "1.45.1",
+      "packaging": "26.3",
+      "pathspec": "1.1.1",
+      "pillow": "12.3.0",
+      "platformdirs": "4.12.3",
+      "pluggy": "1.6.0",
+      "pre_commit": "4.6.2",
+      "protobuf": "7.36.2",
+      "pyclipper": "1.4.0",
+      "pydantic": "2.13.5",
+      "pydantic_core": "2.46.5",
+      "pygments": "2.21.0",
+      "pytest": "9.1.1",
+      "pytest-cov": "7.1.0",
+      "python-discovery": "1.6.1",
+      "pyyaml": "6.0.3",
+      "rapidocr": "3.9.2",
+      "requests": "2.34.2",
+      "rich": "15.0.0",
+      "ruff": "0.16.10",
+      "scikit-learn": "1.9.1",
+      "scipy": "1.18.1",
+      "setuptools": "84.0.0",
+      "shapely": "2.1.2",
+      "shellingham": "1.5.4",
+      "six": "1.17.0",
+      "sniffio": "1.3.1",
+      "sympy": "1.14.0",
+      "threadpoolctl": "3.7.0",
+      "torch": "2.14.1",
+      "tqdm": "4.70.1",
+      "truststore": "0.10.5",
+      "typer": "0.27.2",
+      "typing-inspection": "0.4.4",
+      "typing_extensions": "4.16.0",
+      "urllib3": "2.8.0",
+      "virtualenv": "21.14.5"
+    },
+    "platform": "macOS-15.7.7-arm64-arm-64bit-Mach-O",
+    "machine": "arm64",
+    "processor": "arm",
+    "cpu_count": 10,
+    "memory_bytes": 17179869184
+  },
+  "config": {
+    "decision": "ADR-0034",
+    "validation_check": "20261027T102600447861Z-fusion-validation-check",
+    "rehearsal": "20261028T223352641267Z-fusion-check-rehearsal",
+    "test_inputs": "20261029T135209393973Z-fusion-test-inputs"
+  },
+  "config_hash": "eb84587b79b226e7341e67f514483b9feb852dd9446998e262efd228c3d2ca22",
+  "dataset_sha256": {
+    "findit2": "6f8c6f134951956627edcc06c7e8fc298abb9e984073ab193174aee204d46261"
+  },
+  "seeds": {
+    "bootstrap": 0,
+    "baseline": 0
+  },
+  "test_unlocks": [
+    "ADR-0034: the single evaluation of Phase 7"
+  ],
+  "results": {
+    "rq3": {
+      "transcript": {
+        "technique": {
+          "CPI": {
+            "receipts": 27,
+            "mean_contribution": {
+              "rules": 0.27219718580900354,
+              "system 2": 1.0860212184548408,
+              "system 1 + system 1 evidence": 0.7972081113858928,
+              "copy-move": 6.341266444235409,
+              "link 1": 0.2734197792975485,
+              "link 2": 0.10578440618352716
+            },
+            "largest": {
+              "rules": 0,
+              "system 2": 0,
+              "system 1 + system 1 evidence": 2,
+              "copy-move": 25,
+              "link 1": 0,
+              "link 2": 0
+            },
+            "caught": {
+              "accounting rules": 8.16,
+              "pixel evidence": 12.8,
+              "copy-move": 20.8,
+              "fusion": 20.8
+            }
+          },
+          "CPO": {
+            "receipts": 2,
+            "mean_contribution": {
+              "rules": -0.11134167710384708,
+              "system 2": 0.7433114619299481,
+              "system 1 + system 1 evidence": 0.24440187145528933,
+              "copy-move": -1.4065261059953134,
+              "link 1": 0.42646949639438364,
+              "link 2": -0.030219794617484592
+            },
+            "largest": {
+              "rules": 0,
+              "system 2": 1,
+              "system 1 + system 1 evidence": 0,
+              "copy-move": 0,
+              "link 1": 1,
+              "link 2": 0
+            },
+            "caught": {
+              "accounting rules": 0.0,
+              "pixel evidence": 1.0,
+              "copy-move": 0.0,
+              "fusion": 0.0
+            }
+          },
+          "IMI": {
+            "receipts": 3,
+            "mean_contribution": {
+              "rules": 0.3893027340319284,
+              "system 2": 1.8122323946939034,
+              "system 1 + system 1 evidence": 0.8872587580692439,
+              "copy-move": 0.39852023561525635,
+              "link 1": 0.42646949639438364,
+              "link 2": 0.12278493128365364
+            },
+            "largest": {
+              "rules": 0,
+              "system 2": 2,
+              "system 1 + system 1 evidence": 0,
+              "copy-move": 1,
+              "link 1": 0,
+              "link 2": 0
+            },
+            "caught": {
+              "accounting rules": 2.0,
+              "pixel evidence": 1.0,
+              "copy-move": 1.0,
+              "fusion": 1.0
+            }
+          },
+          "CUT": {
+            "receipts": 5,
+            "mean_contribution": {
+              "rules": 1.1022885659497637,
+              "system 2": 1.1507406016916644,
+              "system 1 + system 1 evidence": 0.09750508368804237,
+              "copy-move": 0.20701332124015784,
+              "link 1": 0.2198523783136564,
+              "link 2": 0.2451887120045642
+            },
+            "largest": {
+              "rules": 0,
+              "system 2": 3,
+              "system 1 + system 1 evidence": 0,
+              "copy-move": 2,
+              "link 1": 0,
+              "link 2": 0
+            },
+            "caught": {
+              "accounting rules": 3.0,
+              "pixel evidence": 1.0,
+              "copy-move": 2.0,
+              "fusion": 2.0
+            }
+          },
+          "PIX": {
+            "receipts": 3,
+            "mean_contribution": {
+              "rules": 1.5349323871214782,
+              "system 2": 1.0129299405336563,
+              "system 1 + system 1 evidence": 0.12454591155344286,
+              "copy-move": 1.2827062727304719,
+              "link 1": 0.08210763292650487,
+              "link 2": 0.27578965718479187
+            },
+            "largest": {
+              "rules": 0,
+              "system 2": 1,
+              "system 1 + system 1 evidence": 0,
+              "copy-move": 2,
+              "link 1": 0,
+              "link 2": 0
+            },
+            "caught": {
+              "accounting rules": 2.0,
+              "pixel evidence": 1.0,
+              "copy-move": 2.0,
+              "fusion": 2.0
+            }
+          }
+        },
+        "entity": {
+          "total_payment": {
+            "receipts": 14,
+            "mean_contribution": {
+              "rules": 0.7259977435271524,
+              "system 2": 1.3116801267029694,
+              "system 1 + system 1 evidence": 1.0055634230828603,
+              "copy-move": 7.338707351339589,
+              "link 1": 0.42646949639438364,
+              "link 2": 0.2648607481918534
+            },
+            "largest": {
+              "rules": 0,
+              "system 2": 1,
+              "system 1 + system 1 evidence": 0,
+              "copy-move": 13,
+              "link 1": 0,
+              "link 2": 0
+            },
+            "caught": {
+              "accounting rules": 9.16,
+              "pixel evidence": 6.800000000000001,
+              "copy-move": 13.0,
+              "fusion": 13.0
+            }
+          },
+          "product": {
+            "receipts": 15,
+            "mean_contribution": {
+              "rules": 0.5384997782638464,
+              "system 2": 1.537567790451969,
+              "system 1 + system 1 evidence": 1.1039901113500374,
+              "copy-move": 5.4133406125826165,
+              "link 1": 0.4264694963943836,
+              "link 2": 0.18398682164410893
+            },
+            "largest": {
+              "rules": 0,
+              "system 2": 4,
+              "system 1 + system 1 evidence": 0,
+              "copy-move": 11,
+              "link 1": 0,
+              "link 2": 0
+            },
+            "caught": {
+              "accounting rules": 8.16,
+              "pixel evidence": 8.0,
+              "copy-move": 11.0,
+              "fusion": 11.0
+            }
+          },
+          "metadata": {
+            "receipts": 15,
+            "mean_contribution": {
+              "rules": -0.028651527973119296,
+              "system 2": 1.0525611102540535,
+              "system 1 + system 1 evidence": 0.5294655087738817,
+              "copy-move": 3.0709373598537786,
+              "link 1": 0.2887247510072322,
+              "link 2": 0.0003811505627430554
+            },
+            "largest": {
+              "rules": 0,
+              "system 2": 3,
+              "system 1 + system 1 evidence": 1,
+              "copy-move": 10,
+              "link 1": 1,
+              "link 2": 0
+            },
+            "caught": {
+              "accounting rules": 1.0,
+              "pixel evidence": 7.800000000000001,
+              "copy-move": 7.800000000000001,
+              "fusion": 6.800000000000001
+            }
+          },
+          "company": {
+            "receipts": 5,
+            "mean_contribution": {
+              "rules": -0.13905542887869007,
+              "system 2": 0.9955495505986107,
+              "system 1 + system 1 evidence": 0.29000785604639495,
+              "copy-move": 3.7326265479288674,
+              "link 1": -0.19338185784779813,
+              "link 2": -0.030219794617484592
+            },
+            "largest": {
+              "rules": 0,
+              "system 2": 0,
+              "system 1 + system 1 evidence": 1,
+              "copy-move": 4,
+              "link 1": 0,
+              "link 2": 0
+            },
+            "caught": {
+              "accounting rules": 0.0,
+              "pixel evidence": 1.0,
+              "copy-move": 2.0,
+              "fusion": 3.0
+            }
+          }
+        },
+        "rules-blindness": {
+          "changing only what the rules cannot check": {
+            "receipts": 17,
+            "mean_contribution": {
+              "rules": -0.10681693464489087,
+              "system 2": 0.9325335862274349,
+              "system 1 + system 1 evidence": 0.4802799022334531,
+              "copy-move": 2.674196078847995,
+              "link 1": 0.12262079333449065,
+              "link 2": -0.030219794617484592
+            },
+            "largest": {
+              "rules": 0,
+              "system 2": 2,
+              "system 1 + system 1 evidence": 2,
+              "copy-move": 12,
+              "link 1": 1,
+              "link 2": 0
+            },
+            "caught": {
+              "accounting rules": 0.0,
+              "pixel evidence": 7.0,
+              "copy-move": 7.800000000000001,
+              "fusion": 7.800000000000001
+            }
+          }
+        },
+        "editing software": {
+          "aperçu": {
+            "receipts": 3,
+            "mean_contribution": {
+              "rules": 0.15685150344684337,
+              "system 2": 1.8273678257394756,
+              "system 1 + system 1 evidence": 0.9992714945139803,
+              "copy-move": 2.4648691033876897,
+              "link 1": 0.42646949639438364,
+              "link 2": 0.12278493128365364
+            },
+            "largest": {
+              "rules": 0,
+              "system 2": 1,
+              "system 1 + system 1 evidence": 0,
+              "copy-move": 2,
+              "link 1": 0,
+              "link 2": 0
+            },
+            "caught": {
+              "accounting rules": 1.0,
+              "pixel evidence": 1.0,
+              "copy-move": 2.0,
+              "fusion": 2.0
+            }
+          },
+          "gimp": {
+            "receipts": 13,
+            "mean_contribution": {
+              "rules": 0.34469344139553176,
+              "system 2": 0.8741064379857966,
+              "system 1 + system 1 evidence": 0.6963630803256152,
+              "copy-move": 3.6836817362742056,
+              "link 1": 0.18806512937815992,
+              "link 2": 0.07570655408330339
+            },
+            "largest": {
+              "rules": 0,
+              "system 2": 2,
+              "system 1 + system 1 evidence": 1,
+              "copy-move": 9,
+              "link 1": 1,
+              "link 2": 0
+            },
+            "caught": {
+              "accounting rules": 3.16,
+              "pixel evidence": 6.0,
+              "copy-move": 6.0,
+              "fusion": 7.0
+            }
+          },
+          "paint": {
+            "receipts": 18,
+            "mean_contribution": {
+              "rules": 0.24962493949493833,
+              "system 2": 1.2549118161316708,
+              "system 1 + system 1 evidence": 0.6710451471745836,
+              "copy-move": 6.003296321664228,
+              "link 1": 0.3116822085717573,
+              "link 2": 0.1227849312836536
+            },
+            "largest": {
+              "rules": 0,
+              "system 2": 3,
+              "system 1 + system 1 evidence": 1,
+              "copy-move": 14,
+              "link 1": 0,
+              "link 2": 0
+            },
+            "caught": {
+              "accounting rules": 7.0,
+              "pixel evidence": 7.800000000000001,
+              "copy-move": 13.0,
+              "fusion": 12.8
+            }
+          },
+          "paint3d": {
+            "receipts": 1,
+            "mean_contribution": {
+              "rules": -0.10979431800977259,
+              "system 2": 1.1606042968006687,
+              "system 1 + system 1 evidence": 1.0874758216036797,
+              "copy-move": 2.035320499541385,
+              "link 1": 0.42646949639438364,
+              "link 2": -0.030219794617484592
+            },
+            "largest": {
+              "rules": 0,
+              "system 2": 0,
+              "system 1 + system 1 evidence": 0,
+              "copy-move": 1,
+              "link 1": 0,
+              "link 2": 0
+            },
+            "caught": {
+              "accounting rules": 0.0,
+              "pixel evidence": 1.0,
+              "copy-move": 0.8000000000000007,
+              "fusion": 0.0
+            }
+          }
+        }
+      },
+      "ocr": {
+        "technique": {
+          "CPI": {
+            "receipts": 27,
+            "mean_contribution": {
+              "rules": 0.1111934839231715,
+              "system 2": 1.116368784741176,
+              "system 1 + system 1 evidence": 0.7709050560115442,
+              "copy-move": 6.3993747447141285,
+              "link 1": 0.13587143218590336,
+              "link 2": 0.23260420280028404
+            },
+            "largest": {
+              "rules": 0,
+              "system 2": 0,
+              "system 1 + system 1 evidence": 2,
+              "copy-move": 25,
+              "link 1": 0,
+              "link 2": 0
+            },
+            "caught": {
+              "accounting rules": 7.0,
+              "pixel evidence": 12.8,
+              "copy-move": 20.8,
+              "fusion": 20.8
+            }
+          },
+          "CPO": {
+            "receipts": 2,
+            "mean_contribution": {
+              "rules": -0.061931275164387053,
+              "system 2": 0.7640824132511446,
+              "system 1 + system 1 evidence": 0.24935134143952792,
+              "copy-move": -1.4194148313496366,
+              "link 1": 0.24067481523349848,
+              "link 2": -0.08013159139531312
+            },
+            "largest": {
+              "rules": 0,
+              "system 2": 1,
+              "system 1 + system 1 evidence": 0,
+              "copy-move": 0,
+              "link 1": 1,
+              "link 2": 0
+            },
+            "caught": {
+              "accounting rules": 0.0,
+              "pixel evidence": 1.0,
+              "copy-move": 0.0,
+              "fusion": 0.0
+            }
+          },
+          "IMI": {
+            "receipts": 3,
+            "mean_contribution": {
+              "rules": 0.0298041696519894,
+              "system 2": 1.8628730652348209,
+              "system 1 + system 1 evidence": 0.8562837883110648,
+              "copy-move": 0.4021720824193013,
+              "link 1": 0.24067481523349846,
+              "link 2": 0.23260420280028396
+            },
+            "largest": {
+              "rules": 0,
+              "system 2": 2,
+              "system 1 + system 1 evidence": 0,
+              "copy-move": 1,
+              "link 1": 0,
+              "link 2": 0
+            },
+            "caught": {
+              "accounting rules": 0.0,
+              "pixel evidence": 1.0,
+              "copy-move": 1.0,
+              "fusion": 1.0
+            }
+          },
+          "CUT": {
+            "receipts": 5,
+            "mean_contribution": {
+              "rules": 0.3049482359772518,
+              "system 2": 1.1828966738703472,
+              "system 1 + system 1 evidence": 0.08543023101358312,
+              "copy-move": 0.20891029125072333,
+              "link 1": 0.014299507850693217,
+              "link 2": 0.48279283815676166
+            },
+            "largest": {
+              "rules": 0,
+              "system 2": 3,
+              "system 1 + system 1 evidence": 0,
+              "copy-move": 2,
+              "link 1": 0,
+              "link 2": 0
+            },
+            "caught": {
+              "accounting rules": 1.0,
+              "pixel evidence": 1.0,
+              "copy-move": 2.0,
+              "fusion": 1.0
+            }
+          },
+          "PIX": {
+            "receipts": 3,
+            "mean_contribution": {
+              "rules": 0.3878067753617495,
+              "system 2": 1.0412350583263774,
+              "system 1 + system 1 evidence": 0.10899532462593962,
+              "copy-move": 1.2944603729842967,
+              "link 1": 0.05202872574782743,
+              "link 2": 0.5453399969958811
+            },
+            "largest": {
+              "rules": 0,
+              "system 2": 1,
+              "system 1 + system 1 evidence": 0,
+              "copy-move": 2,
+              "link 1": 0,
+              "link 2": 0
+            },
+            "caught": {
+              "accounting rules": 1.0,
+              "pixel evidence": 1.0,
+              "copy-move": 2.0,
+              "fusion": 1.0
+            }
+          }
+        },
+        "entity": {
+          "total_payment": {
+            "receipts": 14,
+            "mean_contribution": {
+              "rules": 0.16761001909357592,
+              "system 2": 1.3483334617531102,
+              "system 1 + system 1 evidence": 0.9693779767419628,
+              "copy-move": 7.405955718151974,
+              "link 1": 0.24067481523349846,
+              "link 2": 0.5900165390238236
+            },
+            "largest": {
+              "rules": 0,
+              "system 2": 1,
+              "system 1 + system 1 evidence": 0,
+              "copy-move": 13,
+              "link 1": 0,
+              "link 2": 0
+            },
+            "caught": {
+              "accounting rules": 3.0,
+              "pixel evidence": 6.800000000000001,
+              "copy-move": 13.0,
+              "fusion": 12.0
+            }
+          },
+          "product": {
+            "receipts": 15,
+            "mean_contribution": {
+              "rules": 0.08826481043234682,
+              "system 2": 1.5805332865652622,
+              "system 1 + system 1 evidence": 1.06758529529426,
+              "copy-move": 5.46294584927718,
+              "link 1": 0.24067481523349843,
+              "link 2": 0.4202456793176423
+            },
+            "largest": {
+              "rules": 0,
+              "system 2": 4,
+              "system 1 + system 1 evidence": 0,
+              "copy-move": 11,
+              "link 1": 0,
+              "link 2": 0
+            },
+            "caught": {
+              "accounting rules": 2.0,
+              "pixel evidence": 8.0,
+              "copy-move": 11.0,
+              "fusion": 10.0
+            }
+          },
+          "metadata": {
+            "receipts": 15,
+            "mean_contribution": {
+              "rules": 0.14393851419807163,
+              "system 2": 1.0819736737666716,
+              "system 1 + system 1 evidence": 0.5140494499360548,
+              "copy-move": 3.099077945401942,
+              "link 1": 0.08975794364496165,
+              "link 2": 0.04496272628292572
+            },
+            "largest": {
+              "rules": 0,
+              "system 2": 3,
+              "system 1 + system 1 evidence": 1,
+              "copy-move": 10,
+              "link 1": 1,
+              "link 2": 0
+            },
+            "caught": {
+              "accounting rules": 5.0,
+              "pixel evidence": 7.800000000000001,
+              "copy-move": 7.800000000000001,
+              "fusion": 7.800000000000001
+            }
+          },
+          "company": {
+            "receipts": 5,
+            "mean_contribution": {
+              "rules": -0.08666516720518622,
+              "system 2": 1.0233689941460473,
+              "system 1 + system 1 evidence": 0.27836402138949523,
+              "copy-move": 3.7668305333518517,
+              "link 1": -0.09888814584070942,
+              "link 2": -0.08013159139531312
+            },
+            "largest": {
+              "rules": 0,
+              "system 2": 0,
+              "system 1 + system 1 evidence": 1,
+              "copy-move": 4,
+              "link 1": 0,
+              "link 2": 0
+            },
+            "caught": {
+              "accounting rules": 0.0,
+              "pixel evidence": 1.0,
+              "copy-move": 2.0,
+              "fusion": 3.0
+            }
+          }
+        },
+        "rules-blindness": {
+          "changing only what the rules cannot check": {
+            "receipts": 17,
+            "mean_contribution": {
+              "rules": 0.0674675418249219,
+              "system 2": 0.9585921238889145,
+              "system 1 + system 1 evidence": 0.46563629488433866,
+              "copy-move": 2.69870111907225,
+              "link 1": 0.007641410574728365,
+              "link 2": -0.08013159139531312
+            },
+            "largest": {
+              "rules": 0,
+              "system 2": 2,
+              "system 1 + system 1 evidence": 2,
+              "copy-move": 12,
+              "link 1": 1,
+              "link 2": 0
+            },
+            "caught": {
+              "accounting rules": 4.0,
+              "pixel evidence": 7.0,
+              "copy-move": 7.800000000000001,
+              "fusion": 8.8
+            }
+          }
+        },
+        "editing software": {
+          "aperçu": {
+            "receipts": 3,
+            "mean_contribution": {
+              "rules": 0.01804275113147702,
+              "system 2": 1.8784314378298974,
+              "system 1 + system 1 evidence": 0.9517650908803414,
+              "copy-move": 2.4874559723924707,
+              "link 1": 0.24067481523349846,
+              "link 2": 0.23260420280028396
+            },
+            "largest": {
+              "rules": 0,
+              "system 2": 1,
+              "system 1 + system 1 evidence": 0,
+              "copy-move": 2,
+              "link 1": 0,
+              "link 2": 0
+            },
+            "caught": {
+              "accounting rules": 0.0,
+              "pixel evidence": 1.0,
+              "copy-move": 2.0,
+              "fusion": 2.0
+            }
+          },
+          "gimp": {
+            "receipts": 13,
+            "mean_contribution": {
+              "rules": 0.09096773850106891,
+              "system 2": 0.8985322987492063,
+              "system 1 + system 1 evidence": 0.6761894755259008,
+              "copy-move": 3.7174372151019357,
+              "link 1": 0.06653996340057136,
+              "link 2": 0.13637780458625412
+            },
+            "largest": {
+              "rules": 0,
+              "system 2": 2,
+              "system 1 + system 1 evidence": 1,
+              "copy-move": 9,
+              "link 1": 1,
+              "link 2": 0
+            },
+            "caught": {
+              "accounting rules": 3.0,
+              "pixel evidence": 6.0,
+              "copy-move": 6.0,
+              "fusion": 6.0
+            }
+          },
+          "paint": {
+            "receipts": 18,
+            "mean_contribution": {
+              "rules": 0.07882288700114137,
+              "system 2": 1.2899788285218574,
+              "system 1 + system 1 evidence": 0.6500422009846224,
+              "copy-move": 6.0583076273063625,
+              "link 1": 0.1463517704906629,
+              "link 2": 0.2847268351662169
+            },
+            "largest": {
+              "rules": 0,
+              "system 2": 3,
+              "system 1 + system 1 evidence": 1,
+              "copy-move": 14,
+              "link 1": 0,
+              "link 2": 0
+            },
+            "caught": {
+              "accounting rules": 3.0,
+              "pixel evidence": 7.800000000000001,
+              "copy-move": 13.0,
+              "fusion": 12.8
+            }
+          },
+          "paint3d": {
+            "receipts": 1,
+            "mean_contribution": {
+              "rules": 0.6061606083098645,
+              "system 2": 1.1930359981623382,
+              "system 1 + system 1 evidence": 1.061625784696309,
+              "copy-move": 2.0539711927740214,
+              "link 1": 0.24067481523349848,
+              "link 2": -0.08013159139531312
+            },
+            "largest": {
+              "rules": 0,
+              "system 2": 0,
+              "system 1 + system 1 evidence": 0,
+              "copy-move": 1,
+              "link 1": 0,
+              "link 2": 0
+            },
+            "caught": {
+              "accounting rules": 1.0,
+              "pixel evidence": 1.0,
+              "copy-move": 0.8000000000000007,
+              "fusion": 1.0
+            }
+          }
+        }
+      }
+    },
+    "false_alarms": {
+      "transcript": {
+        "accounting rules": {
+          "digital": {
+            "receipts": 4.0,
+            "flagged": 1.0
+          },
+          "handwritten": {
+            "receipts": 84.0,
+            "flagged": 3.16
+          },
+          "handwritten and digital": {
+            "receipts": 7.0,
+            "flagged": 0.0
+          },
+          "none": {
+            "receipts": 88.0,
+            "flagged": 6.48
+          }
+        },
+        "pixel evidence": {
+          "digital": {
+            "receipts": 4.0,
+            "flagged": 1.0
+          },
+          "handwritten": {
+            "receipts": 84.0,
+            "flagged": 4.0
+          },
+          "handwritten and digital": {
+            "receipts": 7.0,
+            "flagged": 1.0
+          },
+          "none": {
+            "receipts": 88.0,
+            "flagged": 0.0
+          }
+        },
+        "copy-move": {
+          "digital": {
+            "receipts": 4.0,
+            "flagged": 0.0
+          },
+          "handwritten": {
+            "receipts": 84.0,
+            "flagged": 0.0
+          },
+          "handwritten and digital": {
+            "receipts": 7.0,
+            "flagged": 0.0
+          },
+          "none": {
+            "receipts": 88.0,
+            "flagged": 0.0
+          }
+        },
+        "fusion": {
+          "digital": {
+            "receipts": 4.0,
+            "flagged": 0.0
+          },
+          "handwritten": {
+            "receipts": 84.0,
+            "flagged": 0.0
+          },
+          "handwritten and digital": {
+            "receipts": 7.0,
+            "flagged": 0.0
+          },
+          "none": {
+            "receipts": 88.0,
+            "flagged": 0.0
+          }
+        }
+      },
+      "ocr": {
+        "accounting rules": {
+          "digital": {
+            "receipts": 4.0,
+            "flagged": 0.0
+          },
+          "handwritten": {
+            "receipts": 84.0,
+            "flagged": 5.0
+          },
+          "handwritten and digital": {
+            "receipts": 7.0,
+            "flagged": 0.0
+          },
+          "none": {
+            "receipts": 88.0,
+            "flagged": 9.8
+          }
+        },
+        "pixel evidence": {
+          "digital": {
+            "receipts": 4.0,
+            "flagged": 1.0
+          },
+          "handwritten": {
+            "receipts": 84.0,
+            "flagged": 4.0
+          },
+          "handwritten and digital": {
+            "receipts": 7.0,
+            "flagged": 1.0
+          },
+          "none": {
+            "receipts": 88.0,
+            "flagged": 0.0
+          }
+        },
+        "copy-move": {
+          "digital": {
+            "receipts": 4.0,
+            "flagged": 0.0
+          },
+          "handwritten": {
+            "receipts": 84.0,
+            "flagged": 0.0
+          },
+          "handwritten and digital": {
+            "receipts": 7.0,
+            "flagged": 0.0
+          },
+          "none": {
+            "receipts": 88.0,
+            "flagged": 0.0
+          }
+        },
+        "fusion": {
+          "digital": {
+            "receipts": 4.0,
+            "flagged": 0.0
+          },
+          "handwritten": {
+            "receipts": 84.0,
+            "flagged": 0.0
+          },
+          "handwritten and digital": {
+            "receipts": 7.0,
+            "flagged": 0.0
+          },
+          "none": {
+            "receipts": 88.0,
+            "flagged": 0.0
+          }
+        }
+      }
+    },
+    "rq4": {
+      "transcript": {
+        "receipts": 35,
+        "located": 35,
+        "hit_rate": {
+          "value": 0.9428571428571428,
+          "low": 0.8571428571428571,
+          "high": 1.0
+        },
+        "baseline": 0.04874285714285714,
+        "detects": true,
+        "in_review": 23,
+        "in_review_hits": 22,
+        "by_technique": {
+          "CPI": {
+            "receipts": 27,
+            "hits": 26
+          },
+          "CPO": {
+            "receipts": 2,
+            "hits": 2
+          },
+          "CUT": {
+            "receipts": 5,
+            "hits": 4
+          },
+          "IMI": {
+            "receipts": 3,
+            "hits": 3
+          },
+          "PIX": {
+            "receipts": 3,
+            "hits": 3
+          }
+        },
+        "by_entity": {
+          "company": {
+            "receipts": 5,
+            "hits": 5
+          },
+          "metadata": {
+            "receipts": 15,
+            "hits": 14
+          },
+          "product": {
+            "receipts": 15,
+            "hits": 14
+          },
+          "total_payment": {
+            "receipts": 14,
+            "hits": 13
+          }
+        }
+      },
+      "ocr": {
+        "receipts": 35,
+        "located": 35,
+        "hit_rate": {
+          "value": 0.9428571428571428,
+          "low": 0.8571428571428571,
+          "high": 1.0
+        },
+        "baseline": 0.04874285714285714,
+        "detects": true,
+        "in_review": 24,
+        "in_review_hits": 23,
+        "by_technique": {
+          "CPI": {
+            "receipts": 27,
+            "hits": 26
+          },
+          "CPO": {
+            "receipts": 2,
+            "hits": 2
+          },
+          "CUT": {
+            "receipts": 5,
+            "hits": 4
+          },
+          "IMI": {
+            "receipts": 3,
+            "hits": 3
+          },
+          "PIX": {
+            "receipts": 3,
+            "hits": 3
+          }
+        },
+        "by_entity": {
+          "company": {
+            "receipts": 5,
+            "hits": 5
+          },
+          "metadata": {
+            "receipts": 15,
+            "hits": 14
+          },
+          "product": {
+            "receipts": 15,
+            "hits": 14
+          },
+          "total_payment": {
+            "receipts": 14,
+            "hits": 13
+          }
+        }
+      }
+    },
+    "grounding": {
+      "transcript": {
+        "reports": 218,
+        "facts": 9070,
+        "violations": [],
+        "rate": 1.0
+      },
+      "ocr": {
+        "reports": 218,
+        "facts": 9647,
+        "violations": [],
+        "rate": 1.0
+      }
+    },
+    "transcript": {
+      "receipts": 218,
+      "forged": 35,
+      "table": {
+        "accounting rules": {
+          "average_precision": {
+            "value": 0.3477130689499889,
+            "low": 0.23627083862383516,
+            "high": 0.5038138511518723
+          },
+          "roc_auc": {
+            "value": 0.674863387978142,
+            "low": 0.5753298204527713,
+            "high": 0.7720530835284933
+          },
+          "recall_at_10pct": {
+            "value": 0.31885714285714284,
+            "low": 0.17142857142857143,
+            "high": 0.42857142857142855
+          },
+          "recall_at_20pct": {
+            "value": 0.37142857142857144,
+            "low": 0.22857142857142856,
+            "high": 0.5142857142857142
+          },
+          "f1": {
+            "value": 0.37037037037037035,
+            "low": 0.20408163265306123,
+            "high": 0.5283018867924528
+          },
+          "brier": 0.12422826787300041,
+          "ece": 0.05601593814535139,
+          "threshold": 0.2568981762950894
+        },
+        "pixel evidence": {
+          "average_precision": {
+            "value": 0.6916464415822514,
+            "low": 0.5613773278910922,
+            "high": 0.820276884280919
+          },
+          "roc_auc": {
+            "value": 0.8721311475409836,
+            "low": 0.7942193598750976,
+            "high": 0.9372404371584699
+          },
+          "recall_at_10pct": {
+            "value": 0.45142857142857146,
+            "low": 0.3371428571428572,
+            "high": 0.5428571428571428
+          },
+          "recall_at_20pct": {
+            "value": 0.7428571428571429,
+            "low": 0.6171428571428572,
+            "high": 0.8742857142857143
+          },
+          "f1": {
+            "value": 0.6842105263157895,
+            "low": 0.5675675675675675,
+            "high": 0.7894736842105263
+          },
+          "brier": 0.08163176768511723,
+          "ece": 0.0446151681433719,
+          "threshold": 0.30255137219201894
+        },
+        "copy-move": {
+          "average_precision": {
+            "value": 0.8301044619049772,
+            "low": 0.710998252512014,
+            "high": 0.9280471821756227
+          },
+          "roc_auc": {
+            "value": 0.8707259953161592,
+            "low": 0.7779859484777517,
+            "high": 0.9463700234192037
+          },
+          "recall_at_10pct": {
+            "value": 0.6228571428571429,
+            "low": 0.6,
+            "high": 0.6228571428571429
+          },
+          "recall_at_20pct": {
+            "value": 0.8,
+            "low": 0.6571428571428571,
+            "high": 0.9142857142857143
+          },
+          "f1": {
+            "value": 0.8484848484848485,
+            "low": 0.75,
+            "high": 0.9295774647887324
+          },
+          "brier": 0.04475894016113687,
+          "ece": 0.027703268557453798,
+          "threshold": 0.33747275125749315
+        },
+        "system 2 alone": {
+          "average_precision": {
+            "value": 0.7015107175198447,
+            "low": 0.5674465156533942,
+            "high": 0.8284875319117668
+          },
+          "roc_auc": {
+            "value": 0.8800936768149883,
+            "low": 0.8074941451990633,
+            "high": 0.9394223263075722
+          },
+          "recall_at_10pct": {
+            "value": 0.45142857142857146,
+            "low": 0.3657142857142857,
+            "high": 0.5657142857142857
+          },
+          "recall_at_20pct": {
+            "value": 0.7428571428571429,
+            "low": 0.6,
+            "high": 0.8571428571428571
+          },
+          "f1": {
+            "value": 0.6571428571428571,
+            "low": 0.5245901639344263,
+            "high": 0.7733333333333333
+          },
+          "brier": 0.08537102312819148,
+          "ece": 0.05246705594473115,
+          "threshold": 0.4165636449396741
+        },
+        "system 1 alone": {
+          "average_precision": {
+            "value": 0.48843504112266317,
+            "low": 0.35566566971854824,
+            "high": 0.6326732098051221
+          },
+          "roc_auc": {
+            "value": 0.7681498829039812,
+            "low": 0.6768149882903981,
+            "high": 0.8501209992193598
+          },
+          "recall_at_10pct": {
+            "value": 0.37142857142857144,
+            "low": 0.22857142857142856,
+            "high": 0.45714285714285713
+          },
+          "recall_at_20pct": {
+            "value": 0.545054945054945,
+            "low": 0.4,
+            "high": 0.6857142857142857
+          },
+          "f1": {
+            "value": 0.5217391304347826,
+            "low": 0.3783783783783784,
+            "high": 0.6493668831168828
+          },
+          "brier": 0.11355953674452411,
+          "ece": 0.029808787822534683,
+          "threshold": 0.2157604497883718
+        },
+        "fusion without the accounting rules": {
+          "average_precision": {
+            "value": 0.9106812330426234,
+            "low": 0.8415581894226035,
+            "high": 0.9667178968369606
+          },
+          "roc_auc": {
+            "value": 0.9722092115534738,
+            "low": 0.9437900078064013,
+            "high": 0.9915690866510538
+          },
+          "recall_at_10pct": {
+            "value": 0.6228571428571429,
+            "low": 0.5714285714285714,
+            "high": 0.6228571428571429
+          },
+          "recall_at_20pct": {
+            "value": 0.8742857142857143,
+            "low": 0.7428571428571429,
+            "high": 0.9600000000000001
+          },
+          "f1": {
+            "value": 0.8135593220338984,
+            "low": 0.6792452830188679,
+            "high": 0.90625
+          },
+          "brier": 0.041588963961319086,
+          "ece": 0.03062105277747407,
+          "threshold": 0.6086241567161633
+        },
+        "fusion without pixel evidence": {
+          "average_precision": {
+            "value": 0.8515736765883326,
+            "low": 0.744690198463539,
+            "high": 0.9429142210068396
+          },
+          "roc_auc": {
+            "value": 0.9049180327868852,
+            "low": 0.8282591725214676,
+            "high": 0.9676034348165495
+          },
+          "recall_at_10pct": {
+            "value": 0.6228571428571429,
+            "low": 0.6,
+            "high": 0.6228571428571429
+          },
+          "recall_at_20pct": {
+            "value": 0.8,
+            "low": 0.6571428571428571,
+            "high": 0.9142857142857143
+          },
+          "f1": {
+            "value": 0.8181818181818182,
+            "low": 0.7096774193548387,
+            "high": 0.9117647058823529
+          },
+          "brier": 0.04433052083332641,
+          "ece": 0.02781258373125185,
+          "threshold": 0.2802079751879759
+        },
+        "fusion without copy-move": {
+          "average_precision": {
+            "value": 0.7628294187235192,
+            "low": 0.6445695770169836,
+            "high": 0.8748664650004783
+          },
+          "roc_auc": {
+            "value": 0.898048399687744,
+            "low": 0.8220140515222483,
+            "high": 0.9595667447306792
+          },
+          "recall_at_10pct": {
+            "value": 0.5085714285714286,
+            "low": 0.4,
+            "high": 0.5942857142857143
+          },
+          "recall_at_20pct": {
+            "value": 0.7714285714285715,
+            "low": 0.6571428571428571,
+            "high": 0.8857142857142857
+          },
+          "f1": {
+            "value": 0.676923076923077,
+            "low": 0.5423728813559322,
+            "high": 0.7941176470588235
+          },
+          "brier": 0.0712241111507334,
+          "ece": 0.04263404384677184,
+          "threshold": 0.3787260132779334
+        },
+        "score-level baseline": {
+          "average_precision": {
+            "value": 0.9110511035437607,
+            "low": 0.8401083430865618,
+            "high": 0.9679180519632679
+          },
+          "roc_auc": {
+            "value": 0.9684621389539423,
+            "low": 0.9303669008587041,
+            "high": 0.9923497267759562
+          },
+          "recall_at_10pct": {
+            "value": 0.6228571428571429,
+            "low": 0.5428571428571428,
+            "high": 0.6228571428571429
+          },
+          "recall_at_20pct": {
+            "value": 0.9028571428571429,
+            "low": 0.8,
+            "high": 0.9714285714285714
+          },
+          "f1": {
+            "value": 0.7936507936507936,
+            "low": 0.6666666666666666,
+            "high": 0.8955223880597015
+          },
+          "brier": 0.04201335186266582,
+          "ece": 0.04064831020942947,
+          "threshold": 0.3657697117230601
+        },
+        "fusion": {
+          "average_precision": {
+            "value": 0.9120097776665024,
+            "low": 0.8440591705640206,
+            "high": 0.9674222982528359
+          },
+          "roc_auc": {
+            "value": 0.9726775956284153,
+            "low": 0.9437900078064013,
+            "high": 0.9920374707259954
+          },
+          "recall_at_10pct": {
+            "value": 0.6228571428571429,
+            "low": 0.5657142857142857,
+            "high": 0.6228571428571429
+          },
+          "recall_at_20pct": {
+            "value": 0.8742857142857143,
+            "low": 0.7714285714285715,
+            "high": 0.9714285714285714
+          },
+          "f1": {
+            "value": 0.8135593220338984,
+            "low": 0.6792452830188679,
+            "high": 0.90625
+          },
+          "brier": 0.040635071035936256,
+          "ece": 0.028654678399875323,
+          "threshold": 0.6131477002553435
+        }
+      },
+      "comparisons": {
+        "accounting rules": {
+          "value": 0.5642967087165135,
+          "low": 0.4121053627807006,
+          "high": 0.6812788872421051,
+          "above_zero": true
+        },
+        "pixel evidence": {
+          "value": 0.22036333608425096,
+          "low": 0.1080719782910157,
+          "high": 0.33620850931773044,
+          "above_zero": true
+        },
+        "copy-move": {
+          "value": 0.08190531576152515,
+          "low": -0.0010149940516991146,
+          "high": 0.17618107911189138,
+          "above_zero": false
+        },
+        "score-level baseline": {
+          "value": 0.0009586741227416429,
+          "low": -0.027640871838899964,
+          "high": 0.02712848631971421,
+          "above_zero": false
+        }
+      },
+      "fusion_beats_every_single_source": false,
+      "seeds": {
+        "0": 0.9120097776665024,
+        "1": 0.9337135780025725,
+        "2": 0.9138778157768506
+      },
+      "success": {
+        "f1": {
+          "value": 0.8135593220338984,
+          "low": 0.6792452830188679,
+          "high": 0.90625
+        },
+        "recall_at_10pct": {
+          "value": 0.6228571428571429,
+          "low": 0.5657142857142857,
+          "high": 0.6228571428571429
+        },
+        "f1_above_published": true,
+        "recall_above_chance": true,
+        "met": true
+      }
+    },
+    "ocr": {
+      "receipts": 218,
+      "forged": 35,
+      "table": {
+        "accounting rules": {
+          "average_precision": {
+            "value": 0.24705786293239285,
+            "low": 0.18050011122955503,
+            "high": 0.3874708802054748
+          },
+          "roc_auc": {
+            "value": 0.6020296643247462,
+            "low": 0.49547228727556597,
+            "high": 0.7061709601873536
+          },
+          "recall_at_10pct": {
+            "value": 0.2,
+            "low": 0.08571428571428572,
+            "high": 0.3142857142857143
+          },
+          "recall_at_20pct": {
+            "value": 0.33142857142857146,
+            "low": 0.2,
+            "high": 0.48999999999999994
+          },
+          "f1": {
+            "value": 0.2571428571428571,
+            "low": 0.12903225806451613,
+            "high": 0.3880804311774458
+          },
+          "brier": 0.13268544672717078,
+          "ece": 0.06987319696910914,
+          "threshold": 0.2383851078952206
+        },
+        "pixel evidence": {
+          "average_precision": {
+            "value": 0.6916464415822514,
+            "low": 0.5613773278910922,
+            "high": 0.820276884280919
+          },
+          "roc_auc": {
+            "value": 0.8721311475409836,
+            "low": 0.7942193598750976,
+            "high": 0.9372404371584699
+          },
+          "recall_at_10pct": {
+            "value": 0.45142857142857146,
+            "low": 0.3371428571428572,
+            "high": 0.5428571428571428
+          },
+          "recall_at_20pct": {
+            "value": 0.7428571428571429,
+            "low": 0.6171428571428572,
+            "high": 0.8742857142857143
+          },
+          "f1": {
+            "value": 0.6842105263157895,
+            "low": 0.5675675675675675,
+            "high": 0.7894736842105263
+          },
+          "brier": 0.08163176768511723,
+          "ece": 0.0446151681433719,
+          "threshold": 0.30255137219201894
+        },
+        "copy-move": {
+          "average_precision": {
+            "value": 0.8301044619049772,
+            "low": 0.710998252512014,
+            "high": 0.9280471821756227
+          },
+          "roc_auc": {
+            "value": 0.8707259953161592,
+            "low": 0.7779859484777517,
+            "high": 0.9463700234192037
+          },
+          "recall_at_10pct": {
+            "value": 0.6228571428571429,
+            "low": 0.6,
+            "high": 0.6228571428571429
+          },
+          "recall_at_20pct": {
+            "value": 0.8,
+            "low": 0.6571428571428571,
+            "high": 0.9142857142857143
+          },
+          "f1": {
+            "value": 0.8484848484848485,
+            "low": 0.75,
+            "high": 0.9295774647887324
+          },
+          "brier": 0.04475894016113687,
+          "ece": 0.027703268557453798,
+          "threshold": 0.33747275125749315
+        },
+        "system 2 alone": {
+          "average_precision": {
+            "value": 0.7015107175198447,
+            "low": 0.5674465156533942,
+            "high": 0.8284875319117668
+          },
+          "roc_auc": {
+            "value": 0.8800936768149883,
+            "low": 0.8074941451990633,
+            "high": 0.9394223263075722
+          },
+          "recall_at_10pct": {
+            "value": 0.45142857142857146,
+            "low": 0.3657142857142857,
+            "high": 0.5657142857142857
+          },
+          "recall_at_20pct": {
+            "value": 0.7428571428571429,
+            "low": 0.6,
+            "high": 0.8571428571428571
+          },
+          "f1": {
+            "value": 0.6571428571428571,
+            "low": 0.5245901639344263,
+            "high": 0.7733333333333333
+          },
+          "brier": 0.08537102312819148,
+          "ece": 0.05246705594473115,
+          "threshold": 0.4165636449396741
+        },
+        "system 1 alone": {
+          "average_precision": {
+            "value": 0.48843504112266317,
+            "low": 0.35566566971854824,
+            "high": 0.6326732098051221
+          },
+          "roc_auc": {
+            "value": 0.7681498829039812,
+            "low": 0.6768149882903981,
+            "high": 0.8501209992193598
+          },
+          "recall_at_10pct": {
+            "value": 0.37142857142857144,
+            "low": 0.22857142857142856,
+            "high": 0.45714285714285713
+          },
+          "recall_at_20pct": {
+            "value": 0.545054945054945,
+            "low": 0.4,
+            "high": 0.6857142857142857
+          },
+          "f1": {
+            "value": 0.5217391304347826,
+            "low": 0.3783783783783784,
+            "high": 0.6493668831168828
+          },
+          "brier": 0.11355953674452411,
+          "ece": 0.029808787822534683,
+          "threshold": 0.2157604497883718
+        },
+        "fusion without the accounting rules": {
+          "average_precision": {
+            "value": 0.9002716879063482,
+            "low": 0.82526685592402,
+            "high": 0.961544767008174
+          },
+          "roc_auc": {
+            "value": 0.9669008587041374,
+            "low": 0.9339539422326307,
+            "high": 0.9898516783762685
+          },
+          "recall_at_10pct": {
+            "value": 0.6228571428571429,
+            "low": 0.5714285714285714,
+            "high": 0.6228571428571429
+          },
+          "recall_at_20pct": {
+            "value": 0.8285714285714286,
+            "low": 0.7142857142857143,
+            "high": 0.9428571428571428
+          },
+          "f1": {
+            "value": 0.819672131147541,
+            "low": 0.7017543859649122,
+            "high": 0.9117647058823529
+          },
+          "brier": 0.04261631551805981,
+          "ece": 0.035379611840594925,
+          "threshold": 0.5329859971132338
+        },
+        "fusion without pixel evidence": {
+          "average_precision": {
+            "value": 0.8423663042313443,
+            "low": 0.7296404567212742,
+            "high": 0.9362529040350778
+          },
+          "roc_auc": {
+            "value": 0.8818110850897736,
+            "low": 0.7921916471506636,
+            "high": 0.9573809523809523
+          },
+          "recall_at_10pct": {
+            "value": 0.6228571428571429,
+            "low": 0.6,
+            "high": 0.6228571428571429
+          },
+          "recall_at_20pct": {
+            "value": 0.8,
+            "low": 0.6571428571428571,
+            "high": 0.9142857142857143
+          },
+          "f1": {
+            "value": 0.8307692307692308,
+            "low": 0.7213114754098361,
+            "high": 0.9230769230769231
+          },
+          "brier": 0.04499930569548544,
+          "ece": 0.03818824086709905,
+          "threshold": 0.30351736935376317
+        },
+        "fusion without copy-move": {
+          "average_precision": {
+            "value": 0.7516918724144565,
+            "low": 0.6322243438869614,
+            "high": 0.8642880899632588
+          },
+          "roc_auc": {
+            "value": 0.8897736143637783,
+            "low": 0.8096760343481655,
+            "high": 0.955815768930523
+          },
+          "recall_at_10pct": {
+            "value": 0.4857142857142857,
+            "low": 0.37142857142857144,
+            "high": 0.5942857142857143
+          },
+          "recall_at_20pct": {
+            "value": 0.7885714285714286,
+            "low": 0.6571428571428571,
+            "high": 0.8857142857142857
+          },
+          "f1": {
+            "value": 0.6666666666666666,
+            "low": 0.5373134328358209,
+            "high": 0.782608695652174
+          },
+          "brier": 0.07330720829777719,
+          "ece": 0.05251891031814594,
+          "threshold": 0.32605014579192976
+        },
+        "score-level baseline": {
+          "average_precision": {
+            "value": 0.9051141112445131,
+            "low": 0.831899577316508,
+            "high": 0.9634448051617245
+          },
+          "roc_auc": {
+            "value": 0.9672131147540983,
+            "low": 0.9295862607338017,
+            "high": 0.9914129586260734
+          },
+          "recall_at_10pct": {
+            "value": 0.6228571428571429,
+            "low": 0.5428571428571428,
+            "high": 0.6228571428571429
+          },
+          "recall_at_20pct": {
+            "value": 0.8571428571428571,
+            "low": 0.76,
+            "high": 0.9714285714285714
+          },
+          "f1": {
+            "value": 0.7894736842105263,
+            "low": 0.6933333333333334,
+            "high": 0.8767123287671232
+          },
+          "brier": 0.04323134633131571,
+          "ece": 0.036422210690107204,
+          "threshold": 0.17981757035245546
+        },
+        "fusion": {
+          "average_precision": {
+            "value": 0.9021790706244492,
+            "low": 0.8287020706614018,
+            "high": 0.9627024492795706
+          },
+          "roc_auc": {
+            "value": 0.9670569867291179,
+            "low": 0.9323965651834504,
+            "high": 0.99032006245121
+          },
+          "recall_at_10pct": {
+            "value": 0.6228571428571429,
+            "low": 0.5428571428571428,
+            "high": 0.6228571428571429
+          },
+          "recall_at_20pct": {
+            "value": 0.8571428571428571,
+            "low": 0.7428571428571429,
+            "high": 0.9428571428571428
+          },
+          "f1": {
+            "value": 0.8135593220338984,
+            "low": 0.6792452830188679,
+            "high": 0.90625
+          },
+          "brier": 0.0421802038029816,
+          "ece": 0.03378836150771117,
+          "threshold": 0.5624147669061262
+        }
+      },
+      "comparisons": {
+        "accounting rules": {
+          "value": 0.6551212076920564,
+          "low": 0.5108734819513997,
+          "high": 0.7373803322685136,
+          "above_zero": true
+        },
+        "pixel evidence": {
+          "value": 0.21053262904219783,
+          "low": 0.09646408921800842,
+          "high": 0.3262971370307303,
+          "above_zero": true
+        },
+        "copy-move": {
+          "value": 0.07207460871947202,
+          "low": -0.00401135688549591,
+          "high": 0.15531428365881975,
+          "above_zero": false
+        },
+        "score-level baseline": {
+          "value": -0.002935040620063889,
+          "low": -0.026731221100219506,
+          "high": 0.01917258631808901,
+          "above_zero": false
+        }
+      },
+      "fusion_beats_every_single_source": false,
+      "seeds": {
+        "0": 0.9021790706244492,
+        "1": 0.9294692904997532,
+        "2": 0.9147212172226207
+      },
+      "success": {
+        "f1": {
+          "value": 0.8135593220338984,
+          "low": 0.6792452830188679,
+          "high": 0.90625
+        },
+        "recall_at_10pct": {
+          "value": 0.6228571428571429,
+          "low": 0.5428571428571428,
+          "high": 0.6228571428571429
+        },
+        "f1_above_published": true,
+        "recall_above_chance": true,
+        "met": true
+      }
+    },
+    "T3": {
+      "table": {
+        "fusion of track T2": {
+          "average_precision": {
+            "value": 0.9021790706244492,
+            "low": 0.8287020706614018,
+            "high": 0.9627024492795706
+          },
+          "roc_auc": {
+            "value": 0.9670569867291179,
+            "low": 0.9323965651834504,
+            "high": 0.99032006245121
+          },
+          "recall_at_10pct": {
+            "value": 0.6228571428571429,
+            "low": 0.5428571428571428,
+            "high": 0.6228571428571429
+          },
+          "recall_at_20pct": {
+            "value": 0.8571428571428571,
+            "low": 0.7428571428571429,
+            "high": 0.9428571428571428
+          },
+          "f1": {
+            "value": 0.8135593220338984,
+            "low": 0.6792452830188679,
+            "high": 0.90625
+          },
+          "brier": 0.0421802038029816,
+          "ece": 0.03378836150771117,
+          "threshold": 0.5624147669061262
+        },
+        "file metadata alone": {
+          "average_precision": {
+            "value": 0.9220474734236201,
+            "low": 0.8279713044078086,
+            "high": 1.0
+          },
+          "roc_auc": {
+            "value": 0.9802498048399688,
+            "low": 0.9462138953942233,
+            "high": 1.0
+          },
+          "recall_at_10pct": {
+            "value": 0.5882539682539684,
+            "low": 0.5409022556390978,
+            "high": 0.6228571428571429
+          },
+          "recall_at_20pct": {
+            "value": 0.9726216640502355,
+            "low": 0.9178649921507065,
+            "high": 1.0
+          },
+          "f1": {
+            "value": 0.9577464788732394,
+            "low": 0.9041095890410958,
+            "high": 1.0
+          },
+          "brier": 0.013777488337389678,
+          "ece": 0.015093368342709709,
+          "threshold": 0.9999537017486739
+        },
+        "fusion of track T3": {
+          "average_precision": {
+            "value": 0.9959331349247316,
+            "low": 0.9851261749248937,
+            "high": 1.0
+          },
+          "roc_auc": {
+            "value": 0.9992193598750976,
+            "low": 0.9970335675253708,
+            "high": 1.0
+          },
+          "recall_at_10pct": {
+            "value": 0.6228571428571429,
+            "low": 0.6228571428571429,
+            "high": 0.6228571428571429
+          },
+          "recall_at_20pct": {
+            "value": 1.0,
+            "low": 1.0,
+            "high": 1.0
+          },
+          "f1": {
+            "value": 0.9722222222222222,
+            "low": 0.9333333333333333,
+            "high": 1.0
+          },
+          "brier": 0.009744837899875918,
+          "ece": 0.011054926940483462,
+          "threshold": 0.30232901790295214
+        }
+      }
+    },
+    "policy": {
+      "transcript": {
+        "10 %": {
+          "budget": 0.1,
+          "threshold": 0.7484014662853322,
+          "receipts": 218,
+          "reviewed": 23,
+          "forged": 35,
+          "forged_reviewed": 23,
+          "review_share": {
+            "value": 0.10550458715596331,
+            "low": 0.06422018348623854,
+            "high": 0.14678899082568808
+          },
+          "recall": {
+            "value": 0.6571428571428571,
+            "low": 0.4878048780487805,
+            "high": 0.8125
+          },
+          "precision": {
+            "value": 1.0,
+            "low": 1.0,
+            "high": 1.0
+          }
+        },
+        "20 %": {
+          "budget": 0.2,
+          "threshold": 0.21404936779230965,
+          "receipts": 218,
+          "reviewed": 37,
+          "forged": 35,
+          "forged_reviewed": 28,
+          "review_share": {
+            "value": 0.16972477064220184,
+            "low": 0.11926605504587157,
+            "high": 0.22018348623853212
+          },
+          "recall": {
+            "value": 0.8,
+            "low": 0.65625,
+            "high": 0.925
+          },
+          "precision": {
+            "value": 0.7567567567567568,
+            "low": 0.6129032258064516,
+            "high": 0.8888888888888888
+          }
+        }
+      },
+      "ocr": {
+        "10 %": {
+          "budget": 0.1,
+          "threshold": 0.723037724890667,
+          "receipts": 218,
+          "reviewed": 24,
+          "forged": 35,
+          "forged_reviewed": 24,
+          "review_share": {
+            "value": 0.11009174311926606,
+            "low": 0.06880733944954129,
+            "high": 0.15137614678899083
+          },
+          "recall": {
+            "value": 0.6857142857142857,
+            "low": 0.5263157894736842,
+            "high": 0.8372093023255814
+          },
+          "precision": {
+            "value": 1.0,
+            "low": 1.0,
+            "high": 1.0
+          }
+        },
+        "20 %": {
+          "budget": 0.2,
+          "threshold": 0.1923158406525398,
+          "receipts": 218,
+          "reviewed": 39,
+          "forged": 35,
+          "forged_reviewed": 28,
+          "review_share": {
+            "value": 0.17889908256880735,
+            "low": 0.12844036697247707,
+            "high": 0.22935779816513763
+          },
+          "recall": {
+            "value": 0.8,
+            "low": 0.65625,
+            "high": 0.925
+          },
+          "precision": {
+            "value": 0.717948717948718,
+            "low": 0.5681818181818182,
+            "high": 0.8541666666666666
+          }
+        }
+      }
+    },
+    "sensitivity": {
+      "rq3": {
+        "transcript": {
+          "technique": {
+            "CPI": {
+              "receipts": 27,
+              "mean_contribution": {
+                "rules": 0.27219718580900354,
+                "system 2": 1.0860212184548408,
+                "system 1 + system 1 evidence": 0.7972081113858928,
+                "copy-move": 6.341266444235409,
+                "link 1": 0.2734197792975485,
+                "link 2": 0.10578440618352716
+              },
+              "largest": {
+                "rules": 0,
+                "system 2": 0,
+                "system 1 + system 1 evidence": 2,
+                "copy-move": 25,
+                "link 1": 0,
+                "link 2": 0
+              },
+              "caught": {
+                "accounting rules": 8.4,
+                "pixel evidence": 12.0,
+                "copy-move": 20.0,
+                "fusion": 20.0
+              }
+            },
+            "CPO": {
+              "receipts": 2,
+              "mean_contribution": {
+                "rules": -0.11134167710384708,
+                "system 2": 0.7433114619299481,
+                "system 1 + system 1 evidence": 0.24440187145528933,
+                "copy-move": -1.4065261059953134,
+                "link 1": 0.42646949639438364,
+                "link 2": -0.030219794617484592
+              },
+              "largest": {
+                "rules": 0,
+                "system 2": 1,
+                "system 1 + system 1 evidence": 0,
+                "copy-move": 0,
+                "link 1": 1,
+                "link 2": 0
+              },
+              "caught": {
+                "accounting rules": 0.0,
+                "pixel evidence": 1.0,
+                "copy-move": 0.0,
+                "fusion": 0.0
+              }
+            },
+            "IMI": {
+              "receipts": 3,
+              "mean_contribution": {
+                "rules": 0.3893027340319284,
+                "system 2": 1.8122323946939034,
+                "system 1 + system 1 evidence": 0.8872587580692439,
+                "copy-move": 0.39852023561525635,
+                "link 1": 0.42646949639438364,
+                "link 2": 0.12278493128365364
+              },
+              "largest": {
+                "rules": 0,
+                "system 2": 2,
+                "system 1 + system 1 evidence": 0,
+                "copy-move": 1,
+                "link 1": 0,
+                "link 2": 0
+              },
+              "caught": {
+                "accounting rules": 2.0,
+                "pixel evidence": 1.0,
+                "copy-move": 1.0,
+                "fusion": 1.0
+              }
+            },
+            "CUT": {
+              "receipts": 5,
+              "mean_contribution": {
+                "rules": 1.1022885659497637,
+                "system 2": 1.1507406016916644,
+                "system 1 + system 1 evidence": 0.09750508368804237,
+                "copy-move": 0.20701332124015784,
+                "link 1": 0.2198523783136564,
+                "link 2": 0.2451887120045642
+              },
+              "largest": {
+                "rules": 0,
+                "system 2": 3,
+                "system 1 + system 1 evidence": 0,
+                "copy-move": 2,
+                "link 1": 0,
+                "link 2": 0
+              },
+              "caught": {
+                "accounting rules": 3.0,
+                "pixel evidence": 1.0,
+                "copy-move": 2.0,
+                "fusion": 2.0
+              }
+            },
+            "PIX": {
+              "receipts": 3,
+              "mean_contribution": {
+                "rules": 1.5349323871214782,
+                "system 2": 1.0129299405336563,
+                "system 1 + system 1 evidence": 0.12454591155344286,
+                "copy-move": 1.2827062727304719,
+                "link 1": 0.08210763292650487,
+                "link 2": 0.27578965718479187
+              },
+              "largest": {
+                "rules": 0,
+                "system 2": 1,
+                "system 1 + system 1 evidence": 0,
+                "copy-move": 2,
+                "link 1": 0,
+                "link 2": 0
+              },
+              "caught": {
+                "accounting rules": 2.0,
+                "pixel evidence": 1.0,
+                "copy-move": 2.0,
+                "fusion": 2.0
+              }
+            }
+          },
+          "entity": {
+            "total_payment": {
+              "receipts": 14,
+              "mean_contribution": {
+                "rules": 0.7259977435271524,
+                "system 2": 1.3116801267029694,
+                "system 1 + system 1 evidence": 1.0055634230828603,
+                "copy-move": 7.338707351339589,
+                "link 1": 0.42646949639438364,
+                "link 2": 0.2648607481918534
+              },
+              "largest": {
+                "rules": 0,
+                "system 2": 1,
+                "system 1 + system 1 evidence": 0,
+                "copy-move": 13,
+                "link 1": 0,
+                "link 2": 0
+              },
+              "caught": {
+                "accounting rules": 9.4,
+                "pixel evidence": 6.0,
+                "copy-move": 13.0,
+                "fusion": 13.0
+              }
+            },
+            "product": {
+              "receipts": 15,
+              "mean_contribution": {
+                "rules": 0.5384997782638464,
+                "system 2": 1.537567790451969,
+                "system 1 + system 1 evidence": 1.1039901113500374,
+                "copy-move": 5.4133406125826165,
+                "link 1": 0.4264694963943836,
+                "link 2": 0.18398682164410893
+              },
+              "largest": {
+                "rules": 0,
+                "system 2": 4,
+                "system 1 + system 1 evidence": 0,
+                "copy-move": 11,
+                "link 1": 0,
+                "link 2": 0
+              },
+              "caught": {
+                "accounting rules": 8.4,
+                "pixel evidence": 8.0,
+                "copy-move": 11.0,
+                "fusion": 11.0
+              }
+            },
+            "metadata": {
+              "receipts": 15,
+              "mean_contribution": {
+                "rules": -0.028651527973119296,
+                "system 2": 1.0525611102540535,
+                "system 1 + system 1 evidence": 0.5294655087738817,
+                "copy-move": 3.0709373598537786,
+                "link 1": 0.2887247510072322,
+                "link 2": 0.0003811505627430554
+              },
+              "largest": {
+                "rules": 0,
+                "system 2": 3,
+                "system 1 + system 1 evidence": 1,
+                "copy-move": 10,
+                "link 1": 1,
+                "link 2": 0
+              },
+              "caught": {
+                "accounting rules": 1.0,
+                "pixel evidence": 7.0,
+                "copy-move": 7.0,
+                "fusion": 6.0
+              }
+            },
+            "company": {
+              "receipts": 5,
+              "mean_contribution": {
+                "rules": -0.13905542887869007,
+                "system 2": 0.9955495505986107,
+                "system 1 + system 1 evidence": 0.29000785604639495,
+                "copy-move": 3.7326265479288674,
+                "link 1": -0.19338185784779813,
+                "link 2": -0.030219794617484592
+              },
+              "largest": {
+                "rules": 0,
+                "system 2": 0,
+                "system 1 + system 1 evidence": 1,
+                "copy-move": 4,
+                "link 1": 0,
+                "link 2": 0
+              },
+              "caught": {
+                "accounting rules": 0.0,
+                "pixel evidence": 1.0,
+                "copy-move": 2.0,
+                "fusion": 3.0
+              }
+            }
+          },
+          "rules-blindness": {
+            "changing only what the rules cannot check": {
+              "receipts": 17,
+              "mean_contribution": {
+                "rules": -0.10681693464489087,
+                "system 2": 0.9325335862274349,
+                "system 1 + system 1 evidence": 0.4802799022334531,
+                "copy-move": 2.674196078847995,
+                "link 1": 0.12262079333449065,
+                "link 2": -0.030219794617484592
+              },
+              "largest": {
+                "rules": 0,
+                "system 2": 2,
+                "system 1 + system 1 evidence": 2,
+                "copy-move": 12,
+                "link 1": 1,
+                "link 2": 0
+              },
+              "caught": {
+                "accounting rules": 0.0,
+                "pixel evidence": 7.0,
+                "copy-move": 7.0,
+                "fusion": 7.0
+              }
+            }
+          },
+          "editing software": {
+            "aperçu": {
+              "receipts": 3,
+              "mean_contribution": {
+                "rules": 0.15685150344684337,
+                "system 2": 1.8273678257394756,
+                "system 1 + system 1 evidence": 0.9992714945139803,
+                "copy-move": 2.4648691033876897,
+                "link 1": 0.42646949639438364,
+                "link 2": 0.12278493128365364
+              },
+              "largest": {
+                "rules": 0,
+                "system 2": 1,
+                "system 1 + system 1 evidence": 0,
+                "copy-move": 2,
+                "link 1": 0,
+                "link 2": 0
+              },
+              "caught": {
+                "accounting rules": 1.0,
+                "pixel evidence": 1.0,
+                "copy-move": 2.0,
+                "fusion": 2.0
+              }
+            },
+            "gimp": {
+              "receipts": 13,
+              "mean_contribution": {
+                "rules": 0.34469344139553176,
+                "system 2": 0.8741064379857966,
+                "system 1 + system 1 evidence": 0.6963630803256152,
+                "copy-move": 3.6836817362742056,
+                "link 1": 0.18806512937815992,
+                "link 2": 0.07570655408330339
+              },
+              "largest": {
+                "rules": 0,
+                "system 2": 2,
+                "system 1 + system 1 evidence": 1,
+                "copy-move": 9,
+                "link 1": 1,
+                "link 2": 0
+              },
+              "caught": {
+                "accounting rules": 3.4,
+                "pixel evidence": 6.0,
+                "copy-move": 6.0,
+                "fusion": 7.0
+              }
+            },
+            "paint": {
+              "receipts": 18,
+              "mean_contribution": {
+                "rules": 0.24962493949493833,
+                "system 2": 1.2549118161316708,
+                "system 1 + system 1 evidence": 0.6710451471745836,
+                "copy-move": 6.003296321664228,
+                "link 1": 0.3116822085717573,
+                "link 2": 0.1227849312836536
+              },
+              "largest": {
+                "rules": 0,
+                "system 2": 3,
+                "system 1 + system 1 evidence": 1,
+                "copy-move": 14,
+                "link 1": 0,
+                "link 2": 0
+              },
+              "caught": {
+                "accounting rules": 7.0,
+                "pixel evidence": 7.0,
+                "copy-move": 13.0,
+                "fusion": 12.0
+              }
+            },
+            "paint3d": {
+              "receipts": 1,
+              "mean_contribution": {
+                "rules": -0.10979431800977259,
+                "system 2": 1.1606042968006687,
+                "system 1 + system 1 evidence": 1.0874758216036797,
+                "copy-move": 2.035320499541385,
+                "link 1": 0.42646949639438364,
+                "link 2": -0.030219794617484592
+              },
+              "largest": {
+                "rules": 0,
+                "system 2": 0,
+                "system 1 + system 1 evidence": 0,
+                "copy-move": 1,
+                "link 1": 0,
+                "link 2": 0
+              },
+              "caught": {
+                "accounting rules": 0.0,
+                "pixel evidence": 1.0,
+                "copy-move": 0.0,
+                "fusion": 0.0
+              }
+            }
+          }
+        },
+        "ocr": {
+          "technique": {
+            "CPI": {
+              "receipts": 27,
+              "mean_contribution": {
+                "rules": 0.1111934839231715,
+                "system 2": 1.116368784741176,
+                "system 1 + system 1 evidence": 0.7709050560115442,
+                "copy-move": 6.3993747447141285,
+                "link 1": 0.13587143218590336,
+                "link 2": 0.23260420280028404
+              },
+              "largest": {
+                "rules": 0,
+                "system 2": 0,
+                "system 1 + system 1 evidence": 2,
+                "copy-move": 25,
+                "link 1": 0,
+                "link 2": 0
+              },
+              "caught": {
+                "accounting rules": 7.0,
+                "pixel evidence": 12.0,
+                "copy-move": 20.0,
+                "fusion": 20.0
+              }
+            },
+            "CPO": {
+              "receipts": 2,
+              "mean_contribution": {
+                "rules": -0.061931275164387053,
+                "system 2": 0.7640824132511446,
+                "system 1 + system 1 evidence": 0.24935134143952792,
+                "copy-move": -1.4194148313496366,
+                "link 1": 0.24067481523349848,
+                "link 2": -0.08013159139531312
+              },
+              "largest": {
+                "rules": 0,
+                "system 2": 1,
+                "system 1 + system 1 evidence": 0,
+                "copy-move": 0,
+                "link 1": 1,
+                "link 2": 0
+              },
+              "caught": {
+                "accounting rules": 0.0,
+                "pixel evidence": 1.0,
+                "copy-move": 0.0,
+                "fusion": 0.0
+              }
+            },
+            "IMI": {
+              "receipts": 3,
+              "mean_contribution": {
+                "rules": 0.0298041696519894,
+                "system 2": 1.8628730652348209,
+                "system 1 + system 1 evidence": 0.8562837883110648,
+                "copy-move": 0.4021720824193013,
+                "link 1": 0.24067481523349846,
+                "link 2": 0.23260420280028396
+              },
+              "largest": {
+                "rules": 0,
+                "system 2": 2,
+                "system 1 + system 1 evidence": 0,
+                "copy-move": 1,
+                "link 1": 0,
+                "link 2": 0
+              },
+              "caught": {
+                "accounting rules": 0.0,
+                "pixel evidence": 1.0,
+                "copy-move": 1.0,
+                "fusion": 1.0
+              }
+            },
+            "CUT": {
+              "receipts": 5,
+              "mean_contribution": {
+                "rules": 0.3049482359772518,
+                "system 2": 1.1828966738703472,
+                "system 1 + system 1 evidence": 0.08543023101358312,
+                "copy-move": 0.20891029125072333,
+                "link 1": 0.014299507850693217,
+                "link 2": 0.48279283815676166
+              },
+              "largest": {
+                "rules": 0,
+                "system 2": 3,
+                "system 1 + system 1 evidence": 0,
+                "copy-move": 2,
+                "link 1": 0,
+                "link 2": 0
+              },
+              "caught": {
+                "accounting rules": 1.0,
+                "pixel evidence": 1.0,
+                "copy-move": 2.0,
+                "fusion": 1.0
+              }
+            },
+            "PIX": {
+              "receipts": 3,
+              "mean_contribution": {
+                "rules": 0.3878067753617495,
+                "system 2": 1.0412350583263774,
+                "system 1 + system 1 evidence": 0.10899532462593962,
+                "copy-move": 1.2944603729842967,
+                "link 1": 0.05202872574782743,
+                "link 2": 0.5453399969958811
+              },
+              "largest": {
+                "rules": 0,
+                "system 2": 1,
+                "system 1 + system 1 evidence": 0,
+                "copy-move": 2,
+                "link 1": 0,
+                "link 2": 0
+              },
+              "caught": {
+                "accounting rules": 1.0,
+                "pixel evidence": 1.0,
+                "copy-move": 2.0,
+                "fusion": 1.0
+              }
+            }
+          },
+          "entity": {
+            "total_payment": {
+              "receipts": 14,
+              "mean_contribution": {
+                "rules": 0.16761001909357592,
+                "system 2": 1.3483334617531102,
+                "system 1 + system 1 evidence": 0.9693779767419628,
+                "copy-move": 7.405955718151974,
+                "link 1": 0.24067481523349846,
+                "link 2": 0.5900165390238236
+              },
+              "largest": {
+                "rules": 0,
+                "system 2": 1,
+                "system 1 + system 1 evidence": 0,
+                "copy-move": 13,
+                "link 1": 0,
+                "link 2": 0
+              },
+              "caught": {
+                "accounting rules": 3.0,
+                "pixel evidence": 6.0,
+                "copy-move": 13.0,
+                "fusion": 12.0
+              }
+            },
+            "product": {
+              "receipts": 15,
+              "mean_contribution": {
+                "rules": 0.08826481043234682,
+                "system 2": 1.5805332865652622,
+                "system 1 + system 1 evidence": 1.06758529529426,
+                "copy-move": 5.46294584927718,
+                "link 1": 0.24067481523349843,
+                "link 2": 0.4202456793176423
+              },
+              "largest": {
+                "rules": 0,
+                "system 2": 4,
+                "system 1 + system 1 evidence": 0,
+                "copy-move": 11,
+                "link 1": 0,
+                "link 2": 0
+              },
+              "caught": {
+                "accounting rules": 2.0,
+                "pixel evidence": 8.0,
+                "copy-move": 11.0,
+                "fusion": 10.0
+              }
+            },
+            "metadata": {
+              "receipts": 15,
+              "mean_contribution": {
+                "rules": 0.14393851419807163,
+                "system 2": 1.0819736737666716,
+                "system 1 + system 1 evidence": 0.5140494499360548,
+                "copy-move": 3.099077945401942,
+                "link 1": 0.08975794364496165,
+                "link 2": 0.04496272628292572
+              },
+              "largest": {
+                "rules": 0,
+                "system 2": 3,
+                "system 1 + system 1 evidence": 1,
+                "copy-move": 10,
+                "link 1": 1,
+                "link 2": 0
+              },
+              "caught": {
+                "accounting rules": 5.0,
+                "pixel evidence": 7.0,
+                "copy-move": 7.0,
+                "fusion": 7.0
+              }
+            },
+            "company": {
+              "receipts": 5,
+              "mean_contribution": {
+                "rules": -0.08666516720518622,
+                "system 2": 1.0233689941460473,
+                "system 1 + system 1 evidence": 0.27836402138949523,
+                "copy-move": 3.7668305333518517,
+                "link 1": -0.09888814584070942,
+                "link 2": -0.08013159139531312
+              },
+              "largest": {
+                "rules": 0,
+                "system 2": 0,
+                "system 1 + system 1 evidence": 1,
+                "copy-move": 4,
+                "link 1": 0,
+                "link 2": 0
+              },
+              "caught": {
+                "accounting rules": 0.0,
+                "pixel evidence": 1.0,
+                "copy-move": 2.0,
+                "fusion": 3.0
+              }
+            }
+          },
+          "rules-blindness": {
+            "changing only what the rules cannot check": {
+              "receipts": 17,
+              "mean_contribution": {
+                "rules": 0.0674675418249219,
+                "system 2": 0.9585921238889145,
+                "system 1 + system 1 evidence": 0.46563629488433866,
+                "copy-move": 2.69870111907225,
+                "link 1": 0.007641410574728365,
+                "link 2": -0.08013159139531312
+              },
+              "largest": {
+                "rules": 0,
+                "system 2": 2,
+                "system 1 + system 1 evidence": 2,
+                "copy-move": 12,
+                "link 1": 1,
+                "link 2": 0
+              },
+              "caught": {
+                "accounting rules": 4.0,
+                "pixel evidence": 7.0,
+                "copy-move": 7.0,
+                "fusion": 8.0
+              }
+            }
+          },
+          "editing software": {
+            "aperçu": {
+              "receipts": 3,
+              "mean_contribution": {
+                "rules": 0.01804275113147702,
+                "system 2": 1.8784314378298974,
+                "system 1 + system 1 evidence": 0.9517650908803414,
+                "copy-move": 2.4874559723924707,
+                "link 1": 0.24067481523349846,
+                "link 2": 0.23260420280028396
+              },
+              "largest": {
+                "rules": 0,
+                "system 2": 1,
+                "system 1 + system 1 evidence": 0,
+                "copy-move": 2,
+                "link 1": 0,
+                "link 2": 0
+              },
+              "caught": {
+                "accounting rules": 0.0,
+                "pixel evidence": 1.0,
+                "copy-move": 2.0,
+                "fusion": 2.0
+              }
+            },
+            "gimp": {
+              "receipts": 13,
+              "mean_contribution": {
+                "rules": 0.09096773850106891,
+                "system 2": 0.8985322987492063,
+                "system 1 + system 1 evidence": 0.6761894755259008,
+                "copy-move": 3.7174372151019357,
+                "link 1": 0.06653996340057136,
+                "link 2": 0.13637780458625412
+              },
+              "largest": {
+                "rules": 0,
+                "system 2": 2,
+                "system 1 + system 1 evidence": 1,
+                "copy-move": 9,
+                "link 1": 1,
+                "link 2": 0
+              },
+              "caught": {
+                "accounting rules": 3.0,
+                "pixel evidence": 6.0,
+                "copy-move": 6.0,
+                "fusion": 6.0
+              }
+            },
+            "paint": {
+              "receipts": 18,
+              "mean_contribution": {
+                "rules": 0.07882288700114137,
+                "system 2": 1.2899788285218574,
+                "system 1 + system 1 evidence": 0.6500422009846224,
+                "copy-move": 6.0583076273063625,
+                "link 1": 0.1463517704906629,
+                "link 2": 0.2847268351662169
+              },
+              "largest": {
+                "rules": 0,
+                "system 2": 3,
+                "system 1 + system 1 evidence": 1,
+                "copy-move": 14,
+                "link 1": 0,
+                "link 2": 0
+              },
+              "caught": {
+                "accounting rules": 3.0,
+                "pixel evidence": 7.0,
+                "copy-move": 13.0,
+                "fusion": 12.0
+              }
+            },
+            "paint3d": {
+              "receipts": 1,
+              "mean_contribution": {
+                "rules": 0.6061606083098645,
+                "system 2": 1.1930359981623382,
+                "system 1 + system 1 evidence": 1.061625784696309,
+                "copy-move": 2.0539711927740214,
+                "link 1": 0.24067481523349848,
+                "link 2": -0.08013159139531312
+              },
+              "largest": {
+                "rules": 0,
+                "system 2": 0,
+                "system 1 + system 1 evidence": 0,
+                "copy-move": 1,
+                "link 1": 0,
+                "link 2": 0
+              },
+              "caught": {
+                "accounting rules": 1.0,
+                "pixel evidence": 1.0,
+                "copy-move": 0.0,
+                "fusion": 1.0
+              }
+            }
+          }
+        }
+      },
+      "false_alarms": {
+        "transcript": {
+          "accounting rules": {
+            "digital": {
+              "receipts": 3.0,
+              "flagged": 0.0
+            },
+            "handwritten": {
+              "receipts": 81.0,
+              "flagged": 3.4
+            },
+            "handwritten and digital": {
+              "receipts": 6.0,
+              "flagged": 0.0
+            },
+            "none": {
+              "receipts": 85.0,
+              "flagged": 6.2
+            }
+          },
+          "pixel evidence": {
+            "digital": {
+              "receipts": 3.0,
+              "flagged": 1.0
+            },
+            "handwritten": {
+              "receipts": 81.0,
+              "flagged": 4.0
+            },
+            "handwritten and digital": {
+              "receipts": 6.0,
+              "flagged": 1.0
+            },
+            "none": {
+              "receipts": 85.0,
+              "flagged": 0.0
+            }
+          },
+          "copy-move": {
+            "digital": {
+              "receipts": 3.0,
+              "flagged": 0.0
+            },
+            "handwritten": {
+              "receipts": 81.0,
+              "flagged": 0.0
+            },
+            "handwritten and digital": {
+              "receipts": 6.0,
+              "flagged": 0.0
+            },
+            "none": {
+              "receipts": 85.0,
+              "flagged": 0.0
+            }
+          },
+          "fusion": {
+            "digital": {
+              "receipts": 3.0,
+              "flagged": 0.0
+            },
+            "handwritten": {
+              "receipts": 81.0,
+              "flagged": 0.0
+            },
+            "handwritten and digital": {
+              "receipts": 6.0,
+              "flagged": 0.0
+            },
+            "none": {
+              "receipts": 85.0,
+              "flagged": 0.0
+            }
+          }
+        },
+        "ocr": {
+          "accounting rules": {
+            "digital": {
+              "receipts": 3.0,
+              "flagged": 0.0
+            },
+            "handwritten": {
+              "receipts": 81.0,
+              "flagged": 5.0
+            },
+            "handwritten and digital": {
+              "receipts": 6.0,
+              "flagged": 0.0
+            },
+            "none": {
+              "receipts": 85.0,
+              "flagged": 9.0
+            }
+          },
+          "pixel evidence": {
+            "digital": {
+              "receipts": 3.0,
+              "flagged": 1.0
+            },
+            "handwritten": {
+              "receipts": 81.0,
+              "flagged": 4.0
+            },
+            "handwritten and digital": {
+              "receipts": 6.0,
+              "flagged": 1.0
+            },
+            "none": {
+              "receipts": 85.0,
+              "flagged": 0.0
+            }
+          },
+          "copy-move": {
+            "digital": {
+              "receipts": 3.0,
+              "flagged": 0.0
+            },
+            "handwritten": {
+              "receipts": 81.0,
+              "flagged": 0.0
+            },
+            "handwritten and digital": {
+              "receipts": 6.0,
+              "flagged": 0.0
+            },
+            "none": {
+              "receipts": 85.0,
+              "flagged": 0.0
+            }
+          },
+          "fusion": {
+            "digital": {
+              "receipts": 3.0,
+              "flagged": 0.0
+            },
+            "handwritten": {
+              "receipts": 81.0,
+              "flagged": 0.0
+            },
+            "handwritten and digital": {
+              "receipts": 6.0,
+              "flagged": 0.0
+            },
+            "none": {
+              "receipts": 85.0,
+              "flagged": 0.0
+            }
+          }
+        }
+      },
+      "rq4": {
+        "transcript": {
+          "receipts": 35,
+          "located": 35,
+          "hit_rate": {
+            "value": 0.9428571428571428,
+            "low": 0.8571428571428571,
+            "high": 1.0
+          },
+          "baseline": 0.04874285714285714,
+          "detects": true,
+          "in_review": 23,
+          "in_review_hits": 22,
+          "by_technique": {
+            "CPI": {
+              "receipts": 27,
+              "hits": 26
+            },
+            "CPO": {
+              "receipts": 2,
+              "hits": 2
+            },
+            "CUT": {
+              "receipts": 5,
+              "hits": 4
+            },
+            "IMI": {
+              "receipts": 3,
+              "hits": 3
+            },
+            "PIX": {
+              "receipts": 3,
+              "hits": 3
+            }
+          },
+          "by_entity": {
+            "company": {
+              "receipts": 5,
+              "hits": 5
+            },
+            "metadata": {
+              "receipts": 15,
+              "hits": 14
+            },
+            "product": {
+              "receipts": 15,
+              "hits": 14
+            },
+            "total_payment": {
+              "receipts": 14,
+              "hits": 13
+            }
+          }
+        },
+        "ocr": {
+          "receipts": 35,
+          "located": 35,
+          "hit_rate": {
+            "value": 0.9428571428571428,
+            "low": 0.8571428571428571,
+            "high": 1.0
+          },
+          "baseline": 0.04874285714285714,
+          "detects": true,
+          "in_review": 24,
+          "in_review_hits": 23,
+          "by_technique": {
+            "CPI": {
+              "receipts": 27,
+              "hits": 26
+            },
+            "CPO": {
+              "receipts": 2,
+              "hits": 2
+            },
+            "CUT": {
+              "receipts": 5,
+              "hits": 4
+            },
+            "IMI": {
+              "receipts": 3,
+              "hits": 3
+            },
+            "PIX": {
+              "receipts": 3,
+              "hits": 3
+            }
+          },
+          "by_entity": {
+            "company": {
+              "receipts": 5,
+              "hits": 5
+            },
+            "metadata": {
+              "receipts": 15,
+              "hits": 14
+            },
+            "product": {
+              "receipts": 15,
+              "hits": 14
+            },
+            "total_payment": {
+              "receipts": 14,
+              "hits": 13
+            }
+          }
+        }
+      },
+      "grounding": {
+        "transcript": {
+          "reports": 210,
+          "facts": 8737,
+          "violations": [],
+          "rate": 1.0
+        },
+        "ocr": {
+          "reports": 210,
+          "facts": 9304,
+          "violations": [],
+          "rate": 1.0
+        }
+      },
+      "transcript": {
+        "receipts": 210,
+        "forged": 35,
+        "table": {
+          "accounting rules": {
+            "average_precision": {
+              "value": 0.372781216431202,
+              "low": 0.253206581032895,
+              "high": 0.5314825905199637
+            },
+            "roc_auc": {
+              "value": 0.6766530612244898,
+              "low": 0.5768938775510205,
+              "high": 0.7722448979591837
+            },
+            "recall_at_10pct": {
+              "value": 0.32571428571428573,
+              "low": 0.19363095238095257,
+              "high": 0.44
+            },
+            "recall_at_20pct": {
+              "value": 0.37142857142857144,
+              "low": 0.22857142857142856,
+              "high": 0.5142857142857142
+            },
+            "f1": {
+              "value": 0.38461538461538464,
+              "low": 0.2127659574468085,
+              "high": 0.5454545454545454
+            },
+            "brier": 0.12659760671993173,
+            "ece": 0.06762703257354445,
+            "threshold": 0.2568981762950894
+          },
+          "pixel evidence": {
+            "average_precision": {
+              "value": 0.6935872604308448,
+              "low": 0.5612576920476705,
+              "high": 0.8243871668095477
+            },
+            "roc_auc": {
+              "value": 0.8718367346938776,
+              "low": 0.7973836734693879,
+              "high": 0.9356734693877551
+            },
+            "recall_at_10pct": {
+              "value": 0.42857142857142855,
+              "low": 0.3142857142857143,
+              "high": 0.5428571428571428
+            },
+            "recall_at_20pct": {
+              "value": 0.7428571428571429,
+              "low": 0.6,
+              "high": 0.8571428571428571
+            },
+            "f1": {
+              "value": 0.6842105263157895,
+              "low": 0.5713474025974032,
+              "high": 0.7894736842105263
+            },
+            "brier": 0.08433748654575884,
+            "ece": 0.054414013043025435,
+            "threshold": 0.30255137219201894
+          },
+          "copy-move": {
+            "average_precision": {
+              "value": 0.8313277034951913,
+              "low": 0.7142857142857142,
+              "high": 0.9285714285714286
+            },
+            "roc_auc": {
+              "value": 0.8711020408163266,
+              "low": 0.7792653061224489,
+              "high": 0.9462857142857143
+            },
+            "recall_at_10pct": {
+              "value": 0.6,
+              "low": 0.6,
+              "high": 0.6
+            },
+            "recall_at_20pct": {
+              "value": 0.8,
+              "low": 0.6571428571428571,
+              "high": 0.9142857142857143
+            },
+            "f1": {
+              "value": 0.8484848484848485,
+              "low": 0.75,
+              "high": 0.9295774647887324
+            },
+            "brier": 0.04588581733632209,
+            "ece": 0.024483852068044185,
+            "threshold": 0.33747275125749315
+          },
+          "system 2 alone": {
+            "average_precision": {
+              "value": 0.7033667892858207,
+              "low": 0.5712466691152522,
+              "high": 0.8294853901860907
+            },
+            "roc_auc": {
+              "value": 0.8791836734693877,
+              "low": 0.8073469387755102,
+              "high": 0.9389387755102041
+            },
+            "recall_at_10pct": {
+              "value": 0.42857142857142855,
+              "low": 0.34285714285714286,
+              "high": 0.5428571428571428
+            },
+            "recall_at_20pct": {
+              "value": 0.7428571428571429,
+              "low": 0.6,
+              "high": 0.8285714285714286
+            },
+            "f1": {
+              "value": 0.6571428571428571,
+              "low": 0.5277777777777778,
+              "high": 0.7733333333333333
+            },
+            "brier": 0.0878427482739909,
+            "ece": 0.06683449479454778,
+            "threshold": 0.4165636449396741
+          },
+          "system 1 alone": {
+            "average_precision": {
+              "value": 0.4932048234303505,
+              "low": 0.360299418925203,
+              "high": 0.6363641698326501
+            },
+            "roc_auc": {
+              "value": 0.7689795918367347,
+              "low": 0.6757551020408163,
+              "high": 0.8504489795918367
+            },
+            "recall_at_10pct": {
+              "value": 0.37142857142857144,
+              "low": 0.22857142857142856,
+              "high": 0.45714285714285713
+            },
+            "recall_at_20pct": {
+              "value": 0.5428571428571428,
+              "low": 0.4,
+              "high": 0.6857142857142857
+            },
+            "f1": {
+              "value": 0.5217391304347826,
+              "low": 0.37681159420289856,
+              "high": 0.6567164179104478
+            },
+            "brier": 0.11721634157580578,
+            "ece": 0.03971981764501471,
+            "threshold": 0.2157604497883718
+          },
+          "fusion without the accounting rules": {
+            "average_precision": {
+              "value": 0.9120838175877231,
+              "low": 0.8420145331956063,
+              "high": 0.9667268144485526
+            },
+            "roc_auc": {
+              "value": 0.9719183673469388,
+              "low": 0.9430163265306123,
+              "high": 0.9915102040816327
+            },
+            "recall_at_10pct": {
+              "value": 0.6,
+              "low": 0.5714285714285714,
+              "high": 0.6
+            },
+            "recall_at_20pct": {
+              "value": 0.8285714285714286,
+              "low": 0.7142857142857143,
+              "high": 0.9428571428571428
+            },
+            "f1": {
+              "value": 0.8135593220338984,
+              "low": 0.7037037037037037,
+              "high": 0.90625
+            },
+            "brier": 0.04299050296554828,
+            "ece": 0.03305469103189299,
+            "threshold": 0.6086241567161633
+          },
+          "fusion without pixel evidence": {
+            "average_precision": {
+              "value": 0.8546717848827748,
+              "low": 0.7509292619938441,
+              "high": 0.9439207078914927
+            },
+            "roc_auc": {
+              "value": 0.9066122448979592,
+              "low": 0.8326489795918368,
+              "high": 0.9681653061224489
+            },
+            "recall_at_10pct": {
+              "value": 0.6,
+              "low": 0.6,
+              "high": 0.6
+            },
+            "recall_at_20pct": {
+              "value": 0.8,
+              "low": 0.6571428571428571,
+              "high": 0.9142857142857143
+            },
+            "f1": {
+              "value": 0.8181818181818182,
+              "low": 0.7096774193548387,
+              "high": 0.9090909090909091
+            },
+            "brier": 0.045721067981586185,
+            "ece": 0.02764090056276676,
+            "threshold": 0.2802079751879759
+          },
+          "fusion without copy-move": {
+            "average_precision": {
+              "value": 0.7642341178785601,
+              "low": 0.6428132815262911,
+              "high": 0.8733990796490241
+            },
+            "roc_auc": {
+              "value": 0.8971428571428571,
+              "low": 0.8223673469387756,
+              "high": 0.9568979591836735
+            },
+            "recall_at_10pct": {
+              "value": 0.4857142857142857,
+              "low": 0.4,
+              "high": 0.5714285714285714
+            },
+            "recall_at_20pct": {
+              "value": 0.7714285714285715,
+              "low": 0.6285714285714286,
+              "high": 0.8857142857142857
+            },
+            "f1": {
+              "value": 0.676923076923077,
+              "low": 0.5396520146520148,
+              "high": 0.7945205479452054
+            },
+            "brier": 0.07372710678546998,
+            "ece": 0.047141552233724814,
+            "threshold": 0.3787260132779334
+          },
+          "score-level baseline": {
+            "average_precision": {
+              "value": 0.9136312766731496,
+              "low": 0.8437346261594579,
+              "high": 0.9698191377020329
+            },
+            "roc_auc": {
+              "value": 0.9688163265306122,
+              "low": 0.9314285714285714,
+              "high": 0.9928163265306122
+            },
+            "recall_at_10pct": {
+              "value": 0.6,
+              "low": 0.5428571428571428,
+              "high": 0.6
+            },
+            "recall_at_20pct": {
+              "value": 0.8857142857142857,
+              "low": 0.8,
+              "high": 0.9714285714285714
+            },
+            "f1": {
+              "value": 0.7936507936507936,
+              "low": 0.676666666666669,
+              "high": 0.8923076923076924
+            },
+            "brier": 0.043329304933690256,
+            "ece": 0.038450785172179376,
+            "threshold": 0.3657697117230601
+          },
+          "fusion": {
+            "average_precision": {
+              "value": 0.912695887946819,
+              "low": 0.8437471900189096,
+              "high": 0.9670135842289433
+            },
+            "roc_auc": {
+              "value": 0.9722448979591837,
+              "low": 0.9435102040816327,
+              "high": 0.9916775510204081
+            },
+            "recall_at_10pct": {
+              "value": 0.6,
+              "low": 0.5428571428571428,
+              "high": 0.6
+            },
+            "recall_at_20pct": {
+              "value": 0.8571428571428571,
+              "low": 0.7428571428571429,
+              "high": 0.9428571428571428
+            },
+            "f1": {
+              "value": 0.8135593220338984,
+              "low": 0.7037037037037037,
+              "high": 0.90625
+            },
+            "brier": 0.042064304070677246,
+            "ece": 0.031149205426062976,
+            "threshold": 0.6131477002553435
+          }
+        },
+        "comparisons": {
+          "accounting rules": {
+            "value": 0.539914671515617,
+            "low": 0.38346620514287477,
+            "high": 0.6616842633431832,
+            "above_zero": true
+          },
+          "pixel evidence": {
+            "value": 0.21910862751597415,
+            "low": 0.10109366437080067,
+            "high": 0.33758517494342527,
+            "above_zero": true
+          },
+          "copy-move": {
+            "value": 0.08136818445162775,
+            "low": -0.0003905785305652971,
+            "high": 0.17510723077559162,
+            "above_zero": false
+          },
+          "score-level baseline": {
+            "value": -0.0009353887263305882,
+            "low": -0.02950906779743942,
+            "high": 0.0238652981370463,
+            "above_zero": false
+          }
+        },
+        "fusion_beats_every_single_source": false,
+        "seeds": {
+          "0": 0.912695887946819,
+          "1": 0.9342423288287456,
+          "2": 0.9142883248080493
+        },
+        "success": {
+          "f1": {
+            "value": 0.8135593220338984,
+            "low": 0.7037037037037037,
+            "high": 0.90625
+          },
+          "recall_at_10pct": {
+            "value": 0.6,
+            "low": 0.5428571428571428,
+            "high": 0.6
+          },
+          "f1_above_published": true,
+          "recall_above_chance": true,
+          "met": true
+        }
+      },
+      "ocr": {
+        "receipts": 210,
+        "forged": 35,
+        "table": {
+          "accounting rules": {
+            "average_precision": {
+              "value": 0.25323868704951885,
+              "low": 0.18722109245112178,
+              "high": 0.3941874295548032
+            },
+            "roc_auc": {
+              "value": 0.6018775510204082,
+              "low": 0.4935510204081633,
+              "high": 0.7057979591836734
+            },
+            "recall_at_10pct": {
+              "value": 0.2,
+              "low": 0.08571428571428572,
+              "high": 0.30714285714285716
+            },
+            "recall_at_20pct": {
+              "value": 0.34285714285714286,
+              "low": 0.2,
+              "high": 0.4857142857142857
+            },
+            "f1": {
+              "value": 0.2608695652173913,
+              "low": 0.12698412698412698,
+              "high": 0.3902439024390244
+            },
+            "brier": 0.13655581189386629,
+            "ece": 0.07283725718867382,
+            "threshold": 0.2383851078952206
+          },
+          "pixel evidence": {
+            "average_precision": {
+              "value": 0.6935872604308448,
+              "low": 0.5612576920476705,
+              "high": 0.8243871668095477
+            },
+            "roc_auc": {
+              "value": 0.8718367346938776,
+              "low": 0.7973836734693879,
+              "high": 0.9356734693877551
+            },
+            "recall_at_10pct": {
+              "value": 0.42857142857142855,
+              "low": 0.3142857142857143,
+              "high": 0.5428571428571428
+            },
+            "recall_at_20pct": {
+              "value": 0.7428571428571429,
+              "low": 0.6,
+              "high": 0.8571428571428571
+            },
+            "f1": {
+              "value": 0.6842105263157895,
+              "low": 0.5713474025974032,
+              "high": 0.7894736842105263
+            },
+            "brier": 0.08433748654575884,
+            "ece": 0.054414013043025435,
+            "threshold": 0.30255137219201894
+          },
+          "copy-move": {
+            "average_precision": {
+              "value": 0.8313277034951913,
+              "low": 0.7142857142857142,
+              "high": 0.9285714285714286
+            },
+            "roc_auc": {
+              "value": 0.8711020408163266,
+              "low": 0.7792653061224489,
+              "high": 0.9462857142857143
+            },
+            "recall_at_10pct": {
+              "value": 0.6,
+              "low": 0.6,
+              "high": 0.6
+            },
+            "recall_at_20pct": {
+              "value": 0.8,
+              "low": 0.6571428571428571,
+              "high": 0.9142857142857143
+            },
+            "f1": {
+              "value": 0.8484848484848485,
+              "low": 0.75,
+              "high": 0.9295774647887324
+            },
+            "brier": 0.04588581733632209,
+            "ece": 0.024483852068044185,
+            "threshold": 0.33747275125749315
+          },
+          "system 2 alone": {
+            "average_precision": {
+              "value": 0.7033667892858207,
+              "low": 0.5712466691152522,
+              "high": 0.8294853901860907
+            },
+            "roc_auc": {
+              "value": 0.8791836734693877,
+              "low": 0.8073469387755102,
+              "high": 0.9389387755102041
+            },
+            "recall_at_10pct": {
+              "value": 0.42857142857142855,
+              "low": 0.34285714285714286,
+              "high": 0.5428571428571428
+            },
+            "recall_at_20pct": {
+              "value": 0.7428571428571429,
+              "low": 0.6,
+              "high": 0.8285714285714286
+            },
+            "f1": {
+              "value": 0.6571428571428571,
+              "low": 0.5277777777777778,
+              "high": 0.7733333333333333
+            },
+            "brier": 0.0878427482739909,
+            "ece": 0.06683449479454778,
+            "threshold": 0.4165636449396741
+          },
+          "system 1 alone": {
+            "average_precision": {
+              "value": 0.4932048234303505,
+              "low": 0.360299418925203,
+              "high": 0.6363641698326501
+            },
+            "roc_auc": {
+              "value": 0.7689795918367347,
+              "low": 0.6757551020408163,
+              "high": 0.8504489795918367
+            },
+            "recall_at_10pct": {
+              "value": 0.37142857142857144,
+              "low": 0.22857142857142856,
+              "high": 0.45714285714285713
+            },
+            "recall_at_20pct": {
+              "value": 0.5428571428571428,
+              "low": 0.4,
+              "high": 0.6857142857142857
+            },
+            "f1": {
+              "value": 0.5217391304347826,
+              "low": 0.37681159420289856,
+              "high": 0.6567164179104478
+            },
+            "brier": 0.11721634157580578,
+            "ece": 0.03971981764501471,
+            "threshold": 0.2157604497883718
+          },
+          "fusion without the accounting rules": {
+            "average_precision": {
+              "value": 0.9028363069175649,
+              "low": 0.8281587801000528,
+              "high": 0.9621138314308054
+            },
+            "roc_auc": {
+              "value": 0.9670204081632653,
+              "low": 0.9343673469387755,
+              "high": 0.9897183673469387
+            },
+            "recall_at_10pct": {
+              "value": 0.6,
+              "low": 0.5714285714285714,
+              "high": 0.6
+            },
+            "recall_at_20pct": {
+              "value": 0.8285714285714286,
+              "low": 0.7142857142857143,
+              "high": 0.9428571428571428
+            },
+            "f1": {
+              "value": 0.819672131147541,
+              "low": 0.7017543859649122,
+              "high": 0.9090909090909091
+            },
+            "brier": 0.04398905289958817,
+            "ece": 0.03678219490938572,
+            "threshold": 0.5329859971132338
+          },
+          "fusion without pixel evidence": {
+            "average_precision": {
+              "value": 0.8438638891815418,
+              "low": 0.7331682395591981,
+              "high": 0.9368328760912811
+            },
+            "roc_auc": {
+              "value": 0.8814693877551021,
+              "low": 0.7922448979591836,
+              "high": 0.9555918367346938
+            },
+            "recall_at_10pct": {
+              "value": 0.6,
+              "low": 0.6,
+              "high": 0.6
+            },
+            "recall_at_20pct": {
+              "value": 0.8,
+              "low": 0.6571428571428571,
+              "high": 0.9142857142857143
+            },
+            "f1": {
+              "value": 0.8307692307692308,
+              "low": 0.7213114754098361,
+              "high": 0.9230769230769231
+            },
+            "brier": 0.046355426604288104,
+            "ece": 0.036474506824172345,
+            "threshold": 0.30351736935376317
+          },
+          "fusion without copy-move": {
+            "average_precision": {
+              "value": 0.7527866857973612,
+              "low": 0.6314836464130593,
+              "high": 0.8659533602155759
+            },
+            "roc_auc": {
+              "value": 0.8886530612244898,
+              "low": 0.8093020408163266,
+              "high": 0.9529795918367346
+            },
+            "recall_at_10pct": {
+              "value": 0.4857142857142857,
+              "low": 0.37142857142857144,
+              "high": 0.5714285714285714
+            },
+            "recall_at_20pct": {
+              "value": 0.7714285714285715,
+              "low": 0.6571428571428571,
+              "high": 0.8857142857142857
+            },
+            "f1": {
+              "value": 0.6666666666666666,
+              "low": 0.5357017102615695,
+              "high": 0.7837837837837838
+            },
+            "brier": 0.07588910856143276,
+            "ece": 0.04797768677449116,
+            "threshold": 0.32605014579192976
+          },
+          "score-level baseline": {
+            "average_precision": {
+              "value": 0.9093593811700486,
+              "low": 0.8365537389668556,
+              "high": 0.9664948578445854
+            },
+            "roc_auc": {
+              "value": 0.9678367346938775,
+              "low": 0.9293061224489796,
+              "high": 0.992
+            },
+            "recall_at_10pct": {
+              "value": 0.6,
+              "low": 0.5428571428571428,
+              "high": 0.6
+            },
+            "recall_at_20pct": {
+              "value": 0.8571428571428571,
+              "low": 0.7714285714285715,
+              "high": 0.9714285714285714
+            },
+            "f1": {
+              "value": 0.8,
+              "low": 0.704187285877427,
+              "high": 0.8888888888888888
+            },
+            "brier": 0.04446703448416108,
+            "ece": 0.03927314304823108,
+            "threshold": 0.17981757035245546
+          },
+          "fusion": {
+            "average_precision": {
+              "value": 0.904309259850712,
+              "low": 0.8294493069642999,
+              "high": 0.9624218694543853
+            },
+            "roc_auc": {
+              "value": 0.9670204081632653,
+              "low": 0.9324081632653061,
+              "high": 0.9903673469387755
+            },
+            "recall_at_10pct": {
+              "value": 0.6,
+              "low": 0.5428571428571428,
+              "high": 0.6
+            },
+            "recall_at_20pct": {
+              "value": 0.8571428571428571,
+              "low": 0.7428571428571429,
+              "high": 0.9428571428571428
+            },
+            "f1": {
+              "value": 0.8135593220338984,
+              "low": 0.7037037037037037,
+              "high": 0.90625
+            },
+            "brier": 0.043557789183787644,
+            "ece": 0.03666497461882609,
+            "threshold": 0.5624147669061262
+          }
+        },
+        "comparisons": {
+          "accounting rules": {
+            "value": 0.6510705728011932,
+            "low": 0.5073149321230612,
+            "high": 0.7330013071667216,
+            "above_zero": true
+          },
+          "pixel evidence": {
+            "value": 0.21072199941986713,
+            "low": 0.0927144900261649,
+            "high": 0.33032847197864285,
+            "above_zero": true
+          },
+          "copy-move": {
+            "value": 0.07298155635552073,
+            "low": -0.0013074187873174281,
+            "high": 0.15947254926083596,
+            "above_zero": false
+          },
+          "score-level baseline": {
+            "value": -0.005050121319336576,
+            "low": -0.02991429901328385,
+            "high": 0.01649961950223077,
+            "above_zero": false
+          }
+        },
+        "fusion_beats_every_single_source": false,
+        "seeds": {
+          "0": 0.904309259850712,
+          "1": 0.932497778007765,
+          "2": 0.9161158913688612
+        },
+        "success": {
+          "f1": {
+            "value": 0.8135593220338984,
+            "low": 0.7037037037037037,
+            "high": 0.90625
+          },
+          "recall_at_10pct": {
+            "value": 0.6,
+            "low": 0.5428571428571428,
+            "high": 0.6
+          },
+          "f1_above_published": true,
+          "recall_above_chance": true,
+          "met": true
+        }
+      },
+      "T3": {
+        "table": {
+          "fusion of track T2": {
+            "average_precision": {
+              "value": 0.904309259850712,
+              "low": 0.8294493069642999,
+              "high": 0.9624218694543853
+            },
+            "roc_auc": {
+              "value": 0.9670204081632653,
+              "low": 0.9324081632653061,
+              "high": 0.9903673469387755
+            },
+            "recall_at_10pct": {
+              "value": 0.6,
+              "low": 0.5428571428571428,
+              "high": 0.6
+            },
+            "recall_at_20pct": {
+              "value": 0.8571428571428571,
+              "low": 0.7428571428571429,
+              "high": 0.9428571428571428
+            },
+            "f1": {
+              "value": 0.8135593220338984,
+              "low": 0.7037037037037037,
+              "high": 0.90625
+            },
+            "brier": 0.043557789183787644,
+            "ece": 0.03666497461882609,
+            "threshold": 0.5624147669061262
+          },
+          "file metadata alone": {
+            "average_precision": {
+              "value": 0.9222222222222222,
+              "low": 0.8304761904761905,
+              "high": 1.0
+            },
+            "roc_auc": {
+              "value": 0.98,
+              "low": 0.9485714285714286,
+              "high": 1.0
+            },
+            "recall_at_10pct": {
+              "value": 0.5666666666666668,
+              "low": 0.523076923076923,
+              "high": 0.6
+            },
+            "recall_at_20pct": {
+              "value": 0.9724137931034483,
+              "low": 0.9177142857142856,
+              "high": 1.0
+            },
+            "f1": {
+              "value": 0.9577464788732394,
+              "low": 0.9066666666666666,
+              "high": 1.0
+            },
+            "brier": 0.014296303253070825,
+            "ece": 0.01518860057768924,
+            "threshold": 0.9999537017486739
+          },
+          "fusion of track T3": {
+            "average_precision": {
+              "value": 0.9959331349247316,
+              "low": 0.9854206945936269,
+              "high": 1.0
+            },
+            "roc_auc": {
+              "value": 0.9991836734693877,
+              "low": 0.9968979591836735,
+              "high": 1.0
+            },
+            "recall_at_10pct": {
+              "value": 0.6,
+              "low": 0.6,
+              "high": 0.6
+            },
+            "recall_at_20pct": {
+              "value": 1.0,
+              "low": 1.0,
+              "high": 1.0
+            },
+            "f1": {
+              "value": 0.9722222222222222,
+              "low": 0.9333333333333333,
+              "high": 1.0
+            },
+            "brier": 0.010115922849053563,
+            "ece": 0.01141967755082445,
+            "threshold": 0.30232901790295214
+          }
+        }
+      },
+      "policy": {
+        "transcript": {
+          "10 %": {
+            "budget": 0.1,
+            "threshold": 0.7484014662853322,
+            "receipts": 210,
+            "reviewed": 23,
+            "forged": 35,
+            "forged_reviewed": 23,
+            "review_share": {
+              "value": 0.10952380952380952,
+              "low": 0.06666666666666667,
+              "high": 0.1523809523809524
+            },
+            "recall": {
+              "value": 0.6571428571428571,
+              "low": 0.5,
+              "high": 0.8125363372093019
+            },
+            "precision": {
+              "value": 1.0,
+              "low": 1.0,
+              "high": 1.0
+            }
+          },
+          "20 %": {
+            "budget": 0.2,
+            "threshold": 0.21404936779230965,
+            "receipts": 210,
+            "reviewed": 37,
+            "forged": 35,
+            "forged_reviewed": 28,
+            "review_share": {
+              "value": 0.1761904761904762,
+              "low": 0.12857142857142856,
+              "high": 0.22857142857142856
+            },
+            "recall": {
+              "value": 0.8,
+              "low": 0.6571428571428571,
+              "high": 0.9230769230769231
+            },
+            "precision": {
+              "value": 0.7567567567567568,
+              "low": 0.6097560975609756,
+              "high": 0.8888888888888888
+            }
+          }
+        },
+        "ocr": {
+          "10 %": {
+            "budget": 0.1,
+            "threshold": 0.723037724890667,
+            "receipts": 210,
+            "reviewed": 24,
+            "forged": 35,
+            "forged_reviewed": 24,
+            "review_share": {
+              "value": 0.11428571428571428,
+              "low": 0.07142857142857142,
+              "high": 0.1619047619047619
+            },
+            "recall": {
+              "value": 0.6857142857142857,
+              "low": 0.5294117647058824,
+              "high": 0.8378378378378378
+            },
+            "precision": {
+              "value": 1.0,
+              "low": 1.0,
+              "high": 1.0
+            }
+          },
+          "20 %": {
+            "budget": 0.2,
+            "threshold": 0.1923158406525398,
+            "receipts": 210,
+            "reviewed": 39,
+            "forged": 35,
+            "forged_reviewed": 28,
+            "review_share": {
+              "value": 0.18571428571428572,
+              "low": 0.13333333333333333,
+              "high": 0.24285714285714285
+            },
+            "recall": {
+              "value": 0.8,
+              "low": 0.6571428571428571,
+              "high": 0.9230769230769231
+            },
+            "precision": {
+              "value": 0.717948717948718,
+              "low": 0.5714285714285714,
+              "high": 0.8518790849673199
+            }
+          }
+        }
+      }
+    }
+  }
+}

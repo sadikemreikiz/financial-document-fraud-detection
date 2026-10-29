@@ -1,0 +1,279 @@
+{
+  "run_id": "20261029T135209393973Z-fusion-test-inputs",
+  "name": "fusion-test-inputs",
+  "started": "2026-10-29T13:52:09.393973Z",
+  "finished": "2026-10-29T14:16:58.899253Z",
+  "code": {
+    "commit": "0449c49b83364a5d36f3c56df6650041055c6b90",
+    "dirty": false
+  },
+  "environment": {
+    "python": "3.14.8",
+    "docfraud": "2.0.0.dev0",
+    "packages": {
+      "annotated-doc": "0.0.5",
+      "annotated-types": "0.8.0",
+      "anthropic": "2.1.0",
+      "antlr4-python3-runtime": "4.9.3",
+      "anyio": "4.15.1",
+      "ast_serialize": "0.12.1",
+      "certifi": "2026.7.22",
+      "cfgv": "3.5.0",
+      "charset-normalizer": "3.5.2",
+      "cloudpickle": "3.1.2",
+      "colorlog": "6.12.0",
+      "coverage": "7.16.2",
+      "distlib": "0.4.3",
+      "docfraud": "2.0.0.dev0",
+      "docstring_parser": "0.18.0",
+      "filelock": "4.0.12",
+      "flatbuffers": "25.12.19",
+      "fsspec": "2026.9.0",
+      "h11": "0.16.0",
+      "httpcore2": "2.16.0",
+      "httpx2": "2.16.0",
+      "identify": "2.6.20",
+      "idna": "3.20",
+      "iniconfig": "2.3.0",
+      "jinja2": "3.1.6",
+      "jiter": "0.17.0",
+      "joblib": "1.6.0",
+      "librt": "0.16.0",
+      "markdown-it-py": "4.2.0",
+      "markupsafe": "3.0.4",
+      "mdurl": "0.1.2",
+      "mpmath": "1.3.0",
+      "mypy": "2.4.0",
+      "mypy_extensions": "1.1.0",
+      "narwhals": "2.26.0",
+      "networkx": "3.7",
+      "nodeenv": "1.11.0",
+      "numpy": "2.5.3",
+      "omegaconf": "2.3.1",
+      "onnxruntime": "1.30.0",
+      "opencv-python": "5.0.0.93",
+      "opentelemetry-api": "1.45.1",
+      "packaging": "26.3",
+      "pathspec": "1.1.1",
+      "pillow": "12.3.0",
+      "platformdirs": "4.12.3",
+      "pluggy": "1.6.0",
+      "pre_commit": "4.6.2",
+      "protobuf": "7.36.2",
+      "pyclipper": "1.4.0",
+      "pydantic": "2.13.5",
+      "pydantic_core": "2.46.5",
+      "pygments": "2.21.0",
+      "pytest": "9.1.1",
+      "pytest-cov": "7.1.0",
+      "python-discovery": "1.6.1",
+      "pyyaml": "6.0.3",
+      "rapidocr": "3.9.2",
+      "requests": "2.34.2",
+      "rich": "15.0.0",
+      "ruff": "0.16.10",
+      "scikit-learn": "1.9.1",
+      "scipy": "1.18.1",
+      "setuptools": "84.0.0",
+      "shapely": "2.1.2",
+      "shellingham": "1.5.4",
+      "six": "1.17.0",
+      "sniffio": "1.3.1",
+      "sympy": "1.14.0",
+      "threadpoolctl": "3.7.0",
+      "torch": "2.14.1",
+      "tqdm": "4.70.1",
+      "truststore": "0.10.5",
+      "typer": "0.27.2",
+      "typing-inspection": "0.4.4",
+      "typing_extensions": "4.16.0",
+      "urllib3": "2.8.0",
+      "virtualenv": "21.14.5"
+    },
+    "platform": "macOS-15.7.7-arm64-arm-64bit-Mach-O",
+    "machine": "arm64",
+    "processor": "arm",
+    "cpu_count": 10,
+    "memory_bytes": 17179869184
+  },
+  "config": {
+    "decision": "ADR-0034",
+    "rehearsal": "20261028T221458086105Z-fusion-inputs-rehearsal",
+    "test_reading": "20261029T134037577263Z-llm-test-reading",
+    "models": {
+      "0": {
+        "path": "artifacts/learned/rounds/round-5/system-2/seed-0/model.pt",
+        "sha256": "3d457b983be1b6630fe1e1a648a34441378bcf2c63248cd612ce86c2bc2d70e6"
+      },
+      "1": {
+        "path": "artifacts/learned/rounds/round-5/system-2/seed-1/model.pt",
+        "sha256": "934843c445b96fc0efaeb3dc86c909688d5c40b05b7f33dbd67dbbbae6c8c90e"
+      },
+      "2": {
+        "path": "artifacts/learned/rounds/round-5/system-2/seed-2/model.pt",
+        "sha256": "32ef593f623e776020caeb0f801078c58fff42866976621f388816551de6ef10"
+      }
+    }
+  },
+  "config_hash": "29fe7cb30ba2518662e06fdc1d8ce6fec8cbfb1c683ce8b211c030ce4fe82d62",
+  "dataset_sha256": {
+    "findit2": "6f8c6f134951956627edcc06c7e8fc298abb9e984073ab193174aee204d46261"
+  },
+  "seeds": {
+    "system 2, seed 0": 0,
+    "system 2, seed 1": 1,
+    "system 2, seed 2": 2
+  },
+  "test_unlocks": [
+    "ADR-0034: the single evaluation of Phase 7"
+  ],
+  "results": {
+    "summary": {
+      "ocr, seed 0": {
+        "receipts": 218,
+        "means": {
+          "rules": 0.17435568525049586,
+          "system 2": 0.36329217508852885,
+          "system 1": 0.23751176515849048,
+          "system 1 evidence": 0.6422018348623854,
+          "copy-move": 0.11215832405844495,
+          "link 1": 0.5504587155963303,
+          "link 2": 0.0871559633027523,
+          "file metadata": 0.1651376146788991
+        },
+        "copy_move_pairs": 81
+      },
+      "ocr, seed 1": {
+        "receipts": 218,
+        "means": {
+          "rules": 0.17435568525049586,
+          "system 2": 0.3650078361625302,
+          "system 1": 0.23751176515849048,
+          "system 1 evidence": 0.6422018348623854,
+          "copy-move": 0.11215832405844495,
+          "link 1": 0.536697247706422,
+          "link 2": 0.12844036697247707,
+          "file metadata": 0.1651376146788991
+        },
+        "copy_move_pairs": 81
+      },
+      "ocr, seed 2": {
+        "receipts": 218,
+        "means": {
+          "rules": 0.17435568525049586,
+          "system 2": 0.3343891161377186,
+          "system 1": 0.23751176515849048,
+          "system 1 evidence": 0.6422018348623854,
+          "copy-move": 0.11215832405844495,
+          "link 1": 0.6009174311926605,
+          "link 2": 0.11467889908256881,
+          "file metadata": 0.1651376146788991
+        },
+        "copy_move_pairs": 81
+      },
+      "transcript, seed 0": {
+        "receipts": 218,
+        "means": {
+          "rules": 0.16731514828297395,
+          "system 2": 0.36329217508852885,
+          "system 1": 0.23751176515849048,
+          "system 1 evidence": 0.6422018348623854,
+          "copy-move": 0.11215832405844495,
+          "link 1": 0.5458715596330275,
+          "link 2": 0.05963302752293578,
+          "file metadata": 0.1651376146788991
+        },
+        "copy_move_pairs": 81
+      },
+      "transcript, seed 1": {
+        "receipts": 218,
+        "means": {
+          "rules": 0.16731514828297395,
+          "system 2": 0.3650078361625302,
+          "system 1": 0.23751176515849048,
+          "system 1 evidence": 0.6422018348623854,
+          "copy-move": 0.11215832405844495,
+          "link 1": 0.5412844036697247,
+          "link 2": 0.08256880733944955,
+          "file metadata": 0.1651376146788991
+        },
+        "copy_move_pairs": 81
+      },
+      "transcript, seed 2": {
+        "receipts": 218,
+        "means": {
+          "rules": 0.16731514828297395,
+          "system 2": 0.3343891161377186,
+          "system 1": 0.23751176515849048,
+          "system 1 evidence": 0.6422018348623854,
+          "copy-move": 0.11215832405844495,
+          "link 1": 0.6100917431192661,
+          "link 2": 0.06422018348623854,
+          "file metadata": 0.1651376146788991
+        },
+        "copy_move_pairs": 81
+      }
+    },
+    "sha256": "6c0e9efc40df5eb93c9e187d3b2874059e14b84e6abd01d837b635aaadba34a3",
+    "rules_scorers": {
+      "transcript": {
+        "totals_reconcile:fail": 0.8628180942138808,
+        "totals_reconcile:not_applicable": 0.22538298827044917,
+        "items_reconcile:fail": 1.2896547283447302,
+        "items_reconcile:not_applicable": -0.20565907612883633,
+        "line_amounts:fail": 0.662018448211693,
+        "line_amounts:not_applicable": -0.3644999353853869,
+        "change_given:fail": 1.5736424871989414,
+        "change_given:not_applicable": -0.04118719186376955,
+        "repeats_agree:fail": -0.08530375558481006,
+        "repeats_agree:not_applicable": -0.355369493548445,
+        "tax_rates:fail": 0.7941298291918097,
+        "tax_rates:not_applicable": 0.22011454958669938
+      },
+      "ocr": {
+        "totals_reconcile:fail": -0.20217311502289337,
+        "totals_reconcile:not_applicable": 0.12196790196496142,
+        "items_reconcile:fail": 0.15158598345515928,
+        "items_reconcile:not_applicable": -0.022619243626610285,
+        "line_amounts:fail": 0.5613250764708695,
+        "line_amounts:not_applicable": -0.15176486466374256,
+        "change_given:fail": 1.1651642960043789,
+        "change_given:not_applicable": 0.17823799621186348,
+        "repeats_agree:fail": 0.4690151913929987,
+        "repeats_agree:not_applicable": -0.7556324999226361,
+        "tax_rates:fail": 0.2145731969516551,
+        "tax_rates:not_applicable": 0.3677728809636373
+      }
+    },
+    "models": {
+      "0": "learned-3d457b983be1-torch2.14.1-mps",
+      "1": "learned-934843c445b9-torch2.14.1-mps",
+      "2": "learned-32ef593f623e-torch2.14.1-mps"
+    },
+    "efficiency": {
+      "seconds": {
+        "page and OCR": {
+          "receipts": 218,
+          "median": 0.010525270510697737,
+          "p95": 0.06429491419985421
+        },
+        "system 1, copy-move and file traits": {
+          "receipts": 218,
+          "median": 1.2352453755011084,
+          "p95": 6.951780820541898
+        },
+        "system 2, one seed": {
+          "receipts": 654,
+          "median": 0.29952583300473634,
+          "p95": 8.298558725010663
+        },
+        "reading both text sources": {
+          "receipts": 218,
+          "median": 0.07588462501007598,
+          "p95": 0.2048801499608089
+        }
+      },
+      "peak_resident_bytes": 2858254336
+    }
+  }
+}

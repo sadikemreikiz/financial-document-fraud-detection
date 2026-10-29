@@ -32,6 +32,11 @@ REPORTED_RUNS = Path("reports/runs")
 TRACKS = {TextSource.TRANSCRIPT: "T1 transcript", TextSource.OCR: "T2 OCR"}
 FREEZE_TAG = "phase-7-freeze"
 """The git tag the configuration is frozen at before the test split is unlocked (ADR-0034)."""
+FIX_TAG = "phase-7-fix-1"
+"""The git tag of the one fix made after the unlock (ADR-0034, 2): track R's inputs read only
+their OCR text, after the command failed on the transcript, which no result uses."""
+FIXED_FILES = ("src/docfraud/cli/common.py", "src/docfraud/cli/fusion.py")
+"""The only files :data:`FIX_TAG` changed after :data:`FREEZE_TAG`."""
 TEST_UNLOCK = "ADR-0034: the single evaluation of Phase 7"
 """The reason every command of Phase 7 gives when it unlocks the test split (ADR-0034)."""
 
@@ -99,8 +104,11 @@ def require_unchanged(commit: str, paths: Sequence[str], problem: str) -> None:
 def require_freeze_tag() -> None:
     """Stop unless the committed source is the source tagged :data:`FREEZE_TAG` (ADR-0034, 1).
 
+    The source tagged :data:`FIX_TAG` passes too, if it changed nothing after the freeze but
+    :data:`FIXED_FILES`: a fault found after the unlock is fixed and disclosed (ADR-0034, 2).
+
     Raises:
-        typer.Exit: If the tag does not exist or the source changed after it.
+        typer.Exit: If the tag does not exist or the source changed after it, other than by the fix.
     """
     changed = changed_since(FREEZE_TAG, ("src",))
     if changed is None:
@@ -108,7 +116,7 @@ def require_freeze_tag() -> None:
             f"[red]no tag {FREEZE_TAG}[/red]: freeze the configuration first (ADR-0034, decision 1)"
         )
         raise typer.Exit(1)
-    if changed:
+    if changed and (changed_since(FIX_TAG, ("src",)) != [] or not set(changed) <= set(FIXED_FILES)):
         console.print(f"[red]the source changed after {FREEZE_TAG}[/red]: " + ", ".join(changed))
         raise typer.Exit(1)
 
