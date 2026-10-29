@@ -565,6 +565,11 @@ h3 { font-size: 1.05rem; margin: 0 0 .3rem; font-family: ui-monospace, monospace
 h4 { font-size: .95rem; margin: .8rem 0 .2rem; }
 a { color: var(--accent); }
 .lede { color: var(--muted); max-width: 48rem; }
+.byline { margin: 0 0 .6rem; }
+.glance { border-left: 4px solid var(--accent); padding: .1rem 1rem .4rem; margin: 1.2rem 0; }
+.glance h2 { margin-top: .6rem; }
+.glance li { margin: .35rem 0; }
+.contents { font-size: .9rem; margin: 1rem 0 1.4rem; line-height: 1.9; }
 .credit { border: 1px solid var(--line); background: var(--panel); border-radius: 8px;
   padding: .3rem 1.2rem .8rem; }
 .citation { font-size: .95rem; }
@@ -617,6 +622,57 @@ def lede(records: Records) -> str:
     )
 
 
+CONTENTS = (
+    ("glance", "At a glance"),
+    ("credit", "Credit"),
+    ("results", "Results"),
+    ("how", "How it works"),
+    ("choice", "How the ten were chosen"),
+    (CAUGHT, "Caught"),
+    (MISSED, "Missed"),
+    (GENUINE, "Genuine"),
+    ("limits", "Limitations"),
+    ("reproduce", "Reproduce"),
+)
+"""The page's sections, linked from the top so that a reader can go straight to one."""
+
+
+def byline() -> str:
+    """Who built the system, with links to the author and the code."""
+    return (
+        f'<p class="byline">By {_link(AUTHOR_PAGE, AUTHOR)} · '
+        f"{_link(REPOSITORY, 'code, run records and documentation')}</p>"
+    )
+
+
+def glance(records: Records) -> str:
+    """The results in plain words, for a reader who is not in the field."""
+    ocr = records.check["ocr"]
+    policy = records.check["policy"]["ocr"]["10 %"]
+    reviewed, forged = policy["reviewed"], policy["forged_reviewed"]
+    found = f"all {forged} were forged" if forged == reviewed else f"{forged} of them were forged"
+    missed = ocr["forged"] - forged
+    return f"""
+<section id="glance" class="glance" aria-labelledby="glance-title">
+  <h2 id="glance-title">At a glance</h2>
+  <ul>
+    <li>Of {_e(ocr["receipts"])} receipts the system had never seen, it sent the
+    {_e(reviewed)} it found most suspicious to a reviewer, and {found}.</li>
+    <li>It missed {missed} of the {_e(ocr["forged"])} forged receipts; the cards below show
+    why.</li>
+    <li>It reaches an F1 score of {ocr["success"]["f1"]["value"]:.3f}, against {PUBLISHED_F1:.3f}
+    for the best published result we know of on the same receipts. F1 weighs how many forgeries
+    are found against how many alarms are right; 1 is perfect.</li>
+  </ul>
+</section>"""
+
+
+def contents() -> str:
+    """Links to the page's sections."""
+    links = " · ".join(f'<a href="#{key}">{_e(name)}</a>' for key, name in CONTENTS)
+    return f'\n<nav class="contents" aria-label="Contents">{links}</nav>'
+
+
 def render_page(
     records: Records,
     annotations: Mapping[str, Mapping[str, Any]],
@@ -626,6 +682,8 @@ def render_page(
     """The whole page, from the records, the annotations and the documents it quotes."""
     body = "".join(
         (
+            glance(records),
+            contents(),
             credit(),
             results(records),
             how(),
@@ -650,6 +708,7 @@ test split, chosen by a stated rule, with its evidence, reports and failures.">
 <main>
 <header>
   <h1>Detecting forged receipts: ten cases from the test split</h1>
+  {byline()}
   <p class="lede">{lede(records)}</p>
 </header>{body}
 </main>

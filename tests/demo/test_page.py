@@ -160,3 +160,22 @@ def test_the_build_stops_on_an_image_that_was_not_pinned(tmp_path: Path) -> None
     assert result.exit_code == 1
     assert "pins" in result.output
     assert not (tmp_path / "site").exists()
+
+
+def test_the_top_names_the_author_and_the_results_before_the_credit(built: str) -> None:
+    found = records()
+    policy = found.check["policy"]["ocr"]["10 %"]
+    author = built.index("Sadik Emre Ikiz")
+    glance = built.index('id="glance"')
+    assert author < glance < built.index('id="credit"') < built.index("<img")
+    assert f"it sent the\n    {policy['reviewed']} it found most suspicious" in built
+    assert f"all {policy['forged_reviewed']} were forged" in built
+
+
+def test_every_link_of_the_contents_has_its_section(built: str) -> None:
+    nav = re.search(r'<nav class="contents"[^>]*>(.*?)</nav>', built, re.DOTALL)
+    assert nav is not None
+    targets = re.findall(r'href="#([^"]+)"', nav.group(1))
+    assert len(targets) == 10
+    for target in targets:
+        assert f'id="{target}"' in built, target

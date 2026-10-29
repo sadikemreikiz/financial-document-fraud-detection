@@ -115,9 +115,16 @@ leaves out.
 
 ### 4. The page
 
-In order: a title and one sentence on what the page is; the credit (decision 5); the results; how
-the system works; how the ten receipts were chosen; the gallery in three groups, each headed with
-its real count; the limitations; how to reproduce; a footer.
+In order: a title, the author with a link to the code, and one sentence on what the page is; the
+results at a glance, in three plain sentences for readers outside the field (how many receipts
+were sent to review and how many of them were forged, how many forgeries were missed, and F1
+against the best published result, with what F1 means); links to every section; the credit
+(decision 5); the results; how the system works; how the ten receipts were chosen; the gallery in
+three groups, each headed with its real count; the limitations; how to reproduce; a footer. The
+credit still comes before any image. The author and the plain summary come first because, read
+as a recruiter would, the first screen otherwise showed neither what the system achieves nor who
+built it: the results began below it and the author's name only at the end of a page about 29
+screens long on a phone.
 
 - **Results**, on T2, measured once with 95 % intervals: average precision 0.902 (0.829 to
   0.963), chance 0.161; F1 0.814 (0.679 to 0.906) against the best published result we know of,
