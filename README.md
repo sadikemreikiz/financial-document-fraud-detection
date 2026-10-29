@@ -17,27 +17,29 @@ reviewer, evaluated on real human forgeries.
   the way I found a shortcut in the dataset: a rule that looks only at the file format beats the
   best published result (F1 79.3 against 28.39), so every image is normalised before any model
   sees it.
-- **Result so far:** combining copy-move detection, pixel forensics and the accounting rules
-  ranks forged receipts with an average precision of 0.85 (chance 0.17), above every single
-  source, in one pre-registered check on the validation split; at a 10 % review budget all 19
+- **Result:** measured once on the 218 receipts of the locked test split, combining copy-move
+  detection, pixel forensics and the accounting rules ranks forged receipts with an average
+  precision of 0.90 from the image alone (chance 0.16) and reaches an F1 of 0.81 (95 % interval
+  0.68 to 0.91), against 0.28 for the best published result; at a 10 % review budget all 24
   receipts sent to review are forged, and the first region an audit report shows hits the edit
-  on 30 of the 33 forgeries. The pixel model behind it was trained only on forgeries from my own synthetic
-  engine.
+  on 33 of the 35 forgeries. Saved again as JPEG, the same receipts fall to 0.61: the system
+  relies on lossless files. The pixel model behind it was trained only on forgeries from my own
+  synthetic engine.
 - **Built with:** Python 3.14, PyTorch, scikit-learn, RapidOCR, the Claude API, pytest, mypy in
   strict mode and CI on every pull request.
-- **Status:** Phases 0 to 6 of 8 complete. Phase 5 combined the evidence into one decision and
-  an audit report; Phase 6 measured an LLM as a detector against it and built the review agent,
-  each checked once on the validation split. Phase 7, the single evaluation on the locked test
-  split, is next.
+- **Status:** Phases 0 to 6 of 8 complete, and Phase 7's single evaluation on the locked test
+  split is done ([Phase 7 results](reports/README.md)). The model card, a public demo and
+  publication complete Phase 7.
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="reports/fusion/figures/validation-precision-dark.svg">
-  <img alt="Average precision on the validation split, with 95 % intervals, on transcripts (T1) and OCR text (T2): fusion 0.85 and 0.83, fusion without the links 0.83 and 0.82, copy-move alone 0.75, pixel evidence alone 0.66, accounting rules alone 0.39 and 0.32; chance 0.17." src="reports/fusion/figures/validation-precision-light.svg">
+  <source media="(prefers-color-scheme: dark)" srcset="reports/fusion/figures/test-precision-dark.svg">
+  <img alt="Average precision on the test split, with 95 % intervals, on transcripts (T1) and OCR text (T2): fusion 0.91 and 0.90, fusion without the links 0.91 and 0.91, copy-move alone 0.83, pixel evidence alone 0.69, accounting rules alone 0.35 and 0.25; chance 0.16." src="reports/fusion/figures/test-precision-light.svg">
 </picture>
 
-How well the fused system and each source alone rank the 33 forged receipts among the 190 of the
-validation split, in the one check of Phase 5 ([Phase 5 results](reports/fusion/README.md)).
-Phase 4's measurement of the pixel systems is in the [Phase 4 results](reports/forensics/README.md).
+How well the fused system and each source alone rank the 35 forged receipts among the 218 of the
+test split, measured once in Phase 7 ([Phase 7 results](reports/README.md)). The validation check
+of Phase 5 is in the [Phase 5 results](reports/fusion/README.md), and Phase 4's measurement of the
+pixel systems in the [Phase 4 results](reports/forensics/README.md).
 
 This repository is **v2** of my M.Sc. thesis (University of Europe for Applied Sciences, Berlin,
 2026). It is a rebuild from scratch: when I reviewed the thesis implementation after
@@ -48,7 +50,7 @@ same research questions properly. See [From thesis to v2](docs/thesis-review.md)
 
 **Under active development.** Phases 0 to 6 of the [roadmap](docs/project-charter.md#roadmap)
 are complete: foundations, data, reading, accounting rules, pixel forensics, fusion and the
-language-model layer. Reading errors
+language-model layer; Phase 7's evaluation on the test split is done. Reading errors
 cause most false alarms of the accounting rules, so LLM field extraction moved before Phase 5
 ([ADR-0024](docs/decisions/0024-llm-extraction-before-fusion.md)). Its measurement was fixed in
 advance ([ADR-0025](docs/decisions/0025-llm-extraction-preregistration.md)): the LLM points to
@@ -66,8 +68,10 @@ validation split ([Phase 5 results](reports/fusion/README.md)). Phase 6b set a l
 against that system as a detector and built an agent that drafts the case file of a receipt sent
 to review, both fixed in advance
 ([ADR-0031](docs/decisions/0031-llm-detector-and-agent.md)) and checked once on the validation
-split ([Phase 6 results](reports/llm/README.md)). The test split stays locked until the final
-evaluation of Phase 7.
+split ([Phase 6 results](reports/llm/README.md)). Phase 7 unlocked the test split once, as fixed
+in advance ([ADR-0034](docs/decisions/0034-phase-7-preregistration.md)), and measured every system
+on it ([Phase 7 results](reports/README.md)); the model card, a public demo and publication come
+next.
 
 ## Findings so far
 
@@ -110,8 +114,9 @@ evaluation of Phase 7.
 - **Combining the evidence beats every single source.** Checked once on the validation split,
   the fused system reaches an average precision of 0.85 on the transcripts and 0.83 on OCR text,
   above copy-move detection alone (0.75), pixel forensics alone (0.66) and the accounting rules
-  alone (0.39 and 0.32), each by a paired-bootstrap interval above zero; the claims wait for the
-  test split ([report](reports/fusion/validation-check.md)).
+  alone (0.39 and 0.32), each by a paired-bootstrap interval above zero
+  ([report](reports/fusion/validation-check.md)); on the test split the margin over copy-move is
+  no longer above zero, as below.
 - **Linking pixels to fields adds little that can be shown.** Without the two links the fused
   system loses 0.022 (0.0002 to 0.048) on the transcripts and 0.011 (−0.011 to 0.035) on OCR
   text ([Phase 5 results](reports/fusion/README.md)).
@@ -128,6 +133,24 @@ evaluation of Phase 7.
   validation receipts sent to review, 5 of the 1,224 numbers and boxes in its case files were
   not found in the tool outputs, and its first observation pointed at the edit on all 19, as the
   audit report does ([report](reports/llm/agent/validation.md)).
+- **On the test split, the success criterion is met.** Measured once with everything frozen on
+  the validation split, fusion reaches an F1 of 0.814 (0.679 to 0.906) on both text sources,
+  against 0.284 for the best published result, and an average precision of 0.912 on the
+  transcripts and 0.902 on OCR text; all 24 receipts sent to review at the 10 % budget are
+  forged, and every audit report is grounded ([Phase 7 results](reports/README.md)).
+- **There, fusion does not clearly beat copy-move alone.** Its margin is 0.072 (−0.004 to
+  0.155) on OCR text, so the claim that it beats every single source is not made, and linking
+  adds nothing that can be measured ([report](reports/fusion/test-check.md)).
+- **The system relies on lossless files.** Saved again as JPEG at quality 95, the test receipts
+  fall from an average precision of 0.902 to 0.607, and at 75 to 0.414: copy-move needs regions
+  identical pixel for pixel ([report](reports/fusion/track-r.md)).
+- **A general LLM stays far behind on the test split.** Claude Sonnet 5.5 reaches an average
+  precision of 0.447 and Claude Opus 5.5 0.692, against 0.902 for fusion on the same text; the
+  difference to Sonnet, named in advance, is 0.455 (0.314 to 0.587)
+  ([report](reports/llm/detector/test.md)).
+- **One command failed after the unlock and was fixed by the rule fixed in advance.** It read a
+  text source track R does not use; the fix changed what it reads and nothing else, and is
+  disclosed ([Phase 7 results](reports/README.md#the-one-fix-after-the-unlock)).
 
 ## How the work is done
 
@@ -156,6 +179,7 @@ evaluation of Phase 7.
 | [Phase 4 results](reports/forensics/README.md) | Pre-registration, real forgeries, reference systems, synthetic engine, learned models, one clean measurement |
 | [Phase 5 results](reports/fusion/README.md) | Copy-move, linking, fusion, review policy and audit report, checked once on the validation split |
 | [Phase 6 results](reports/llm/README.md) | The LLM field reader, the LLM as a detector against the fused system, and the review agent, each checked once |
+| [Phase 7 results](reports/README.md) | The single evaluation on the test split: the claims, robustness to re-saved images, every error and the one fix after the unlock |
 | [From thesis to v2](docs/thesis-review.md) | Code-verified review of the original implementation |
 
 ## Development
