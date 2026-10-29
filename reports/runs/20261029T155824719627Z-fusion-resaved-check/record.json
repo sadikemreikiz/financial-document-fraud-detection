@@ -1,0 +1,253 @@
+{
+  "run_id": "20261029T155824719627Z-fusion-resaved-check",
+  "name": "fusion-resaved-check",
+  "started": "2026-10-29T15:58:24.719627Z",
+  "finished": "2026-10-29T15:58:29.431617Z",
+  "code": {
+    "commit": "0b07762edf357c3b405071401eb95af9e6b40cfc",
+    "dirty": false
+  },
+  "environment": {
+    "python": "3.14.8",
+    "docfraud": "2.0.0.dev0",
+    "packages": {
+      "annotated-doc": "0.0.5",
+      "annotated-types": "0.8.0",
+      "anthropic": "2.1.0",
+      "antlr4-python3-runtime": "4.9.3",
+      "anyio": "4.15.1",
+      "ast_serialize": "0.12.1",
+      "certifi": "2026.7.22",
+      "cfgv": "3.5.0",
+      "charset-normalizer": "3.5.2",
+      "cloudpickle": "3.1.2",
+      "colorlog": "6.12.0",
+      "coverage": "7.16.2",
+      "distlib": "0.4.3",
+      "docfraud": "2.0.0.dev0",
+      "docstring_parser": "0.18.0",
+      "filelock": "4.0.12",
+      "flatbuffers": "25.12.19",
+      "fsspec": "2026.9.0",
+      "h11": "0.16.0",
+      "httpcore2": "2.16.0",
+      "httpx2": "2.16.0",
+      "identify": "2.6.20",
+      "idna": "3.20",
+      "iniconfig": "2.3.0",
+      "jinja2": "3.1.6",
+      "jiter": "0.17.0",
+      "joblib": "1.6.0",
+      "librt": "0.16.0",
+      "markdown-it-py": "4.2.0",
+      "markupsafe": "3.0.4",
+      "mdurl": "0.1.2",
+      "mpmath": "1.3.0",
+      "mypy": "2.4.0",
+      "mypy_extensions": "1.1.0",
+      "narwhals": "2.26.0",
+      "networkx": "3.7",
+      "nodeenv": "1.11.0",
+      "numpy": "2.5.3",
+      "omegaconf": "2.3.1",
+      "onnxruntime": "1.30.0",
+      "opencv-python": "5.0.0.93",
+      "opentelemetry-api": "1.45.1",
+      "packaging": "26.3",
+      "pathspec": "1.1.1",
+      "pillow": "12.3.0",
+      "platformdirs": "4.12.3",
+      "pluggy": "1.6.0",
+      "pre_commit": "4.6.2",
+      "protobuf": "7.36.2",
+      "pyclipper": "1.4.0",
+      "pydantic": "2.13.5",
+      "pydantic_core": "2.46.5",
+      "pygments": "2.21.0",
+      "pytest": "9.1.1",
+      "pytest-cov": "7.1.0",
+      "python-discovery": "1.6.1",
+      "pyyaml": "6.0.3",
+      "rapidocr": "3.9.2",
+      "requests": "2.34.2",
+      "rich": "15.0.0",
+      "ruff": "0.16.10",
+      "scikit-learn": "1.9.1",
+      "scipy": "1.18.1",
+      "setuptools": "84.0.0",
+      "shapely": "2.1.2",
+      "shellingham": "1.5.4",
+      "six": "1.17.0",
+      "sniffio": "1.3.1",
+      "sympy": "1.14.0",
+      "threadpoolctl": "3.7.0",
+      "torch": "2.14.1",
+      "tqdm": "4.70.1",
+      "truststore": "0.10.5",
+      "typer": "0.27.2",
+      "typing-inspection": "0.4.4",
+      "typing_extensions": "4.16.0",
+      "urllib3": "2.8.0",
+      "virtualenv": "21.14.5"
+    },
+    "platform": "macOS-15.7.7-arm64-arm-64bit-Mach-O",
+    "machine": "arm64",
+    "processor": "arm",
+    "cpu_count": 10,
+    "memory_bytes": 17179869184
+  },
+  "config": {
+    "decision": "ADR-0034",
+    "validation_check": "20261027T102600447861Z-fusion-validation-check",
+    "rehearsal": "20261028T223352641267Z-fusion-check-rehearsal",
+    "resaved_inputs": "20261029T153037498140Z-fusion-resaved-inputs"
+  },
+  "config_hash": "e2f4879dadb4b6eda2f16ca5256791be422e392bc2349a9cbb0a1d0410ee337a",
+  "dataset_sha256": {
+    "findit2": "6f8c6f134951956627edcc06c7e8fc298abb9e984073ab193174aee204d46261"
+  },
+  "seeds": {
+    "bootstrap": 0
+  },
+  "test_unlocks": [
+    "ADR-0034: the single evaluation of Phase 7"
+  ],
+  "results": {
+    "95": {
+      "table": {
+        "average_precision": {
+          "value": 0.6068569083684353,
+          "low": 0.4742965131700272,
+          "high": 0.7418344333645902
+        },
+        "roc_auc": {
+          "value": 0.8221701795472287,
+          "low": 0.7297384855581577,
+          "high": 0.9030444964871195
+        },
+        "recall_at_10pct": {
+          "value": 0.37142857142857144,
+          "low": 0.22857142857142856,
+          "high": 0.5085714285714286
+        },
+        "recall_at_20pct": {
+          "value": 0.6,
+          "low": 0.45714285714285713,
+          "high": 0.7428571428571429
+        },
+        "f1": {
+          "value": 0.37209302325581395,
+          "low": 0.20512820512820512,
+          "high": 0.5416666666666666
+        },
+        "brier": 0.10136666099019409,
+        "ece": 0.08296918457814556,
+        "threshold": 0.5624147669061262
+      },
+      "against_original": {
+        "value": 0.29532216225601393,
+        "low": 0.18447715309303014,
+        "high": 0.4053943506664224,
+        "above_zero": true
+      },
+      "success": {
+        "f1": {
+          "value": 0.37209302325581395,
+          "low": 0.20512820512820512,
+          "high": 0.5416666666666666
+        },
+        "recall_at_10pct": {
+          "value": 0.37142857142857144,
+          "low": 0.22857142857142856,
+          "high": 0.5085714285714286
+        },
+        "f1_above_published": false,
+        "recall_above_chance": true,
+        "met": false
+      }
+    },
+    "75": {
+      "table": {
+        "average_precision": {
+          "value": 0.4142921479785652,
+          "low": 0.2851410561045286,
+          "high": 0.5612622406986404
+        },
+        "roc_auc": {
+          "value": 0.659328649492584,
+          "low": 0.5489461358313817,
+          "high": 0.7633138173302108
+        },
+        "recall_at_10pct": {
+          "value": 0.2857142857142857,
+          "low": 0.17142857142857143,
+          "high": 0.42857142857142855
+        },
+        "recall_at_20pct": {
+          "value": 0.37142857142857144,
+          "low": 0.24571428571428575,
+          "high": 0.5314285714285715
+        },
+        "f1": {
+          "value": 0.20512820512820512,
+          "low": 0.05555555555555555,
+          "high": 0.37209302325581395
+        },
+        "brier": 0.12403792756258113,
+        "ece": 0.08772851138427702,
+        "threshold": 0.5624147669061262
+      },
+      "against_original": {
+        "value": 0.48788692264588407,
+        "low": 0.35479091038277066,
+        "high": 0.6066790541149156,
+        "above_zero": true
+      },
+      "success": {
+        "f1": {
+          "value": 0.20512820512820512,
+          "low": 0.05555555555555555,
+          "high": 0.37209302325581395
+        },
+        "recall_at_10pct": {
+          "value": 0.2857142857142857,
+          "low": 0.17142857142857143,
+          "high": 0.42857142857142855
+        },
+        "f1_above_published": false,
+        "recall_above_chance": true,
+        "met": false
+      }
+    },
+    "original": {
+      "average_precision": {
+        "value": 0.9021790706244492,
+        "low": 0.8287020706614018,
+        "high": 0.9627024492795706
+      },
+      "roc_auc": {
+        "value": 0.9670569867291179,
+        "low": 0.9323965651834504,
+        "high": 0.99032006245121
+      },
+      "recall_at_10pct": {
+        "value": 0.6228571428571429,
+        "low": 0.5428571428571428,
+        "high": 0.6228571428571429
+      },
+      "recall_at_20pct": {
+        "value": 0.8571428571428571,
+        "low": 0.7428571428571429,
+        "high": 0.9428571428571428
+      },
+      "f1": {
+        "value": 0.8135593220338984,
+        "low": 0.6792452830188679,
+        "high": 0.90625
+      },
+      "brier": 0.0421802038029816,
+      "ece": 0.03378836150771117,
+      "threshold": 0.5624147669061262
+    }
+  }
+}
