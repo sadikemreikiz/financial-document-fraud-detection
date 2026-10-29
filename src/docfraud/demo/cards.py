@@ -143,3 +143,12 @@ def demo_cards(
         "gallery": gallery,
         "alarms": {budget_name(p): alarms(probabilities, by_id, p) for p in policies},
     }
+
+
+def shown_digests(results: Mapping[str, Any]) -> dict[str, str]:
+    """The SHA-256 of every shown receipt's image, as a ``demo-cards`` record pins it."""
+    return {
+        shown["receipt"]: shown["sha256"]
+        for group in results["gallery"].values()
+        for shown in group
+    }

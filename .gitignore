@@ -27,3 +27,7 @@ build/
 .DS_Store
 .idea/
 .vscode/
+
+# The demo's page and the receipts' assets are built locally or in CI, never committed (ADR-0035)
+/_site/
+/demo-assets/

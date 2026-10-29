@@ -1,14 +1,19 @@
 """``docfraud demo``: the public demo of ADR-0035.
 
-``cards`` keeps the system's outputs for the receipts the demo shows in a run record.
+``cards`` keeps the system's outputs for the receipts the demo shows in a run record; ``assets``
+exports their images and annotations for the owner's private repository; ``build`` writes the
+page from both, and is what the deployment runs.
 """
 
+import shutil
 from collections.abc import Mapping
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Annotated, Any
 
 import typer
 
+from docfraud.cli.agent import AGENT
 from docfraud.cli.common import (
     REPORTED_RUNS,
     DataDir,
@@ -33,17 +38,32 @@ from docfraud.data.download import SOURCES, sha256_of
 from docfraud.data.models import Split
 from docfraud.data.splits import select
 from docfraud.decision import BUDGETS, ReviewPolicy
-from docfraud.demo.cards import RUN_NAME, budget_name, demo_cards
+from docfraud.demo.assets import AssetMismatchError, export, image_name, load
+from docfraud.demo.cards import RUN_NAME, budget_name, demo_cards, shown_digests
 from docfraud.demo.gallery import CAUGHT, FALSE_ALARM, MISSED
-from docfraud.evaluation.runs import JsonRunStore, run
+from docfraud.demo.page import Records, error_notes, render_page
+from docfraud.evaluation.runs import JsonRunStore, code_version, run
 from docfraud.forensics.learned.rounds import SEEDS
 from docfraud.fusion.errors import RUN_NAME as ERRORS_RUN
 from docfraud.fusion.errors import frozen_assessments
+from docfraud.fusion.final import RESAVED_RUN
+from docfraud.fusion.final import RUN_NAME as TEST_CHECK_RUN
 from docfraud.fusion.rehearsal import TEST_INPUTS_RUN
+from docfraud.llm.agent_final import RUN_NAME as AGENT_RUN
+from docfraud.llm.detector_final import CLAIMS, DESCRIPTIVE, RUN_NAMES
 
 app = typer.Typer(help="The public demo (ADR-0035).")
 
 DEMO_UNLOCK = "ADR-0035: the receipts of the public demo, after the single evaluation"
+
+PHASE_7_PAGE = Path("reports/README.md")
+"""The Phase 7 page, whose table holds the error notes the owner checked."""
+
+SITE = Path("_site")
+
+Assets = Annotated[
+    Path, typer.Option(help="The directory of the receipts' images and annotations.")
+]
 
 
 @app.command("cards")
@@ -120,3 +140,78 @@ def disagreement(results: Mapping[str, Any], recorded: Mapping[str, Any]) -> str
     if any(misses.get(c["receipt"]) != c["probability"] for c in results["gallery"][MISSED]):
         return "a miss shown differs from the error analysis's record"
     return None
+
+
+@app.command("assets")
+def assets_command(
+    output: Assets,
+    data_dir: DataDir = Path("data"),
+    runs: Runs = REPORTED_RUNS,
+) -> None:
+    """Export the shown receipts' images and annotations for the private repository (ADR-0035, 6).
+
+    The images are copied as the dataset distributes them, and must have the SHA-256 the
+    ``demo-cards`` record pinned.
+    """
+    pinned = shown_digests(_latest(JsonRunStore(runs), RUN_NAME).results)
+    documents = {
+        d.doc_id: d
+        for d in select(
+            findit_documents(data_dir), Split.TEST, unlock_test=True, reason=DEMO_UNLOCK
+        )
+    }
+    digests = export([documents[r] for r in pinned], output)
+    differ = sorted(r for r in pinned if digests[r] != pinned[r])
+    if differ:
+        console.print(f"[red]images differ from the demo's record[/red]: {', '.join(differ)}")
+        raise typer.Exit(1)
+    console.print(f"[green]exported[/green] {len(digests)} receipts to {output}")
+
+
+@app.command("build")
+def build_command(
+    assets: Assets,
+    output: Annotated[Path, typer.Option(help="Where the page is written.")] = SITE,
+    runs: Runs = REPORTED_RUNS,
+) -> None:
+    """Write the demo's page from the run records and the receipts' assets (ADR-0035, 3 to 6).
+
+    Every image must have the SHA-256 the ``demo-cards`` record pinned; the build stops otherwise.
+    """
+    store = JsonRunStore(runs)
+    cards = _latest(store, RUN_NAME).results
+    pinned = shown_digests(cards)
+    try:
+        annotations = load(assets, pinned)
+    except AssetMismatchError as error:
+        console.print(f"[red]{error}[/red]")
+        raise typer.Exit(1) from error
+    notes = error_notes(PHASE_7_PAGE.read_text(encoding="utf-8"))
+    missing = [c["receipt"] for c in cards["gallery"][MISSED] if c["receipt"] not in notes]
+    if missing:
+        console.print(f"[red]no error note on {PHASE_7_PAGE} for[/red] {', '.join(missing)}")
+        raise typer.Exit(1)
+    case_files = {
+        c["receipt"]: (AGENT / "test" / f"{c['receipt']}.md").read_text(encoding="utf-8")
+        for c in cards["gallery"][CAUGHT]
+    }
+    version = code_version()
+    built = datetime.now(UTC).date().isoformat()
+    records = Records(
+        check=_latest(store, TEST_CHECK_RUN).results,
+        resaved=_latest(store, RESAVED_RUN).results,
+        detector=_latest(store, RUN_NAMES[CLAIMS]).results,
+        detector_descriptive=_latest(store, RUN_NAMES[DESCRIPTIVE]).results,
+        agent=_latest(store, AGENT_RUN).results,
+        errors=_latest(store, ERRORS_RUN).results,
+        cards=cards,
+        commit=version.commit or "unknown",
+        built=built if version.dirty is False else f"{built} (with uncommitted changes)",
+    )
+    page = render_page(records, annotations, case_files, notes)
+    receipts = output / "receipts"
+    receipts.mkdir(parents=True, exist_ok=True)
+    for receipt in pinned:
+        shutil.copyfile(assets / image_name(receipt), receipts / image_name(receipt))
+    (output / "index.html").write_text(page, encoding="utf-8")
+    console.print(f"[green]written[/green] {output / 'index.html'} with {len(pinned)} receipts")

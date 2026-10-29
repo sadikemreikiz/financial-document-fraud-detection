@@ -129,6 +129,7 @@ How the LLM reads a receipt, and what code guarantees on the way
 | `docfraud.fusion` | Calibration and fusion models | 5 |
 | `docfraud.decision` | Decision policy | 5 |
 | `docfraud.reporting` | Audit reports | 5 |
+| `docfraud.demo` | The public demo: the receipts a stated rule chooses, their cards and the page ([ADR-0035](decisions/0035-public-demo.md)) | 7 |
 | `docfraud.llm` | Provider interface, LLM extraction (6a), investigation agent (6b) | 6a, 6b |
 | `docfraud.api`, `docfraud.cli` | HTTP API and command line | 0, 7 |
 
