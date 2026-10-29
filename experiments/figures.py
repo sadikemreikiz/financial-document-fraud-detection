@@ -43,6 +43,7 @@ ROOT = Path(__file__).resolve().parents[1]
 FIGURES = ROOT / "reports" / "forensics" / "figures"
 FUSION_FIGURES = ROOT / "reports" / "fusion" / "figures"
 VALIDATION_RUN = "fusion-validation-check"
+TEST_RUN = "fusion-test-check"
 
 LABELS = {
     1: "System 1 · JPEG lattice",
@@ -263,8 +264,11 @@ FUSION_ROWS = {
 TRACK_MARKS = (("transcript", "T1 · transcripts", "o"), ("ocr", "T2 · OCR", "D"))
 
 
-def validation_figure(results: Any, theme: Theme) -> Path:
-    """Average precision of fusion, its baseline and each single source, on both text sources."""
+def split_figure(results: Any, theme: Theme, split: str = "validation") -> Path:
+    """Average precision of fusion, its baseline and each single source, on both text sources.
+
+    ``results`` are those of the validation check or of the test check; ``split`` names it.
+    """
     receipts, forged = results["transcript"]["receipts"], results["transcript"]["forged"]
     chance = forged / receipts
     with plt.rc_context(_style(theme)):
@@ -308,19 +312,24 @@ def validation_figure(results: Any, theme: Theme) -> Path:
             columnspacing=1.6,
             labelcolor=theme.secondary,
         )
+        checked = "checked once" if split == "validation" else "measured once"
         _title(
             figure,
-            "Average precision on the validation split, checked once",
+            f"Average precision on the {split} split, {checked}",
             f"{receipts} receipts, {forged} forged · dots with 95 % intervals · system 2 seed 0",
             theme,
         )
+        where = (
+            "The claims are made on the test split in Phase 7."
+            if split == "validation"
+            else "The system frozen before the test split was unlocked, applied unchanged."
+        )
         _note(
             figure,
-            f"Grey line: chance, the share of forged receipts ({chance:.2f}). The claims are made "
-            "on the test split in Phase 7.",
+            f"Grey line: chance, the share of forged receipts ({chance:.2f}). {where}",
             theme,
         )
-        return _save(figure, "validation-precision", theme, FUSION_FIGURES)
+        return _save(figure, f"{split}-precision", theme, FUSION_FIGURES)
 
 
 def main() -> None:
@@ -331,12 +340,15 @@ def main() -> None:
         for s in MAP_SYSTEMS
     }
     order = sorted(MAP_SYSTEMS, key=lambda s: -precision[s])  # the highest first
-    validation = JsonRunStore(ROOT / "reports" / "runs").records(VALIDATION_RUN)[-1].results
+    store = JsonRunStore(ROOT / "reports" / "runs")
+    validation = store.records(VALIDATION_RUN)[-1].results
+    test = store.records(TEST_RUN)[-1].results
     for theme in (LIGHT, DARK):
         for path in (
             precision_figure(data, order, theme),
             localisation_figure(data, order, theme),
-            validation_figure(validation, theme),
+            split_figure(validation, theme),
+            split_figure(test, theme, "test"),
         ):
             print(f"written: {path.relative_to(ROOT)}")  # noqa: T201
 
