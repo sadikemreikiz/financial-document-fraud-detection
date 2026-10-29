@@ -175,6 +175,8 @@ records, and CI checks that every committed report matches its record.
 ## What comes next
 
 The [model card](../docs/model-card.md) states what the system was measured on, how well, and
-where it fails. Next come the public demo (the dataset's authors allowed a small number of their
-receipts on it, with a clear citation of the paper and the dataset page), publication of the
-repository, and Phase 8.
+where it fails. Next come the public demo (L3i, which published the dataset, allowed a small
+number of its receipts on it, with a clear citation of the paper and the dataset page;
+[ADR-0035](../docs/decisions/0035-public-demo.md)), the owner's approval of the
+[review of the thesis](../docs/thesis-review.md), public with the repository since its
+creation, and Phase 8.

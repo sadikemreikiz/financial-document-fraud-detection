@@ -10,6 +10,7 @@ from docfraud.cli import (
     baseline,
     copy_move,
     data,
+    demo,
     detector,
     final,
     forensics,
@@ -42,6 +43,7 @@ app.add_typer(fusion.app, name="fusion")
 app.add_typer(detector.app, name="detector")
 app.add_typer(agent.app, name="agent")
 app.add_typer(final.app, name="final")
+app.add_typer(demo.app, name="demo")
 
 
 def _print_version(value: bool) -> None:

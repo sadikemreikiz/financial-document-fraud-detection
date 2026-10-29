@@ -1,0 +1,1856 @@
+{
+  "run_id": "20261029T192933143831Z-demo-cards",
+  "name": "demo-cards",
+  "started": "2026-10-29T19:29:33.143831Z",
+  "finished": "2026-10-29T19:29:33.193786Z",
+  "code": {
+    "commit": "0f31d816fad9808e1742c7630ba3ca38eedb03e3",
+    "dirty": false
+  },
+  "environment": {
+    "python": "3.14.8",
+    "docfraud": "2.0.0.dev0",
+    "packages": {
+      "annotated-doc": "0.0.5",
+      "annotated-types": "0.8.0",
+      "anthropic": "2.1.0",
+      "antlr4-python3-runtime": "4.9.3",
+      "anyio": "4.15.1",
+      "ast_serialize": "0.12.1",
+      "certifi": "2026.7.22",
+      "cfgv": "3.5.0",
+      "charset-normalizer": "3.5.2",
+      "cloudpickle": "3.1.2",
+      "colorlog": "6.12.0",
+      "coverage": "7.16.2",
+      "distlib": "0.4.3",
+      "docfraud": "2.0.0.dev0",
+      "docstring_parser": "0.18.0",
+      "filelock": "4.0.12",
+      "flatbuffers": "25.12.19",
+      "fsspec": "2026.9.0",
+      "h11": "0.16.0",
+      "httpcore2": "2.16.0",
+      "httpx2": "2.16.0",
+      "identify": "2.6.20",
+      "idna": "3.20",
+      "iniconfig": "2.3.0",
+      "jinja2": "3.1.6",
+      "jiter": "0.17.0",
+      "joblib": "1.6.0",
+      "librt": "0.16.0",
+      "markdown-it-py": "4.2.0",
+      "markupsafe": "3.0.4",
+      "mdurl": "0.1.2",
+      "mpmath": "1.3.0",
+      "mypy": "2.4.0",
+      "mypy_extensions": "1.1.0",
+      "narwhals": "2.26.0",
+      "networkx": "3.7",
+      "nodeenv": "1.11.0",
+      "numpy": "2.5.3",
+      "omegaconf": "2.3.1",
+      "onnxruntime": "1.30.0",
+      "opencv-python": "5.0.0.93",
+      "opentelemetry-api": "1.45.1",
+      "packaging": "26.3",
+      "pathspec": "1.1.1",
+      "pillow": "12.3.0",
+      "platformdirs": "4.12.3",
+      "pluggy": "1.6.0",
+      "pre_commit": "4.6.2",
+      "protobuf": "7.36.2",
+      "pyclipper": "1.4.0",
+      "pydantic": "2.13.5",
+      "pydantic_core": "2.46.5",
+      "pygments": "2.21.0",
+      "pytest": "9.1.1",
+      "pytest-cov": "7.1.0",
+      "python-discovery": "1.6.1",
+      "pyyaml": "6.0.3",
+      "rapidocr": "3.9.2",
+      "requests": "2.34.2",
+      "rich": "15.0.0",
+      "ruff": "0.16.10",
+      "scikit-learn": "1.9.1",
+      "scipy": "1.18.1",
+      "setuptools": "84.0.0",
+      "shapely": "2.1.2",
+      "shellingham": "1.5.4",
+      "six": "1.17.0",
+      "sniffio": "1.3.1",
+      "sympy": "1.14.0",
+      "threadpoolctl": "3.7.0",
+      "torch": "2.14.1",
+      "tqdm": "4.70.1",
+      "truststore": "0.10.5",
+      "typer": "0.27.2",
+      "typing-inspection": "0.4.4",
+      "typing_extensions": "4.16.0",
+      "urllib3": "2.8.0",
+      "virtualenv": "21.14.5"
+    },
+    "platform": "macOS-15.7.7-arm64-arm-64bit-Mach-O",
+    "machine": "arm64",
+    "processor": "arm",
+    "cpu_count": 10,
+    "memory_bytes": 17179869184
+  },
+  "config": {
+    "decision": "ADR-0035",
+    "validation_check": "20261027T102600447861Z-fusion-validation-check",
+    "error_analysis": "20261029T161307625540Z-fusion-test-errors"
+  },
+  "config_hash": "e96bf241595a51ceb38e593a1c53fd9c8403e7432e429d2094aaa0300898477f",
+  "dataset_sha256": {
+    "findit2": "6f8c6f134951956627edcc06c7e8fc298abb9e984073ab193174aee204d46261"
+  },
+  "seeds": {},
+  "test_unlocks": [
+    "ADR-0035: the receipts of the public demo, after the single evaluation"
+  ],
+  "results": {
+    "policies": [
+      {
+        "budget": 0.1,
+        "threshold": 0.723037724890667
+      },
+      {
+        "budget": 0.2,
+        "threshold": 0.1923158406525398
+      }
+    ],
+    "receipts": 218,
+    "forged": 35,
+    "outcomes": {
+      "caught": 24,
+      "missed": 11,
+      "genuine": 183,
+      "false alarm": 0
+    },
+    "gallery": {
+      "caught": [
+        {
+          "receipt": "X51006620182",
+          "rank": 0,
+          "probability": 0.999999986201469,
+          "sha256": "3fe2a46f065037ae3543149eeae9559bc74412e54d218b04475f99d2e03f69bd",
+          "card": {
+            "probability": 0.999999986201469,
+            "decisions": {
+              "10 %": "review",
+              "20 %": "review"
+            },
+            "towards": [
+              {
+                "inputs": [
+                  "copy-move"
+                ],
+                "contribution": 21.58950561348415,
+                "reasons": [
+                  "input values: copy-move 1.996",
+                  "copy-move scores the receipt 1.996: the regions (246, 1541, 142 x 38 px) and (264, 1742, 142 x 38 px) are pixel for pixel identical over 5396 px"
+                ],
+                "boxes": [
+                  [
+                    246,
+                    1541,
+                    142,
+                    38
+                  ],
+                  [
+                    264,
+                    1742,
+                    142,
+                    38
+                  ]
+                ]
+              },
+              {
+                "inputs": [
+                  "system 1",
+                  "system 1 evidence"
+                ],
+                "contribution": 2.1608755646657656,
+                "reasons": [
+                  "input values: system 1 1.095; system 1 evidence 1.000",
+                  "system 1 scores the receipt 1.095; its most suspicious region is (136, 1536, 256 x 48 px)"
+                ],
+                "boxes": [
+                  [
+                    136,
+                    1536,
+                    256,
+                    48
+                  ]
+                ]
+              },
+              {
+                "inputs": [
+                  "system 2"
+                ],
+                "contribution": 1.9180435311363122,
+                "reasons": [
+                  "input values: system 2 0.998",
+                  "system 2 scores the receipt 0.998; its most suspicious region is (139, 1535, 249 x 48 px)"
+                ],
+                "boxes": [
+                  [
+                    139,
+                    1535,
+                    249,
+                    48
+                  ]
+                ]
+              }
+            ],
+            "against": [
+              {
+                "inputs": [
+                  "rules"
+                ],
+                "contribution": -0.12215013297211742,
+                "reasons": [
+                  "input values: rules 0.132"
+                ],
+                "boxes": []
+              }
+            ],
+            "overlay": [
+              {
+                "detector": "copy-move",
+                "boxes": [
+                  [
+                    246,
+                    1541,
+                    142,
+                    38
+                  ],
+                  [
+                    264,
+                    1742,
+                    142,
+                    38
+                  ]
+                ]
+              },
+              {
+                "detector": "system 1",
+                "boxes": [
+                  [
+                    136,
+                    1536,
+                    256,
+                    48
+                  ]
+                ]
+              },
+              {
+                "detector": "system 2",
+                "boxes": [
+                  [
+                    139,
+                    1535,
+                    249,
+                    48
+                  ]
+                ]
+              },
+              {
+                "detector": "linking",
+                "boxes": [
+                  [
+                    144,
+                    1532,
+                    249,
+                    49
+                  ],
+                  [
+                    69,
+                    1581,
+                    737,
+                    52
+                  ],
+                  [
+                    142,
+                    1733,
+                    381,
+                    49
+                  ]
+                ]
+              }
+            ],
+            "first_region": [
+              [
+                246,
+                1541,
+                142,
+                38
+              ],
+              [
+                264,
+                1742,
+                142,
+                38
+              ]
+            ],
+            "report": "# Audit report: X51006620182\n\n- Track: T2 (OCR)\n- Probability of forgery: 1.000 (calibrated)\n- Decision: review; receipts from 0.723 are reviewed, a review budget of 10 %\n\nThe system accepts a receipt or sends it to review. Rejecting it is the reviewer's decision.\n\n## Evidence towards forgery, strongest first\n\n- **copy-move** (+21.590 on the log-odds)\n  - input values: copy-move 1.996\n  - copy-move scores the receipt 1.996: the regions (246, 1541, 142 x 38 px) and (264, 1742, 142 x 38 px) are pixel for pixel identical over 5396 px\n  - located at (246, 1541, 142 x 38 px); (264, 1742, 142 x 38 px)\n- **system 1 + system 1 evidence** (+2.161 on the log-odds)\n  - input values: system 1 1.095; system 1 evidence 1.000\n  - system 1 scores the receipt 1.095; its most suspicious region is (136, 1536, 256 x 48 px)\n  - located at (136, 1536, 256 x 48 px)\n- **system 2** (+1.918 on the log-odds)\n  - input values: system 2 0.998\n  - system 2 scores the receipt 0.998; its most suspicious region is (139, 1535, 249 x 48 px)\n  - located at (139, 1535, 249 x 48 px)\n- **link 1** (+0.241 on the log-odds)\n  - input values: link 1 1.000\n  - a suspicious region lies on: item description\n  - located at (144, 1532, 249 x 49 px); (69, 1581, 737 x 52 px); (142, 1733, 381 x 49 px)\n\n## Evidence against forgery, strongest first\n\n- **rules** (-0.122 on the log-odds)\n  - input values: rules 0.132\n- **link 2** (-0.080 on the log-odds)\n  - input values: link 2 0.000\n"
+          }
+        },
+        {
+          "receipt": "X51005757349",
+          "rank": 8,
+          "probability": 0.9976480623401883,
+          "sha256": "1d9b30d352f166cd821335197b8ad64a6f2f6205eeeb3e5eaae90fe49aa34968",
+          "card": {
+            "probability": 0.9976480623401883,
+            "decisions": {
+              "10 %": "review",
+              "20 %": "review"
+            },
+            "towards": [
+              {
+                "inputs": [
+                  "copy-move"
+                ],
+                "contribution": 7.936314431186131,
+                "reasons": [
+                  "input values: copy-move 0.811",
+                  "copy-move scores the receipt 0.811: the regions (328, 903, 44 x 31 px) and (543, 904, 44 x 31 px) are pixel for pixel identical over 1364 px"
+                ],
+                "boxes": [
+                  [
+                    328,
+                    903,
+                    44,
+                    31
+                  ],
+                  [
+                    543,
+                    904,
+                    44,
+                    31
+                  ]
+                ]
+              },
+              {
+                "inputs": [
+                  "system 2"
+                ],
+                "contribution": 1.4878471778272495,
+                "reasons": [
+                  "input values: system 2 0.857",
+                  "system 2 scores the receipt 0.857; its most suspicious region is (537, 1090, 31 x 31 px)"
+                ],
+                "boxes": [
+                  [
+                    537,
+                    1090,
+                    31,
+                    31
+                  ]
+                ]
+              },
+              {
+                "inputs": [
+                  "system 1",
+                  "system 1 evidence"
+                ],
+                "contribution": 0.7310089173824601,
+                "reasons": [
+                  "input values: system 1 0.607; system 1 evidence 1.000",
+                  "system 1 scores the receipt 0.607; its most suspicious region is (536, 1016, 8 x 32 px)"
+                ],
+                "boxes": [
+                  [
+                    536,
+                    1016,
+                    8,
+                    32
+                  ]
+                ]
+              }
+            ],
+            "against": [
+              {
+                "inputs": [
+                  "link 2"
+                ],
+                "contribution": -0.08013159139531312,
+                "reasons": [
+                  "input values: link 2 0.000"
+                ],
+                "boxes": []
+              }
+            ],
+            "overlay": [
+              {
+                "detector": "copy-move",
+                "boxes": [
+                  [
+                    328,
+                    903,
+                    44,
+                    31
+                  ],
+                  [
+                    543,
+                    904,
+                    44,
+                    31
+                  ]
+                ]
+              },
+              {
+                "detector": "system 2",
+                "boxes": [
+                  [
+                    537,
+                    1090,
+                    31,
+                    31
+                  ]
+                ]
+              },
+              {
+                "detector": "system 1",
+                "boxes": [
+                  [
+                    536,
+                    1016,
+                    8,
+                    32
+                  ]
+                ]
+              },
+              {
+                "detector": "linking",
+                "boxes": [
+                  [
+                    543,
+                    1085,
+                    91,
+                    43
+                  ],
+                  [
+                    332,
+                    898,
+                    88,
+                    40
+                  ],
+                  [
+                    541,
+                    898,
+                    90,
+                    41
+                  ]
+                ]
+              }
+            ],
+            "first_region": [
+              [
+                328,
+                903,
+                44,
+                31
+              ],
+              [
+                543,
+                904,
+                44,
+                31
+              ]
+            ],
+            "report": "# Audit report: X51005757349\n\n- Track: T2 (OCR)\n- Probability of forgery: 0.998 (calibrated)\n- Decision: review; receipts from 0.723 are reviewed, a review budget of 10 %\n\nThe system accepts a receipt or sends it to review. Rejecting it is the reviewer's decision.\n\n## Evidence towards forgery, strongest first\n\n- **copy-move** (+7.936 on the log-odds)\n  - input values: copy-move 0.811\n  - copy-move scores the receipt 0.811: the regions (328, 903, 44 x 31 px) and (543, 904, 44 x 31 px) are pixel for pixel identical over 1364 px\n  - located at (328, 903, 44 x 31 px); (543, 904, 44 x 31 px)\n- **system 2** (+1.488 on the log-odds)\n  - input values: system 2 0.857\n  - system 2 scores the receipt 0.857; its most suspicious region is (537, 1090, 31 x 31 px)\n  - located at (537, 1090, 31 x 31 px)\n- **system 1 + system 1 evidence** (+0.731 on the log-odds)\n  - input values: system 1 0.607; system 1 evidence 1.000\n  - system 1 scores the receipt 0.607; its most suspicious region is (536, 1016, 8 x 32 px)\n  - located at (536, 1016, 8 x 32 px)\n- **link 1** (+0.241 on the log-odds)\n  - input values: link 1 1.000\n  - a suspicious region lies on: item amount, item unit price, total_due\n  - located at (543, 1085, 91 x 43 px); (332, 898, 88 x 40 px); (541, 898, 90 x 41 px)\n\n## Evidence against forgery, strongest first\n\n- **link 2** (-0.080 on the log-odds)\n  - input values: link 2 0.000\n- **rules** (-0.064 on the log-odds)\n  - input values: rules 0.151\n"
+          }
+        },
+        {
+          "receipt": "X51007846357",
+          "rank": 15,
+          "probability": 0.9652837639416921,
+          "sha256": "1d679799da023990809e1b57cf34058356d6c2e99c50b396ae2b18b2adf52633",
+          "card": {
+            "probability": 0.9652837639416921,
+            "decisions": {
+              "10 %": "review",
+              "20 %": "review"
+            },
+            "towards": [
+              {
+                "inputs": [
+                  "copy-move"
+                ],
+                "contribution": 4.836436838569872,
+                "reasons": [
+                  "input values: copy-move 0.543",
+                  "copy-move scores the receipt 0.543: the regions (2604, 3874, 79 x 89 px) and (2604, 4060, 79 x 89 px) are pixel for pixel identical over 6685 px"
+                ],
+                "boxes": [
+                  [
+                    2604,
+                    3874,
+                    79,
+                    89
+                  ],
+                  [
+                    2604,
+                    4060,
+                    79,
+                    89
+                  ]
+                ]
+              },
+              {
+                "inputs": [
+                  "system 2"
+                ],
+                "contribution": 1.9082180907640272,
+                "reasons": [
+                  "input values: system 2 0.995",
+                  "system 2 scores the receipt 0.995; its most suspicious region is (2592, 3872, 80 x 75 px)"
+                ],
+                "boxes": [
+                  [
+                    2592,
+                    3872,
+                    80,
+                    75
+                  ]
+                ]
+              },
+              {
+                "inputs": [
+                  "link 1"
+                ],
+                "contribution": 0.24067481523349848,
+                "reasons": [
+                  "input values: link 1 1.000",
+                  "a suspicious region lies on: tax row tax, tax row taxable amount"
+                ],
+                "boxes": [
+                  [
+                    2541,
+                    3847,
+                    246,
+                    119
+                  ],
+                  [
+                    2566,
+                    3950,
+                    226,
+                    103
+                  ]
+                ]
+              }
+            ],
+            "against": [
+              {
+                "inputs": [
+                  "rules"
+                ],
+                "contribution": -0.09929206396729556,
+                "reasons": [
+                  "input values: rules 0.139"
+                ],
+                "boxes": []
+              }
+            ],
+            "overlay": [
+              {
+                "detector": "copy-move",
+                "boxes": [
+                  [
+                    2604,
+                    3874,
+                    79,
+                    89
+                  ],
+                  [
+                    2604,
+                    4060,
+                    79,
+                    89
+                  ]
+                ]
+              },
+              {
+                "detector": "system 2",
+                "boxes": [
+                  [
+                    2592,
+                    3872,
+                    80,
+                    75
+                  ]
+                ]
+              },
+              {
+                "detector": "linking",
+                "boxes": [
+                  [
+                    2541,
+                    3847,
+                    246,
+                    119
+                  ],
+                  [
+                    2566,
+                    3950,
+                    226,
+                    103
+                  ]
+                ]
+              }
+            ],
+            "first_region": [
+              [
+                2604,
+                3874,
+                79,
+                89
+              ],
+              [
+                2604,
+                4060,
+                79,
+                89
+              ]
+            ],
+            "report": "# Audit report: X51007846357\n\n- Track: T2 (OCR)\n- Probability of forgery: 0.965 (calibrated)\n- Decision: review; receipts from 0.723 are reviewed, a review budget of 10 %\n\nThe system accepts a receipt or sends it to review. Rejecting it is the reviewer's decision.\n\n## Evidence towards forgery, strongest first\n\n- **copy-move** (+4.836 on the log-odds)\n  - input values: copy-move 0.543\n  - copy-move scores the receipt 0.543: the regions (2604, 3874, 79 x 89 px) and (2604, 4060, 79 x 89 px) are pixel for pixel identical over 6685 px\n  - located at (2604, 3874, 79 x 89 px); (2604, 4060, 79 x 89 px)\n- **system 2** (+1.908 on the log-odds)\n  - input values: system 2 0.995\n  - system 2 scores the receipt 0.995; its most suspicious region is (2592, 3872, 80 x 75 px)\n  - located at (2592, 3872, 80 x 75 px)\n- **link 1** (+0.241 on the log-odds)\n  - input values: link 1 1.000\n  - a suspicious region lies on: tax row tax, tax row taxable amount\n  - located at (2541, 3847, 246 x 119 px); (2566, 3950, 226 x 103 px)\n\n## Evidence against forgery, strongest first\n\n- **rules** (-0.099 on the log-odds)\n  - input values: rules 0.139\n- **link 2** (-0.080 on the log-odds)\n  - input values: link 2 0.000\n- **system 1 + system 1 evidence** (-0.050 on the log-odds)\n  - input values: system 1 0.000; system 1 evidence 0.000\n  - system 1 scores the receipt 0.000 and has no evidence on it\n"
+          }
+        },
+        {
+          "receipt": "X51005433556",
+          "rank": 23,
+          "probability": 0.7377615158953077,
+          "sha256": "c1ed7c6e5aaba6b9d2f388b9e407107d75105e1ac83879770493273b534d55d9",
+          "card": {
+            "probability": 0.7377615158953077,
+            "decisions": {
+              "10 %": "review",
+              "20 %": "review"
+            },
+            "towards": [
+              {
+                "inputs": [
+                  "copy-move"
+                ],
+                "contribution": 1.901238025258073,
+                "reasons": [
+                  "input values: copy-move 0.288",
+                  "copy-move scores the receipt 0.288: the regions (470, 413, 10 x 18 px) and (495, 413, 10 x 18 px) are pixel for pixel identical over 180 px"
+                ],
+                "boxes": [
+                  [
+                    470,
+                    413,
+                    10,
+                    18
+                  ],
+                  [
+                    495,
+                    413,
+                    10,
+                    18
+                  ]
+                ]
+              },
+              {
+                "inputs": [
+                  "system 2"
+                ],
+                "contribution": 1.060569895267689,
+                "reasons": [
+                  "input values: system 2 0.716",
+                  "system 2 scores the receipt 0.716; its most suspicious region is (248, 1050, 14 x 19 px)"
+                ],
+                "boxes": [
+                  [
+                    248,
+                    1050,
+                    14,
+                    19
+                  ]
+                ]
+              },
+              {
+                "inputs": [
+                  "rules"
+                ],
+                "contribution": 0.7450126884581751,
+                "reasons": [
+                  "input values: rules 0.406",
+                  "totals_reconcile: total excluding tax 46.90 does not follow from subtotal 49.70 with the printed discounts, service charge, tax and rounding",
+                  "change_given: paid 50.00 - due 49.70 does not give the change 0.0"
+                ],
+                "boxes": [
+                  [
+                    523,
+                    754,
+                    40,
+                    24
+                  ],
+                  [
+                    523,
+                    789,
+                    38,
+                    28
+                  ],
+                  [
+                    482,
+                    826,
+                    82,
+                    45
+                  ],
+                  [
+                    521,
+                    861,
+                    37,
+                    25
+                  ],
+                  [
+                    525,
+                    880,
+                    35,
+                    26
+                  ],
+                  [
+                    521,
+                    1053,
+                    31,
+                    23
+                  ],
+                  [
+                    517,
+                    937,
+                    41,
+                    25
+                  ],
+                  [
+                    517,
+                    956,
+                    39,
+                    26
+                  ]
+                ]
+              }
+            ],
+            "against": [
+              {
+                "inputs": [
+                  "link 2"
+                ],
+                "contribution": -0.08013159139531312,
+                "reasons": [
+                  "input values: link 2 0.000"
+                ],
+                "boxes": []
+              }
+            ],
+            "overlay": [
+              {
+                "detector": "copy-move",
+                "boxes": [
+                  [
+                    470,
+                    413,
+                    10,
+                    18
+                  ],
+                  [
+                    495,
+                    413,
+                    10,
+                    18
+                  ]
+                ]
+              },
+              {
+                "detector": "system 2",
+                "boxes": [
+                  [
+                    248,
+                    1050,
+                    14,
+                    19
+                  ]
+                ]
+              },
+              {
+                "detector": "accounting rules",
+                "boxes": [
+                  [
+                    523,
+                    754,
+                    40,
+                    24
+                  ],
+                  [
+                    523,
+                    789,
+                    38,
+                    28
+                  ],
+                  [
+                    482,
+                    826,
+                    82,
+                    45
+                  ],
+                  [
+                    521,
+                    861,
+                    37,
+                    25
+                  ],
+                  [
+                    525,
+                    880,
+                    35,
+                    26
+                  ],
+                  [
+                    521,
+                    1053,
+                    31,
+                    23
+                  ]
+                ]
+              },
+              {
+                "detector": "accounting rules",
+                "boxes": [
+                  [
+                    523,
+                    789,
+                    38,
+                    28
+                  ],
+                  [
+                    482,
+                    826,
+                    82,
+                    45
+                  ],
+                  [
+                    517,
+                    937,
+                    41,
+                    25
+                  ],
+                  [
+                    517,
+                    956,
+                    39,
+                    26
+                  ]
+                ]
+              },
+              {
+                "detector": "linking",
+                "boxes": [
+                  [
+                    356,
+                    406,
+                    213,
+                    28
+                  ]
+                ]
+              }
+            ],
+            "first_region": [
+              [
+                470,
+                413,
+                10,
+                18
+              ],
+              [
+                495,
+                413,
+                10,
+                18
+              ]
+            ],
+            "report": "# Audit report: X51005433556\n\n- Track: T2 (OCR)\n- Probability of forgery: 0.738 (calibrated)\n- Decision: review; receipts from 0.723 are reviewed, a review budget of 10 %\n\nThe system accepts a receipt or sends it to review. Rejecting it is the reviewer's decision.\n\n## Evidence towards forgery, strongest first\n\n- **copy-move** (+1.901 on the log-odds)\n  - input values: copy-move 0.288\n  - copy-move scores the receipt 0.288: the regions (470, 413, 10 x 18 px) and (495, 413, 10 x 18 px) are pixel for pixel identical over 180 px\n  - located at (470, 413, 10 x 18 px); (495, 413, 10 x 18 px)\n- **system 2** (+1.061 on the log-odds)\n  - input values: system 2 0.716\n  - system 2 scores the receipt 0.716; its most suspicious region is (248, 1050, 14 x 19 px)\n  - located at (248, 1050, 14 x 19 px)\n- **rules** (+0.745 on the log-odds)\n  - input values: rules 0.406\n  - totals_reconcile: total excluding tax 46.90 does not follow from subtotal 49.70 with the printed discounts, service charge, tax and rounding\n  - change_given: paid 50.00 - due 49.70 does not give the change 0.0\n  - located at (523, 754, 40 x 24 px); (523, 789, 38 x 28 px); (482, 826, 82 x 45 px); (521, 861, 37 x 25 px); (525, 880, 35 x 26 px); (521, 1053, 31 x 23 px); (517, 937, 41 x 25 px); (517, 956, 39 x 26 px)\n- **link 1** (+0.241 on the log-odds)\n  - input values: link 1 1.000\n  - a suspicious region lies on: date\n  - located at (356, 406, 213 x 28 px)\n\n## Evidence against forgery, strongest first\n\n- **link 2** (-0.080 on the log-odds)\n  - input values: link 2 0.000\n- **system 1 + system 1 evidence** (-0.050 on the log-odds)\n  - input values: system 1 0.000; system 1 evidence 0.000\n  - system 1 scores the receipt 0.000 and has no evidence on it\n"
+          }
+        }
+      ],
+      "missed": [
+        {
+          "receipt": "X51007579714",
+          "rank": 0,
+          "probability": 0.510115383885756,
+          "sha256": "7707fb888935c3d4e4b64925d8521fb13540a145aade1513f4bd46272a4fd483",
+          "card": {
+            "probability": 0.510115383885756,
+            "decisions": {
+              "10 %": "accept",
+              "20 %": "review"
+            },
+            "towards": [
+              {
+                "inputs": [
+                  "copy-move"
+                ],
+                "contribution": 3.1745873302983996,
+                "reasons": [
+                  "input values: copy-move 0.398",
+                  "copy-move scores the receipt 0.398: the regions (330, 322, 17 x 24 px) and (175, 524, 17 x 24 px) are pixel for pixel identical over 408 px"
+                ],
+                "boxes": [
+                  [
+                    330,
+                    322,
+                    17,
+                    24
+                  ],
+                  [
+                    175,
+                    524,
+                    17,
+                    24
+                  ]
+                ]
+              },
+              {
+                "inputs": [
+                  "link 1"
+                ],
+                "contribution": 0.24067481523349848,
+                "reasons": [
+                  "input values: link 1 1.000",
+                  "a suspicious region lies on: total_due"
+                ],
+                "boxes": [
+                  [
+                    438,
+                    1065,
+                    64,
+                    31
+                  ]
+                ]
+              }
+            ],
+            "against": [
+              {
+                "inputs": [
+                  "system 2"
+                ],
+                "contribution": -0.5481592983675602,
+                "reasons": [
+                  "input values: system 2 0.186",
+                  "system 2 scores the receipt 0.186; its most suspicious region is (440, 1070, 16 x 10 px)"
+                ],
+                "boxes": [
+                  [
+                    440,
+                    1070,
+                    16,
+                    10
+                  ]
+                ]
+              }
+            ],
+            "overlay": [
+              {
+                "detector": "copy-move",
+                "boxes": [
+                  [
+                    330,
+                    322,
+                    17,
+                    24
+                  ],
+                  [
+                    175,
+                    524,
+                    17,
+                    24
+                  ]
+                ]
+              },
+              {
+                "detector": "linking",
+                "boxes": [
+                  [
+                    438,
+                    1065,
+                    64,
+                    31
+                  ]
+                ]
+              }
+            ],
+            "first_region": [
+              [
+                330,
+                322,
+                17,
+                24
+              ],
+              [
+                175,
+                524,
+                17,
+                24
+              ]
+            ],
+            "report": "# Audit report: X51007579714\n\n- Track: T2 (OCR)\n- Probability of forgery: 0.510 (calibrated)\n- Decision: accept; receipts from 0.723 are reviewed, a review budget of 10 %\n\nThe system accepts a receipt or sends it to review. Rejecting it is the reviewer's decision.\n\n## Evidence towards forgery, strongest first\n\n- **copy-move** (+3.175 on the log-odds)\n  - input values: copy-move 0.398\n  - copy-move scores the receipt 0.398: the regions (330, 322, 17 x 24 px) and (175, 524, 17 x 24 px) are pixel for pixel identical over 408 px\n  - located at (330, 322, 17 x 24 px); (175, 524, 17 x 24 px)\n- **link 1** (+0.241 on the log-odds)\n  - input values: link 1 1.000\n  - a suspicious region lies on: total_due\n  - located at (438, 1065, 64 x 31 px)\n\n## Evidence against forgery, strongest first\n\n- **system 2** (-0.548 on the log-odds)\n  - input values: system 2 0.186\n  - system 2 scores the receipt 0.186; its most suspicious region is (440, 1070, 16 x 10 px)\n  - located at (440, 1070, 16 x 10 px)\n- **rules** (-0.195 on the log-odds)\n  - input values: rules 0.109\n- **link 2** (-0.080 on the log-odds)\n  - input values: link 2 0.000\n- **system 1 + system 1 evidence** (-0.050 on the log-odds)\n  - input values: system 1 0.000; system 1 evidence 0.000\n  - system 1 scores the receipt 0.000 and has no evidence on it\n"
+          }
+        },
+        {
+          "receipt": "X51008123447",
+          "rank": 5,
+          "probability": 0.1662302277147228,
+          "sha256": "3362ca3f2311094922812545254d4efaf71a6743447a64413984cc2860a8a5a0",
+          "card": {
+            "probability": 0.1662302277147228,
+            "decisions": {
+              "10 %": "accept",
+              "20 %": "accept"
+            },
+            "towards": [
+              {
+                "inputs": [
+                  "system 2"
+                ],
+                "contribution": 1.806778627358819,
+                "reasons": [
+                  "input values: system 2 0.962",
+                  "system 2 scores the receipt 0.962; its most suspicious region is (369, 838, 55 x 92 px)"
+                ],
+                "boxes": [
+                  [
+                    369,
+                    838,
+                    55,
+                    92
+                  ]
+                ]
+              },
+              {
+                "inputs": [
+                  "link 1"
+                ],
+                "contribution": 0.24067481523349848,
+                "reasons": [
+                  "input values: link 1 1.000",
+                  "a suspicious region lies on: change, tendered"
+                ],
+                "boxes": [
+                  [
+                    340,
+                    838,
+                    88,
+                    34
+                  ],
+                  [
+                    354,
+                    872,
+                    71,
+                    33
+                  ]
+                ]
+              }
+            ],
+            "against": [
+              {
+                "inputs": [
+                  "copy-move"
+                ],
+                "contribution": -1.4194148313496366,
+                "reasons": [
+                  "input values: copy-move 0.000"
+                ],
+                "boxes": []
+              }
+            ],
+            "overlay": [
+              {
+                "detector": "system 2",
+                "boxes": [
+                  [
+                    369,
+                    838,
+                    55,
+                    92
+                  ]
+                ]
+              },
+              {
+                "detector": "linking",
+                "boxes": [
+                  [
+                    340,
+                    838,
+                    88,
+                    34
+                  ],
+                  [
+                    354,
+                    872,
+                    71,
+                    33
+                  ]
+                ]
+              }
+            ],
+            "first_region": [
+              [
+                369,
+                838,
+                55,
+                92
+              ]
+            ],
+            "report": "# Audit report: X51008123447\n\n- Track: T2 (OCR)\n- Probability of forgery: 0.166 (calibrated)\n- Decision: accept; receipts from 0.723 are reviewed, a review budget of 10 %\n\nThe system accepts a receipt or sends it to review. Rejecting it is the reviewer's decision.\n\n## Evidence towards forgery, strongest first\n\n- **system 2** (+1.807 on the log-odds)\n  - input values: system 2 0.962\n  - system 2 scores the receipt 0.962; its most suspicious region is (369, 838, 55 x 92 px)\n  - located at (369, 838, 55 x 92 px)\n- **link 1** (+0.241 on the log-odds)\n  - input values: link 1 1.000\n  - a suspicious region lies on: change, tendered\n  - located at (340, 838, 88 x 34 px); (354, 872, 71 x 33 px)\n\n## Evidence against forgery, strongest first\n\n- **copy-move** (-1.419 on the log-odds)\n  - input values: copy-move 0.000\n- **link 2** (-0.080 on the log-odds)\n  - input values: link 2 0.000\n- **rules** (-0.076 on the log-odds)\n  - input values: rules 0.147\n- **system 1 + system 1 evidence** (-0.050 on the log-odds)\n  - input values: system 1 0.000; system 1 evidence 0.000\n  - system 1 scores the receipt 0.000 and has no evidence on it\n"
+          }
+        },
+        {
+          "receipt": "X51006557117",
+          "rank": 10,
+          "probability": 0.039816699587403435,
+          "sha256": "5a3fa30b86366f4c2e5b57ecb127690de58606de57eb8dc9f1d61a6444b6b430",
+          "card": {
+            "probability": 0.039816699587403435,
+            "decisions": {
+              "10 %": "accept",
+              "20 %": "accept"
+            },
+            "towards": [
+              {
+                "inputs": [
+                  "link 1"
+                ],
+                "contribution": 0.24067481523349848,
+                "reasons": [
+                  "input values: link 1 1.000",
+                  "a suspicious region lies on: date, tax row taxable amount"
+                ],
+                "boxes": [
+                  [
+                    448,
+                    748,
+                    66,
+                    45
+                  ],
+                  [
+                    323,
+                    318,
+                    191,
+                    25
+                  ]
+                ]
+              },
+              {
+                "inputs": [
+                  "rules"
+                ],
+                "contribution": 0.07065025492243962,
+                "reasons": [
+                  "input values: rules 0.193"
+                ],
+                "boxes": []
+              },
+              {
+                "inputs": [
+                  "system 2"
+                ],
+                "contribution": 0.04428124115928781,
+                "reasons": [
+                  "input values: system 2 0.381",
+                  "system 2 scores the receipt 0.381; its most suspicious region is (454, 760, 16 x 25 px)"
+                ],
+                "boxes": [
+                  [
+                    454,
+                    760,
+                    16,
+                    25
+                  ]
+                ]
+              }
+            ],
+            "against": [
+              {
+                "inputs": [
+                  "copy-move"
+                ],
+                "contribution": -1.4194148313496366,
+                "reasons": [
+                  "input values: copy-move 0.000"
+                ],
+                "boxes": []
+              }
+            ],
+            "overlay": [
+              {
+                "detector": "linking",
+                "boxes": [
+                  [
+                    448,
+                    748,
+                    66,
+                    45
+                  ],
+                  [
+                    323,
+                    318,
+                    191,
+                    25
+                  ]
+                ]
+              },
+              {
+                "detector": "system 2",
+                "boxes": [
+                  [
+                    454,
+                    760,
+                    16,
+                    25
+                  ]
+                ]
+              }
+            ],
+            "first_region": [
+              [
+                448,
+                748,
+                66,
+                45
+              ],
+              [
+                323,
+                318,
+                191,
+                25
+              ]
+            ],
+            "report": "# Audit report: X51006557117\n\n- Track: T2 (OCR)\n- Probability of forgery: 0.040 (calibrated)\n- Decision: accept; receipts from 0.723 are reviewed, a review budget of 10 %\n\nThe system accepts a receipt or sends it to review. Rejecting it is the reviewer's decision.\n\n## Evidence towards forgery, strongest first\n\n- **link 1** (+0.241 on the log-odds)\n  - input values: link 1 1.000\n  - a suspicious region lies on: date, tax row taxable amount\n  - located at (448, 748, 66 x 45 px); (323, 318, 191 x 25 px)\n- **rules** (+0.071 on the log-odds)\n  - input values: rules 0.193\n- **system 2** (+0.044 on the log-odds)\n  - input values: system 2 0.381\n  - system 2 scores the receipt 0.381; its most suspicious region is (454, 760, 16 x 25 px)\n  - located at (454, 760, 16 x 25 px)\n\n## Evidence against forgery, strongest first\n\n- **copy-move** (-1.419 on the log-odds)\n  - input values: copy-move 0.000\n- **system 1 + system 1 evidence** (-0.448 on the log-odds)\n  - input values: system 1 0.205; system 1 evidence 1.000\n  - system 1 scores the receipt 0.205; its most suspicious region is (424, 329, 24 x 8 px)\n  - located at (424, 329, 24 x 8 px)\n- **link 2** (-0.080 on the log-odds)\n  - input values: link 2 0.000\n"
+          }
+        }
+      ],
+      "genuine": [
+        {
+          "receipt": "X51005447848",
+          "rank": 0,
+          "probability": 0.5353911578664574,
+          "sha256": "33f8575a869adaf6c34785104f9be8bb506635dc5e6dc3d4a758632f29e487c5",
+          "card": {
+            "probability": 0.5353911578664574,
+            "decisions": {
+              "10 %": "accept",
+              "20 %": "review"
+            },
+            "towards": [
+              {
+                "inputs": [
+                  "system 2"
+                ],
+                "contribution": 1.322726354356238,
+                "reasons": [
+                  "input values: system 2 0.802",
+                  "system 2 scores the receipt 0.802; its most suspicious region is (250, 1189, 54 x 27 px)"
+                ],
+                "boxes": [
+                  [
+                    250,
+                    1189,
+                    54,
+                    27
+                  ]
+                ]
+              },
+              {
+                "inputs": [
+                  "copy-move"
+                ],
+                "contribution": 0.6382968832843301,
+                "reasons": [
+                  "input values: copy-move 0.178",
+                  "copy-move scores the receipt 0.178: the regions (920, 1271, 12 x 25 px) and (920, 1295, 12 x 25 px) are pixel for pixel identical over 300 px"
+                ],
+                "boxes": [
+                  [
+                    920,
+                    1271,
+                    12,
+                    25
+                  ],
+                  [
+                    920,
+                    1295,
+                    12,
+                    25
+                  ]
+                ]
+              },
+              {
+                "inputs": [
+                  "system 1",
+                  "system 1 evidence"
+                ],
+                "contribution": 0.47030833281964973,
+                "reasons": [
+                  "input values: system 1 0.518; system 1 evidence 1.000",
+                  "system 1 scores the receipt 0.518; its most suspicious region is (368, 416, 8 x 8 px)"
+                ],
+                "boxes": [
+                  [
+                    368,
+                    416,
+                    8,
+                    8
+                  ]
+                ]
+              }
+            ],
+            "against": [
+              {
+                "inputs": [
+                  "link 2"
+                ],
+                "contribution": -0.08013159139531312,
+                "reasons": [
+                  "input values: link 2 0.000"
+                ],
+                "boxes": []
+              }
+            ],
+            "overlay": [
+              {
+                "detector": "system 2",
+                "boxes": [
+                  [
+                    250,
+                    1189,
+                    54,
+                    27
+                  ]
+                ]
+              },
+              {
+                "detector": "copy-move",
+                "boxes": [
+                  [
+                    920,
+                    1271,
+                    12,
+                    25
+                  ],
+                  [
+                    920,
+                    1295,
+                    12,
+                    25
+                  ]
+                ]
+              },
+              {
+                "detector": "system 1",
+                "boxes": [
+                  [
+                    368,
+                    416,
+                    8,
+                    8
+                  ]
+                ]
+              },
+              {
+                "detector": "linking",
+                "boxes": [
+                  [
+                    103,
+                    1190,
+                    324,
+                    46
+                  ]
+                ]
+              },
+              {
+                "detector": "accounting rules",
+                "boxes": [
+                  [
+                    764,
+                    1493,
+                    87,
+                    45
+                  ],
+                  [
+                    778,
+                    1532,
+                    76,
+                    40
+                  ],
+                  [
+                    786,
+                    1569,
+                    63,
+                    41
+                  ],
+                  [
+                    727,
+                    1622,
+                    119,
+                    57
+                  ],
+                  [
+                    664,
+                    1771,
+                    57,
+                    32
+                  ],
+                  [
+                    666,
+                    1817,
+                    56,
+                    36
+                  ]
+                ]
+              },
+              {
+                "detector": "accounting rules",
+                "boxes": [
+                  [
+                    764,
+                    1493,
+                    87,
+                    45
+                  ],
+                  [
+                    778,
+                    1532,
+                    76,
+                    40
+                  ],
+                  [
+                    786,
+                    1569,
+                    63,
+                    41
+                  ],
+                  [
+                    727,
+                    1622,
+                    119,
+                    57
+                  ],
+                  [
+                    681,
+                    855,
+                    80,
+                    40
+                  ],
+                  [
+                    681,
+                    1001,
+                    80,
+                    40
+                  ],
+                  [
+                    682,
+                    1147,
+                    81,
+                    43
+                  ],
+                  [
+                    698,
+                    1292,
+                    63,
+                    40
+                  ],
+                  [
+                    694,
+                    1437,
+                    71,
+                    41
+                  ],
+                  [
+                    664,
+                    1771,
+                    57,
+                    32
+                  ],
+                  [
+                    666,
+                    1817,
+                    56,
+                    36
+                  ]
+                ]
+              },
+              {
+                "detector": "accounting rules",
+                "boxes": [
+                  [
+                    340,
+                    855,
+                    29,
+                    37
+                  ],
+                  [
+                    447,
+                    853,
+                    81,
+                    43
+                  ],
+                  [
+                    681,
+                    855,
+                    80,
+                    40
+                  ],
+                  [
+                    341,
+                    1002,
+                    27,
+                    36
+                  ],
+                  [
+                    447,
+                    1000,
+                    75,
+                    40
+                  ],
+                  [
+                    681,
+                    1001,
+                    80,
+                    40
+                  ],
+                  [
+                    342,
+                    1149,
+                    27,
+                    35
+                  ],
+                  [
+                    446,
+                    1146,
+                    81,
+                    43
+                  ],
+                  [
+                    682,
+                    1147,
+                    81,
+                    43
+                  ],
+                  [
+                    338,
+                    1292,
+                    30,
+                    36
+                  ],
+                  [
+                    461,
+                    1291,
+                    63,
+                    40
+                  ],
+                  [
+                    698,
+                    1292,
+                    63,
+                    40
+                  ],
+                  [
+                    338,
+                    1438,
+                    30,
+                    37
+                  ],
+                  [
+                    466,
+                    1436,
+                    54,
+                    41
+                  ],
+                  [
+                    694,
+                    1437,
+                    71,
+                    41
+                  ]
+                ]
+              }
+            ],
+            "first_region": [
+              [
+                250,
+                1189,
+                54,
+                27
+              ]
+            ],
+            "report": "# Audit report: X51005447848\n\n- Track: T2 (OCR)\n- Probability of forgery: 0.535 (calibrated)\n- Decision: accept; receipts from 0.723 are reviewed, a review budget of 10 %\n\nThe system accepts a receipt or sends it to review. Rejecting it is the reviewer's decision.\n\n## Evidence towards forgery, strongest first\n\n- **system 2** (+1.323 on the log-odds)\n  - input values: system 2 0.802\n  - system 2 scores the receipt 0.802; its most suspicious region is (250, 1189, 54 x 27 px)\n  - located at (250, 1189, 54 x 27 px)\n- **copy-move** (+0.638 on the log-odds)\n  - input values: copy-move 0.178\n  - copy-move scores the receipt 0.178: the regions (920, 1271, 12 x 25 px) and (920, 1295, 12 x 25 px) are pixel for pixel identical over 300 px\n  - located at (920, 1271, 12 x 25 px); (920, 1295, 12 x 25 px)\n- **system 1 + system 1 evidence** (+0.470 on the log-odds)\n  - input values: system 1 0.518; system 1 evidence 1.000\n  - system 1 scores the receipt 0.518; its most suspicious region is (368, 416, 8 x 8 px)\n  - located at (368, 416, 8 x 8 px)\n- **link 1** (+0.241 on the log-odds)\n  - input values: link 1 1.000\n  - a suspicious region lies on: item description\n  - located at (103, 1190, 324 x 46 px)\n- **rules** (+0.081 on the log-odds)\n  - input values: rules 0.197\n  - totals_reconcile: total due 53.55 does not follow from subtotal 4780 with the printed discounts, service charge, tax and rounding\n  - items_reconcile: the 5 line amounts add up to 3491.90, which does not lead to subtotal 4780\n  - line_amounts: (S) @15.90 CURRY MIXED VEGE: 1 x 16.85 = 16.85, printed 1685; 515 1 16.85 1685 SR (S) @13.90: 1 x 14.73 = 14.73, printed 1473; (B) @1.50 PLAIN RICE: 2 x 1.59 = 3.18, printed 318\n  - located at (764, 1493, 87 x 45 px); (778, 1532, 76 x 40 px); (786, 1569, 63 x 41 px); (727, 1622, 119 x 57 px); (664, 1771, 57 x 32 px); (666, 1817, 56 x 36 px); (681, 855, 80 x 40 px); (681, 1001, 80 x 40 px); (682, 1147, 81 x 43 px); (698, 1292, 63 x 40 px); (694, 1437, 71 x 41 px); (340, 855, 29 x 37 px); (447, 853, 81 x 43 px); (341, 1002, 27 x 36 px); (447, 1000, 75 x 40 px); (342, 1149, 27 x 35 px); (446, 1146, 81 x 43 px); (338, 1292, 30 x 36 px); (461, 1291, 63 x 40 px); (338, 1438, 30 x 37 px); (466, 1436, 54 x 41 px)\n\n## Evidence against forgery, strongest first\n\n- **link 2** (-0.080 on the log-odds)\n  - input values: link 2 0.000\n"
+          }
+        },
+        {
+          "receipt": "X51006619869",
+          "rank": 91,
+          "probability": 0.03465463885669265,
+          "sha256": "c239d8bc1eb02b3e9b75dd52c7bc0a2bcddaddf25d468cef5d97d14641e3ec4d",
+          "card": {
+            "probability": 0.03465463885669265,
+            "decisions": {
+              "10 %": "accept",
+              "20 %": "accept"
+            },
+            "towards": [
+              {
+                "inputs": [
+                  "rules"
+                ],
+                "contribution": 0.2817285767002659,
+                "reasons": [
+                  "input values: rules 0.260",
+                  "line_amounts: 1) -HH-STORG-BLUE-STD <ADMIN> HH MILTON NYLON BASKET-HMT: 1 x -29.00 = -29.00, printed 23.20"
+                ],
+                "boxes": [
+                  [
+                    118,
+                    1205,
+                    31,
+                    45
+                  ],
+                  [
+                    228,
+                    1202,
+                    230,
+                    54
+                  ],
+                  [
+                    720,
+                    1205,
+                    91,
+                    48
+                  ]
+                ]
+              },
+              {
+                "inputs": [
+                  "link 1"
+                ],
+                "contribution": 0.24067481523349848,
+                "reasons": [
+                  "input values: link 1 1.000",
+                  "a suspicious region lies on: total_due"
+                ],
+                "boxes": [
+                  [
+                    718,
+                    1451,
+                    99,
+                    54
+                  ]
+                ]
+              }
+            ],
+            "against": [
+              {
+                "inputs": [
+                  "system 2"
+                ],
+                "contribution": -1.0954240882973159,
+                "reasons": [
+                  "input values: system 2 0.006",
+                  "system 2 scores the receipt 0.006; its most suspicious region is (790, 1461, 19 x 9 px)"
+                ],
+                "boxes": [
+                  [
+                    790,
+                    1461,
+                    19,
+                    9
+                  ]
+                ]
+              }
+            ],
+            "overlay": [
+              {
+                "detector": "accounting rules",
+                "boxes": [
+                  [
+                    118,
+                    1205,
+                    31,
+                    45
+                  ],
+                  [
+                    228,
+                    1202,
+                    230,
+                    54
+                  ],
+                  [
+                    720,
+                    1205,
+                    91,
+                    48
+                  ]
+                ]
+              },
+              {
+                "detector": "linking",
+                "boxes": [
+                  [
+                    718,
+                    1451,
+                    99,
+                    54
+                  ]
+                ]
+              }
+            ],
+            "first_region": [
+              [
+                118,
+                1205,
+                31,
+                45
+              ],
+              [
+                228,
+                1202,
+                230,
+                54
+              ],
+              [
+                720,
+                1205,
+                91,
+                48
+              ]
+            ],
+            "report": "# Audit report: X51006619869\n\n- Track: T2 (OCR)\n- Probability of forgery: 0.035 (calibrated)\n- Decision: accept; receipts from 0.723 are reviewed, a review budget of 10 %\n\nThe system accepts a receipt or sends it to review. Rejecting it is the reviewer's decision.\n\n## Evidence towards forgery, strongest first\n\n- **rules** (+0.282 on the log-odds)\n  - input values: rules 0.260\n  - line_amounts: 1) -HH-STORG-BLUE-STD <ADMIN> HH MILTON NYLON BASKET-HMT: 1 x -29.00 = -29.00, printed 23.20\n  - located at (118, 1205, 31 x 45 px); (228, 1202, 230 x 54 px); (720, 1205, 91 x 48 px)\n- **link 1** (+0.241 on the log-odds)\n  - input values: link 1 1.000\n  - a suspicious region lies on: total_due\n  - located at (718, 1451, 99 x 54 px)\n\n## Evidence against forgery, strongest first\n\n- **system 2** (-1.095 on the log-odds)\n  - input values: system 2 0.006\n  - system 2 scores the receipt 0.006; its most suspicious region is (790, 1461, 19 x 9 px)\n  - located at (790, 1461, 19 x 9 px)\n- **system 1 + system 1 evidence** (-0.825 on the log-odds)\n  - input values: system 1 0.076; system 1 evidence 1.000\n  - system 1 scores the receipt 0.076; its most suspicious region is (520, 1568, 8 x 8 px)\n  - located at (520, 1568, 8 x 8 px)\n- **copy-move** (-0.298 on the log-odds)\n  - input values: copy-move 0.097\n  - copy-move scores the receipt 0.097: the regions (874, 520, 14 x 16 px) and (874, 656, 14 x 16 px) are pixel for pixel identical over 224 px\n  - located at (874, 520, 14 x 16 px); (874, 656, 14 x 16 px)\n- **link 2** (-0.080 on the log-odds)\n  - input values: link 2 0.000\n"
+          }
+        },
+        {
+          "receipt": "X51006619345",
+          "rank": 182,
+          "probability": 0.007031199407263818,
+          "sha256": "7ca03f208ce58c57c4fb906443fa77d0cca96548905c10fc656831a8dbf5c7b6",
+          "card": {
+            "probability": 0.007031199407263818,
+            "decisions": {
+              "10 %": "accept",
+              "20 %": "accept"
+            },
+            "towards": [
+              {
+                "inputs": [
+                  "rules"
+                ],
+                "contribution": 0.019786550411756133,
+                "reasons": [
+                  "input values: rules 0.177",
+                  "line_amounts: PLASTICWARE-NORMAL (MCH): 20 x 4.90 = 98.00, printed 9.80"
+                ],
+                "boxes": [
+                  [
+                    348,
+                    1156,
+                    36,
+                    55
+                  ],
+                  [
+                    476,
+                    1151,
+                    71,
+                    66
+                  ],
+                  [
+                    655,
+                    1152,
+                    109,
+                    61
+                  ]
+                ]
+              }
+            ],
+            "against": [
+              {
+                "inputs": [
+                  "copy-move"
+                ],
+                "contribution": -1.4194148313496366,
+                "reasons": [
+                  "input values: copy-move 0.000"
+                ],
+                "boxes": []
+              }
+            ],
+            "overlay": [
+              {
+                "detector": "accounting rules",
+                "boxes": [
+                  [
+                    348,
+                    1156,
+                    36,
+                    55
+                  ],
+                  [
+                    476,
+                    1151,
+                    71,
+                    66
+                  ],
+                  [
+                    655,
+                    1152,
+                    109,
+                    61
+                  ]
+                ]
+              }
+            ],
+            "first_region": [
+              [
+                348,
+                1156,
+                36,
+                55
+              ],
+              [
+                476,
+                1151,
+                71,
+                66
+              ],
+              [
+                655,
+                1152,
+                109,
+                61
+              ]
+            ],
+            "report": "# Audit report: X51006619345\n\n- Track: T2 (OCR)\n- Probability of forgery: 0.007 (calibrated)\n- Decision: accept; receipts from 0.723 are reviewed, a review budget of 10 %\n\nThe system accepts a receipt or sends it to review. Rejecting it is the reviewer's decision.\n\n## Evidence towards forgery, strongest first\n\n- **rules** (+0.020 on the log-odds)\n  - input values: rules 0.177\n  - line_amounts: PLASTICWARE-NORMAL (MCH): 20 x 4.90 = 98.00, printed 9.80\n  - located at (348, 1156, 36 x 55 px); (476, 1151, 71 x 66 px); (655, 1152, 109 x 61 px)\n\n## Evidence against forgery, strongest first\n\n- **copy-move** (-1.419 on the log-odds)\n  - input values: copy-move 0.000\n- **system 2** (-1.112 on the log-odds)\n  - input values: system 2 0.000\n  - system 2 scores the receipt 0.000; its most suspicious region is (0, 975, 3 x 34 px)\n  - located at (0, 975, 3 x 34 px)\n- **system 1 + system 1 evidence** (-0.941 on the log-odds)\n  - input values: system 1 0.037; system 1 evidence 1.000\n  - system 1 scores the receipt 0.037; its most suspicious region is (248, 1384, 8 x 8 px)\n  - located at (248, 1384, 8 x 8 px)\n- **link 1** (-0.325 on the log-odds)\n  - input values: link 1 0.000\n- **link 2** (-0.080 on the log-odds)\n  - input values: link 2 0.000\n"
+          }
+        }
+      ]
+    },
+    "alarms": {
+      "10 %": {
+        "genuine": 183,
+        "genuine_with_marks": 95,
+        "false_alarms": 0,
+        "with_marks": 0,
+        "handwritten": 0,
+        "digital_only": 0
+      },
+      "20 %": {
+        "genuine": 183,
+        "genuine_with_marks": 95,
+        "false_alarms": 11,
+        "with_marks": 8,
+        "handwritten": 7,
+        "digital_only": 1
+      }
+    }
+  }
+}

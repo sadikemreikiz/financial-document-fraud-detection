@@ -39,6 +39,7 @@ change of mind is a new record that supersedes the old one.
 | [0031](0031-llm-detector-and-agent.md) | How Phase 6b builds and measures the LLM detector and the investigation agent | Accepted; section 4 amended by 0032, section 5 by 0033 |
 | [0032](0032-stronger-model-on-the-design-fold.md) | The frozen detector is checked once on a stronger model, on the design fold | Accepted |
 | [0033](0033-agent-development-rule.md) | The agent's model, its token budget and the rule for its second version | Accepted |
-| [0034](0034-phase-7-preregistration.md) | Phase 7: the single evaluation on the test split | Accepted |
+| [0034](0034-phase-7-preregistration.md) | Phase 7: the single evaluation on the test split | Accepted; decision 12's publication step amended by 0035 |
+| [0035](0035-public-demo.md) | The public demo: which receipts, what each shows, the page, the credit and the hosting | Accepted |
 
 New records copy [template.md](template.md).
