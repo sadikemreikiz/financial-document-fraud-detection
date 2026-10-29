@@ -22,8 +22,8 @@ reviewer, evaluated on real human forgeries.
   precision of 0.90 from the image alone (chance 0.16) and reaches an F1 of 0.81 (95 % interval
   0.68 to 0.91), against 0.28 for the best published result; at a 10 % review budget all 24
   receipts sent to review are forged, and the first region an audit report shows hits the edit
-  on 33 of the 35 forgeries. Saved again as JPEG, the same receipts fall to 0.61: the system
-  relies on lossless files. The pixel model behind it was trained only on forgeries from my own
+  on 33 of the 35 forgeries. Saved again as JPEG at quality 95, the same receipts fall to 0.61:
+  the system relies on lossless files. The pixel model behind it was trained only on forgeries from my own
   synthetic engine.
 - **Built with:** Python 3.14, PyTorch, scikit-learn, RapidOCR, the Claude API, pytest, mypy in
   strict mode and CI on every pull request.

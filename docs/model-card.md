@@ -124,5 +124,6 @@ review agent's case files hold 3 numbers or boxes, of 1,500, not found in its to
   the [data card](data-card.md#use-with-a-hosted-language-model) records.
 - A wrong flag can cast suspicion on a person. The system therefore only ranks and explains; a
   reviewer decides, and every statement in a report is checked against the evidence.
-- The public demo shows a small number of the dataset's receipts with the written permission of
-  its authors, given on 2026-10-29, with a clear citation of the paper and the dataset page.
+- The public demo, still to be built, may show a small number of the dataset's receipts: its
+  authors allowed it in writing on 2026-10-29, for a non-commercial page with a clear citation
+  of the paper and the dataset page.

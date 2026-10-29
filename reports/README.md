@@ -14,7 +14,8 @@ recorded validation result with zero differences; the configuration was then fro
 `phase-7-freeze` (`f5c2498`).
 
 On 2026-10-29 the test split was unlocked once. Every command ran once, from a clean commit, in
-the order of decision 13, and each run record was committed before the next command ran. The
+the order of decision 13, but the one that failed and ran again after its fix; each run record
+was committed before the next command ran. The
 language models of Phase 7 cost 7.19 USD (projected about 6.9, at most 8.0), 21.54 of the 24.50
 USD limit in all. One command failed on the way and was fixed by the rule fixed in advance
 ([below](#the-one-fix-after-the-unlock)).
@@ -66,8 +67,8 @@ The figure is drawn by `make figures` from the test check's run record; the
   cost 2 cents and 12 seconds a receipt ([report](llm/agent/test.md)).
 - **Localisation is coarse.** The pixel model's map ranks the edited pixels with an average
   precision of 0.373, where chance is 0.006, but at its frozen threshold it outlines them
-  loosely: F1 0.236, intersection over union 0.155. Its most suspicious region hits the edit on
-  20 of the 35 forged receipts, and copy-move's pair on 27 ([report](forensics/test-localisation.md)).
+  loosely: F1 0.236, intersection over union 0.155. Its most suspicious region hits an edit or
+  copy source on 20 of the 35 forged receipts, and copy-move's pair on 27 ([report](forensics/test-localisation.md)).
 - **The file-metadata shortcut stays apart.** Alone it reaches 0.922, and with the T2 inputs
   0.996 (track T3). Saving the file again removes the traits it reads, so T3 enters no claim
   ([ADR-0003](../docs/decisions/0003-content-only-headline.md)).
