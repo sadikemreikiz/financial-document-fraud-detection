@@ -785,7 +785,9 @@ h3 { font-size: clamp(1.6rem, 3.2vw, 2.1rem); line-height: 1.15; margin: 0 0 4px
 .hero { padding: 80px 0 76px; }
 .hero .wrap { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, .95fr);
   gap: 56px; align-items: center; }
-.hero .sub { margin: 0 0 32px; max-width: 34rem; }
+.hero .sub { margin: 0 0 14px; max-width: 34rem; }
+.prototype { margin: 0 0 32px; max-width: 34rem; font-size: .9rem; line-height: 1.5;
+  color: var(--muted); }
 .showcase { margin: 0; }
 .shot { overflow: hidden; border-radius: 24px; background: #ffffff;
   box-shadow: 0 24px 60px rgba(0, 0, 0, .14), 0 0 0 1px var(--line); }
@@ -961,6 +963,12 @@ LEDE = (
 )
 """What the system does, in one sentence; the numbers follow in their own section."""
 
+PROTOTYPE = (
+    "Research prototype · every example on this page was recorded from the frozen system's one "
+    "run on the test split; the page itself runs no model."
+)
+"""What the page is, under the lede, so that no reader expects to upload a receipt."""
+
 SHOWCASE = 0.9
 """The height of the first screen's detail of a receipt, as a share of the image's width."""
 
@@ -1028,6 +1036,7 @@ def hero(records: Records, annotations: Mapping[str, Mapping[str, Any]]) -> str:
   {byline()}
   <h1>Finding forged receipts, and showing why</h1>
   <p class="sub">{_e(LEDE)}</p>
+  <p class="prototype">{_e(PROTOTYPE)}</p>
   <p class="actions"><a class="button" href="#receipts">See what it saw</a>
   <a class="chevron" href="{_e(REPOSITORY)}">Source code</a></p>
   <ul class="skills" aria-label="Built with">{skills}</ul>

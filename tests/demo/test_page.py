@@ -197,6 +197,12 @@ def test_the_top_names_the_author_and_the_results_before_the_credit(built: str) 
     assert "far above" not in built
 
 
+def test_the_first_screen_says_the_examples_are_recorded_and_nothing_runs(built: str) -> None:
+    line = built.index('<p class="prototype">Research prototype')
+    assert built.index("<h1>") < line < built.index('<p class="actions">')
+    assert "the page itself runs no model" in built
+
+
 def test_the_first_screen_shows_the_strongest_catch_with_its_source(built: str) -> None:
     strongest = records().cards["gallery"][CAUGHT][0]["receipt"]
     picture = built.index(f'<image href="receipts/{image_name(strongest)}"')
