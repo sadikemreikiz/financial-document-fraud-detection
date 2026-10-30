@@ -32,7 +32,8 @@ v2 rebuilds the system from scratch to answer the thesis questions properly.
 4. Report results that survive scrutiny: a pre-registered protocol, a locked test set and
    confidence intervals ([evaluation-protocol.md](evaluation-protocol.md)).
 5. Engineer it like a product: typed, tested, reproducible with one command, served through a
-   CLI and an API.
+   command line. *(The HTTP API was dropped on 2026-10-30 by
+   [ADR-0036](decisions/0036-no-api-for-now.md).)*
 
 ## Non-goals
 
@@ -94,7 +95,7 @@ Each phase ends with a short review before the next one starts.
 | 6a | LLM field extraction, measured against the rule-based parser on the gold sets | Parser vs LLM comparison on gold set B |
 | 5 | Copy-move detection, cross-modal evidence linking, fusion, decision policy, audit report, ablations | End-to-end system, ablation table |
 | 6b | LLM layer: review-only investigation agent, standalone LLM detection, cost and latency | LLM evaluations reported |
-| 7 | Single test-set unlock, robustness and error analysis, model card, API and demo, publication | Public repository |
+| 7 | Single test-set unlock, robustness and error analysis, model card, demo (the API: [ADR-0036](decisions/0036-no-api-for-now.md)), publication | Public repository |
 | 8 | Career package: profile README, CV entries, write-up | Ready for applications |
 
 *(Order changed on 2026-10-22 by [ADR-0024](decisions/0024-llm-extraction-before-fusion.md):

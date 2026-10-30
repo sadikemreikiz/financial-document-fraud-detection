@@ -27,7 +27,7 @@ and [ADR-0006](decisions/0006-llm-placement.md).
 
 ```mermaid
 flowchart TD
-    IN["Document input<br/>dataset adapter or upload"] --> READ
+    IN["Document input<br/>dataset adapter"] --> READ
 
     subgraph READ["1 · Reading"]
         NORM["Image normalisation<br/>grayscale, no alpha"]
@@ -133,7 +133,7 @@ How the LLM reads a receipt, and what code guarantees on the way
 | `docfraud.demo` | The public demo: the receipts a stated rule chooses, their cards and the page ([ADR-0035](decisions/0035-public-demo.md)) | 7 |
 | `docfraud.llm` | Provider interface, LLM extraction (6a), investigation agent (6b) | 6a, 6b |
 | `docfraud.cli` | Command line | 0 |
-| `docfraud.api` | HTTP API; not built: whether it is built is decided after the demo ([ADR-0035](decisions/0035-public-demo.md)) | 7 |
+| `docfraud.api` | HTTP API: not built ([ADR-0036](decisions/0036-no-api-for-now.md)); a command for a single receipt is a possible later step | 7 |
 
 Modules are created when their phase starts, not before.
 
