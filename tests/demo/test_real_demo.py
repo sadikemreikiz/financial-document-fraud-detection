@@ -29,8 +29,8 @@ def test_the_page_is_built_from_the_exported_receipts_unchanged(tmp_path: Path) 
     built = runner.invoke(app, ["demo", "build", "--assets", str(assets), "--output", str(site)])
     assert built.exit_code == 0, built.output
     page = (site / "index.html").read_text(encoding="utf-8")
-    shown = re.findall(r'src="receipts/(X\d+\.png)"', page)
-    assert len(shown) == 10  # ADR-0035 shows ten receipts
+    shown = sorted(set(re.findall(r'src="receipts/(X\d+\.png)"', page)))
+    assert len(shown) == 10  # ADR-0035 shows ten receipts, each in the overview and its card
     for name in shown:
         original = (DATA / "test" / name).read_bytes()
         assert (site / "receipts" / name).read_bytes() == original

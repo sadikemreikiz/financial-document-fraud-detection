@@ -18,7 +18,7 @@ from docfraud.data.download import FINDIT2
 from docfraud.demo.assets import ANNOTATIONS, image_name
 from docfraud.demo.cards import RUN_NAME, shown_digests
 from docfraud.demo.gallery import CAUGHT, GENUINE, MISSED
-from docfraud.demo.page import Records, ci, error_notes, render_page
+from docfraud.demo.page import CONTENTS, Records, ci, detail, error_notes, floor, render_page
 from docfraud.evaluation.runs import JsonRunStore
 from docfraud.fusion.errors import RUN_NAME as ERRORS_RUN
 from docfraud.fusion.final import RESAVED_RUN
@@ -88,7 +88,7 @@ def built() -> str:
 
 def test_the_page_loads_nothing_from_another_site(built: str) -> None:
     assert not re.search(r"<script|<link|<iframe|@import|url\(", built, re.IGNORECASE)
-    sources = re.findall(r'\bsrc="([^"]*)"', built)
+    sources = re.findall(r'\b(?:src|href)="([^"]*\.png)"', built)
     assert sources
     assert all(s.startswith("receipts/") for s in sources)
 
@@ -114,7 +114,7 @@ def test_every_card_shows_its_image_digest_and_decisions(built: str) -> None:
         assert f'src="receipts/{image_name(receipt)}"' in built
         assert digest in built
     assert built.count('<article class="card') == len(shown_digests(found.cards))
-    assert built.count("10 %: ") == built.count("20 %: ") == 10
+    assert built.count("10% budget: ") == built.count("20% budget: ") == 10
 
 
 def test_the_numbers_come_from_the_records(built: str) -> None:
@@ -134,7 +134,7 @@ def test_the_misses_and_the_catches_carry_their_notes_and_case_files(built: str)
     notes = error_notes(PHASE_7_PAGE.read_text(encoding="utf-8"))
     for shown in found.cards["gallery"][MISSED]:
         assert html.escape(notes[shown["receipt"]]) in built
-    assert built.count("The case file a language model drafted") == len(
+    assert built.count("Case file drafted by a language model") == len(
         found.cards["gallery"][CAUGHT]
     )
     assert "Grounding check: no violation" in built
@@ -164,18 +164,63 @@ def test_the_build_stops_on_an_image_that_was_not_pinned(tmp_path: Path) -> None
 
 def test_the_top_names_the_author_and_the_results_before_the_credit(built: str) -> None:
     found = records()
+    ocr = found.check["ocr"]
     policy = found.check["policy"]["ocr"]["10 %"]
     author = built.index("Sadik Emre Ikiz")
     glance = built.index('id="glance"')
     assert author < glance < built.index('id="credit"') < built.index("<img")
-    assert f"it sent the\n    {policy['reviewed']} it found most suspicious" in built
-    assert f"all {policy['forged_reviewed']} were forged" in built
+    assert f">{policy['forged_reviewed']} / {policy['reviewed']}<" in built
+    assert "Flagged receipts that were forged" in built
+    assert f">{policy['forged_reviewed']} / {ocr['forged']}<" in built
+    assert f">{ocr['success']['f1']['value']:.3f}<" in built
+    assert "far above" not in built
+
+
+def test_the_first_screen_shows_the_strongest_catch_with_its_source(built: str) -> None:
+    strongest = records().cards["gallery"][CAUGHT][0]["receipt"]
+    picture = built.index(f'<image href="receipts/{image_name(strongest)}"')
+    caption = built[picture : built.index("</figure>", picture)]
+    assert picture < built.index('id="glance"') < built.index('id="credit"')
+    assert "Find it\n    again! (L3i, University of La Rochelle), with permission" in caption
+    assert "the file is unchanged, cropped on\n    screen" in caption
+    assert '<a href="#credit">Full credit below</a>' in caption
+
+
+def test_the_detail_is_centred_on_the_boxes_and_kept_inside_the_image() -> None:
+    assert detail([[100, 1500, 50, 40], [120, 1700, 60, 40]], 888, 2792) == (0, 1220, 888, 799)
+    assert detail([[0, 10, 20, 20]], 888, 2792) == (0, 0, 888, 799)
+    assert detail([[0, 2780, 20, 10]], 888, 2792) == (0, 1993, 888, 799)
+    assert detail([], 888, 500) == (0, 0, 888, 500)
 
 
 def test_every_link_of_the_contents_has_its_section(built: str) -> None:
-    nav = re.search(r'<nav class="contents"[^>]*>(.*?)</nav>', built, re.DOTALL)
+    nav = re.search(r'<nav class="bar"[^>]*>(.*?)</nav>', built, re.DOTALL)
     assert nav is not None
     targets = re.findall(r'href="#([^"]+)"', nav.group(1))
-    assert len(targets) == 10
+    assert len(targets) == len(CONTENTS) + 1  # the sections and the top
     for target in targets:
         assert f'id="{target}"' in built, target
+
+
+def test_the_overview_links_every_receipt_to_its_card(built: str) -> None:
+    receipts = shown_digests(records().cards)
+    tiles = re.findall(r'<a class="tile" href="#(X\d+)">', built)
+    assert sorted(tiles) == sorted(receipts)
+    for receipt in receipts:
+        assert re.search(rf'<article class="card \w+" id="{receipt}">', built), receipt
+
+
+def test_every_card_marks_where_each_budget_sends_to_review(built: str) -> None:
+    policies = records().cards["policies"]
+    assert built.count('<div class="meter"') == len(shown_digests(records().cards))
+    for policy in policies:
+        assert f"{policy['threshold']:.3f} at a {policy['budget'] * 100:.0f}% budget" in built
+
+
+def test_every_f1_stands_beside_the_f1_of_flagging_every_receipt(built: str) -> None:
+    ocr = records().check["ocr"]
+    reference = f"{floor(ocr):.3f}"
+    assert reference == "0.277"  # ADR-0013: 2p / (1 + p) with 35 of 218 receipts forged
+    assert f"Flagging every receipt: {reference}" in built
+    assert f"flagging every receipt scores {reference}" in built
+    assert f"{reference} for\n  flagging every receipt" in built

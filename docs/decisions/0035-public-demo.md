@@ -115,30 +115,70 @@ leaves out.
 
 ### 4. The page
 
-In order: a title, the author with a link to the code, and one sentence on what the page is; the
-results at a glance, in three plain sentences for readers outside the field (how many receipts
-were sent to review and how many of them were forged, how many forgeries were missed, and F1
-against the best published result, with what F1 means); links to every section; the credit
-(decision 5); the results; how the system works; how the ten receipts were chosen; the gallery in
-three groups, each headed with its real count; the limitations; how to reproduce; a footer. The
-credit still comes before any image. The author and the plain summary come first because, read
-as a recruiter would, the first screen otherwise showed neither what the system achieves nor who
-built it: the results began below it and the author's name only at the end of a page about 29
+In order: a bar at the top with links to every section; the author, a title, one sentence on what
+the system does, links to the receipts and to the code, and what it is built with, beside a detail
+of the strongest catch with its evidence boxes, whose caption credits the dataset and the permission
+and links to the full credit; the results at a glance, as three numbers with a plain line each for
+readers outside the field (how many of the receipts sent to review were forged, at the threshold set
+for the 10 % budget; F1 beside the F1 of flagging every receipt and the best published result; and
+how many forgeries were caught and missed), with what F1 means and the main weakness beside them;
+what the project consists of, in four parts; the credit (decision 5); the ten receipts side by side,
+each linking to its card; the gallery in three groups, each headed with its real count; the results
+in full, with the two main weaknesses; how the system works; how the ten receipts were chosen; the
+limitations; how to reproduce; a footer. The full credit comes before the gallery; the one picture
+above it carries the source in its caption. The author and the plain summary come first because,
+read as a recruiter would, the first screen otherwise showed neither what the system achieves nor
+who built it: the results began below it and the author's name only at the end of a page about 29
 screens long on a phone.
 
-- **Results**, on T2, measured once with 95 % intervals: average precision 0.902 (0.829 to
-  0.963), chance 0.161; F1 0.814 (0.679 to 0.906) against the best published result we know of,
-  0.284 (ChatGPT on the transcripts; T1 also reaches 0.814); at the 10 % budget 24 receipts sent
-  to review, all forged, and 11 of the 35 forged accepted; the report's first region on the edit
-  for 33 of 35; expected calibration error 0.034. Links to the success criterion fixed before any
-  model was trained ([ADR-0013](0013-success-criterion-and-floors.md)) and to the freeze before
-  the unlock (ADR-0034). Beside them, the two main weaknesses: saved again as JPEG at quality 95
-  the average precision falls to 0.607 (0.414 at 75) and the success criterion fails; fusion is
-  not shown to beat copy-move alone (0.072, -0.004 to 0.155). General language models given the
-  same receipts reach 0.447 (Sonnet, 0.318 to 0.588), 0.558 (Haiku) and 0.692 (Opus, 0.558 to
-  0.819); in the paper's setting, on the transcripts, Sonnet's F1 is 0.434 (0.310 to 0.553)
-  against ChatGPT's 0.284; fusion exceeds Sonnet by 0.455 (0.314 to 0.587), the ninth pre-named
-  test.
+The owner then found the page hard to read before it was published: three screens of text came
+before the first receipt, every number sat inside a sentence, and each card opened on a line of
+detector internals. Asked for a professional page that a recruiter would want to read on, it was
+laid out as a product page, with the facts and their sources unchanged: large headings and short
+paragraphs; the three numbers as tiles; the ten receipts at a glance before their cards; and in
+each card the outcome as a sign and a word, the probability on a bar marked where each budget
+sends a receipt to review, and the evidence named in the colour of its boxes on the image, its
+details opening on request. Colour is kept for meaning: links are blue, the outcomes carry a
+small green, red or grey sign beside their name, and the evidence keeps the overlay's colours;
+everything else is black, white and grey. The page speaks in the author's voice ("I built", "the
+best published result I know of", as the README does), names the evidence for what it does
+(pixel model, JPEG grid analysis, copy-move detection, accounting checks, field links) with the
+reports' names given in the legend, and writes shares as "10%". The fuller results, the choice of
+the ten and the method follow the gallery.
+
+No sentence claims more than its record. The opening states what was flagged with the budget it
+was flagged at, rather than a comparison in words such as "far above"; every F1 stands beside
+0.277, the F1 of flagging every receipt, as ADR-0013 requires, and the best published result is
+named as a language model that read only the transcripts, where this system also reads the image.
+The project's parts are named for what was done: an evaluation fixed in advance, and every number
+traceable to a recorded run, not "reproducible end to end", since the language-model components
+depend on a hosted model.
+
+Last, on 2026-10-30, the owner chose to open the page on a receipt rather than on text alone: the
+first screen showed no picture of what the system does, and the first receipt came three screens
+down, below the credit. The picture is the strongest catch, X51006620182, the first card the rule
+chose (decision 1), cropped on screen to a window across its width centred on its evidence boxes;
+the file is the dataset's, unchanged, and the caption says that it is a detail. The caption names
+the receipt, its probability, the dataset, L3i and the permission, and links to the full credit,
+which keeps every element of decision 5 and still comes before the gallery. The permission asks
+for a clear citation of the paper and the dataset page, which the full credit gives one screen
+below the picture. The words of the first two screens were cut at the same time: the opening is
+one sentence, what was flagged at the 10 % budget is the first number, and each number carries
+one short line.
+
+- **Results**, on T2, measured once with 95 % intervals: average precision 0.902 (0.829 to 0.963),
+  chance 0.161; F1 0.814 (0.679 to 0.906) against 0.277 for flagging every receipt and the best
+  published result I know of, 0.284 (ChatGPT on the transcripts; T1 also reaches 0.814); at the 10 %
+  budget 24 receipts sent to review, all forged, and 11 of the 35 forged accepted; the report's
+  first region on the edit for 33 of 35; expected calibration error 0.034. Links to the success
+  criterion fixed before any model was trained ([ADR-0013](0013-success-criterion-and-floors.md))
+  and to the freeze before the unlock (ADR-0034). Beside them, the two main weaknesses: saved again
+  as JPEG at quality 95 the average precision falls to 0.607 (0.414 at 75) and the success criterion
+  fails; fusion is not shown to beat copy-move alone (0.072, -0.004 to 0.155). General language
+  models given the same receipts reach 0.447 (Sonnet, 0.318 to 0.588), 0.558 (Haiku) and 0.692
+  (Opus, 0.558 to 0.819); in the paper's setting, on the transcripts, Sonnet's F1 is 0.434 (0.310 to
+  0.553) against ChatGPT's 0.284; fusion exceeds Sonnet by 0.455 (0.314 to 0.587), the ninth
+  pre-named test.
 - **How it works**: a small figure of the flow from the sources of evidence to the case file; a
   legend of the evidence names; and one line on normalisation: 63.0 % of the dataset's forged
   images and none of its genuine ones carry an alpha channel, so every image is turned to
@@ -159,11 +199,13 @@ screens long on a phone.
 Every number is generated from the run records by a command, and a test checks the page's data
 against them. The page makes no request to another site: no CDN, web font, analytics or cookie.
 The images sit on white, since four of the seven forged files carry an alpha channel and one has
-transparent pixels; the original files, 11.2 MB together, load when they come into view.
+transparent pixels; the original files, 11.2 MB together, load when they come into view, except
+the first screen's picture (2.5 MB), which loads with the page.
 
 ### 5. The credit
 
-At the top of the page, before any image:
+Before the gallery, after the results and what the project consists of; the one picture above
+it, in the first screen, carries a source line that links here (decision 4):
 
 - the dataset's name and publisher, L3i (University of La Rochelle), with Yooz, the second
   affiliation of the paper; the permission of L3i, given on 2026-10-29 for this non-commercial
@@ -218,6 +260,9 @@ Space keeps the images in a git repository that anyone can duplicate.
   from one of the paper's eight authors; the page and the model card say L3i.
 - The data card, the download source and the data audit cited LNCS 14191; the proceedings volume
   is 14189, corrected with this record.
+- The page as first built, the README and the model card showed F1 against 0.284 without the F1
+  of flagging every receipt, 0.277, which ADR-0013 shows beside every F1; corrected with this
+  record before the page was published.
 - The best published result is the best we know of: a search on 2026-10-29 found no higher
   document-level result on this test split. The same authors' second paper of ICDAR 2023
   (doi:10.1007/978-3-031-41682-8_12) uses another dataset, French receipts; DOCFORGE-BENCH
@@ -232,7 +277,7 @@ Space keeps the images in a git repository that anyone can duplicate.
 | [ADR-0004](0004-locked-test-set.md): the locked test split | Agrees: ten test receipts are read after the single evaluation, for the demo that ADR-0034 fixed |
 | [ADR-0003](0003-content-only-headline.md): content-only headline, file metadata on its own track | Agrees: the page reports T2 and normalises every image |
 | [ADR-0006](0006-llm-placement.md): a language model is never the sole decision maker | Agrees: the agent's case files are labelled as drafts for a reviewer |
-| [ADR-0013](0013-success-criterion-and-floors.md) and the [charter](../project-charter.md): the best published result, F1 28.39 | Agrees on the number; the page says "the best we know of" (disclosures) |
+| [ADR-0013](0013-success-criterion-and-floors.md) and the [charter](../project-charter.md): the best published result, F1 28.39 | Agrees: every F1 on the page stands beside 0.277, the F1 of flagging every receipt; the page says "the best I know of" (disclosures) |
 | [ADR-0022](0022-learned-models.md): the trained models and the demo are non-commercial | Agrees |
 | [Evaluation protocol](../evaluation-protocol.md), section 2: T2 is what the demo runs | Agrees |
 | [Data card](../data-card.md): the dataset is not redistributed | Agrees: the ten images are served by the demo only, never committed here; the data card records the permission |
