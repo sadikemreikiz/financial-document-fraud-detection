@@ -21,6 +21,7 @@ and [ADR-0006](decisions/0006-llm-placement.md).
 | Reporting (Phase 5) | Built: the assessment with evidence ordered by contribution, the template report and overlay, the independent grounding check and the report's first region for RQ4 ([`docfraud.reporting`](../src/docfraud/reporting/)); RQ4 measured out of fold on the training split and on the validation split, where every audit report was grounded |
 | Investigation agent and LLM detector (Phase 6b) | Pre-registered ([ADR-0031](decisions/0031-llm-detector-and-agent.md), amended by [ADR-0032](decisions/0032-stronger-model-on-the-design-fold.md) and [ADR-0033](decisions/0033-agent-development-rule.md)). The detector ([`detector.py`](../src/docfraud/llm/detector.py), `docfraud detector`) was developed and frozen on the design fold and run once on the validation split ([report](../reports/llm/detector/validation.md)). The agent's tools, case file and grounding check are built ([`agent.py`](../src/docfraud/llm/agent.py), `docfraud agent`); its pilot kept Claude Sonnet 5.5 ([record](../reports/llm/agent/pilot.json)); version 2 of its instruction was kept by ADR-0033's rule on the 12 development cases and frozen ([record](../reports/llm/agent/frozen.json)); it ran once on the 19 validation receipts sent to review, with 5 grounding violations in 1,224 facts and its first observation on target on all 19 ([report](../reports/llm/agent/validation.md)) |
 | The evaluation on the test split (Phase 7) | Done: pre-registered ([ADR-0034](decisions/0034-phase-7-preregistration.md)), rehearsed on the validation split, frozen at the tag `phase-7-freeze`, then every test command ran once ([`docfraud.cli.final`](../src/docfraud/cli/final.py) renders the reports); one fix after the unlock, tagged `phase-7-fix-1`, is disclosed ([results](../reports/README.md)) |
+| The public demo (Phase 7) | Done: ten test receipts chosen by a stated rule, their cards recorded from T2's frozen assessments, and a static page built from the run records and deployed to GitHub Pages on request ([ADR-0035](decisions/0035-public-demo.md), [the page](https://sadikemreikiz.github.io/financial-document-fraud-detection/)). It shows recorded results; it runs no model |
 
 ## Overview
 
@@ -131,7 +132,8 @@ How the LLM reads a receipt, and what code guarantees on the way
 | `docfraud.reporting` | Audit reports | 5 |
 | `docfraud.demo` | The public demo: the receipts a stated rule chooses, their cards and the page ([ADR-0035](decisions/0035-public-demo.md)) | 7 |
 | `docfraud.llm` | Provider interface, LLM extraction (6a), investigation agent (6b) | 6a, 6b |
-| `docfraud.api`, `docfraud.cli` | HTTP API and command line | 0, 7 |
+| `docfraud.cli` | Command line | 0 |
+| `docfraud.api` | HTTP API; not built: whether it is built is decided after the demo ([ADR-0035](decisions/0035-public-demo.md)) | 7 |
 
 Modules are created when their phase starts, not before.
 

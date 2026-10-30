@@ -94,11 +94,11 @@ forged receipts above chance (0.161) at both qualities.
 
 At the 10 % budget on T2 the policy accepts 11 forged receipts and sends no authentic receipt to
 review ([report](fusion/test-errors.md)). With 35 forgeries and 24 places, at least 11 misses
-were certain. On 10 of the 11 the report's first region lies on the edit and the evidence is
-too weak; on one it lies elsewhere; on none was nothing found. The evidence is usually one
-source alone, and the model needs sources to agree. Every one of the 11 files carries traces of
-an editing program, which T3 reads and the headline leaves out. At the 20 % budget, 4 of them
-would be reviewed.
+were certain. On 10 of the 11 the report's first region lies on the edit or its copy source and
+the evidence is too weak; on one it lies elsewhere; on none was nothing found. The evidence is
+usually one source alone, and the model needs sources to agree. Every one of the 11 files
+carries traces of an editing program, which T3 reads and the headline leaves out. At the 20 %
+budget, 4 of them would be reviewed.
 
 One sentence per error, drafted from the system's outputs and checked by the owner on
 2026-10-29 against each receipt, with the edit and the first region drawn on it (ADR-0034,
@@ -175,8 +175,9 @@ records, and CI checks that every committed report matches its record.
 ## What comes next
 
 The [model card](../docs/model-card.md) states what the system was measured on, how well, and
-where it fails. Next come the public demo (L3i, which published the dataset, allowed a small
-number of its receipts on it, with a clear citation of the paper and the dataset page;
-[ADR-0035](../docs/decisions/0035-public-demo.md)), the owner's approval of the
+where it fails. The [public demo](https://sadikemreikiz.github.io/financial-document-fraud-detection/)
+shows ten of the test receipts (L3i, which published the dataset, allowed a small number of its
+receipts on it, with a clear citation of the paper and the dataset page;
+[ADR-0035](../docs/decisions/0035-public-demo.md)). Next come the owner's approval of the
 [review of the thesis](../docs/thesis-review.md), public with the repository since its
 creation, and Phase 8.

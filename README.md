@@ -6,6 +6,9 @@ Explainable detection of forged receipts from the evidence they carry: pixel for
 accounting-rule verification, with an LLM that reads the fields and drafts the case for a human
 reviewer, evaluated on real human forgeries.
 
+**[Live demo](https://sadikemreikiz.github.io/financial-document-fraud-detection/)**: ten receipts of the
+locked test split, the system's evidence on each and the results, as recorded.
+
 ## At a glance
 
 - **What it does:** detects forged receipts from the evidence they carry: arithmetic on the
@@ -22,14 +25,16 @@ reviewer, evaluated on real human forgeries.
   precision of 0.90 from the image alone (chance 0.16) and reaches an F1 of 0.81 (95 % interval
   0.68 to 0.91), against 0.28 for the best published result I know of; at a 10 % review budget
   all 24 receipts sent to review are forged, and the first region an audit report shows hits the
-  edit on 33 of the 35 forgeries. Saved again as JPEG at quality 95, the same receipts fall to
-  0.61: the system relies on lossless files. The pixel model behind it was trained only on
-  forgeries from my own synthetic engine.
+  edit or its copy source on 33 of the 35 forgeries. Saved again as JPEG at quality 95, the same
+  receipts fall to 0.61: the system relies on lossless files. The pixel model behind it was
+  trained only on forgeries from my own synthetic engine.
 - **Built with:** Python 3.14, PyTorch, scikit-learn, RapidOCR, the Claude API, pytest, mypy in
   strict mode and CI on every pull request.
-- **Status:** Phases 0 to 6 of 8 complete, and Phase 7's single evaluation on the locked test
-  split is done ([Phase 7 results](reports/README.md)), and the [model card](docs/model-card.md)
-  states where the system fails. A public demo and publication complete Phase 7.
+- **Status:** Phases 0 to 6 of 8 complete. Phase 7's single evaluation on the locked test split
+  is done ([Phase 7 results](reports/README.md)), the [model card](docs/model-card.md) states
+  where the system fails, and the [public demo](https://sadikemreikiz.github.io/financial-document-fraud-detection/)
+  shows ten of the test receipts. The owner's approval of the
+  [thesis review](docs/thesis-review.md) completes Phase 7.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="reports/fusion/figures/test-precision-dark.svg">
@@ -70,8 +75,9 @@ to review, both fixed in advance
 ([ADR-0031](docs/decisions/0031-llm-detector-and-agent.md)) and checked once on the validation
 split ([Phase 6 results](reports/llm/README.md)). Phase 7 unlocked the test split once, as fixed
 in advance ([ADR-0034](docs/decisions/0034-phase-7-preregistration.md)), and measured every system
-on it ([Phase 7 results](reports/README.md), [model card](docs/model-card.md)); a public demo and
-publication come next.
+on it ([Phase 7 results](reports/README.md), [model card](docs/model-card.md)); the
+[public demo](https://sadikemreikiz.github.io/financial-document-fraud-detection/) shows ten of the test
+receipts, and the owner's approval of the [thesis review](docs/thesis-review.md) comes next.
 
 ## Findings so far
 
@@ -103,9 +109,9 @@ publication come next.
   real ones alone and 0.18 for TruFor, a pretrained forensic model
   ([report](reports/forensics/clean-measurement.md)).
 - **The detectors find the edit, not a shortcut.** The most suspicious region of the best model
-  hits the edit on 69 % of the forged receipts, where a random box of the same size hits 3 %,
-  and a probe over 28 global properties of the images finds no trace of forgery
-  ([Phase 4 results](reports/forensics/README.md)).
+  hits the edit or its copy source on 69 % of the forged receipts, where a random box of the
+  same size hits 3 %, and a probe over 28 global properties of the images finds no trace of
+  forgery ([Phase 4 results](reports/forensics/README.md)).
 - **An LLM reader cuts the rules' false alarms.** With the fields Claude Sonnet 5.5 points to in
   the transcripts, the accounting rules flag 18 % of 404 authentic receipts, against 37 % with
   the rule-based parser, and catch 44 % of the forged ones, against 54 %, in one test fixed

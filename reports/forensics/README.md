@@ -18,7 +18,7 @@ against published work is made here.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="figures/clean-localisation-dark.svg">
-  <img alt="Share of the 74 forged receipts with region annotations whose top region hits the edit, against a random box of the same size: system 2 0.69 against 0.03, system 1 0.80 against 0.36, system 4 0.66 against 0.03, system 3 0.41 against 0.03, system 6 0.35 against 0.07." src="figures/clean-localisation-light.svg">
+  <img alt="Share of the 74 forged receipts with region annotations whose top region hits the edit or its copy source, against a random box of the same size: system 2 0.69 against 0.03, system 1 0.80 against 0.36, system 4 0.66 against 0.03, system 3 0.41 against 0.03, system 6 0.35 against 0.07." src="figures/clean-localisation-light.svg">
 </picture>
 
 The figures are drawn by `make figures` from the measurement's results; the report's tables are
@@ -35,10 +35,11 @@ their table view.
   0.03. That it also beats system 4 (0.437) was not a comparison fixed in advance, so it is
   stated, not claimed.
 - **The systems find the edits, not a shortcut.** On the 74 forged receipts with region
-  annotations, system 2's most suspicious region hits the edit on 69 %, where a random box of
-  the same size hits 3 %; every system with a map passes the localisation guard. The global-trace
-  probe finds no trace of forgery in 28 global properties of the receipts (average precision
-  0.186, chance 0.167), and no system's score follows it (rank correlations 0.03 to 0.13).
+  annotations, system 2's most suspicious region hits the edit or its copy source (shares at
+  least a pixel with either) on 69 %, where a random box of the same size hits 3 %; every system
+  with a map passes the localisation guard. The global-trace probe finds no trace of forgery in
+  28 global properties of the receipts (average precision 0.186, chance 0.167), and no system's
+  score follows it (rank correlations 0.03 to 0.13).
 - **Pixel forensics sees what the accounting rules cannot.** On the 31 forged receipts whose
   edits avoid amounts and products, measured against every authentic receipt, system 2 reaches
   an average precision of 0.482 against a chance level of 0.077, and its 10 % review budget
