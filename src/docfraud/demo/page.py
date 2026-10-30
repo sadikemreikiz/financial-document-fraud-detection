@@ -102,6 +102,13 @@ GROUPS = (
 )
 TITLES = {group: title for group, title, _ in GROUPS}
 
+START = (
+    (CAUGHT, "the strongest catch"),
+    (MISSED, "the closest miss"),
+    (GENUINE, "the genuine receipt it scores highest"),
+)
+"""A short way through the gallery: the receipt of each outcome with the highest probability."""
+
 DECISIONS = {Decision.REVIEW.value: "sent to review", Decision.ACCEPT.value: "not sent to review"}
 """The page's words for the policy's decisions: no one looks at a receipt below the threshold, so
 the page does not call it accepted; the audit report keeps the policy's own word."""
@@ -609,8 +616,18 @@ def overview(records: Records, annotations: Mapping[str, Mapping[str, Any]]) -> 
   <p class="sub">{shown[CAUGHT]} caught, {shown[MISSED]} missed and {shown[GENUINE]} genuine,
   of {records.cards["receipts"]}: a fixed rule picked the strongest and the weakest case of each
   outcome, so the mix is not the real one (<a href="#choice">how</a>).</p>
+  <p class="start"><strong>Start here:</strong> {start_here(records)}</p>
   <div class="tiles">{"".join(tiles)}
   </div>"""
+
+
+def start_here(records: Records) -> str:
+    """Links to one card of each outcome, chosen by the gallery's own ranking, not by hand."""
+    links = []
+    for group, label in START:
+        highest = max(records.cards["gallery"][group], key=lambda item: item["probability"])
+        links.append(f'<a href="#{_e(highest["receipt"])}">{_e(label)}</a>')
+    return " · ".join(links)
 
 
 def gallery(
@@ -835,8 +852,9 @@ h3 { font-size: clamp(1.6rem, 3.2vw, 2.1rem); line-height: 1.15; margin: 0 0 4px
 .credit { padding: 0 0 64px; font-size: .94rem; color: var(--muted); }
 .credit .wrap { padding-top: 48px; border-top: 1px solid var(--line); }
 .credit strong, .credit cite { color: var(--ink); }
+.start { margin: 20px 0 0; font-size: 1.05rem; line-height: 1.6; }
 .tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(168px, 1fr)); gap: 16px;
-  margin: 40px 0 8px; }
+  margin: 32px 0 8px; }
 .tile { display: flex; flex-direction: column; overflow: hidden; background: var(--panel);
   border-radius: 20px; color: var(--ink); transition: transform .25s ease, box-shadow .25s ease; }
 .tile:hover { text-decoration: none; transform: translateY(-4px);

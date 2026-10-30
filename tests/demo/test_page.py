@@ -253,6 +253,19 @@ def test_the_overview_links_every_receipt_to_its_card(built: str) -> None:
         assert re.search(rf'<article class="card \w+" id="{receipt}">', built), receipt
 
 
+def test_start_here_links_the_highest_scored_receipt_of_each_outcome(built: str) -> None:
+    gallery = records().cards["gallery"]
+    line = re.search(r'<p class="start">(.*?)</p>', built, re.DOTALL)
+    assert line is not None
+    targets = re.findall(r'href="#(X\d+)"', line.group(1))
+    expected = [
+        max(gallery[group], key=lambda item: item["probability"])["receipt"]
+        for group in (CAUGHT, MISSED, GENUINE)
+    ]
+    assert targets == expected == ["X51006620182", "X51007579714", "X51005447848"]
+    assert built.index('<p class="start">') < built.index('<div class="tiles">')
+
+
 def test_every_card_marks_where_each_budget_sends_to_review(built: str) -> None:
     policies = records().cards["policies"]
     assert built.count('<div class="meter"') == len(shown_digests(records().cards))
