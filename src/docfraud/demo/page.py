@@ -730,6 +730,7 @@ body { margin: 0; background: var(--page); color: var(--ink);
 a { color: var(--accent); text-decoration: none; }
 a:hover { text-decoration: underline; }
 code, pre, .receipt-id, .tile-id { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+code { overflow-wrap: anywhere; }
 .wrap { max-width: 1000px; margin: 0 auto; padding: 0 22px; }
 .narrow > * { max-width: 760px; }
 section { padding: 76px 0; }
