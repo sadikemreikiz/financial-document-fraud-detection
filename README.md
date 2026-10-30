@@ -221,3 +221,10 @@ sent and kept is recorded in the
 [data card](docs/data-card.md#use-with-a-hosted-language-model). Phase 4 uses third-party
 models under their own terms: TruFor for nonprofit research, credited to its authors, and
 ImageNet-trained weights, which limit the models trained from them to non-commercial research.
+
+## Contact
+
+**Sadik Emre Ikiz** · Open to Applied AI and ML Engineer roles · Berlin
+
+[LinkedIn](https://www.linkedin.com/in/sadikemreikiz/) · [GitHub](https://github.com/sadikemreikiz) ·
+[sadikemreikiz90@gmail.com](mailto:sadikemreikiz90@gmail.com)
