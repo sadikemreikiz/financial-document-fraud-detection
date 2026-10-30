@@ -4,7 +4,7 @@
 |---|---|
 | **Project** | docfraud: explainable multimodal detection of forged financial documents |
 | **Origin** | v2 of the M.Sc. thesis *AI-Based Expert System for Detecting Fraud in Financial Documents* (S. E. Ikiz, University of Europe for Applied Sciences, Berlin, 2026) |
-| **Status** | Phases 0 to 7 complete: Phase 7's single evaluation on the test split, its [model card](model-card.md), the [public demo](https://sadikemreikiz.github.io/financial-document-fraud-detection/) and the [thesis review](thesis-review.md), approved by the owner on 2026-10-30. Phase 8, the career package, remains. Results: [Phase 5](../reports/fusion/README.md), [Phase 6](../reports/llm/README.md), [Phase 7](../reports/README.md) |
+| **Status** | Phases 0 to 8 complete on 2026-10-30: Phase 7's single evaluation on the test split, its [model card](model-card.md), the [public demo](https://sadikemreikiz.github.io/financial-document-fraud-detection/) and the [thesis review](thesis-review.md), approved by the owner on 2026-10-30; and Phase 8, which updated the owner's GitHub profile and prepared CV entries and interview notes, kept outside the repository. Results: [Phase 5](../reports/fusion/README.md), [Phase 6](../reports/llm/README.md), [Phase 7](../reports/README.md) |
 | **Last updated** | 2026-10-30 |
 
 ## Problem
@@ -42,7 +42,7 @@ v2 rebuilds the system from scratch to answer the thesis questions properly.
 - Transaction-, user- or network-level fraud. The unit of analysis is a single document.
 - Handwriting, signature or stamp verification. Benign handwritten notes and stamps occur on half
   of the authentic receipts and must not trigger alarms, but authenticating them is out of scope.
-- Claims about fully AI-generated documents before they are evaluated (planned for v2.1).
+- Claims about fully AI-generated documents before they are evaluated (left for a later version).
 - Redistribution of datasets or of any document images whose licence does not allow it.
 
 ## Research questions
@@ -101,6 +101,9 @@ Each phase ends with a short review before the next one starts.
 *(Order changed on 2026-10-22 by [ADR-0024](decisions/0024-llm-extraction-before-fusion.md):
 field extraction runs before Phase 5, so that fusion is built and measured once, on the better
 reader. Phase numbers are kept.)*
+
+*(Phase 8, on 2026-10-30: no separate write-up was written; the public demo and the README serve
+as one.)*
 
 ## Principles
 
