@@ -23,11 +23,12 @@ locked test split, the system's evidence on each and the results, as recorded.
 - **Result:** measured once on the 218 receipts of the locked test split, combining copy-move
   detection, pixel forensics and the accounting rules ranks forged receipts with an average
   precision of 0.90 from the image alone (chance 0.16) and reaches an F1 of 0.81 (95 % interval
-  0.68 to 0.91), against 0.28 for the best published result I know of; at a 10 % review budget
-  all 24 receipts sent to review are forged, and the first region an audit report shows hits the
-  edit or its copy source on 33 of the 35 forgeries. Saved again as JPEG at quality 95, the same
-  receipts fall to 0.61: the system relies on lossless files. The pixel model behind it was
-  trained only on forgeries from my own synthetic engine.
+  0.68 to 0.91), against 0.28 for the best published result I know of (ChatGPT reading only the
+  transcripts; this system also reads the image); at a 10 % review budget all 24 receipts sent to
+  review are forged, and the first region an audit report shows hits the edit or its copy
+  source on 33 of the 35 forgeries. Saved again as JPEG at quality 95, the same receipts fall to
+  0.61: the system relies on lossless files. The pixel model behind it was trained only on
+  forgeries from my own synthetic engine.
 - **Built with:** Python 3.14, PyTorch, scikit-learn, RapidOCR, the Claude API, pytest, mypy in
   strict mode and CI on every pull request.
 - **Status:** Phases 0 to 6 of 8 complete. Phase 7's single evaluation on the locked test split
@@ -142,10 +143,10 @@ receipts, and the owner's approval of the [thesis review](docs/thesis-review.md)
   audit report does ([report](reports/llm/agent/validation.md)).
 - **On the test split, the success criterion is met.** Measured once with everything frozen on
   the validation split, fusion reaches an F1 of 0.814 (0.679 to 0.906) on both text sources,
-  against 0.284 for the best published result I know of and 0.277 for flagging every receipt,
-  and an average precision of 0.912 on the transcripts and 0.902 on OCR text; all 24 receipts
-  sent to review at the 10 % budget are forged, and every audit report is grounded
-  ([Phase 7 results](reports/README.md)).
+  against 0.284 for the best published result I know of (ChatGPT, transcripts only) and 0.277
+  for flagging every receipt, and an average precision of 0.912 on the transcripts and 0.902 on
+  OCR text; all 24 receipts sent to review at the 10 % budget are forged, and every audit report
+  is grounded ([Phase 7 results](reports/README.md)).
 - **There, fusion does not clearly beat copy-move alone.** Its margin is 0.072 (−0.004 to
   0.155) on OCR text, so the claim that it beats every single source is not made, and linking
   adds nothing that can be measured ([report](reports/fusion/test-check.md)).

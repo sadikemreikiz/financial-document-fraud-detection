@@ -35,8 +35,9 @@ The figure is drawn by `make figures` from the test check's run record; the
   (T2), against 0.284 for the best published result and 0.277 for flagging every receipt;
   recall at the 10 % budget is 0.623 (0.543 to 0.623 on T2) against 0.10. Both lower bounds
   clear their references, which is ADR-0013's criterion. T1 reads the transcripts, as the
-  published result did; T2 reads only the image. Without the eight receipts that had copies
-  elsewhere in the dataset the criterion holds as well ([report](fusion/test-check.md)).
+  published result did, and the image as well; T2 reads only the image. Without the eight
+  receipts that had copies elsewhere in the dataset the criterion holds as well
+  ([report](fusion/test-check.md)).
 - **Fusion ranks forgeries with an average precision of 0.912 on T1 and 0.902 on T2**, where
   chance is 0.161. On the validation split it reached 0.851 and 0.831; the difference lies
   within the intervals that 35 forged receipts allow.

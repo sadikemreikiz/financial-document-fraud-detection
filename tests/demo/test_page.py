@@ -235,6 +235,7 @@ def test_every_f1_stands_beside_the_f1_of_flagging_every_receipt(built: str) -> 
     reference = f"{floor(ocr):.3f}"
     assert reference == "0.277"  # ADR-0013: 2p / (1 + p) with 35 of 218 receipts forged
     assert f"Flagging every receipt: {reference}" in built
+    assert "best published result I know of: 0.284 (ChatGPT, transcripts only)" in built
     assert f"flagging every receipt scores {reference}" in built
     assert f"{reference} for\n  flagging every receipt" in built
 

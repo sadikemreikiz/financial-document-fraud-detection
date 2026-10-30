@@ -68,7 +68,7 @@ On the test split, measured once with everything frozen before the unlock
 | Measure | T1 (transcripts) | T2 (OCR) | Reference |
 |---|---|---|---|
 | Average precision | 0.912 (0.844 to 0.967) | 0.902 (0.829 to 0.963) | chance 0.161 |
-| F1 at the frozen threshold | 0.814 (0.679 to 0.906) | 0.814 (0.679 to 0.906) | best published we know of 0.284; flagging every receipt 0.277 |
+| F1 at the frozen threshold | 0.814 (0.679 to 0.906) | 0.814 (0.679 to 0.906) | best published we know of 0.284 (ChatGPT, transcripts only); flagging every receipt 0.277 |
 | Recall at the 10 % budget | 0.623 (0.566 to 0.623) | 0.623 (0.543 to 0.623) | chance 0.10 |
 | Sent to review at 10 %, of them forged | 23, 23 | 24, 24 | |
 | Brier score, expected calibration error | 0.041, 0.029 | 0.042, 0.034 | |

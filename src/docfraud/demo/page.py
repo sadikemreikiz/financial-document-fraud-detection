@@ -1055,7 +1055,7 @@ def glance(records: Records) -> str:
             f"{ocr['success']['f1']['value']:.3f}",
             "F1 score",
             f"Flagging every receipt: {floor(ocr):.3f}; best published result I know of: "
-            f"{PUBLISHED_F1:.3f}",
+            f"{PUBLISHED_F1:.3f} (ChatGPT, transcripts only)",
         ),
         (
             f"{forged} / {ocr['forged']}",
