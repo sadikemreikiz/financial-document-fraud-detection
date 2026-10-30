@@ -15,8 +15,8 @@ reviewer, evaluated on real human forgeries.
 - **What stands out:** I audited my own thesis, found that data leakage had invalidated its
   results, and rebuilt it under an evaluation protocol fixed before any model was trained. Along
   the way I found a shortcut in the dataset: a rule that looks only at the file format beats the
-  best published result I know of (F1 79.3 against 28.39), so every image is normalised before
-  any model sees it.
+  best published result I know of (F1 79.3 against 28.39, where marking every receipt as forged
+  reaches 27.7), so every image is normalised before any model sees it.
 - **Result:** measured once on the 218 receipts of the locked test split, combining copy-move
   detection, pixel forensics and the accounting rules ranks forged receipts with an average
   precision of 0.90 from the image alone (chance 0.16) and reaches an F1 of 0.81 (95 % interval
@@ -77,8 +77,9 @@ publication come next.
 
 - **The dataset carries a format shortcut.** 63 % of the forged images have an alpha channel and
   none of the authentic ones do. That one rule reaches F1 79.3 on the test split, against 28.39
-  for the best published result I know of. Every image is normalised to grayscale without alpha
-  before any system sees it ([data audit](reports/data/findit2-audit.md)).
+  for the best published result I know of and 27.7 for marking every receipt as forged. Every
+  image is normalised to grayscale without alpha before any system sees it
+  ([data audit](reports/data/findit2-audit.md)).
 - **The thesis implementation leaked.** 89 of the 126 documents its fusion was tested on (71 %)
   had been in the training set of the image model it used
   ([thesis review](docs/thesis-review.md)).
@@ -135,9 +136,10 @@ publication come next.
   audit report does ([report](reports/llm/agent/validation.md)).
 - **On the test split, the success criterion is met.** Measured once with everything frozen on
   the validation split, fusion reaches an F1 of 0.814 (0.679 to 0.906) on both text sources,
-  against 0.284 for the best published result I know of, and an average precision of 0.912 on
-  the transcripts and 0.902 on OCR text; all 24 receipts sent to review at the 10 % budget are
-  forged, and every audit report is grounded ([Phase 7 results](reports/README.md)).
+  against 0.284 for the best published result I know of and 0.277 for flagging every receipt,
+  and an average precision of 0.912 on the transcripts and 0.902 on OCR text; all 24 receipts
+  sent to review at the 10 % budget are forged, and every audit report is grounded
+  ([Phase 7 results](reports/README.md)).
 - **There, fusion does not clearly beat copy-move alone.** Its margin is 0.072 (−0.004 to
   0.155) on OCR text, so the claim that it beats every single source is not made, and linking
   adds nothing that can be measured ([report](reports/fusion/test-check.md)).
