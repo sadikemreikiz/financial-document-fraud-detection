@@ -1,10 +1,12 @@
-# AI-Based Expert System for Detecting Fraud in Financial Documents
+# Finding forged receipts, and showing why
 
 [![CI](https://github.com/sadikemreikiz/financial-document-fraud-detection/actions/workflows/ci.yml/badge.svg)](https://github.com/sadikemreikiz/financial-document-fraud-detection/actions/workflows/ci.yml)
 
 Explainable detection of forged receipts from the evidence they carry: pixel forensics and
 accounting-rule verification, with an LLM that reads the fields and drafts the case for a human
-reviewer, evaluated on real human forgeries.
+reviewer, evaluated on real human forgeries. Version 2 of my M.Sc. thesis, *AI-Based Expert
+System for Detecting Fraud in Financial Documents* (University of Europe for Applied Sciences,
+Berlin, 2026), rebuilt from scratch and measured on receipts only.
 
 **[Live demo](https://sadikemreikiz.github.io/financial-document-fraud-detection/)**: ten receipts of the
 locked test split, the system's evidence on each and the results, as recorded.
