@@ -30,7 +30,7 @@ and our OCR of the image alone (T2, what the system does on a new receipt).
 ## Intended use
 
 - Ranking receipts for a human reviewer and showing where to look, in research and in this
-  portfolio's demo.
+  portfolio's [demo](https://sadikemreikiz.github.io/financial-document-fraud-detection/).
 - Non-commercial only: system 2 starts from ImageNet-trained weights, whose terms limit the
   models trained from them to non-commercial research.
 
@@ -72,7 +72,7 @@ On the test split, measured once with everything frozen before the unlock
 | Recall at the 10 % budget | 0.623 (0.566 to 0.623) | 0.623 (0.543 to 0.623) | chance 0.10 |
 | Sent to review at 10 %, of them forged | 23, 23 | 24, 24 | |
 | Brier score, expected calibration error | 0.041, 0.029 | 0.042, 0.034 | |
-| Report's first region on the edit | 33 of 35 | 33 of 35 | random box about 5 % |
+| Report's first region on the edit or its copy source | 33 of 35 | 33 of 35 | random box about 5 % |
 | Audit reports grounded | 218 of 218 | 218 of 218 | target 100 % |
 
 Intervals are 95 %, by the bootstrap over receipts. The success criterion fixed before any model
@@ -89,8 +89,9 @@ review agent's case files hold 3 numbers or boxes, of 1,500, not found in its to
   regions identical pixel for pixel, and compression breaks them
   ([track R](../reports/fusion/track-r.md)).
 - **One source of evidence is not enough.** Of the 11 forged receipts the 10 % policy accepts,
-  the report's first region lies on the edit in 10, but the evidence comes mostly from one
-  source and stays under the threshold ([errors](../reports/fusion/test-errors.md), with one
+  the report's first region lies on the edit or its copy source in 10, but the evidence comes
+  mostly from one source and stays under the threshold
+  ([errors](../reports/fusion/test-errors.md), with one
   sentence per error on the [Phase 7 page](../reports/README.md#the-errors-one-by-one)).
 - **Forgeries the evidence cannot see.** At the 10 % budget on T2, fusion catches 20.8 of the 27
   receipts forged by copy-paste inside the receipt, but none of the 2 pasted from another
@@ -123,7 +124,9 @@ review agent's case files hold 3 numbers or boxes, of 1,500, not found in its to
   number. The dataset is not redistributed; text and images are sent to the Claude API only as
   the [data card](data-card.md#use-with-a-hosted-language-model) records.
 - A wrong flag can cast suspicion on a person. The system therefore only ranks and explains; a
-  reviewer decides, and every statement in a report is checked against the evidence.
-- The public demo, still to be built, may show a small number of the dataset's receipts: L3i,
-  which published the dataset, allowed it in writing on 2026-10-29, for a non-commercial page
-  with a clear citation of the paper and the dataset page.
+  reviewer decides, and every number and box in a report is looked up in the evidence it rests
+  on; that check does not judge what a sentence claims.
+- The [public demo](https://sadikemreikiz.github.io/financial-document-fraud-detection/)
+  shows ten of the dataset's test receipts, unchanged: L3i, which published the dataset, allowed
+  it in writing on 2026-10-29, for a non-commercial page with a clear citation of the paper and
+  the dataset page.
