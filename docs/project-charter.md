@@ -4,7 +4,7 @@
 |---|---|
 | **Project** | docfraud: explainable multimodal detection of forged financial documents |
 | **Origin** | v2 of the M.Sc. thesis *AI-Based Expert System for Detecting Fraud in Financial Documents* (S. E. Ikiz, University of Europe for Applied Sciences, Berlin, 2026) |
-| **Status** | Phases 0 to 6 complete; Phase 7's single evaluation on the test split, its [model card](model-card.md) and the [public demo](https://sadikemreikiz.github.io/financial-document-fraud-detection/) are done; the owner's approval of the [thesis review](thesis-review.md) is next. Results: [Phase 5](../reports/fusion/README.md), [Phase 6](../reports/llm/README.md), [Phase 7](../reports/README.md) |
+| **Status** | Phases 0 to 7 complete: Phase 7's single evaluation on the test split, its [model card](model-card.md), the [public demo](https://sadikemreikiz.github.io/financial-document-fraud-detection/) and the [thesis review](thesis-review.md), approved by the owner on 2026-10-30. Phase 8, the career package, remains. Results: [Phase 5](../reports/fusion/README.md), [Phase 6](../reports/llm/README.md), [Phase 7](../reports/README.md) |
 | **Last updated** | 2026-10-30 |
 
 ## Problem

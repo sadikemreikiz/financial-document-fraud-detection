@@ -33,11 +33,10 @@ locked test split, the system's evidence on each and the results, as recorded.
   forgeries from my own synthetic engine.
 - **Built with:** Python 3.14, PyTorch, scikit-learn, RapidOCR, the Claude API, Claude Code,
   pytest, mypy in strict mode and CI on every pull request.
-- **Status:** Phases 0 to 6 of 8 complete. Phase 7's single evaluation on the locked test split
-  is done ([Phase 7 results](reports/README.md)), the [model card](docs/model-card.md) states
-  where the system fails, and the [public demo](https://sadikemreikiz.github.io/financial-document-fraud-detection/)
-  shows ten of the test receipts. The owner's approval of the
-  [thesis review](docs/thesis-review.md) completes Phase 7.
+- **Status:** Phases 0 to 7 of 8 complete: the single evaluation on the locked test split
+  ([Phase 7 results](reports/README.md)), the [model card](docs/model-card.md), which states
+  where the system fails, the [public demo](https://sadikemreikiz.github.io/financial-document-fraud-detection/)
+  and the [thesis review](docs/thesis-review.md). Phase 8, the career package, remains.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="reports/fusion/figures/test-precision-dark.svg">
@@ -80,7 +79,7 @@ split ([Phase 6 results](reports/llm/README.md)). Phase 7 unlocked the test spli
 in advance ([ADR-0034](docs/decisions/0034-phase-7-preregistration.md)), and measured every system
 on it ([Phase 7 results](reports/README.md), [model card](docs/model-card.md)); the
 [public demo](https://sadikemreikiz.github.io/financial-document-fraud-detection/) shows ten of the test
-receipts, and the owner's approval of the [thesis review](docs/thesis-review.md) comes next.
+receipts, and the owner approved the [thesis review](docs/thesis-review.md) on 2026-10-30.
 
 ## Findings so far
 
