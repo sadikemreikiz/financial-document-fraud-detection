@@ -179,6 +179,6 @@ The [model card](../docs/model-card.md) states what the system was measured on, 
 where it fails. The [public demo](https://sadikemreikiz.github.io/financial-document-fraud-detection/)
 shows ten of the test receipts (L3i, which published the dataset, allowed a small number of its
 receipts on it, with a clear citation of the paper and the dataset page;
-[ADR-0035](../docs/decisions/0035-public-demo.md)). Next come the owner's approval of the
+[ADR-0035](../docs/decisions/0035-public-demo.md)). The owner approved the
 [review of the thesis](../docs/thesis-review.md), public with the repository since its
-creation, and Phase 8.
+creation, on 2026-10-30; Phase 8, the career package, comes next.
