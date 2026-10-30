@@ -90,6 +90,15 @@ def test_the_template_adds_no_number_of_its_own() -> None:
     assert "## Checks the reviewer could make" in rendered
 
 
+def test_the_opening_sentence_promises_no_more_than_the_check_does() -> None:
+    # The grounding check runs after the case file is rendered and may find violations, and it
+    # reads numbers and boxes only; the template therefore states what is checked, not a result.
+    rendered = render_case_file("RECEIPT", case_file("The system found something."))
+    assert "comes from what the model read" not in rendered
+    assert "is looked up afterwards in what the model read" in rendered
+    assert "what its sentences claim is not checked" in rendered
+
+
 def test_every_number_and_box_must_come_from_what_the_agent_received() -> None:
     located = Location(x=50, y=20, width=20, height=10)
     grounded = render_case_file(

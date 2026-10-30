@@ -89,7 +89,13 @@ def _violations(results: Mapping[str, Any]) -> Table | None:
     if not found:
         return None
     rows: list[list[Cell]] = [list(v.split(": ", 1)) for v in found]
-    return Table("Grounding violations", ("Receipt", "Fact not found in the tool outputs"), rows)
+    return Table(
+        "Grounding violations",
+        ("Receipt", "Fact not found in the tool outputs"),
+        rows,
+        note="The check looks up numbers and boxes, not what a sentence claims. The facts listed "
+        "are not in the tool outputs, whatever a case file's opening sentence says.",
+    )
 
 
 def _failures(results: Mapping[str, Any]) -> Table | None:

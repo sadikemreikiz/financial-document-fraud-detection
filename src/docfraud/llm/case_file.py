@@ -134,7 +134,8 @@ def render_case_file(receipt: str, case_file: CaseFile) -> str:
         f"# Case file: {receipt}",
         "",
         "Drafted by a language model from the system's outputs, for the reviewer. It states no "
-        "verdict; every number and box in it comes from what the model read.",
+        "verdict. Each number and box in it is looked up afterwards in what the model read; what "
+        "its sentences claim is not checked.",
         "",
         "## Observations",
         "",

@@ -33,6 +33,8 @@ A location hits if it shares a pixel with an annotated modified rectangle or cop
 | X51006913023 | 18 |
 | X51006913023 | 30 |
 
+The check looks up numbers and boxes, not what a sentence claims. The facts listed are not in the tool outputs, whatever a case file's opening sentence says.
+
 ### Every case
 
 | Receipt | Label | Fixed form | Facts | Violations | First observation hits | Report's first region hits | Tool calls | Tokens | Cost, USD | Time, s |

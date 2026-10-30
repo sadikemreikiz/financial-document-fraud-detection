@@ -116,5 +116,6 @@ def test_the_report_lists_every_measure_violation_and_case(tmp_path: Path) -> No
     assert "at commit `eeeeeee`, on the 2 validation receipts" in text
     assert "the 10 % budget" in text
     assert "| R2 | 1.412 |" in text
+    assert "The check looks up numbers and boxes, not what a sentence claims." in text
     assert "### Where it points" in text
     assert "| R1 | forged | yes |" in text
