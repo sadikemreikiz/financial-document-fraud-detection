@@ -334,6 +334,11 @@ def test_the_contact_gives_only_the_links_the_owner_gave(built: str) -> None:
     assert built.index('id="reproduce"') < built.index('id="contact"') < built.index("<footer>")
 
 
+def test_the_footer_names_the_tools_it_was_built_with(built: str) -> None:
+    footer = built[built.index("<footer>") :]
+    assert "RapidOCR, the Claude API and Claude Code." in footer
+
+
 def test_long_codes_wrap_so_that_the_page_never_scrolls_sideways() -> None:
     # A SHA-256 is 64 characters with no break; unwrapped, it widened the page to 681 px.
     assert "code { overflow-wrap: anywhere; }" in STYLE

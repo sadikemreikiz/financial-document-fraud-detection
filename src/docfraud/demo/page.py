@@ -768,7 +768,7 @@ def footer() -> str:
   <p>Non-commercial use only: the pixel model starts from ImageNet-trained weights, whose terms
   limit it to non-commercial research, and L3i allowed these receipts on a non-commercial page
   ({PERMISSION_DATE}). Built by {_link(AUTHOR_PAGE, AUTHOR)} with Python, PyTorch, scikit-learn,
-  RapidOCR and the Claude API.</p>
+  RapidOCR, the Claude API and Claude Code.</p>
  </div>
 </footer>"""
 
