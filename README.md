@@ -33,10 +33,10 @@ locked test split, the system's evidence on each and the results, as recorded.
   forgeries from my own synthetic engine.
 - **Built with:** Python 3.14, PyTorch, scikit-learn, RapidOCR, the Claude API, Claude Code,
   pytest, mypy in strict mode and CI on every pull request.
-- **Status:** Phases 0 to 7 of 8 complete: the single evaluation on the locked test split
+- **Status:** complete, with the single evaluation on the locked test split
   ([Phase 7 results](reports/README.md)), the [model card](docs/model-card.md), which states
   where the system fails, the [public demo](https://sadikemreikiz.github.io/financial-document-fraud-detection/)
-  and the [thesis review](docs/thesis-review.md). Phase 8, the career package, remains.
+  and the [thesis review](docs/thesis-review.md).
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="reports/fusion/figures/test-precision-dark.svg">
@@ -55,10 +55,10 @@ same research questions properly. See [From thesis to v2](docs/thesis-review.md)
 
 ## Status
 
-**Under active development.** Phases 0 to 6 of the [roadmap](docs/project-charter.md#roadmap)
-are complete: foundations, data, reading, accounting rules, pixel forensics, fusion and the
-language-model layer; Phase 7's evaluation on the test split is done. Reading errors
-cause most false alarms of the accounting rules, so LLM field extraction moved before Phase 5
+**Complete** (2026-10-30). Every phase of the [roadmap](docs/project-charter.md#roadmap) is
+done; Phases 0 to 7 built and measured the system: foundations, data, reading, accounting rules,
+pixel forensics, fusion, the language-model layer and the single evaluation on the test split.
+Reading errors cause most false alarms of the accounting rules, so LLM field extraction moved before Phase 5
 ([ADR-0024](docs/decisions/0024-llm-extraction-before-fusion.md)). Its measurement was fixed in
 advance ([ADR-0025](docs/decisions/0025-llm-extraction-preregistration.md)): the LLM points to
 the numbers in the receipt text and code takes the values, the model and instruction were
@@ -81,7 +81,7 @@ on it ([Phase 7 results](reports/README.md), [model card](docs/model-card.md)); 
 [public demo](https://sadikemreikiz.github.io/financial-document-fraud-detection/) shows ten of the test
 receipts, and the owner approved the [thesis review](docs/thesis-review.md) on 2026-10-30.
 
-## Findings so far
+## Findings
 
 - **The dataset carries a format shortcut.** 63 % of the forged images have an alpha channel and
   none of the authentic ones do. That one rule reaches F1 79.3 on the test split, against 28.39

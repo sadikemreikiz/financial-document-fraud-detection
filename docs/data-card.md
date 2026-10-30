@@ -143,8 +143,8 @@ Recorded on 2026-10-29, as [ADR-0035](decisions/0035-public-demo.md) requires.
   Invoices, other languages and mobile photographs are not represented.
 - **Forger population**: volunteers rather than professional fraudsters; skill and effort vary,
   which is realistic for opportunistic expense fraud but not for organised fraud.
-- **No AI-generated forgeries.** Forgeries made with generative models are planned for a later
-  version with a separate dataset.
+- **No AI-generated forgeries.** Forgeries made with generative models are left for a later
+  version, with a separate dataset.
 
 ## Reproduction
 

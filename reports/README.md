@@ -173,7 +173,7 @@ make figures                    # fusion/figures/test-precision-*.svg, from the 
 The test commands ran once and now refuse to run again; the reports are rendered from their
 records, and CI checks that every committed report matches its record.
 
-## What comes next
+## After the evaluation
 
 The [model card](../docs/model-card.md) states what the system was measured on, how well, and
 where it fails. The [public demo](https://sadikemreikiz.github.io/financial-document-fraud-detection/)
@@ -181,4 +181,4 @@ shows ten of the test receipts (L3i, which published the dataset, allowed a smal
 receipts on it, with a clear citation of the paper and the dataset page;
 [ADR-0035](../docs/decisions/0035-public-demo.md)). The owner approved the
 [review of the thesis](../docs/thesis-review.md), public with the repository since its
-creation, on 2026-10-30; Phase 8, the career package, comes next.
+creation, on 2026-10-30, and Phase 8 completed the project the same day.
