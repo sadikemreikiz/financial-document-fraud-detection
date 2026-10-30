@@ -27,6 +27,7 @@ from docfraud.demo.page import (
     detail,
     error_notes,
     floor,
+    probability_text,
     render_page,
 )
 from docfraud.evaluation.runs import JsonRunStore
@@ -201,6 +202,21 @@ def test_the_first_screen_says_the_examples_are_recorded_and_nothing_runs(built:
     line = built.index('<p class="prototype">Research prototype')
     assert built.index("<h1>") < line < built.index('<p class="actions">')
     assert "the page itself runs no model" in built
+
+
+def test_a_probability_never_rounds_to_certainty(built: str) -> None:
+    assert probability_text(0.999999986201469) == ">0.999"
+    assert probability_text(0.999999986201469, words=True) == "above 0.999"
+    assert probability_text(0.00001) == "<0.001"
+    assert probability_text(0.510115383885756) == "0.510"
+    # The strongest catch's 0.99999999, on the first screen, its tile and its card.
+    strongest = records().cards["gallery"][CAUGHT][0]["probability"]
+    assert f"{strongest:.3f}" == "1.000"
+    assert "(probability above 0.999)" in built
+    assert '<span class="tile-p">&gt;0.999</span>' in built
+    assert '<span class="value">&gt;0.999</span>' in built
+    assert 'aria-label="Probability above 0.999"' in built
+    assert ">1.000<" not in built
 
 
 def test_the_first_screen_shows_the_strongest_catch_with_its_source(built: str) -> None:

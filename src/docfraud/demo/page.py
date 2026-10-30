@@ -217,6 +217,16 @@ def _colour(detector: str) -> str:
     return f"rgb({red}, {green}, {blue})"
 
 
+def probability_text(probability: float, *, words: bool = False) -> str:
+    """A probability to three places that never rounds to certainty: 1.000 is above 0.999."""
+    shown = f"{probability:.3f}"
+    if shown == "1.000":
+        return "above 0.999" if words else ">0.999"
+    if shown == "0.000":
+        return "below 0.001" if words else "<0.001"
+    return shown
+
+
 def _link(url: str, text: str) -> str:
     return f'<a href="{_e(url)}">{_e(text)}</a>'
 
@@ -505,7 +515,9 @@ def _meter(probability: float, policies: Sequence[Mapping[str, float]]) -> str:
     )
     where = ", ".join(f"{threshold:.3f} at a {budget} budget" for budget, threshold in named)
     return f"""
-    <div class="meter" role="img" aria-label="Probability {probability:.3f}">
+    <div class="meter" role="img" aria-label="Probability {
+        _e(probability_text(probability, words=True))
+    }">
       <span class="fill" style="width: {probability * 100:.1f}%"></span>{ticks}
     </div>
     <p class="meter-note">Review thresholds: {_e(where)}.</p>"""
@@ -550,7 +562,7 @@ def card(  # noqa: PLR0913 - a card joins the record, the annotation and two doc
   </div>
   <div class="card-body">
     <div class="card-top">{_badge(group)}<h4 class="receipt-id">{_e(receipt)}</h4></div>
-    <p class="probability"><span class="value">{found["probability"]:.3f}</span>
+    <p class="probability"><span class="value">{_e(probability_text(found["probability"]))}</span>
     <span class="what">forgery probability, calibrated</span></p>{
         _meter(found["probability"], policies)
     }
@@ -589,7 +601,8 @@ def overview(records: Records, annotations: Mapping[str, Mapping[str, Any]]) -> 
                 f'height="{size["height"]}" loading="lazy" alt=""></span>'
                 f'<span class="tile-text">{_badge(group)}'
                 f'<span class="tile-id">{_e(receipt)}</span>'
-                f'<span class="tile-p">{item["probability"]:.3f}</span></span></a>'
+                f'<span class="tile-p">{_e(probability_text(item["probability"]))}</span>'
+                "</span></a>"
             )
     return f"""
   <h2 id="receipts-title">What the system saw</h2>
@@ -1013,6 +1026,7 @@ def showcase(records: Records, annotations: Mapping[str, Mapping[str, Any]]) -> 
     rects = "".join(
         _rects(item["boxes"], "evidence", _colour(item["detector"])) for item in overlay
     )
+    probability = _e(probability_text(shown["probability"], words=True))
     return f"""
   <figure class="showcase">
     <div class="shot"><svg viewBox="{x} {y} {w} {h}" role="img"
@@ -1020,7 +1034,7 @@ def showcase(records: Records, annotations: Mapping[str, Mapping[str, Any]]) -> 
       <image href="receipts/{_e(image_name(receipt))}" width="{size["width"]}"
         height="{size["height"]}"/>{rects}</svg></div>
     <figcaption>Detail of receipt {_e(receipt)}, the system's strongest catch on the test set
-    (probability {shown["probability"]:.3f}); the coloured boxes are its evidence. From Find it
+    (probability {probability}); the coloured boxes are its evidence. From Find it
     again! (L3i, University of La Rochelle), with permission; the file is unchanged, cropped on
     screen. <a href="#credit">Full credit below</a>.</figcaption>
   </figure>"""
