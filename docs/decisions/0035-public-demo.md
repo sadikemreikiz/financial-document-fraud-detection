@@ -1,6 +1,6 @@
 # 0035. The public demo: which receipts, what each shows, the page, the credit and the hosting
 
-- **Status**: Accepted
+- **Status**: Accepted; the API it leaves open decided by [0036](0036-no-api-for-now.md)
 - **Date**: 2026-10-29 (after the single evaluation of Phase 7)
 
 ## Context

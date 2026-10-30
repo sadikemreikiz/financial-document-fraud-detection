@@ -27,6 +27,7 @@ from docfraud.demo.page import (
     detail,
     error_notes,
     floor,
+    probability_text,
     render_page,
 )
 from docfraud.evaluation.runs import JsonRunStore
@@ -153,6 +154,14 @@ def test_the_misses_and_the_catches_carry_their_notes_and_case_files(built: str)
     assert checked in built
 
 
+def test_the_error_notes_name_the_pixel_detectors_as_the_page_does() -> None:
+    # The page's legend calls system 2 the pixel model and system 1 the JPEG grid analysis; the
+    # notes it quotes use the same names, so that no internal name is in its first layer.
+    notes = error_notes(PHASE_7_PAGE.read_text(encoding="utf-8"))
+    assert notes
+    assert not any(re.search(r"\bsystem [12]\b", n, re.IGNORECASE) for n in notes.values())
+
+
 def test_text_from_the_records_is_escaped() -> None:
     cards = deepcopy(records().cards)
     cards["gallery"][GENUINE][0]["card"]["towards"][0]["reasons"] = ["<b>bold</b> & more"]
@@ -189,6 +198,27 @@ def test_the_top_names_the_author_and_the_results_before_the_credit(built: str) 
     assert "far above" not in built
 
 
+def test_the_first_screen_says_the_examples_are_recorded_and_nothing_runs(built: str) -> None:
+    line = built.index('<p class="prototype">Research prototype')
+    assert built.index("<h1>") < line < built.index('<p class="actions">')
+    assert "the page itself runs no model" in built
+
+
+def test_a_probability_never_rounds_to_certainty(built: str) -> None:
+    assert probability_text(0.999999986201469) == ">0.999"
+    assert probability_text(0.999999986201469, words=True) == "above 0.999"
+    assert probability_text(0.00001) == "<0.001"
+    assert probability_text(0.510115383885756) == "0.510"
+    # The strongest catch's 0.99999999, on the first screen, its tile and its card.
+    strongest = records().cards["gallery"][CAUGHT][0]["probability"]
+    assert f"{strongest:.3f}" == "1.000"
+    assert "(probability above 0.999)" in built
+    assert '<span class="tile-p">&gt;0.999</span>' in built
+    assert '<span class="value">&gt;0.999</span>' in built
+    assert 'aria-label="Probability above 0.999"' in built
+    assert ">1.000<" not in built
+
+
 def test_the_first_screen_shows_the_strongest_catch_with_its_source(built: str) -> None:
     strongest = records().cards["gallery"][CAUGHT][0]["receipt"]
     picture = built.index(f'<image href="receipts/{image_name(strongest)}"')
@@ -223,6 +253,19 @@ def test_the_overview_links_every_receipt_to_its_card(built: str) -> None:
         assert re.search(rf'<article class="card \w+" id="{receipt}">', built), receipt
 
 
+def test_start_here_links_the_highest_scored_receipt_of_each_outcome(built: str) -> None:
+    gallery = records().cards["gallery"]
+    line = re.search(r'<p class="start">(.*?)</p>', built, re.DOTALL)
+    assert line is not None
+    targets = re.findall(r'href="#(X\d+)"', line.group(1))
+    expected = [
+        max(gallery[group], key=lambda item: item["probability"])["receipt"]
+        for group in (CAUGHT, MISSED, GENUINE)
+    ]
+    assert targets == expected == ["X51006620182", "X51007579714", "X51005447848"]
+    assert built.index('<p class="start">') < built.index('<div class="tiles">')
+
+
 def test_every_card_marks_where_each_budget_sends_to_review(built: str) -> None:
     policies = records().cards["policies"]
     assert built.count('<div class="meter"') == len(shown_digests(records().cards))
@@ -235,6 +278,7 @@ def test_every_f1_stands_beside_the_f1_of_flagging_every_receipt(built: str) -> 
     reference = f"{floor(ocr):.3f}"
     assert reference == "0.277"  # ADR-0013: 2p / (1 + p) with 35 of 218 receipts forged
     assert f"Flagging every receipt: {reference}" in built
+    assert "best published result I know of: 0.284 (ChatGPT, transcripts only)" in built
     assert f"flagging every receipt scores {reference}" in built
     assert f"{reference} for\n  flagging every receipt" in built
 
@@ -288,6 +332,11 @@ def test_the_contact_gives_only_the_links_the_owner_gave(built: str) -> None:
     assert "Open to Applied AI and ML Engineer roles · Berlin" in section.group(0)
     assert '<a href="#contact">Contact</a>' in built
     assert built.index('id="reproduce"') < built.index('id="contact"') < built.index("<footer>")
+
+
+def test_the_footer_names_the_tools_it_was_built_with(built: str) -> None:
+    footer = built[built.index("<footer>") :]
+    assert "RapidOCR, the Claude API and Claude Code." in footer
 
 
 def test_long_codes_wrap_so_that_the_page_never_scrolls_sideways() -> None:

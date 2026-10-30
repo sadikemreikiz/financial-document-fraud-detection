@@ -102,6 +102,13 @@ GROUPS = (
 )
 TITLES = {group: title for group, title, _ in GROUPS}
 
+START = (
+    (CAUGHT, "the strongest catch"),
+    (MISSED, "the closest miss"),
+    (GENUINE, "the genuine receipt it scores highest"),
+)
+"""A short way through the gallery: the receipt of each outcome with the highest probability."""
+
 DECISIONS = {Decision.REVIEW.value: "sent to review", Decision.ACCEPT.value: "not sent to review"}
 """The page's words for the policy's decisions: no one looks at a receipt below the threshold, so
 the page does not call it accepted; the audit report keeps the policy's own word."""
@@ -215,6 +222,16 @@ def ci(found: Mapping[str, float]) -> str:
 def _colour(detector: str) -> str:
     red, green, blue = COLOURS[detector]
     return f"rgb({red}, {green}, {blue})"
+
+
+def probability_text(probability: float, *, words: bool = False) -> str:
+    """A probability to three places that never rounds to certainty: 1.000 is above 0.999."""
+    shown = f"{probability:.3f}"
+    if shown == "1.000":
+        return "above 0.999" if words else ">0.999"
+    if shown == "0.000":
+        return "below 0.001" if words else "<0.001"
+    return shown
 
 
 def _link(url: str, text: str) -> str:
@@ -505,7 +522,9 @@ def _meter(probability: float, policies: Sequence[Mapping[str, float]]) -> str:
     )
     where = ", ".join(f"{threshold:.3f} at a {budget} budget" for budget, threshold in named)
     return f"""
-    <div class="meter" role="img" aria-label="Probability {probability:.3f}">
+    <div class="meter" role="img" aria-label="Probability {
+        _e(probability_text(probability, words=True))
+    }">
       <span class="fill" style="width: {probability * 100:.1f}%"></span>{ticks}
     </div>
     <p class="meter-note">Review thresholds: {_e(where)}.</p>"""
@@ -550,7 +569,7 @@ def card(  # noqa: PLR0913 - a card joins the record, the annotation and two doc
   </div>
   <div class="card-body">
     <div class="card-top">{_badge(group)}<h4 class="receipt-id">{_e(receipt)}</h4></div>
-    <p class="probability"><span class="value">{found["probability"]:.3f}</span>
+    <p class="probability"><span class="value">{_e(probability_text(found["probability"]))}</span>
     <span class="what">forgery probability, calibrated</span></p>{
         _meter(found["probability"], policies)
     }
@@ -589,15 +608,26 @@ def overview(records: Records, annotations: Mapping[str, Mapping[str, Any]]) -> 
                 f'height="{size["height"]}" loading="lazy" alt=""></span>'
                 f'<span class="tile-text">{_badge(group)}'
                 f'<span class="tile-id">{_e(receipt)}</span>'
-                f'<span class="tile-p">{item["probability"]:.3f}</span></span></a>'
+                f'<span class="tile-p">{_e(probability_text(item["probability"]))}</span>'
+                "</span></a>"
             )
     return f"""
   <h2 id="receipts-title">What the system saw</h2>
   <p class="sub">{shown[CAUGHT]} caught, {shown[MISSED]} missed and {shown[GENUINE]} genuine,
   of {records.cards["receipts"]}: a fixed rule picked the strongest and the weakest case of each
   outcome, so the mix is not the real one (<a href="#choice">how</a>).</p>
+  <p class="start"><strong>Start here:</strong> {start_here(records)}</p>
   <div class="tiles">{"".join(tiles)}
   </div>"""
+
+
+def start_here(records: Records) -> str:
+    """Links to one card of each outcome, chosen by the gallery's own ranking, not by hand."""
+    links = []
+    for group, label in START:
+        highest = max(records.cards["gallery"][group], key=lambda item: item["probability"])
+        links.append(f'<a href="#{_e(highest["receipt"])}">{_e(label)}</a>')
+    return " · ".join(links)
 
 
 def gallery(
@@ -738,7 +768,7 @@ def footer() -> str:
   <p>Non-commercial use only: the pixel model starts from ImageNet-trained weights, whose terms
   limit it to non-commercial research, and L3i allowed these receipts on a non-commercial page
   ({PERMISSION_DATE}). Built by {_link(AUTHOR_PAGE, AUTHOR)} with Python, PyTorch, scikit-learn,
-  RapidOCR and the Claude API.</p>
+  RapidOCR, the Claude API and Claude Code.</p>
  </div>
 </footer>"""
 
@@ -785,7 +815,9 @@ h3 { font-size: clamp(1.6rem, 3.2vw, 2.1rem); line-height: 1.15; margin: 0 0 4px
 .hero { padding: 80px 0 76px; }
 .hero .wrap { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, .95fr);
   gap: 56px; align-items: center; }
-.hero .sub { margin: 0 0 32px; max-width: 34rem; }
+.hero .sub { margin: 0 0 14px; max-width: 34rem; }
+.prototype { margin: 0 0 32px; max-width: 34rem; font-size: .9rem; line-height: 1.5;
+  color: var(--muted); }
 .showcase { margin: 0; }
 .shot { overflow: hidden; border-radius: 24px; background: #ffffff;
   box-shadow: 0 24px 60px rgba(0, 0, 0, .14), 0 0 0 1px var(--line); }
@@ -820,8 +852,9 @@ h3 { font-size: clamp(1.6rem, 3.2vw, 2.1rem); line-height: 1.15; margin: 0 0 4px
 .credit { padding: 0 0 64px; font-size: .94rem; color: var(--muted); }
 .credit .wrap { padding-top: 48px; border-top: 1px solid var(--line); }
 .credit strong, .credit cite { color: var(--ink); }
+.start { margin: 20px 0 0; font-size: 1.05rem; line-height: 1.6; }
 .tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(168px, 1fr)); gap: 16px;
-  margin: 40px 0 8px; }
+  margin: 32px 0 8px; }
 .tile { display: flex; flex-direction: column; overflow: hidden; background: var(--panel);
   border-radius: 20px; color: var(--ink); transition: transform .25s ease, box-shadow .25s ease; }
 .tile:hover { text-decoration: none; transform: translateY(-4px);
@@ -961,6 +994,12 @@ LEDE = (
 )
 """What the system does, in one sentence; the numbers follow in their own section."""
 
+PROTOTYPE = (
+    "Research prototype · every example on this page was recorded from the frozen system's one "
+    "run on the test split; the page itself runs no model."
+)
+"""What the page is, under the lede, so that no reader expects to upload a receipt."""
+
 SHOWCASE = 0.9
 """The height of the first screen's detail of a receipt, as a share of the image's width."""
 
@@ -1005,6 +1044,7 @@ def showcase(records: Records, annotations: Mapping[str, Mapping[str, Any]]) -> 
     rects = "".join(
         _rects(item["boxes"], "evidence", _colour(item["detector"])) for item in overlay
     )
+    probability = _e(probability_text(shown["probability"], words=True))
     return f"""
   <figure class="showcase">
     <div class="shot"><svg viewBox="{x} {y} {w} {h}" role="img"
@@ -1012,7 +1052,7 @@ def showcase(records: Records, annotations: Mapping[str, Mapping[str, Any]]) -> 
       <image href="receipts/{_e(image_name(receipt))}" width="{size["width"]}"
         height="{size["height"]}"/>{rects}</svg></div>
     <figcaption>Detail of receipt {_e(receipt)}, the system's strongest catch on the test set
-    (probability {shown["probability"]:.3f}); the coloured boxes are its evidence. From Find it
+    (probability {probability}); the coloured boxes are its evidence. From Find it
     again! (L3i, University of La Rochelle), with permission; the file is unchanged, cropped on
     screen. <a href="#credit">Full credit below</a>.</figcaption>
   </figure>"""
@@ -1028,6 +1068,7 @@ def hero(records: Records, annotations: Mapping[str, Mapping[str, Any]]) -> str:
   {byline()}
   <h1>Finding forged receipts, and showing why</h1>
   <p class="sub">{_e(LEDE)}</p>
+  <p class="prototype">{_e(PROTOTYPE)}</p>
   <p class="actions"><a class="button" href="#receipts">See what it saw</a>
   <a class="chevron" href="{_e(REPOSITORY)}">Source code</a></p>
   <ul class="skills" aria-label="Built with">{skills}</ul>
@@ -1055,7 +1096,7 @@ def glance(records: Records) -> str:
             f"{ocr['success']['f1']['value']:.3f}",
             "F1 score",
             f"Flagging every receipt: {floor(ocr):.3f}; best published result I know of: "
-            f"{PUBLISHED_F1:.3f}",
+            f"{PUBLISHED_F1:.3f} (ChatGPT, transcripts only)",
         ),
         (
             f"{forged} / {ocr['forged']}",

@@ -35,8 +35,9 @@ The figure is drawn by `make figures` from the test check's run record; the
   (T2), against 0.284 for the best published result and 0.277 for flagging every receipt;
   recall at the 10 % budget is 0.623 (0.543 to 0.623 on T2) against 0.10. Both lower bounds
   clear their references, which is ADR-0013's criterion. T1 reads the transcripts, as the
-  published result did; T2 reads only the image. Without the eight receipts that had copies
-  elsewhere in the dataset the criterion holds as well ([report](fusion/test-check.md)).
+  published result did, and the image as well; T2 reads only the image. Without the eight
+  receipts that had copies elsewhere in the dataset the criterion holds as well
+  ([report](fusion/test-check.md)).
 - **Fusion ranks forgeries with an average precision of 0.912 on T1 and 0.902 on T2**, where
   chance is 0.161. On the validation split it reached 0.851 and 0.831; the difference lies
   within the intervals that 35 forged receipts allow.
@@ -106,17 +107,17 @@ decision 8):
 
 | Receipt | Probability | What the evidence shows |
 |---|---|---|
-| X51005230616 | 0.144 | System 2 scores the receipt 0.98 and its region, the report's first, lies on the edited product line; an accounting rule also fails (the line amounts add up to 51.90 against a total of 38.90), but the rules' score is low and the probability stays at 0.14. |
-| X51005442361 | 0.254 | Copy-move finds two identical 9 × 15 px patches on the edit, the report's first region, but a duplicate this small scores only 0.22 and system 2 adds little, so the probability is 0.25. |
-| X51005705729 | 0.145 | Both pixel systems point at the edit (system 2 0.92, system 1 0.50) and two accounting rules fail, but no link ties the region to a value the reader read, and the probability stays at 0.15. |
-| X51006388044 | 0.133 | Copy-move finds two identical 18 × 25 px patches on the edit, the report's first region, but the pixel systems see nothing there (system 2 0.08), and the probability stays at 0.13. |
-| X51006557117 | 0.040 | The weakest case: a suspicious region (system 2 0.38) lies on the read date and tax amount at the edit, but a patch pasted from another receipt leaves no duplicate inside this one, and the probability is 0.04. |
-| X51007103639 | 0.279 | System 2 marks the deleted item line (0.79), and its region lies on an item amount that a failing accounting rule reads (the line amounts add up to 15.20 against a total of 15.40), so both links fire, yet the probability reaches only 0.28. |
+| X51005230616 | 0.144 | The pixel model scores the receipt 0.98 and its region, the report's first, lies on the edited product line; an accounting rule also fails (the line amounts add up to 51.90 against a total of 38.90), but the rules' score is low and the probability stays at 0.14. |
+| X51005442361 | 0.254 | Copy-move finds two identical 9 × 15 px patches on the edit, the report's first region, but a duplicate this small scores only 0.22 and the pixel model adds little, so the probability is 0.25. |
+| X51005705729 | 0.145 | Both pixel detectors point at the edit (pixel model 0.92, JPEG grid analysis 0.50) and two accounting rules fail, but no link ties the region to a value the reader read, and the probability stays at 0.15. |
+| X51006388044 | 0.133 | Copy-move finds two identical 18 × 25 px patches on the edit, the report's first region, but the pixel detectors see nothing there (pixel model 0.08), and the probability stays at 0.13. |
+| X51006557117 | 0.040 | The weakest case: a suspicious region (pixel model 0.38) lies on the read date and tax amount at the edit, but a patch pasted from another receipt leaves no duplicate inside this one, and the probability is 0.04. |
+| X51007103639 | 0.279 | The pixel model marks the deleted item line (0.79), and its region lies on an item amount that a failing accounting rule reads (the line amounts add up to 15.20 against a total of 15.40), so both links fire, yet the probability reaches only 0.28. |
 | X51007103688 | 0.182 | Copy-move finds two identical 15 × 35 px patches on the edit, the report's first region, but no other source agrees, and the probability stays at 0.18. |
-| X51007231361 | 0.112 | The one miss found elsewhere: system 2 scores the receipt 0.86, but its region misses the deletion, and nothing else points at the receipt, so the probability is 0.11. |
+| X51007231361 | 0.112 | The one miss found elsewhere: the pixel model scores the receipt 0.86, but its region misses the deletion, and nothing else points at the receipt, so the probability is 0.11. |
 | X51007579714 | 0.510 | The closest miss: copy-move finds two identical 17 × 24 px patches on the edit, and a suspicious region lies on the read total due, but the probability, 0.51, stays under the threshold of 0.72. |
-| X51008123447 | 0.166 | System 2 scores the receipt 0.96 and its region lies on the edited change and amount tendered, but no accounting rule fails and system 1 sees nothing, so the probability stays at 0.17. |
-| X51008123451 | 0.235 | Both pixel systems flag the receipt (system 2 0.86, on the edited item description; system 1 0.68), but a product pasted from another receipt breaks no rule and leaves no duplicate, so the probability stays at 0.24. |
+| X51008123447 | 0.166 | The pixel model scores the receipt 0.96 and its region lies on the edited change and amount tendered, but no accounting rule fails and the JPEG grid analysis sees nothing, so the probability stays at 0.17. |
+| X51008123451 | 0.235 | Both pixel detectors flag the receipt (pixel model 0.86, on the edited item description; JPEG grid analysis 0.68), but a product pasted from another receipt breaks no rule and leaves no duplicate, so the probability stays at 0.24. |
 
 ## The one fix after the unlock
 
