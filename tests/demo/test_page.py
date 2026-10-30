@@ -276,6 +276,20 @@ def test_the_rebuild_commands_need_only_the_repository_and_the_dataset() -> None
     )
 
 
+def test_the_contact_gives_only_the_links_the_owner_gave(built: str) -> None:
+    section = re.search(r'<section id="contact".*?</section>', built, re.DOTALL)
+    assert section is not None
+    links = re.findall(r'href="([^"]+)"', section.group(0))
+    assert links == [
+        "https://www.linkedin.com/in/sadikemreikiz/",
+        "https://github.com/sadikemreikiz",
+        "mailto:sadikemreikiz90@gmail.com",
+    ]
+    assert "Open to Applied AI and ML Engineer roles · Berlin" in section.group(0)
+    assert '<a href="#contact">Contact</a>' in built
+    assert built.index('id="reproduce"') < built.index('id="contact"') < built.index("<footer>")
+
+
 def test_long_codes_wrap_so_that_the_page_never_scrolls_sideways() -> None:
     # A SHA-256 is 64 characters with no break; unwrapped, it widened the page to 681 px.
     assert "code { overflow-wrap: anywhere; }" in STYLE

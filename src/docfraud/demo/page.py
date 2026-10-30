@@ -23,6 +23,10 @@ from docfraud.reporting.overlay import COLOURS
 REPOSITORY = "https://github.com/sadikemreikiz/financial-document-fraud-detection"
 AUTHOR = "Sadik Emre Ikiz"
 AUTHOR_PAGE = "https://github.com/sadikemreikiz"
+LINKEDIN = "https://www.linkedin.com/in/sadikemreikiz/"
+EMAIL = "sadikemreikiz90@gmail.com"
+LOOKING_FOR = "Open to Applied AI and ML Engineer roles · Berlin"
+"""The author's contact and what they look for, as the owner gave them."""
 PAPER_DOI = "https://doi.org/10.1007/978-3-031-41682-8_28"
 PAPER_HAL = "https://hal.science/hal-04295385"
 SROIE_DOI = "https://doi.org/10.1109/ICDAR.2019.00244"
@@ -713,6 +717,19 @@ def reproduce(records: Records) -> str:
 </section>"""
 
 
+def contact() -> str:
+    """Who built the page and how to reach them."""
+    return f"""
+<section id="contact" class="band" aria-labelledby="contact-title">
+ <div class="wrap narrow">
+  <h2 id="contact-title">Contact</h2>
+  <p class="contact-who"><strong>{_e(AUTHOR)}</strong> · {_e(LOOKING_FOR)}</p>
+  <p class="contact-links">{_link(LINKEDIN, "LinkedIn")} · {_link(AUTHOR_PAGE, "GitHub")} ·
+  {_link("mailto:" + EMAIL, EMAIL)}</p>
+ </div>
+</section>"""
+
+
 def footer() -> str:
     """Use, permission and author."""
     return f"""
@@ -910,6 +927,8 @@ pre.code { background: var(--code); color: var(--code-ink); }
   border: 3px solid; border-radius: 3px; vertical-align: middle; }
 .swatch.truth { border-color: var(--ink); }
 .limits li { margin: 10px 0; }
+.contact-who { margin: 0 0 8px; font-size: 1.1rem; }
+.contact-links { margin: 0; overflow-wrap: anywhere; }
 footer { padding: 28px 0 44px; border-top: 1px solid var(--line); background: var(--band);
   color: var(--muted); font-size: .8rem; }
 @media (prefers-reduced-motion: reduce) {
@@ -953,6 +972,7 @@ CONTENTS = (
     ("how", "How it works"),
     ("limits", "Limitations"),
     ("credit", "Credit"),
+    ("contact", "Contact"),
 )
 """The page's sections, linked from the bar at the top so that a reader can go straight to one."""
 
@@ -1107,6 +1127,7 @@ def render_page(
             choice(records),
             limitations(records),
             reproduce(records),
+            contact(),
         )
     )
     return f"""<!doctype html>
