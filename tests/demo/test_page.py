@@ -153,6 +153,14 @@ def test_the_misses_and_the_catches_carry_their_notes_and_case_files(built: str)
     assert checked in built
 
 
+def test_the_error_notes_name_the_pixel_detectors_as_the_page_does() -> None:
+    # The page's legend calls system 2 the pixel model and system 1 the JPEG grid analysis; the
+    # notes it quotes use the same names, so that no internal name is in its first layer.
+    notes = error_notes(PHASE_7_PAGE.read_text(encoding="utf-8"))
+    assert notes
+    assert not any(re.search(r"\bsystem [12]\b", n, re.IGNORECASE) for n in notes.values())
+
+
 def test_text_from_the_records_is_escaped() -> None:
     cards = deepcopy(records().cards)
     cards["gallery"][GENUINE][0]["card"]["towards"][0]["reasons"] = ["<b>bold</b> & more"]
