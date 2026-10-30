@@ -13,6 +13,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from docfraud.data.download import FINDIT2
+from docfraud.decision import Decision
 from docfraud.demo.assets import image_name
 from docfraud.demo.gallery import CAUGHT, GENUINE, MISSED
 from docfraud.detectors.finding import COPY_MOVE, LINKING, RULES, SYSTEM_1, SYSTEM_2
@@ -93,9 +94,13 @@ ENTITIES = {
 GROUPS = (
     (CAUGHT, "Caught", "forgeries flagged for review"),
     (MISSED, "Missed", "forgeries it let through"),
-    (GENUINE, "Genuine", "genuine receipts accepted"),
+    (GENUINE, "Genuine", "genuine receipts not sent to review"),
 )
 TITLES = {group: title for group, title, _ in GROUPS}
+
+DECISIONS = {Decision.REVIEW.value: "sent to review", Decision.ACCEPT.value: "not sent to review"}
+"""The page's words for the policy's decisions: no one looks at a receipt below the threshold, so
+the page does not call it accepted; the audit report keeps the policy's own word."""
 
 SIGNS = {CAUGHT: "&#10003;", MISSED: "&#10005;", GENUINE: "&#9675;"}
 """The outcome's sign, shown beside its name, so that colour never carries the outcome alone."""
@@ -126,8 +131,8 @@ BUILT = (
     ),
     (
         "An evaluation fixed in advance",
-        "The success criterion was set before any training, and the system frozen before the "
-        "locked test set was opened.",
+        "The success criterion was set before any training, and the system frozen before its "
+        "one run on the locked test split.",
     ),
     (
         "Every number traceable",
@@ -163,10 +168,9 @@ BIBTEX = r"""@inproceedings{martineztornes2023receipt,
 COMMANDS = """uv sync
 uv run docfraud data download
 uv run docfraud data prepare
-uv run docfraud demo cards
 uv run docfraud demo assets --output demo-assets
 uv run docfraud demo build --assets demo-assets --output _site"""
-"""The commands that rebuild the page; ``demo cards`` also needs Phase 7's inputs tables."""
+"""The commands that rebuild the page from the recorded cards, in a fresh clone with the dataset."""
 
 ERROR_NOTE = re.compile(r"^\| (X\d+) \| [0-9.]+ \| (.+) \|$")
 
@@ -302,12 +306,13 @@ def results(records: Records) -> str:
             "At a 10% review budget",
             f"{policy['reviewed']} receipts sent to review, {policy['forged_reviewed']} of them "
             f"forged; {ocr['forged'] - policy['forged_reviewed']} of the {ocr['forged']} forged "
-            "receipts accepted",
+            "receipts not sent to review",
         ),
         (
             "Localisation",
-            f"the first region an audit report shows lies on the edit for {hits} of the "
-            f"{located['receipts']} forged receipts",
+            f"the first region an audit report shows overlaps the annotated edit or its copy "
+            f"source, by at least one pixel, for {hits} of the {located['receipts']} forged "
+            "receipts",
         ),
         (
             "Calibration",
@@ -324,7 +329,7 @@ def results(records: Records) -> str:
   <h2 id="results-title">Full results</h2>
   <p class="sub">Measured once, on the {_e(ocr["receipts"])} receipts of the locked test split
   ({_e(ocr["forged"])} forged), from the image and the system's own OCR, with everything frozen
-  before the split was opened.</p>
+  beforehand.</p>
   <p>The success criterion was fixed before any model was trained ({
         _link(
             REPOSITORY + "/blob/main/docs/decisions/0013-success-criterion-and-floors.md",
@@ -403,7 +408,7 @@ def choice(records: Records) -> str:
   strongest and the weakest case of each group are shown. The gallery therefore does not show the
   real mix: of the {records.cards["receipts"]} test receipts,
   {counts[CAUGHT]} were caught, {counts[MISSED]} missed, {counts["false alarm"]} raised
-  a false alarm and {counts[GENUINE]} genuine receipts were accepted
+  a false alarm and {counts[GENUINE]} genuine receipts were not sent to review
   ({_link(REPOSITORY + "/blob/main/docs/decisions/0035-public-demo.md", "ADR-0035")}).</p>
   <p>The images are the dataset's files, unchanged; each card gives its SHA-256. The boxes are
   drawn on a separate layer. The reports quote what the OCR read, misreadings included: the
@@ -516,7 +521,7 @@ def card(  # noqa: PLR0913 - a card joins the record, the annotation and two doc
     receipt = shown["receipt"]
     found = shown["card"]
     decisions = " · ".join(
-        f"{_e(_percent(budget))} budget: <strong>{_e(d)}</strong>"
+        f"{_e(_percent(budget))} budget: <strong>{_e(DECISIONS[d])}</strong>"
         for budget, d in found["decisions"].items()
     )
     note = ""
@@ -527,11 +532,12 @@ def card(  # noqa: PLR0913 - a card joins the record, the annotation and two doc
     extra = ""
     if case_file is not None:
         violations = [v for v in grounding["violations"] if v.startswith(f"{receipt}:")]
-        checked = "no violation" if not violations else f"{len(violations)} violations"
+        checked = "all found" if not violations else f"{len(violations)} not found"
         extra = f"""
     <details class="more"><summary>Case file drafted by a language model</summary>
       <p class="aside">Drafted by Claude Sonnet 5.5 from the system's outputs, for the reviewer;
-      it gives no verdict. Grounding check: {checked}.</p>
+      it gives no verdict. Grounding check, its numbers and boxes looked up in its tools'
+      outputs: {checked}.</p>
       <pre>{_e(case_file)}</pre>
     </details>"""
     return f"""
@@ -634,13 +640,13 @@ def _elsewhere(records: Records) -> str:
         if e["kind"] == "miss" and e["cause"] == "found elsewhere"
     ]
     if not away:
-        return "Every miss has its strongest located evidence on the edit."
+        return "Every miss has its strongest located evidence on the edit or its copy source."
     shown = {c["receipt"] for c in records.cards["gallery"][MISSED]}
     where = "shown above" if set(away) <= shown else "not among the receipts shown"
     have = "has its" if len(away) == 1 else "have their"
     return (
         f"Of the {records.errors['misses']['count']} misses, {len(away)} {have} strongest "
-        f"located evidence away from the edit ({', '.join(away)}), {where}."
+        f"located evidence away from the edit and its copy source ({', '.join(away)}), {where}."
     )
 
 
@@ -650,6 +656,9 @@ def limitations(records: Records) -> str:
     violations = records.agent["grounding"]["violations"]
     elsewhere = _elsewhere(records)
     with_violations = len({v.split(":")[0] for v in violations})
+    disclosures = _link(
+        REPOSITORY + "/blob/main/docs/evaluation-protocol.md#9-disclosures", "disclosures"
+    )
     return f"""
 <section id="limits" class="band" aria-labelledby="limits-title">
  <div class="wrap narrow">
@@ -668,10 +677,13 @@ def limitations(records: Records) -> str:
     {alarms["genuine_with_marks"]} of the {alarms["genuine"]} genuine receipts carry one.</li>
     <li>The agent's {_e(records.agent["grounding"]["case_files"])} case files hold
     {len(violations)} numbers or boxes not found in its tools' outputs, in {with_violations} case
-    files not shown here.</li>
+    files not shown here; the check looks up numbers and boxes, not what a sentence claims.</li>
     <li>No adversarial test was made, and the language models are hosted ones whose provider may
-    change them. The test split had been opened once before, to reproduce the published
-    baseline.</li>
+    change them.</li>
+    <li>Before the system's one run on it, the test split was opened once, to reproduce the
+    published baseline; while the data was checked, before any model was trained, one test
+    receipt and a few lines of others were seen, and nothing was developed on them
+    ({disclosures}).</li>
   </ul>
   <p>The {_link(REPOSITORY + "/blob/main/docs/model-card.md", "model card")} states where the
   system fails in full.</p>
@@ -690,8 +702,10 @@ def reproduce(records: Records) -> str:
   {_link(REPOSITORY, "repository")}; the evaluated system is frozen at the tag
   <code>phase-7-freeze</code>. The dataset is downloaded from its page and checked against the
   SHA-256 <code>{_e(FINDIT2.sha256)}</code>, which identifies the archive wherever it is obtained.
-  The page itself is rebuilt with:</p>
+  The page itself is rebuilt from the recorded cards with:</p>
   <pre class="code">{_e(COMMANDS)}</pre>
+  <p>Recording the cards again, with <code>docfraud demo cards</code>, also needs the input
+  tables of Phase 7's run, which are not in the repository.</p>
   <p>This page was built from commit
   {_link(f"{REPOSITORY}/commit/{commit}", commit[:12])} on {_e(records.built)} by
   <code>docfraud demo build</code>, from the record <code>demo-cards</code>.</p>
@@ -1038,7 +1052,7 @@ def glance(records: Records) -> str:
     return f"""
 <section id="glance" class="band" aria-labelledby="glance-title">
  <div class="wrap">
-  <h2 id="glance-title">Tested once, on {_e(ocr["receipts"])} receipts it had never seen</h2>
+  <h2 id="glance-title">Tested once, on {_e(ocr["receipts"])} held-out receipts</h2>
   <ul class="stats">{tiles}
   </ul>
   <p class="footnote">F1 weighs forgeries found against false alarms; 1 is perfect. Main

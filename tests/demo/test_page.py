@@ -19,6 +19,7 @@ from docfraud.demo.assets import ANNOTATIONS, image_name
 from docfraud.demo.cards import RUN_NAME, shown_digests
 from docfraud.demo.gallery import CAUGHT, GENUINE, MISSED
 from docfraud.demo.page import (
+    COMMANDS,
     CONTENTS,
     STYLE,
     Records,
@@ -146,7 +147,10 @@ def test_the_misses_and_the_catches_carry_their_notes_and_case_files(built: str)
     assert built.count("Case file drafted by a language model") == len(
         found.cards["gallery"][CAUGHT]
     )
-    assert "Grounding check: no violation" in built
+    checked = (
+        "Grounding check, its numbers and boxes looked up in its tools'\n      outputs: all found"
+    )
+    assert checked in built
 
 
 def test_text_from_the_records_is_escaped() -> None:
@@ -233,6 +237,43 @@ def test_every_f1_stands_beside_the_f1_of_flagging_every_receipt(built: str) -> 
     assert f"Flagging every receipt: {reference}" in built
     assert f"flagging every receipt scores {reference}" in built
     assert f"{reference} for\n  flagging every receipt" in built
+
+
+def test_the_test_split_is_called_held_out_and_its_earlier_contacts_are_disclosed(
+    built: str,
+) -> None:
+    # Evaluation protocol, section 9: the split was opened for the baseline, and parts of a few
+    # receipts were seen in the data checks, so the page does not say the system never saw them.
+    assert "never seen" not in built
+    assert "held-out receipts</h2>" in built
+    assert "to reproduce the\n    published baseline" in built
+    assert "evaluation-protocol.md#9-disclosures" in built
+
+
+def test_receipts_below_the_threshold_are_not_called_accepted(built: str) -> None:
+    # No one looks at a receipt under the threshold, so the page's own words say it was not sent
+    # to review; the audit reports it quotes keep the policy's word.
+    page_text = re.sub(r"<pre>.*?</pre>", "", built, flags=re.DOTALL)
+    assert not re.search(r"\baccept(?:s|ed)?\b", page_text)
+    assert "budget: <strong>not sent to review</strong>" in built
+    assert "budget: <strong>sent to review</strong>" in built
+    assert "- Decision: accept;" in built
+
+
+def test_a_hit_counts_the_copy_source_as_the_code_does(built: str) -> None:
+    # reporting.localisation.first_region_hit: a box hits a modified rectangle or a copy source.
+    assert "on the edit for" not in built
+    assert "the annotated edit or its copy source, by at least one pixel" in built
+
+
+def test_the_rebuild_commands_need_only_the_repository_and_the_dataset() -> None:
+    # ``demo cards`` reads Phase 7's input tables, which are not committed, and records a new run;
+    # the page is rebuilt from the committed record alone, as the deployment workflow does.
+    assert "demo cards" not in COMMANDS
+    assert COMMANDS.splitlines()[-1].startswith("uv run docfraud demo build")
+    assert "uv run docfraud demo build" in Path(".github/workflows/demo.yml").read_text(
+        encoding="utf-8"
+    )
 
 
 def test_long_codes_wrap_so_that_the_page_never_scrolls_sideways() -> None:
