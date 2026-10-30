@@ -18,7 +18,16 @@ from docfraud.data.download import FINDIT2
 from docfraud.demo.assets import ANNOTATIONS, image_name
 from docfraud.demo.cards import RUN_NAME, shown_digests
 from docfraud.demo.gallery import CAUGHT, GENUINE, MISSED
-from docfraud.demo.page import CONTENTS, Records, ci, detail, error_notes, floor, render_page
+from docfraud.demo.page import (
+    CONTENTS,
+    STYLE,
+    Records,
+    ci,
+    detail,
+    error_notes,
+    floor,
+    render_page,
+)
 from docfraud.evaluation.runs import JsonRunStore
 from docfraud.fusion.errors import RUN_NAME as ERRORS_RUN
 from docfraud.fusion.final import RESAVED_RUN
@@ -224,3 +233,8 @@ def test_every_f1_stands_beside_the_f1_of_flagging_every_receipt(built: str) -> 
     assert f"Flagging every receipt: {reference}" in built
     assert f"flagging every receipt scores {reference}" in built
     assert f"{reference} for\n  flagging every receipt" in built
+
+
+def test_long_codes_wrap_so_that_the_page_never_scrolls_sideways() -> None:
+    # A SHA-256 is 64 characters with no break; unwrapped, it widened the page to 681 px.
+    assert "code { overflow-wrap: anywhere; }" in STYLE
