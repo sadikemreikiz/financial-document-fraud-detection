@@ -96,6 +96,10 @@ T1 and T2 are both headline results and are always reported side by side.
   threshold. It is applied unchanged to the test split.
 - Also reported: precision, recall, average precision (area under the precision-recall curve),
   ROC-AUC, Matthews correlation coefficient, balanced accuracy.
+  *(Noted on 2026-10-30: the Matthews correlation coefficient and balanced accuracy were reported
+  in Phases 3 and 4 only; the reports of Phases 5 to 7 give precision, recall, F1, average
+  precision, ROC-AUC, the Brier score and the expected calibration error. An omission, not a
+  decision; no result depends on it.)*
 - Calibration: Brier score and expected calibration error with 10 equal-mass bins.
 - Floors: every F1 is reported next to the F1 of marking every document as forged,
   2*p* / (1 + *p*) for a share *p* of forged documents, and every ranking metric next to its
