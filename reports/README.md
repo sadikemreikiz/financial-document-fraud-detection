@@ -119,6 +119,15 @@ decision 8):
 | X51008123447 | 0.166 | The pixel model scores the receipt 0.96 and its region lies on the edited change and amount tendered, but no accounting rule fails and the JPEG grid analysis sees nothing, so the probability stays at 0.17. |
 | X51008123451 | 0.235 | Both pixel detectors flag the receipt (pixel model 0.86, on the edited item description; JPEG grid analysis 0.68), but a product pasted from another receipt breaks no rule and leaves no duplicate, so the probability stays at 0.24. |
 
+One sentence of a case file that the public demo shows is wrong, an error the grounding check
+cannot catch: it looks up numbers and boxes, not what a sentence claims. The owner checked it
+against the receipt on 2026-11-07; the case file stays as committed, and the demo shows the note
+above it:
+
+| Case file | What is wrong |
+|---|---|
+| X51006620182 | The third observation is wrong. The printed amounts reconcile (items 70.50; 70.50 + 3.55 + 4.45 = 78.50; change 21.50). The grounding check matches numbers, not claims, so it passed. |
+
 ## The one fix after the unlock
 
 `fusion resaved-inputs`, which makes track R's inputs, stopped on the eighth test receipt. It

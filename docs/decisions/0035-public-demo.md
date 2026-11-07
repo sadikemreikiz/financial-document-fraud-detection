@@ -98,7 +98,10 @@ the system's first region is there.
 - For the four caught receipts, the agent's case file as committed in
   `reports/llm/agent/test/`, unchanged, labelled as drafted by Claude Sonnet 5.5, with its
   grounding result (no violation on any of the four). Readings of the OCR that are wrong stay as
-  written; the page explains them.
+  written; the page explains them. A sentence found wrong after the run stays too, and the note
+  the owner checked on the [Phase 7 page](../../reports/README.md) is shown above the case file
+  (added 2026-11-07: X51006620182's third observation says the printed amounts disagree, and
+  they reconcile; the grounding check looks up numbers, not what a sentence claims).
 - For the three misses, the error note the owner checked on the
   [Phase 7 page](../../reports/README.md), unchanged.
 - The receipt's identifier, the SHA-256 of its image and a source line.

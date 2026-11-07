@@ -41,7 +41,7 @@ from docfraud.decision import BUDGETS, ReviewPolicy
 from docfraud.demo.assets import AssetMismatchError, export, image_name, load
 from docfraud.demo.cards import RUN_NAME, budget_name, demo_cards, shown_digests
 from docfraud.demo.gallery import CAUGHT, FALSE_ALARM, MISSED
-from docfraud.demo.page import Records, error_notes, render_page
+from docfraud.demo.page import Records, case_file_notes, error_notes, render_page
 from docfraud.evaluation.runs import JsonRunStore, code_version, run
 from docfraud.forensics.learned.rounds import SEEDS
 from docfraud.fusion.errors import RUN_NAME as ERRORS_RUN
@@ -195,6 +195,14 @@ def build_command(
         c["receipt"]: (AGENT / "test" / f"{c['receipt']}.md").read_text(encoding="utf-8")
         for c in cards["gallery"][CAUGHT]
     }
+    case_notes = case_file_notes(PHASE_7_PAGE.read_text(encoding="utf-8"))
+    stray = sorted(set(case_notes) - set(case_files))
+    if stray:
+        console.print(
+            f"[red]a case-file note on {PHASE_7_PAGE} names no case file shown:[/red] "
+            f"{', '.join(stray)}"
+        )
+        raise typer.Exit(1)
     version = code_version()
     built = datetime.now(UTC).date().isoformat()
     records = Records(
@@ -208,7 +216,7 @@ def build_command(
         commit=version.commit or "unknown",
         built=built if version.dirty is False else f"{built} (with uncommitted changes)",
     )
-    page = render_page(records, annotations, case_files, notes)
+    page = render_page(records, annotations, case_files, notes, case_notes)
     receipts = output / "receipts"
     receipts.mkdir(parents=True, exist_ok=True)
     for receipt in pinned:
