@@ -329,7 +329,10 @@ def test_the_contact_gives_only_the_links_the_owner_gave(built: str) -> None:
         "https://github.com/sadikemreikiz",
         "mailto:sadikemreikiz90@gmail.com",
     ]
-    assert "Open to Applied AI and ML Engineer roles · Berlin" in section.group(0)
+    assert (
+        "Open to AI Engineer and software engineering roles on AI products · Berlin"
+        in section.group(0)
+    )
     assert '<a href="#contact">Contact</a>' in built
     assert built.index('id="reproduce"') < built.index('id="contact"') < built.index("<footer>")
 
