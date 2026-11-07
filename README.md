@@ -226,7 +226,7 @@ ImageNet-trained weights, which limit the models trained from them to non-commer
 
 ## Contact
 
-**Sadik Emre Ikiz** · Open to Applied AI and ML Engineer roles · Berlin
+**Sadik Emre Ikiz** · Open to AI Engineer and software engineering roles on AI products · Berlin
 
 [LinkedIn](https://www.linkedin.com/in/sadikemreikiz/) · [GitHub](https://github.com/sadikemreikiz) ·
 [sadikemreikiz90@gmail.com](mailto:sadikemreikiz90@gmail.com)
