@@ -184,6 +184,9 @@ uv run docfraud demo build --assets demo-assets --output _site"""
 """The commands that rebuild the page from the recorded cards, in a fresh clone with the dataset."""
 
 ERROR_NOTE = re.compile(r"^\| (X\d+) \| [0-9.]+ \| (.+) \|$")
+CASE_FILE_NOTE = re.compile(r"^\| (X\d+) \| ([^|]+) \|$")
+"""A row of the Phase 7 page's table of case-file sentences found wrong: two cells, where an
+error note's row has three."""
 
 
 @dataclass(frozen=True, slots=True)
@@ -207,6 +210,15 @@ def error_notes(phase_7_page: str) -> dict[str, str]:
         found[1]: found[2]
         for line in phase_7_page.splitlines()
         if (found := ERROR_NOTE.match(line.strip()))
+    }
+
+
+def case_file_notes(phase_7_page: str) -> dict[str, str]:
+    """The notes on case-file sentences the owner found wrong, from the Phase 7 page."""
+    return {
+        found[1]: found[2]
+        for line in phase_7_page.splitlines()
+        if (found := CASE_FILE_NOTE.match(line.strip()))
     }
 
 
@@ -536,6 +548,7 @@ def card(  # noqa: PLR0913 - a card joins the record, the annotation and two doc
     *,
     annotation: Mapping[str, Any],
     case_file: str | None,
+    case_note: str | None,
     error_note: str | None,
     grounding: Mapping[str, Any],
     policies: Sequence[Mapping[str, float]],
@@ -556,11 +569,16 @@ def card(  # noqa: PLR0913 - a card joins the record, the annotation and two doc
     if case_file is not None:
         violations = [v for v in grounding["violations"] if v.startswith(f"{receipt}:")]
         checked = "all found" if not violations else f"{len(violations)} not found"
+        correction = ""
+        if case_note is not None:
+            correction = f"""
+      <div class="note"><p><strong>Checked by the author</strong> after the run:
+      {_e(case_note)}</p></div>"""
         extra = f"""
     <details class="more"><summary>Case file drafted by a language model</summary>
       <p class="aside">Drafted by Claude Sonnet 5.5 from the system's outputs, for the reviewer;
       it gives no verdict. Grounding check, its numbers and boxes looked up in its tools'
-      outputs: {checked}.</p>
+      outputs: {checked}.</p>{correction}
       <pre>{_e(case_file)}</pre>
     </details>"""
     return f"""
@@ -635,6 +653,7 @@ def gallery(
     annotations: Mapping[str, Mapping[str, Any]],
     case_files: Mapping[str, str],
     notes: Mapping[str, str],
+    case_notes: Mapping[str, str],
 ) -> str:
     """The ten receipts at a glance, then their cards in three groups, each with its real count."""
     counts = records.cards["outcomes"]
@@ -647,6 +666,7 @@ def gallery(
                 item,
                 annotation=annotations[item["receipt"]],
                 case_file=case_files.get(item["receipt"]),
+                case_note=case_notes.get(item["receipt"]),
                 error_note=notes.get(item["receipt"]) if group == MISSED else None,
                 grounding=records.agent["grounding"],
                 policies=records.cards["policies"],
@@ -1154,6 +1174,7 @@ def render_page(
     annotations: Mapping[str, Mapping[str, Any]],
     case_files: Mapping[str, str],
     notes: Mapping[str, str],
+    case_notes: Mapping[str, str],
 ) -> str:
     """The whole page, from the records, the annotations and the documents it quotes."""
     sections = "".join(
@@ -1162,7 +1183,7 @@ def render_page(
             glance(records),
             built(),
             credit(),
-            gallery(records, annotations, case_files, notes),
+            gallery(records, annotations, case_files, notes, case_notes),
             results(records),
             how(),
             choice(records),

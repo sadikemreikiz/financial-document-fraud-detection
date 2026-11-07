@@ -23,6 +23,7 @@ from docfraud.demo.page import (
     CONTENTS,
     STYLE,
     Records,
+    case_file_notes,
     ci,
     detail,
     error_notes,
@@ -88,8 +89,10 @@ def page(found: Records) -> str:
         c["receipt"]: (AGENT / "test" / f"{c['receipt']}.md").read_text(encoding="utf-8")
         for c in found.cards["gallery"][CAUGHT]
     }
-    notes = error_notes(PHASE_7_PAGE.read_text(encoding="utf-8"))
-    return render_page(found, annotations(found), case_files, notes)
+    phase_7_page = PHASE_7_PAGE.read_text(encoding="utf-8")
+    notes = error_notes(phase_7_page)
+    case_notes = case_file_notes(phase_7_page)
+    return render_page(found, annotations(found), case_files, notes, case_notes)
 
 
 @pytest.fixture(scope="module")
@@ -152,6 +155,47 @@ def test_the_misses_and_the_catches_carry_their_notes_and_case_files(built: str)
         "Grounding check, its numbers and boxes looked up in its tools'\n      outputs: all found"
     )
     assert checked in built
+
+
+def test_the_case_file_notes_are_read_apart_from_the_error_notes() -> None:
+    phase_7_page = PHASE_7_PAGE.read_text(encoding="utf-8")
+    errors = error_notes(phase_7_page)
+    cases = case_file_notes(phase_7_page)
+    caught = {c["receipt"] for c in records().cards["gallery"][CAUGHT]}
+    assert cases
+    assert set(cases) <= caught
+    assert not set(cases) & set(errors)
+    assert all("|" not in note for note in cases.values())
+
+
+def test_a_case_file_sentence_found_wrong_carries_the_owners_note_above_it(built: str) -> None:
+    cases = case_file_notes(PHASE_7_PAGE.read_text(encoding="utf-8"))
+    for receipt, note in cases.items():
+        start = built.index(f'id="{receipt}"')
+        end = built.find("<article", start)
+        case_file = built[start : end if end != -1 else None]
+        case_file = case_file[case_file.index("Case file drafted by a language model") :]
+        assert case_file.index(html.escape(note)) < case_file.index("<pre>")
+    assert built.count("<strong>Checked by the author</strong> after the run:") == len(cases)
+
+
+def test_the_build_stops_on_a_case_file_note_for_no_case_file_shown(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    found = records()
+    stray = tmp_path / "README.md"
+    stray.write_text(
+        PHASE_7_PAGE.read_text(encoding="utf-8") + "\n| X00000000000 | Not a case file shown. |\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr("docfraud.cli.demo.PHASE_7_PAGE", stray)
+    monkeypatch.setattr("docfraud.cli.demo.load", lambda *_: annotations(found))
+    result = runner.invoke(
+        app, ["demo", "build", "--assets", str(tmp_path), "--output", str(tmp_path / "site")]
+    )
+    assert result.exit_code == 1
+    assert "X00000000000" in result.output
+    assert not (tmp_path / "site").exists()
 
 
 def test_the_error_notes_name_the_pixel_detectors_as_the_page_does() -> None:
